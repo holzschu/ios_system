@@ -36,4 +36,4 @@ Your Mileage May Vary.
 
 Run the script `get_sources.sh`. This will download the latest sources form [Apple OpenSource](https://opensource.apple.com) and patch them for compatibility with iOS. Then open the Xcode project `ios_system.xcodeproj` and hit build. You should have the `ios_system` framework, ready to be included in you own projects. Alternatively, drag `ios_system.xcodeproj` into you project, add `ios_system.framework` to your linked binaries and compile. 
 
-
+If you're feeling brave, you can edit `get_sources.sh` to get the latest version of the tools. 
