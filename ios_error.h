@@ -13,6 +13,7 @@
 #include <pthread.h>
 #include <err.h>
 
+#ifdef _ERR_H_ // did we go through system err.h?
 static void myerrx(int i, const char * fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -44,10 +45,11 @@ static void mywarn(const char * fmt, ...) {
     vwarn(fmt, ap);
     va_end(ap);
 }
-
 #define errx myerrx
 #define err myerr
 #define warn mywarn
+#endif // _ERR_H_
+
 #define exit(a) pthread_exit(NULL)
 #define _exit(a) pthread_exit(NULL)
 

@@ -6,7 +6,7 @@ libutil=libutil-51
 libinfo=Libinfo-517
 shell=shell_cmds-203
 text=text_cmds-99
-archive=libarchive-54.tar.gz
+archive=libarchive-54
 
 # Cleanup:
 rm -rf file_cmds shell_cmds text_cmds libutil libinfo 
@@ -54,9 +54,10 @@ mv $text text_cmds
 
 # get source for BSD-tar:
 # not gnu-tar because licensing issues.
-curl https://opensource.apple.com/tarballs/libarchive/$archive.tar.gz
+# not Apple-Source because won't compile
+curl https://opensource.apple.com/tarballs/libarchive/$archive.tar.gz -O
 tar xfz $archive.tar.gz
 rm $archive.tar.gz
-mv $archive.tar.gz libarchive
+mv $archive libarchive
 
 
