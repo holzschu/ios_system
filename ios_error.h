@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include <pthread.h>
+#include <err.h>
 
 static void myerrx(int i, const char * fmt, ...) {
     va_list ap;
