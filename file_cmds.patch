@@ -1,0 +1,1445 @@
+diff -Naur file_cmds-272/chflags/chflags.c file_cmds/chflags/chflags.c
+--- file_cmds-272/chflags/chflags.c	2010-03-19 04:52:40.000000000 +0100
++++ file_cmds/chflags/chflags.c	2017-12-05 13:50:47.000000000 +0100
+@@ -52,11 +52,13 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include "ios_error.h"
++
+ 
+ static void usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++chflags_main(int argc, char *argv[])
+ {
+ 	FTS *ftsp;
+ 	FTSENT *p;
+diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
+--- file_cmds-272/chmod/chmod.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/chmod/chmod.c	2017-12-05 12:56:09.000000000 +0100
+@@ -60,17 +60,19 @@
+ 
+ #ifdef __APPLE__
+ #include "chmod_acl.h"
++#include "ios_error.h" // remap exit to pthread_exit
+ 
+ #endif /*__APPLE__*/
+ 
+-int fflag = 0;
++int chmod_fflag = 0;
+ 
+-int main(int, char *[]);
+-void usage(void);
++int chmod_main(int, char *[]);
++void chmod_usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++chmod_main(int argc, char *argv[])
+ {
++    chmod_fflag = 0;
+ 	FTS *ftsp = NULL;
+ 	FTSENT *p = NULL;
+ 	mode_t *set = NULL;
+@@ -93,7 +95,7 @@
+ 
+ 	set = NULL;
+ 	omode = 0;
+-	Hflag = Lflag = Pflag = Rflag = fflag = hflag = vflag = 0;
++	Hflag = Lflag = Pflag = Rflag = chmod_fflag = hflag = vflag = 0;
+ #ifndef __APPLE__
+ 	while ((ch = getopt(argc, argv, "HLPRXfghorstuvwx")) != -1)
+ #else
+@@ -118,7 +120,7 @@
+ 			Rflag = 1;
+ 			break;
+ 		case 'f':
+-			fflag = 1;
++			chmod_fflag = 1;
+ 			break;
+ 		case 'h':
+ 			/*
+@@ -188,19 +190,19 @@
+ 			break;
+ 		case '?':
+ 		default:
+-			usage();
++			chmod_usage();
+ 		}
+ done:	argv += optind;
+ 	argc -= optind;
+ 
+ #ifdef __APPLE__
+ 	if (argc < ((acloptflags & ACL_FLAG) ? 1 : 2))
+-		usage();
++		chmod_usage();
+ 	if (!Rflag && (Hflag || Lflag || Pflag))
+ 		warnx("options -H, -L, -P only useful with -R");
+ #else  /* !__APPLE__ */
+ 	if (argc < 2)
+-		usage();
++		chmod_usage();
+ #endif	/* __APPLE__ */
+ 
+ #ifdef __APPLE__
+@@ -222,7 +224,7 @@
+ 		}
+ 		
+ 		if (argc < 3)
+-			usage();
++			chmod_usage();
+ 
+ 		if (acloptlen > 2) {
+ 			for (index = 2; index < acloptlen; index++) {
+@@ -232,7 +234,7 @@
+ 
+ 					if (argc < ((acloptflags & ACL_DELETE_FLAG)
+ 						    ? 3 : 4))
+-						usage();
++						chmod_usage();
+ 					argv++;
+ 					argc--;
+ 					errno = 0;
+@@ -261,7 +263,7 @@
+ 					break;
+ 				default:
+ 					errno = EINVAL;
+-					usage();
++					chmod_usage();
+ 				}
+ 			}
+ 		}
+@@ -402,7 +404,7 @@
+ 			newmode = oct ? omode : getmode(set, p->fts_statp->st_mode);
+ 			if ((newmode & ALLPERMS) == (p->fts_statp->st_mode & ALLPERMS))
+ 				continue;
+-			if ((*change_mode)(p->fts_accpath, newmode) && !fflag) {
++			if ((*change_mode)(p->fts_accpath, newmode) && !chmod_fflag) {
+ 				warn("Unable to change file mode on %s", p->fts_path);
+ 				rval = 1;
+ 			} else {
+@@ -444,7 +446,7 @@
+ }
+ 
+ void
+-usage(void)
++chmod_usage(void)
+ {
+ #ifdef __APPLE__
+ 	(void)fprintf(stderr,
+diff -Naur file_cmds-272/chmod/chmod_acl.c file_cmds/chmod/chmod_acl.c
+--- file_cmds-272/chmod/chmod_acl.c	2015-08-04 22:32:26.000000000 +0200
++++ file_cmds/chmod/chmod_acl.c	2017-12-05 12:56:09.000000000 +0100
+@@ -42,8 +42,9 @@
+ 
+ #include <membership.h>
+ #include "chmod_acl.h"
++#include "ios_error.h"
+ 
+-extern void usage(void);
++extern void chmod_usage(void);
+ 
+ #ifdef __APPLE__
+ static struct {
+@@ -115,7 +116,8 @@
+ 		return entryg;
+ 	}
+ 	
+-	errx(1, "Unable to translate '%s' to a UUID", tok);
++	errx(1, "Unable to translate '%s' to a UUID", tok); // pthread_exit
++    return NULL; // never reached
+ }
+ 
+ /* Convert an acl entry in string form to an acl_entry_t */
+@@ -650,7 +652,7 @@
+ 		acl_entry_t rentry;
+ 		
+ 		if (-1 == position) {
+-			usage();
++			chmod_usage();
+ 		}
+ 		if (0 == flag_new_acl) {
+ 			if (0 != acl_get_entry(oacl, position,
+@@ -678,7 +680,7 @@
+ 	acl_entry_t entry = NULL;
+ 	unsigned retval = 0;
+ 
+-	extern int fflag;
++	extern int chmod_fflag;
+ 
+ /* XXX acl_get_file() returns a zero entry ACL if an ACL was previously
+  * associated with the file, and has had its entries removed.
+@@ -695,7 +697,7 @@
+  */
+ 
+ 	if (path == NULL)
+-		usage();
++		chmod_usage();
+ 
+ 	if (optflags & ACL_CLEAR_FLAG) {
+ 		filesec_t fsec = filesec_init();
+@@ -707,7 +709,7 @@
+                 }
+ 		if (follow) {
+ 			if (chmodx_np(path, fsec) != 0) {
+-                                if (!fflag) {
++                                if (!chmod_fflag) {
+ 					warn("Failed to clear ACL on file %s", path);
+ 				}
+ 				retval = 1;
+@@ -716,14 +718,14 @@
+ 			int fd = open(path, O_SYMLINK);
+ 			if (fd != -1) {
+ 				if (fchmodx_np(fd, fsec) != 0) {
+-					if (!fflag) {
++					if (!chmod_fflag) {
+ 						warn("Failed to clear ACL on file %s", path);
+ 					}
+ 					retval = 1;
+ 				}
+ 				close(fd);
+ 			} else {
+-				if (!fflag) {
++				if (!chmod_fflag) {
+ 					warn("Failed to open file %s", path);
+ 				}
+ 				retval = 1;
+@@ -844,7 +846,7 @@
+ 			}
+ 		}
+ 		if (status != 0) {
+-			if (!fflag)
++			if (!chmod_fflag)
+ 				warn("Failed to set ACL on file '%s'", path);
+ 			retval = 1;
+ 		}
+diff -Naur file_cmds-272/chown/chown.c file_cmds/chown/chown.c
+--- file_cmds-272/chown/chown.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/chown/chown.c	2017-12-05 13:52:38.000000000 +0100
+@@ -60,26 +60,27 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <sys/time.h>
++#include "ios_error.h"
+ 
+ #ifdef __APPLE__
+-#include <get_compat.h>
+-#else
++// #include <get_compat.h>
++// #else
+ #define COMPAT_MODE(a,b) (1)
+ #endif /* __APPLE__ */
+ 
+-void	a_gid(const char *);
+-void	a_uid(const char *);
+-void	chownerr(const char *);
++static void	a_gid(const char *);
++static void	a_uid(const char *);
++static void	chownerr(const char *);
+ static uid_t	id(const char *, const char *);
+-void	usage(void);
++static void	usage(void);
+ 
+-uid_t uid;
+-gid_t gid;
+-int ischown;
+-const char *gname;
++static uid_t uid;
++static gid_t gid;
++static int ischown;
++static const char *gname;
+ 
+ int
+-main(int argc, char **argv)
++chown_main(int argc, char **argv)
+ {
+ 	FTS *ftsp;
+ 	FTSENT *p;
+diff -Naur file_cmds-272/cksum/cksum.c file_cmds/cksum/cksum.c
+--- file_cmds-272/cksum/cksum.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/cksum/cksum.c	2017-12-05 11:48:22.000000000 +0100
+@@ -61,11 +61,12 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h" // remap exit to pthread_exit
+ 
+ static void usage(void);
+ 
+ int
+-main(int argc, char **argv)
++chksum_main(int argc, char **argv)
+ {
+ 	uint32_t val;
+ 	int ch, fd, rval;
+@@ -102,7 +103,7 @@
+ 					cfncn = csum2;
+ 					pfncn = psum2;
+ 				} else if (!strcmp(optarg, "3")) {
+-					cfncn = crc32;
++					cfncn = chksum_crc32;
+ 					pfncn = pcrc;
+ 				} else {
+ 					warnx("illegal argument to -o option");
+diff -Naur file_cmds-272/cksum/crc32.c file_cmds/cksum/crc32.c
+--- file_cmds-272/cksum/crc32.c	2012-03-14 00:22:38.000000000 +0100
++++ file_cmds/cksum/crc32.c	2017-12-05 11:42:40.000000000 +0100
+@@ -98,7 +98,7 @@
+ uint32_t crc32_total = 0;
+ 
+ int
+-crc32(int fd, uint32_t *cval, off_t *clen)
++chksum_crc32(int fd, uint32_t *cval, off_t *clen)
+ {
+     uint32_t lcrc = ~0;
+     ssize_t nr;
+diff -Naur file_cmds-272/cksum/extern.h file_cmds/cksum/extern.h
+--- file_cmds-272/cksum/extern.h	2006-12-09 07:36:49.000000000 +0100
++++ file_cmds/cksum/extern.h	2017-12-05 11:42:32.000000000 +0100
+@@ -43,5 +43,5 @@
+ void	psum2(char *, uint32_t, off_t);
+ int	csum1(int, uint32_t *, off_t *);
+ int	csum2(int, uint32_t *, off_t *);
+-int	crc32(int, uint32_t *, off_t *);
++int	chksum_crc32(int, uint32_t *, off_t *);
+ __END_DECLS
+diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
+--- file_cmds-272/compress/compress.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/compress/compress.c	2017-12-05 11:36:56.000000000 +0100
+@@ -56,19 +56,20 @@
+ #include <unistd.h>
+ 
+ #include "zopen.h"
++#include "ios_error.h"
+ 
+-void	compress(const char *, const char *, int);
+-void	cwarn(const char *, ...) __printflike(1, 2);
+-void	cwarnx(const char *, ...) __printflike(1, 2);
+-void	decompress(const char *, const char *, int);
+-int	permission(const char *);
+-void	setfile(const char *, struct stat *);
+-void	usage(int);
++static void	compress(const char *, const char *, int);
++static void	cwarn(const char *, ...) __printflike(1, 2);
++static void	cwarnx(const char *, ...) __printflike(1, 2);
++static void	decompress(const char *, const char *, int);
++static int	permission(const char *);
++static void	setfile(const char *, struct stat *);
++static void	usage(int);
+ 
+-int eval, force, verbose, cat;
++static int eval, force, verbose, cat;
+ 
+ int
+-main(int argc, char *argv[])
++compress_main(int argc, char *argv[])
+ {
+ 	enum {COMPRESS, DECOMPRESS} style;
+ 	size_t len;
+@@ -77,7 +78,8 @@
+ 
+ 	if (argc < 1)
+ 		usage(1);
+-	cat = 0;
++    // init all flags
++    eval = force = verbose = cat = 0;
+ 	if ((p = rindex(argv[0], '/')) == NULL)
+ 		p = argv[0];
+ 	else
+diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
+--- file_cmds-272/cp/cp.c	2017-04-17 19:33:52.000000000 +0200
++++ file_cmds/cp/cp.c	2017-12-05 12:55:44.000000000 +0100
+@@ -74,9 +74,10 @@
+ 
+ #ifdef __APPLE__
+ #include <copyfile.h>
+-#include <get_compat.h>
+-#else /* !__APPLE__ */
++// #include <get_compat.h>
++// #else /* !__APPLE__ */
+ #define COMPAT_MODE(a,b) (1)
++#include "ios_error.h"
+ #endif /* __APPLE__ */
+ 
+ #include "extern.h"
+@@ -90,7 +91,7 @@
+ 
+ PATH_T to = { to.p_path, emptystring, "" };
+ 
+-int fflag, iflag, nflag, pflag, vflag;
++int cp_fflag, iflag, nflag, pflag, vflag;
+ #ifdef __APPLE__
+ int Xflag;
+ #endif /* __APPLE__ */
+@@ -104,14 +105,20 @@
+ static void siginfo(int __unused);
+ 
+ int
+-main(int argc, char *argv[])
++cp_main(int argc, char *argv[])
+ {
+ 	struct stat to_stat, tmp_stat;
+ 	enum op type;
+ 	int Hflag, Lflag, Pflag, ch, fts_options, r, have_trailing_slash;
+ 	char *target;
+ 
+-	Hflag = Lflag = Pflag = 0;
++    Hflag = Lflag = Pflag = 0;
++    cp_fflag = iflag = nflag = pflag = vflag = 0;
++#ifdef __APPLE__
++    Xflag = 0;
++#endif /* __APPLE__ */
++    Rflag = rflag = cflag = 0;
++    
+ 	while ((ch = getopt(argc, argv, "cHLPRXafinprv")) != -1)
+ 		switch (ch) {
+ 		case 'c':
+@@ -136,7 +143,7 @@
+ 			Xflag = 1;
+ 			break;
+ 		case 'f':
+-			fflag = 1;
++			cp_fflag = 1;
+ 			/* Determine if the STD is SUSv3 or Legacy */
+ 			if (COMPAT_MODE("bin/cp", "unix2003"))
+ 				nflag = 0;	/* reset nflag, but not iflag */
+@@ -146,13 +153,13 @@
+ 		case 'i':
+ 			iflag = 1;
+ 			if (COMPAT_MODE("bin/cp", "unix2003"))
+-				nflag = 0;	/* reset nflag, but not fflag */
++				nflag = 0;	/* reset nflag, but not cp_fflag */
+ 			else
+-				fflag = nflag = 0;
++				cp_fflag = nflag = 0;
+ 			break;
+ 		case 'n':
+ 			nflag = 1;
+-			fflag = iflag = 0;
++			cp_fflag = iflag = 0;
+ 			break;
+ 		case 'p':
+ 			pflag = 1;
+@@ -169,14 +176,14 @@
+ 			Rflag = 1;
+ 			break;
+ 		default:
+-			usage();
++			cp_usage();
+ 			break;
+ 		}
+ 	argc -= optind;
+ 	argv += optind;
+ 
+ 	if (argc < 2)
+-		usage();
++		cp_usage();
+ 
+ 	if (cflag && Xflag) {
+ 		errx(1, "the -c and -X options may not be specified together");
+@@ -245,7 +252,7 @@
+ 		 * Case (1).  Target is not a directory.
+ 		 */
+ 		if (argc > 1) {
+-			usage();
++			cp_usage();
+ 			exit(1);
+ 		}
+ 		/*
+@@ -281,7 +288,7 @@
+ 		 */
+ 		type = FILE_TO_DIR;
+ 
+-	exit (copy(argv, type, fts_options));
++	return (copy(argv, type, fts_options));
+ }
+ 
+ static int
+diff -Naur file_cmds-272/cp/extern.h file_cmds/cp/extern.h
+--- file_cmds-272/cp/extern.h	2017-04-17 19:33:52.000000000 +0200
++++ file_cmds/cp/extern.h	2017-12-05 12:55:57.000000000 +0100
+@@ -37,7 +37,7 @@
+ } PATH_T;
+ 
+ extern PATH_T to;
+-extern int fflag, iflag, nflag, pflag, vflag;
++extern int cp_fflag, iflag, nflag, pflag, vflag;
+ #ifdef __APPLE__
+ extern int Xflag;
+ #endif /* __APPLE__ */
+@@ -52,5 +52,5 @@
+ int	setfile(struct stat *, int);
+ int	preserve_dir_acls(struct stat *, char *, char *);
+ int	preserve_fd_acls(int, int);
+-void	usage(void);
++void	cp_usage(void);
+ __END_DECLS
+diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
+--- file_cmds-272/cp/utils.c	2017-04-17 19:33:52.000000000 +0200
++++ file_cmds/cp/utils.c	2017-12-05 12:58:18.000000000 +0100
+@@ -58,14 +58,15 @@
+ #include <copyfile.h>
+ #include <string.h>
+ #include <sys/mount.h>
+-#include <get_compat.h> 
++// #include <get_compat.h>
+ #include <sys/attr.h>
+ #include <sys/clonefile.h>
+-#else 
++// #else 
+ #define COMPAT_MODE(a,b) (1)
+ #endif /* __APPLE__ */
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ #define	cp_pct(x,y)	(int)(100.0 * (double)(x) / (double)(y))
+ 
+ int
+@@ -133,7 +134,7 @@
+ 		    /* first try to overwrite existing destination file name */
+ 		    to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
+ 		    if (to_fd == -1) {
+-			if (fflag) {
++			if (cp_fflag) {
+ 			    /* Only if it fails remove file and create a new one */
+ 			    (void)unlink(to.p_path);
+ 			    to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
+@@ -141,7 +142,7 @@
+ 			}
+ 		    }
+ 		} else {
+-			if (fflag) {
++			if (cp_fflag) {
+ 			    /* remove existing destination file name, 
+ 			     * create a new file  */
+ 			    (void)unlink(to.p_path);
+@@ -513,7 +514,7 @@
+ #endif /* !__APPLE__ */
+ 
+ void
+-usage(void)
++cp_usage(void)
+ {
+ 
+ 	if (COMPAT_MODE("bin/cp", "unix2003")) {
+diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
+--- file_cmds-272/df/df.c	2015-05-13 02:57:59.000000000 +0200
++++ file_cmds/df/df.c	2017-12-05 12:43:41.000000000 +0100
+@@ -72,10 +72,11 @@
+ #include <sysexits.h>
+ #include <unistd.h>
+ #include <libutil.h>
++#include "ios_error.h"
+ 
+ #ifdef __APPLE__
+-#include "get_compat.h"
+-#else
++// #include "get_compat.h"
++// #else
+ #define COMPAT_MODE(func, mode) 1
+ #endif
+ 
+@@ -110,29 +111,30 @@
+ 	int ifree;
+ };
+ 
+-unsigned long long vals_si [] = {1, KILO_SI_SZ, MEGA_SI_SZ, GIGA_SI_SZ, TERA_SI_SZ, PETA_SI_SZ};
+-unsigned long long vals_base2[] = {1, KILO_2_SZ, MEGA_2_SZ, GIGA_2_SZ, TERA_2_SZ, PETA_2_SZ};
+-unsigned long long *valp;
++static unsigned long long vals_si [] = {1, KILO_SI_SZ, MEGA_SI_SZ, GIGA_SI_SZ, TERA_SI_SZ, PETA_SI_SZ};
++static unsigned long long vals_base2[] = {1, KILO_2_SZ, MEGA_2_SZ, GIGA_2_SZ, TERA_2_SZ, PETA_2_SZ};
++static unsigned long long *valp;
+ 
+ typedef enum { NONE, KILO, MEGA, GIGA, TERA, PETA, UNIT_MAX } unit_t;
+ 
+-unit_t unitp [] = { NONE, KILO, MEGA, GIGA, TERA, PETA };
++static unit_t unitp [] = { NONE, KILO, MEGA, GIGA, TERA, PETA };
+ 
+-int	  bread(off_t, void *, int);
++static int	  bread(off_t, void *, int);
+ int	  checkvfsname(const char *, char **);
+-char	 *getmntpt(char *);
+-int	  int64width(int64_t);
+-char	 *makenetvfslist(void);
++static char	 *getmntpt(char *);
++static int	  int64width(int64_t);
++static char	 *makenetvfslist(void);
+ char	**makevfslist(const char *);
+-void	  prthuman(struct statfs *, uint64_t);
+-void	  prthumanval(int64_t);
+-void	  prtstat(struct statfs *, struct maxwidths *);
+-long	  regetmntinfo(struct statfs **, long, char **);
+-unit_t	  unit_adjust(double *);
+-void	  update_maxwidths(struct maxwidths *, struct statfs *);
+-void	  usage(void);
++static void	  prthuman(struct statfs *, uint64_t);
++static void	  prthumanval(int64_t);
++static void	  prtstat(struct statfs *, struct maxwidths *);
++static long	  regetmntinfo(struct statfs **, long, char **);
++static unit_t	  unit_adjust(double *);
++static void	  update_maxwidths(struct maxwidths *, struct statfs *);
++static void	  usage(void);
+ 
+-int	aflag = 0, hflag, iflag, nflag;
++static int	aflag = 0, hflag, iflag, nflag;
++static int headerlen, timesthrough;
+ 
+ static __inline int imax(int a, int b)
+ {
+@@ -140,7 +142,7 @@
+ }
+ 
+ int
+-main(int argc, char *argv[])
++df_main(int argc, char *argv[])
+ {
+ 	struct stat stbuf;
+ 	struct statfs statfsbuf, *mntbuf;
+@@ -149,6 +151,10 @@
+ 	long mntsize;
+ 	int ch, i, rv, tflag = 0, kludge_tflag = 0;
+ 	int kflag = 0;
++    // always init the flags:
++    aflag = hflag = iflag = nflag = 0;
++    headerlen = 0; timesthrough = 0;
++
+ 	const char *options = "abgHhiklmnPt:T:";
+ 	if (COMPAT_MODE("bin/df", "unix2003")) {
+ 		/* Unix2003 requires -t be "include total capacity". which df
+@@ -156,7 +162,8 @@
+ 		  *not* expect a string after -t (we provide -T in both cases
+ 		  to cover the old use of -t) */
+ 		options = "abgHhiklmnPtT:";
+-		iflag = 1;
++		// iflag = 1;
++        iflag = 0;
+ 	}
+ 
+ 	vfslist = NULL;
+@@ -434,7 +441,7 @@
+ prtstat(struct statfs *sfsp, struct maxwidths *mwp)
+ {
+ 	static long blocksize;
+-	static int headerlen, timesthrough;
++	// static int headerlen, timesthrough;
+ 	static const char *header;
+ 	uint64_t used, availblks, inodes;
+ 	char * avail_str;
+diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
+--- file_cmds-272/du/du.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/du/du.c	2017-12-05 13:54:25.000000000 +0100
+@@ -67,10 +67,11 @@
+ #include <string.h>
+ #include <sysexits.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+ #ifdef __APPLE__
+-#include <get_compat.h>
+-#else
++// #include <get_compat.h>
++// #else
+ #define COMPAT_MODE(func, mode) (1)
+ #endif
+ 
+@@ -94,13 +95,13 @@
+ 
+ #define TWO_TB  (2LL * 1024LL * 1024LL * 1024LL * 1024LL)
+ 
+-unsigned long long vals_si [] = {1, KILO_SI_SZ, MEGA_SI_SZ, GIGA_SI_SZ, TERA_SI_SZ, PETA_SI_SZ};
+-unsigned long long vals_base2[] = {1, KILO_2_SZ, MEGA_2_SZ, GIGA_2_SZ, TERA_2_SZ, PETA_2_SZ};
+-unsigned long long *valp;
++static unsigned long long vals_si [] = {1, KILO_SI_SZ, MEGA_SI_SZ, GIGA_SI_SZ, TERA_SI_SZ, PETA_SI_SZ};
++static unsigned long long vals_base2[] = {1, KILO_2_SZ, MEGA_2_SZ, GIGA_2_SZ, TERA_2_SZ, PETA_2_SZ};
++static unsigned long long *valp;
+ 
+ typedef enum { NONE, KILO, MEGA, GIGA, TERA, PETA, UNIT_MAX } unit_t;
+ 
+-int unitp [] = { NONE, KILO, MEGA, GIGA, TERA, PETA };
++static int unitp [] = { NONE, KILO, MEGA, GIGA, TERA, PETA };
+ 
+ SLIST_HEAD(ignhead, ignentry) ignores;
+ struct ignentry {
+@@ -111,14 +112,14 @@
+ static int	linkchk(FTSENT *);
+ static int	dirlinkchk(FTSENT *);
+ static void	usage(void);
+-void		prthumanval(double);
+-unit_t		unit_adjust(double *);
+-void		ignoreadd(const char *);
+-void		ignoreclean(void);
+-int		ignorep(FTSENT *);
++static void		prthumanval(double);
++static unit_t		unit_adjust(double *);
++static void		ignoreadd(const char *);
++static void		ignoreclean(void);
++static int		ignorep(FTSENT *);
+ 
+ int
+-main(int argc, char *argv[])
++du_main(int argc, char *argv[])
+ {
+ 	FTS		*fts;
+ 	FTSENT		*p;
+diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
+--- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
++++ file_cmds/gzip/gzip.c	2017-12-05 13:10:30.000000000 +0100
+@@ -68,9 +68,14 @@
+ #ifdef __APPLE__
+ #include <sys/attr.h>
+ #include <copyfile.h>
+-#include <get_compat.h>
++// #include <get_compat.h>
++#define COMPAT_MODE(func, mode) 1
+ int futimens(int fd, const struct timespec times[2]);
+ #endif /* __APPLE__ */
++#include <stdbool.h> // for booleans
++#include "ios_error.h"
++// iOS: Until someone install the header file (the library exists)
++#define NO_XZ_SUPPORT
+ 
+ /* what type of file are we dealing with */
+ enum filetype {
+@@ -166,7 +171,7 @@
+ #define SUFFIX_MAXLEN	30
+ 
+ #ifdef __APPLE__
+-static	const char	gzip_version[] = "Apple gzip " GZIP_APPLE_VERSION;
++static	const char	gzip_version[] = "Apple gzip "; // GZIP_APPLE_VERSION;
+ #else
+ static	const char	gzip_version[] = "FreeBSD gzip 20150413";
+ #endif
+@@ -226,10 +231,10 @@
+ static	bool	zcat;
+ #endif
+ 
+-static	void	maybe_err(const char *fmt, ...) __printflike(1, 2) __dead2;
++static	void	maybe_err(const char *fmt, ...) __printflike(1, 2) ; // __dead2;
+ #if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT) ||	\
+     !defined(NO_XZ_SUPPORT)
+-static	void	maybe_errx(const char *fmt, ...) __printflike(1, 2) __dead2;
++static	void	maybe_errx(const char *fmt, ...) __printflike(1, 2) ; // __dead2;
+ #endif
+ static	void	maybe_warn(const char *fmt, ...) __printflike(1, 2);
+ static	void	maybe_warnx(const char *fmt, ...) __printflike(1, 2);
+@@ -247,8 +252,8 @@
+ static	void	handle_stdout(void);
+ static	void	print_ratio(off_t, off_t, FILE *);
+ static	void	print_list(int fd, off_t, const char *, time_t);
+-static	void	usage(void) __dead2;
+-static	void	display_version(void) __dead2;
++static	void	usage(void) ; // __dead2;
++static	void	display_version(void) ; // __dead2;
+ #ifndef SMALL
+ static	void	display_license(void);
+ static	void	sigint_handler(int);
+@@ -314,14 +319,24 @@
+ #endif
+ 
+ int
+-main(int argc, char **argv)
++gzip_main(int argc, char **argv)
+ {
+-	const char *progname = getprogname();
++	const char *progname = argv[0]; // getprogname(); // getprogname returns Host application
+ #ifndef SMALL
+ 	char *gzip;
+ 	int len;
+ #endif
+ 	int ch;
++    // Initialize all flags:
++    cflag = dflag =   lflag = 0;
++    numflag = 6;
++#ifndef SMALL
++    fflag = kflag = nflag = Nflag = qflag = rflag = tflag = vflag = 0;
++#endif
++    exit_value = 0;           /* exit value */
++#ifdef __APPLE__
++    zcat = false;
++#endif
+ 
+ #ifndef SMALL
+ 	if ((gzip = getenv("GZIP")) != NULL)
+@@ -1181,7 +1196,7 @@
+ 	if (lflag == 0 && stat(outfile, &sb) == 0) {
+ 		if (fflag)
+ 			unlink(outfile);
+-		else if (isatty(STDIN_FILENO)) {
++		else if (isatty(fileno(stdin))) {
+ 			char ans[10] = { 'n', '\0' };	/* default */
+ 
+ 			fprintf(stderr, "%s already exists -- do you wish to "
+@@ -1343,7 +1358,7 @@
+ 		remove_file = outfile;
+ #endif
+ 	} else
+-		out = STDOUT_FILENO;
++		out = fileno(stdout);
+ 
+ 	insize = gz_compress(in, out, &size, basename(file), (uint32_t)isb.st_mtime);
+ 
+@@ -1520,10 +1535,10 @@
+ 
+ 	if (cflag == 0 && lflag == 0) {
+ 		zfd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
+-		if (zfd == STDOUT_FILENO) {
++		if (zfd == fileno(stdout)) {
+ 			/* We won't close STDOUT_FILENO later... */
+ 			zfd = dup(zfd);
+-			close(STDOUT_FILENO);
++			close(fileno(stdout));
+ 		}
+ 		if (zfd == -1) {
+ 			maybe_warn("can't open %s", outfile);
+@@ -1533,7 +1548,7 @@
+ 		remove_file = outfile;
+ #endif
+ 	} else
+-		zfd = STDOUT_FILENO;
++		zfd = fileno(stdout);
+ 
+ 	switch (method) {
+ #ifndef NO_BZIP2_SUPPORT
+@@ -1630,7 +1645,7 @@
+ 
+ 	if (close(fd) != 0)
+ 		maybe_warn("couldn't close input");
+-	if (zfd != STDOUT_FILENO && close(zfd) != 0)
++	if (zfd != fileno(stdout) && close(zfd) != 0)
+ 		maybe_warn("couldn't close output");
+ 
+ 	if (size == -1) {
+@@ -1688,7 +1703,7 @@
+     lose:
+ 	if (fd != -1)
+ 		close(fd);
+-	if (zfd != -1 && zfd != STDOUT_FILENO)
++	if (zfd != -1 && zfd != fileno(stdout))
+ 		close(fd);
+ 	return -1;
+ }
+@@ -1702,7 +1717,7 @@
+ 	ssize_t w;
+ 
+ 	in_tot = count;
+-	w = write(STDOUT_FILENO, prepend, count);
++	w = write(fileno(stdout), prepend, count);
+ 	if (w == -1 || (size_t)w != count) {
+ 		maybe_warn("write to stdout");
+ 		return -1;
+@@ -1718,7 +1733,7 @@
+ 			break;
+ 		}
+ 
+-		if (write(STDOUT_FILENO, buf, rv) != rv) {
++		if (write(fileno(stdout), buf, rv) != rv) {
+ 			maybe_warn("write to stdout");
+ 			break;
+ 		}
+@@ -1743,7 +1758,7 @@
+ #endif
+ 
+ #ifndef SMALL
+-	if (fflag == 0 && lflag == 0 && isatty(STDIN_FILENO)) {
++	if (fflag == 0 && lflag == 0 && isatty(fileno(stdin))) {
+ 		maybe_warnx("standard input is a terminal -- ignoring");
+ 		return;
+ 	}
+@@ -1753,15 +1768,15 @@
+ 		struct stat isb;
+ 
+ 		/* XXX could read the whole file, etc. */
+-		if (fstat(STDIN_FILENO, &isb) < 0) {
++		if (fstat(fileno(stdin), &isb) < 0) {
+ 			maybe_warn("fstat");
+ 			return;
+ 		}
+-		print_list(STDIN_FILENO, isb.st_size, "stdout", isb.st_mtime);
++		print_list(fileno(stdin), isb.st_size, "stdout", isb.st_mtime);
+ 		return;
+ 	}
+ 
+-	bytes_read = read_retry(STDIN_FILENO, header1, sizeof header1);
++	bytes_read = read_retry(fileno(stdin), header1, sizeof header1);
+ 	if (bytes_read == -1) {
+ 		maybe_warn("can't read stdin");
+ 		return;
+@@ -1778,22 +1793,22 @@
+ 			maybe_warnx("unknown compression format");
+ 			return;
+ 		}
+-		usize = cat_fd(header1, sizeof header1, &gsize, STDIN_FILENO);
++		usize = cat_fd(header1, sizeof header1, &gsize, fileno(stdin));
+ 		break;
+ #endif
+ 	case FT_GZIP:
+-		usize = gz_uncompress(STDIN_FILENO, STDOUT_FILENO, 
++		usize = gz_uncompress(fileno(stdin), fileno(stdout),
+ 			      (char *)header1, sizeof header1, &gsize, "(stdin)");
+ 		break;
+ #ifndef NO_BZIP2_SUPPORT
+ 	case FT_BZIP2:
+-		usize = unbzip2(STDIN_FILENO, STDOUT_FILENO,
++		usize = unbzip2(fileno(stdin), fileno(stdout),
+ 				(char *)header1, sizeof header1, &gsize);
+ 		break;
+ #endif
+ #ifndef NO_COMPRESS_SUPPORT
+ 	case FT_Z:
+-		if ((in = zdopen(STDIN_FILENO)) == NULL) {
++		if ((in = zdopen(fileno(stdin))) == NULL) {
+ 			maybe_warnx("zopen of stdin");
+ 			return;
+ 		}
+@@ -1805,13 +1820,13 @@
+ #endif
+ #ifndef NO_PACK_SUPPORT
+ 	case FT_PACK:
+-		usize = unpack(STDIN_FILENO, STDOUT_FILENO,
++		usize = unpack(fileno(stdin), fileno(stdout),
+ 			       (char *)header1, sizeof header1, &gsize);
+ 		break;
+ #endif
+ #ifndef NO_XZ_SUPPORT
+ 	case FT_XZ:
+-		usize = unxz(STDIN_FILENO, STDOUT_FILENO,
++		usize = unxz(fileno(stdin), fileno(stdout),
+ 			     (char *)header1, sizeof header1, &gsize);
+ 		break;
+ #endif
+@@ -1836,13 +1851,13 @@
+ 	int ret;
+ 
+ #ifndef SMALL
+-	if (fflag == 0 && isatty(STDOUT_FILENO)) {
++	if (fflag == 0 && isatty(fileno(stdout))) {
+ 		maybe_warnx("standard output is a terminal -- ignoring");
+ 		return;
+ 	}
+ #endif
+ 	/* If stdin is a file use its mtime, otherwise use current time */
+-	ret = fstat(STDIN_FILENO, &sb);
++	ret = fstat(fileno(stdin), &sb);
+ 
+ #ifndef SMALL
+ 	if (ret < 0) {
+@@ -1864,7 +1879,7 @@
+ 		mtime = (uint32_t)systime;
+ 	}
+ 	 		
+-	usize = gz_compress(STDIN_FILENO, STDOUT_FILENO, &gsize, "", mtime);
++	usize = gz_compress(fileno(stdin), fileno(stdout), &gsize, "", mtime);
+ #ifndef SMALL
+         if (vflag && !tflag && usize != -1 && gsize != -1)
+ 		print_verbage(NULL, NULL, usize, gsize);
+diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
+--- file_cmds-272/ln/ln.c	2013-10-31 01:07:31.000000000 +0100
++++ file_cmds/ln/ln.c	2017-12-05 13:47:20.000000000 +0100
+@@ -52,27 +52,29 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+-int	fflag;				/* Unlink existing files. */
+-int	Fflag;				/* Remove empty directories also. */
+-int	hflag;				/* Check new name for symlink first. */
+-int	iflag;				/* Interactive mode. */
+-int	sflag;				/* Symbolic, not hard, link. */
+-int	vflag;				/* Verbose output. */
++static int	fflag;				/* Unlink existing files. */
++static int	Fflag;				/* Remove empty directories also. */
++static int	hflag;				/* Check new name for symlink first. */
++static int	iflag;				/* Interactive mode. */
++static int	sflag;				/* Symbolic, not hard, link. */
++static int	vflag;				/* Verbose output. */
+ 					/* System link call. */
+-int (*linkf)(const char *, const char *);
+-char	linkch;
++static int (*linkf)(const char *, const char *);
++static char	linkch;
+ 
+-int	linkit(const char *, const char *, int);
+-void	usage(void);
++static int	linkit(const char *, const char *, int);
++static void	usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++ln_main(int argc, char *argv[])
+ {
+ 	struct stat sb;
+ 	char *p, *sourcedir;
+ 	int ch, exitval;
+-
++    
++    fflag = Fflag = hflag = iflag = sflag = vflag = 0;
+ 	if (argc < 1)
+ 		usage();
+ 	/*
+@@ -92,7 +94,8 @@
+ 		if (argc != 2)
+ 			usage();
+ 		linkf = link;
+-		exit(linkit(argv[0], argv[1], 0));
++		return(linkit(argv[0], argv[1], 0));
++        exit(linkit(argv[0], argv[1], 0));
+ 	}
+ 
+ 	while ((ch = getopt(argc, argv, "Ffhinsv")) != -1)
+@@ -138,9 +141,11 @@
+ 		usage();
+ 		/* NOTREACHED */
+ 	case 1:				/* ln target */
+-		exit(linkit(argv[0], ".", 1));
++        return(linkit(argv[0], ".", 1));
++		// exit(linkit(argv[0], ".", 1));
+ 	case 2:				/* ln target source */
+-		exit(linkit(argv[0], argv[1], 0));
++        return(linkit(argv[0], argv[1], 0));
++		// exit(linkit(argv[0], argv[1], 0));
+ 	default:
+ 		;
+ 	}
+@@ -163,7 +168,7 @@
+ 	exit(exitval);
+ }
+ 
+-int
++static int
+ linkit(const char *target, const char *source, int isdir)
+ {
+ 	struct stat sb;
+@@ -252,7 +257,7 @@
+ 	return (0);
+ }
+ 
+-void
++static void
+ usage(void)
+ {
+ 	(void)fprintf(stderr, "%s\n%s\n%s\n",
+diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
+--- file_cmds-272/ls/extern.h	2010-05-13 01:09:37.000000000 +0200
++++ file_cmds/ls/extern.h	2017-12-05 13:16:09.000000000 +0100
+@@ -51,7 +51,7 @@
+ void	 printlong(DISPLAY *);
+ void	 printscol(DISPLAY *);
+ void	 printstream(DISPLAY *);
+-void	 usage(void);
++void	 ls_usage(void);
+ int      prn_normal(const char *);
+ size_t	 len_octal(const char *, int);
+ int	 prn_octal(const char *);
+diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
+--- file_cmds-272/ls/ls.c	2014-07-04 00:38:26.000000000 +0200
++++ file_cmds/ls/ls.c	2017-12-05 13:59:41.000000000 +0100
+@@ -73,12 +73,13 @@
+ #include <sys/acl.h>
+ #include <sys/xattr.h>
+ #include <sys/param.h>
+-#include <get_compat.h>
+-#else
++// #include <get_compat.h>
++// #else
+ #define COMPAT_MODE(a,b) (1)
+ #endif /* __APPLE__ */
+ #include "ls.h"
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ /*
+  * Upward approximation of the maximum number of characters needed to
+@@ -141,10 +142,54 @@
+ char *enter_bold;		/* ANSI sequence to set color to bold mode */
+ #endif
+ 
++static void initializeAllFlags()
++{
++    termwidth = 80;
++    f_accesstime = 0; /* use time of last access */
++    f_birthtime = 0;          /* use time of file birth */
++    f_flags = 0;              /* show flags associated with a file */
++    f_humanval = 0;           /* show human-readable file sizes */
++    f_inode = 0;              /* print inode */
++    f_kblocks = 0;            /* print size in kilobytes */
++    f_listdir = 0;            /* list actual directory, not contents */
++    f_listdot = 0;            /* list files beginning with . */
++    f_longform = 0;           /* long listing format */
++    f_nonprint = 0;           /* show unprintables as ? */
++    f_nosort = 0;             /* don't sort output */
++    f_notabs = 0;             /* don't use tab-separated multi-col output */
++    f_numericonly = 0;        /* don't convert uid/gid to name */
++    f_octal = 0;              /* show unprintables as \xxx */
++    f_octal_escape = 0;       /* like f_octal but use C escapes if possible */
++    f_recursive = 0;          /* ls subdirectories also */
++    f_reversesort = 0;        /* reverse whatever sort is used */
++    f_sectime = 0;            /* print the real time for all files */
++    f_singlecol = 0;          /* use single column output */
++    f_size = 0;               /* list size in short listing */
++    f_slash = 0;              /* similar to f_type, but only for dirs */
++    f_sortacross = 0; /* sort across rows, not down columns */
++    f_statustime = 0; /* use time of last mode change */
++    f_stream = 0;             /* stream the output, separate with commas */
++    f_timesort = 0;           /* sort by time vice name */
++    f_sizesort = 0;           /* sort by size */
++    f_type = 0;               /* add type character for non-regular files */
++    f_whiteout = 0;           /* show whiteout entries */
++    f_acl = 0;                /* show ACLs in long listing */
++    f_xattr = 0;              /* show extended attributes in long listing */
++    f_group = 0;              /* show group */
++    f_owner = 0;              /* show owner */
++#ifdef COLORLS
++    f_color = 0;              /* add type in color for non-regular files */
++#endif
++    optind = 1;
++    opterr = 1;
++    optreset = 1;
++}
++
++
+ static int rval;
+ 
+ int
+-main(int argc, char *argv[])
++ls_main(int argc, char *argv[])
+ {
+ 	static char dot[] = ".", *dotav[] = {dot, NULL};
+ 	struct winsize win;
+@@ -157,11 +202,15 @@
+ #endif
+ 
+ 	if (argc < 1)
+-		usage();
++		ls_usage();
++    // re-initialize all flags:
++    initializeAllFlags();
++    rval = 0;
+ 	(void)setlocale(LC_ALL, "");
+ 
+ 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
+-	if (isatty(STDOUT_FILENO)) {
++    // iOS: we *are* a terminal, but STDOUT_FILENO doesn't exist
++	if (isatty(STDOUT_FILENO) || 1) {
+ 		termwidth = 80;
+ 		if ((p = getenv("COLUMNS")) != NULL && *p != '\0')
+ 			termwidth = atoi(p);
+@@ -366,7 +415,7 @@
+ 			break;
+ 		default:
+ 		case '?':
+-			usage();
++			ls_usage();
+ 		}
+ 	}
+ 	argc -= optind;
+diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
+--- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
++++ file_cmds/ls/print.c	2017-12-05 13:21:16.000000000 +0100
+@@ -75,13 +75,15 @@
+ #include <stdint.h>		/* intmax_t */
+ #include <assert.h>
+ #ifdef __APPLE__ 
+-#include <get_compat.h>
+-#else 
++// #include <get_compat.h>
++// #else
+ #define COMPAT_MODE(a,b) (1)
+ #endif /* __APPLE__ */
+ 
+ #include "ls.h"
+ #include "extern.h"
++#include "ios_error.h"
++
+ 
+ static int	printaname(FTSENT *, u_long, u_long);
+ static void	printlink(FTSENT *);
+@@ -796,7 +798,8 @@
+ 	endcolor(sig);
+ 
+ 	(void)signal(sig, SIG_DFL);
+-	(void)kill(getpid(), sig);
++    pthread_exit(NULL);
++	// (void)kill(getpid(), sig);
+ }
+ 
+ #endif /* COLORLS */
+diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
+--- file_cmds-272/ls/util.c	2008-03-12 21:31:12.000000000 +0100
++++ file_cmds/ls/util.c	2017-12-05 13:21:36.000000000 +0100
+@@ -53,6 +53,7 @@
+ 
+ #include "ls.h"
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ int
+ prn_normal(const char *s)
+@@ -218,7 +219,7 @@
+ }
+ 
+ void
+-usage(void)
++ls_usage(void)
+ {
+ 	(void)fprintf(stderr,
+ #ifdef COLORLS
+diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
+--- file_cmds-272/mkdir/mkdir.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/mkdir/mkdir.c	2017-12-05 13:48:26.000000000 +0100
+@@ -57,18 +57,21 @@
+ #include <string.h>
+ #include <sysexits.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+ static void	usage(void);
+ 
+-int vflag;
++static int vflag;
+ 
+ int
+-main(int argc, char *argv[])
++mkdir_main(int argc, char *argv[])
+ {
+ 	int ch, exitval, success, pflag;
+ 	mode_t omode, *set = (mode_t *)NULL;
+ 	char *mode;
+-
++    // initialize flag
++    vflag = 0;
++    
+ 	pflag = 0;
+ 	mode = NULL;
+ 	while ((ch = getopt(argc, argv, "m:pv")) != -1)
+diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
+--- file_cmds-272/mv/mv.c	2015-08-04 22:32:26.000000000 +0200
++++ file_cmds/mv/mv.c	2017-12-05 13:39:22.000000000 +0100
+@@ -74,22 +74,23 @@
+ #endif
+ 
+ #ifdef __APPLE__ 
+-#include <get_compat.h>
+-#else   
++// #include <get_compat.h>
++// #else
+ #define COMPAT_MODE(a,b) (1) 
+ #endif /* __APPLE__ */ 
+ 
+ #include "pathnames.h"
++#include "ios_error.h"
+ 
+ int fflg, iflg, nflg, vflg;
+ 
+-int	copy(char *, char *);
+-int	do_move(char *, char *);
+-int	fastcopy(char *, char *, struct stat *);
+-void	usage(void);
++static int	copy(char *, char *);
++static int	do_move(char *, char *);
++static int	fastcopy(char *, char *, struct stat *);
++static void	usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++mv_main(int argc, char *argv[])
+ {
+ 	size_t baselen, len;
+ 	int rval;
+@@ -134,7 +135,8 @@
+ 	if (stat(argv[argc - 1], &sb) || !S_ISDIR(sb.st_mode)) {
+ 		if (argc > 2)
+ 			usage();
+-		exit(do_move(argv[0], argv[1]));
++        return(do_move(argv[0], argv[1]));
++        // exit(do_move(argv[0], argv[1]));
+ 	}
+ 	
+ #ifdef __APPLE__
+@@ -165,18 +167,21 @@
+ 		}
+ 		for ( ; ; p--, q--) {
+ 			if (*p != *q)
+-				exit(do_move(argv[0], argv[1]));
++                return(do_move(argv[0], argv[1]));
++                // exit(do_move(argv[0], argv[1]));
+ 			if (*p == '/')
+ 				break;
+ 			if (p == argv[0]) {
+ 				if (q == argv[1] || *(q-1) == '/')
+ 					break;
+-				exit(do_move(argv[0], argv[1]));
++                return(do_move(argv[0], argv[1]));
++				// exit(do_move(argv[0], argv[1]));
+ 			}
+ 			if (q == argv[1]) {
+ 				if (p == argv[0] || *(p-1) == '/')
+ 					break;
+-				exit(do_move(argv[0], argv[1]));
++				return(do_move(argv[0], argv[1]));
++                // exit(do_move(argv[0], argv[1]));
+ 			}
+ 		}
+ 	}
+diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
+--- file_cmds-272/rm/rm.c	2016-09-16 18:43:23.000000000 +0200
++++ file_cmds/rm/rm.c	2017-12-05 13:43:51.000000000 +0100
+@@ -65,22 +65,23 @@
+ #include <removefile.h>
+ #include <pwd.h>
+ #include <grp.h>
+-#include "get_compat.h"
+-#else
++// #include "get_compat.h"
++// #else
+ #define COMPAT_MODE(func, mode) 1
+ #endif
++#include "ios_error.h"
+ 
+-int dflag, eval, fflag, iflag, Pflag, vflag, Wflag, stdin_ok;
+-uid_t uid;
++static int dflag, eval, fflag, iflag, Pflag, vflag, Wflag, stdin_ok;
++static uid_t uid;
+ 
+-int	check __P((char *, char *, struct stat *));
+-int checkdir __P((char *));
+-int		yes_or_no __P((void));
+-void	checkdot __P((char **));
+-void	rm_file __P((char **));
+-void	rm_overwrite __P((char *, struct stat *));
+-void	rm_tree __P((char **));
+-void	usage __P((void));
++static int	check __P((char *, char *, struct stat *));
++static int checkdir __P((char *));
++static int		yes_or_no __P((void));
++static void	checkdot __P((char **));
++static void	rm_file __P((char **));
++static void	rm_overwrite __P((char *, struct stat *));
++static void	rm_tree __P((char **));
++static void	usage __P((void));
+ 
+ /*
+  * rm --
+@@ -90,7 +91,7 @@
+  * 	file removal.
+  */
+ int
+-main(argc, argv)
++rm_main(argc, argv)
+ 	int argc;
+ 	char *argv[];
+ {
+@@ -100,6 +101,9 @@
+ 	if (argc < 1)
+ 		usage();
+ 
++    // init all flags, something quite important for rm
++    dflag = eval = fflag = iflag = Pflag = vflag = Wflag = stdin_ok = 0;
++
+ 	/*
+ 	 * Test for the special case where the utility is called as
+ 	 * "unlink", for which the functionality provided is greatly
+diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
+--- file_cmds-272/rmdir/rmdir.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/rmdir/rmdir.c	2017-12-05 13:49:22.000000000 +0100
+@@ -52,12 +52,13 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+-int rm_path(char *);
+-void usage(void);
++static int rm_path(char *);
++static void usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++rmdir_main(int argc, char *argv[])
+ {
+ 	int ch, errors;
+ 	int pflag;
+diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
+--- file_cmds-272/stat/stat.c	2014-02-11 01:17:24.000000000 +0100
++++ file_cmds/stat/stat.c	2017-12-05 13:57:34.000000000 +0100
+@@ -67,6 +67,7 @@
+ #include <string.h>
+ #include <time.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+ #if HAVE_STRUCT_STAT_ST_FLAGS
+ #define DEF_F "%#Xf "
+@@ -180,18 +181,18 @@
+ #define SHOW_filename	'N'
+ #define SHOW_sizerdev	'Z'
+ 
+-void	usage(const char *);
+-void	output(const struct stat *, const char *,
++static void	usage(const char *);
++static void	output(const struct stat *, const char *,
+ 	    const char *, int, int, int);
+-int	format1(const struct stat *,	/* stat info */
++static int	format1(const struct stat *,	/* stat info */
+ 	    const char *,		/* the file name */
+ 	    const char *, int,		/* the format string itself */
+ 	    char *, size_t,		/* a place to put the output */
+ 	    int, int, int, int,		/* the parsed format */
+ 	    int, int);
+ 
+-char *timefmt;
+-int linkfail;
++static char *timefmt;
++static int linkfail;
+ 
+ #define addchar(s, c, nl) \
+ 	do { \
+@@ -200,7 +201,7 @@
+ 	} while (0/*CONSTCOND*/)
+ 
+ int
+-main(int argc, char *argv[])
++stat_main(int argc, char *argv[])
+ {
+ 	struct stat st;
+ 	int ch, rc, errs, am_readlink;
+@@ -217,7 +218,8 @@
+ 	statfmt = NULL;
+ 	timefmt = NULL;
+ 
+-	if (strcmp(getprogname(), "readlink") == 0) {
++    // if (strcmp(getprogname(), "readlink") == 0) {
++        if (strcmp(argv[0], "readlink") == 0) {
+ 		am_readlink = 1;
+ 		options = "n";
+ 		synopsis = "[-n] [file ...]";
+diff -Naur file_cmds-272/touch/touch.c file_cmds/touch/touch.c
+--- file_cmds-272/touch/touch.c	2013-10-05 00:39:00.000000000 +0200
++++ file_cmds/touch/touch.c	2017-12-05 13:41:56.000000000 +0100
+@@ -58,16 +58,17 @@
+ #include <string.h>
+ #include <time.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+-int	rw(char *, struct stat *, int);
+-void	stime_arg1(char *, struct timeval *);
+-void	stime_arg2(char *, int, struct timeval *);
+-void	stime_file(char *, struct timeval *);
+-int	timeoffset(char *);
+-void	usage(char *);
++static int	rw(char *, struct stat *, int);
++static void	stime_arg1(char *, struct timeval *);
++static void	stime_arg2(char *, int, struct timeval *);
++static void	stime_file(char *, struct timeval *);
++static int	timeoffset(char *);
++static void	usage(char *);
+ 
+ int
+-main(int argc, char *argv[])
++touch_main(int argc, char *argv[])
+ {
+ 	struct stat sb;
+ 	struct timeval tv[2];
