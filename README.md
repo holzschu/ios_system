@@ -32,4 +32,8 @@ setenv SSL_CERT_FILE = $HOME/Documents/cacert.pem
 ```
 Your Mileage May Vary. 
 
+## Installation:
+
+Run the script `get_sources.sh`. This will download the latest sources form [Apple OpenSource](https://opensource.apple.com) and patch them for compatibility with iOS. Then open the Xcode project `ios_system.xcodeproj` and hit build. You should have the `ios_system` framework, ready to be included in you own projects. Alternatively, drag `ios_system.xcodeproj` into you project, add `ios_system.framework` to your linked binaries and compile. 
+
 
