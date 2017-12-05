@@ -18,7 +18,7 @@ For each set of commands, we need to provide the associated framework. Framework
 
 This `ios_system` framework has been successfully ported into a shell, [Blink](https://github.com/holzschu/blink) and into an editor, [iVim](https://github.com/holzschu/iVim). In both cases, it provides a Unix look-and-feel (well, mostly feel). 
 
-**Issues:** In iOS, you cannot write in the ~ directory, only in `~/Documents/`, `~/Library/` and `~/tmp`. Most Unix programs assume the configuration files are in `$HOME`. 
+**Issues:** In iOS, you cannot write in the `~` directory, only in `~/Documents/`, `~/Library/` and `~/tmp`. Most Unix programs assume the configuration files are in `$HOME`. 
 So either you redefine `$HOME` to `~/Documents/` or you set configuration variables (using `setenv`) to some other place.
 
 Here's what I have:
