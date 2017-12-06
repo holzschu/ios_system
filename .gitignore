@@ -12,6 +12,16 @@
 *.map
 *.exp
 
+# Vim temporary files
+.*.sw?
+
+# Downloaded files:
+file_cmds//
+libinfo//
+libutil//
+shell_cmds//
+text_cmds//
+
 # Precompiled Headers
 *.gch
 *.pch

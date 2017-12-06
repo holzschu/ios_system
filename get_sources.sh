@@ -7,10 +7,11 @@ libinfo=Libinfo-517
 shell=shell_cmds-203
 text=text_cmds-99
 archive=libarchive-54
+curl=curl-105
 
 # Cleanup:
-rm -rf file_cmds shell_cmds text_cmds libutil libinfo 
-rm -rf $file $libutil $libinfo $shell $text
+rm -rf file_cmds shell_cmds text_cmds libutil libinfo libarchive
+rm -rf $file $libutil $libinfo $shell $text $archive
 
 # get source for file_cmds
 echo "Getting file_cmds"
@@ -52,12 +53,15 @@ rm $text.tar.gz
 mv $text text_cmds
 (cd text_cmds ; patch -p1 < ../text_cmds.patch ; cd ..)
 
-# get source for BSD-tar:
-# not gnu-tar because licensing issues.
-# not Apple-Source because won't compile
+# get source for BSD-tar: (not gnu-tar because licensing issues).
 curl https://opensource.apple.com/tarballs/libarchive/$archive.tar.gz -O
 tar xfz $archive.tar.gz
 rm $archive.tar.gz
 mv $archive libarchive
+(cd libarchive ; patch -p1 < ../libarchive.patch ; cd ..)
 
-
+# get source for curl. This one requires OpenSSH + libssl
+curl https://opensource.apple.com/tarballs/curl/$curl.tar.gz -O
+tar xfz $curl.tar.gz
+rm $curl.tar.gz
+mv $curl curl
