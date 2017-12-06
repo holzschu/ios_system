@@ -10,8 +10,8 @@ archive=libarchive-54
 curl=curl-105
 
 # Cleanup:
-rm -rf file_cmds shell_cmds text_cmds libutil libinfo libarchive
-rm -rf $file $libutil $libinfo $shell $text $archive
+rm -rf file_cmds shell_cmds text_cmds libutil libinfo libarchive curl
+rm -rf $file $libutil $libinfo $shell $text $archive $curl 
 
 # get source for file_cmds
 echo "Getting file_cmds"
@@ -65,3 +65,5 @@ curl https://opensource.apple.com/tarballs/curl/$curl.tar.gz -O
 tar xfz $curl.tar.gz
 rm $curl.tar.gz
 mv $curl curl
+(cd curl ; patch -p1 < ../curl.patch ; cd ..)
+
