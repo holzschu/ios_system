@@ -25,7 +25,7 @@
 #define TEXT_UTILITIES  // text_cmds_ios
 // to activate CURL, you need openSSL.framework and libssh2.framework
 // see, https://github.com/blinksh/blink or https://github.com/x2on/libssh2-for-iOS
-// #define CURL_COMMANDS
+#define CURL_COMMANDS
 // to activate TEX_COMMANDS, you need the lib-tex libraries:
 // See: https://github.com/holzschu/lib-tex
 #define TEX_COMMANDS    // pdftex, luatex, bibtex and the like
