@@ -13,13 +13,14 @@
 		2219DFC31FD739C900675252 /* libpdftex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBE1FD739C900675252 /* libpdftex.dylib */; };
 		2219DFC41FD739C900675252 /* libkpathsea.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBF1FD739C900675252 /* libkpathsea.6.dylib */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; settings = {COMPILER_FLAGS = "-D FEAT_LUA"; }; };
+		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; settings = {COMPILER_FLAGS = "-D FEAT_LUA -D FEAT_PYTHON"; }; };
 		223497AC1FD6CF7A007ED1A9 /* file_cmds_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223497AA1FD6CF6D007ED1A9 /* file_cmds_ios.framework */; };
 		223498171FD6EBB0007ED1A9 /* shell_cmds_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223498161FD6EB9C007ED1A9 /* shell_cmds_ios.framework */; };
 		223498551FD70039007ED1A9 /* text_cmds_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223498541FD7002F007ED1A9 /* text_cmds_ios.framework */; };
 		22A509D31FD738D5008EF94D /* libarchive_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22A509D01FD738C8008EF94D /* libarchive_ios.framework */; };
 		22ADE3591FD93416008EFE0C /* curl_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219E2E51FD8097D00675252 /* curl_ios.framework */; };
 		22C467961FD9BA3C00AB2C6E /* lua_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22BD50031FD9BA12008F8315 /* lua_ios.framework */; };
+		22C467B81FD9D6C500AB2C6E /* Python_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C467B51FD9D6B500AB2C6E /* Python_ios.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -65,6 +66,13 @@
 			remoteGlobalIDString = 2262086A1FD55B6600E93426;
 			remoteInfo = lua_ios;
 		};
+		22C467B41FD9D6B500AB2C6E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 22C467AC1FD9D6B500AB2C6E /* Python_ios.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 22FCCF4F1F0BCFB800F67B0B;
+			remoteInfo = Python_ios;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +91,7 @@
 		2234984D1FD7002E007ED1A9 /* text_cmds_ios.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = text_cmds_ios.xcodeproj; path = text_cmds_ios/text_cmds_ios.xcodeproj; sourceTree = "<group>"; };
 		22A509CA1FD738C8008EF94D /* libarchive_ios.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libarchive_ios.xcodeproj; path = libarchive_ios/libarchive_ios.xcodeproj; sourceTree = "<group>"; };
 		22BD4FFE1FD9BA12008F8315 /* lua_ios.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = lua_ios.xcodeproj; path = ../lua_ios/lua_ios.xcodeproj; sourceTree = "<group>"; };
+		22C467AC1FD9D6B500AB2C6E /* Python_ios.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Python_ios.xcodeproj; path = ../python_ios/Python_ios.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +99,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22C467B81FD9D6C500AB2C6E /* Python_ios.framework in Frameworks */,
 				22C467961FD9BA3C00AB2C6E /* lua_ios.framework in Frameworks */,
 				22ADE3591FD93416008EFE0C /* curl_ios.framework in Frameworks */,
 				22A509D31FD738D5008EF94D /* libarchive_ios.framework in Frameworks */,
@@ -118,6 +128,7 @@
 		223496A11FD5FC71007ED1A9 = {
 			isa = PBXGroup;
 			children = (
+				22C467AC1FD9D6B500AB2C6E /* Python_ios.xcodeproj */,
 				22BD4FFE1FD9BA12008F8315 /* lua_ios.xcodeproj */,
 				223496B61FD5FC89007ED1A9 /* ios_system.m */,
 				223497A51FD6CF6D007ED1A9 /* file_cmds_ios.xcodeproj */,
@@ -200,6 +211,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		22C467AD1FD9D6B500AB2C6E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				22C467B51FD9D6B500AB2C6E /* Python_ios.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -275,6 +294,10 @@
 					ProjectRef = 22BD4FFE1FD9BA12008F8315 /* lua_ios.xcodeproj */;
 				},
 				{
+					ProductGroup = 22C467AD1FD9D6B500AB2C6E /* Products */;
+					ProjectRef = 22C467AC1FD9D6B500AB2C6E /* Python_ios.xcodeproj */;
+				},
+				{
 					ProductGroup = 223498111FD6EB9C007ED1A9 /* Products */;
 					ProjectRef = 223498101FD6EB9C007ED1A9 /* shell_cmds_ios.xcodeproj */;
 				},
@@ -331,6 +354,13 @@
 			fileType = wrapper.framework;
 			path = lua_ios.framework;
 			remoteRef = 22BD50021FD9BA12008F8315 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		22C467B51FD9D6B500AB2C6E /* Python_ios.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Python_ios.framework;
+			remoteRef = 22C467B41FD9D6B500AB2C6E /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
