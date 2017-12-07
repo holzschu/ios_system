@@ -23,9 +23,13 @@
 #define ARCHIVE_UTILITIES // libarchive_ios
 #define SHELL_UTILITIES  // shell_cmds_ios
 #define TEXT_UTILITIES  // text_cmds_ios
+// If we are inside Blinkshell, it's better to run curl separately
+#ifndef BLINKSHELL
 // to activate CURL, you need openSSL.framework and libssh2.framework
 // see, https://github.com/blinksh/blink or https://github.com/x2on/libssh2-for-iOS
+// Inside Blinkshell, we run CURL separately, statically, so it can access Blink keys.
 #define CURL_COMMANDS
+#endif
 // to activate TEX_COMMANDS, you need the lib-tex libraries:
 // See: https://github.com/holzschu/lib-tex
 #define TEX_COMMANDS    // pdftex, luatex, bibtex and the like
@@ -257,9 +261,9 @@ int ios_system(char* inputCmd) {
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
     char* originalCommand = cmd;
-    fprintf(stderr, "Command sent: %s \n", cmd); fflush(stderr);
+    // fprintf(stderr, "Command sent: %s \n", cmd); fflush(stderr);
     if (cmd[0] == '"') {
-        // Command was enclosed in quotes (almost always)
+        // Command was enclosed in quotes (almost always with Vim)
         cmd = cmd + 1; // remove starting quote
         cmd[strlen(cmd) - 1] = 0x00; // remove ending quote
         assert(cmd + strlen(cmd) < maxPointer);
@@ -375,6 +379,13 @@ int ios_system(char* inputCmd) {
             // everything until next quote is part of the argument
             argv[argc-1] = str + 1;
             char* end = strstr(argv[argc-1], "'");
+            if (!end) break;
+            end[0] = 0x0;
+            str = end + 1;
+        } if (str[0] == '\"') { // argument begins with a double quote.
+            // everything until next double quote is part of the argument
+            argv[argc-1] = str + 1;
+            char* end = strstr(argv[argc-1], "\"");
             if (!end) break;
             end[0] = 0x0;
             str = end + 1;
