@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2017-12-05 16:18:11.000000000 +0100
++++ text_cmds/cat/cat.c	2017-12-07 22:15:11.000000000 +0100
 @@ -63,9 +63,10 @@
  #include <string.h>
  #include <unistd.h>
@@ -14,7 +14,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  const char *filename;
  
  static void usage(void);
-@@ -78,11 +79,13 @@
+@@ -78,11 +79,14 @@
  #endif
  
  int
@@ -26,18 +26,50 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  	setlocale(LC_CTYPE, "");
 +    // Initialize all flags
 +    bflag = eflag = nflag = sflag = tflag = vflag = 0; rval = 0;
++    optind = 1; opterr = 1; optreset = 1;
  
  	while ((ch = getopt(argc, argv, "benstuv")) != -1)
  		switch (ch) {
-@@ -118,6 +121,7 @@
+@@ -116,8 +120,8 @@
+ 		scanfiles(argv, 1);
+ 	else
  		scanfiles(argv, 0);
- 	if (fclose(stdout))
- 		err(1, "stdout");
+-	if (fclose(stdout))
+-		err(1, "stdout");
++	// if (fclose(stdout)) err(1, "stdout");
 +    optarg = NULL; opterr = 0; optind = 0;
  	exit(rval);
  	/* NOTREACHED */
  }
-@@ -259,6 +263,8 @@
+@@ -243,22 +247,30 @@
+ 	static char *buf = NULL;
+ 	struct stat sbuf;
+ 
+-	wfd = fileno(stdout);
++	// wfd = fileno(stdout);
+ 	if (buf == NULL) {
+-		if (fstat(wfd, &sbuf))
+-			err(1, "%s", filename);
++		// if (fstat(wfd, &sbuf))
++			// err(1, "%s", filename);
+ 		bsize = MAX(sbuf.st_blksize, 1024);
+ 		if ((buf = malloc(bsize)) == NULL)
+ 			err(1, "buffer");
+ 	}
+ 	while ((nr = read(rfd, buf, bsize)) > 0)
+-		for (off = 0; nr; nr -= nw, off += nw)
+-			if ((nw = write(wfd, buf + off, (size_t)nr)) < 0)
+-				err(1, "stdout");
++        for (off = 0; nr; nr -= nw, off += nw) {
++            // We can't write to the fd of stdout, so we write to stdout
++            nw = 0; // number of bytes written
++            for (int i = 0; i < nr; i++) {
++                fputc(*(buf+off+nw), stdout);
++                nw += 1;
++            }
++			// if ((nw = write(wfd, buf + off, (size_t)nr)) < 0) err(1, "stdout");
++        }
+ 	if (nr < 0) {
  		warn("%s", filename);
  		rval = 1;
  	}
@@ -48,7 +80,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  #ifndef NO_UDOM_SUPPORT
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2017-12-05 16:24:07.000000000 +0100
++++ text_cmds/grep/grep.c	2017-12-07 22:15:46.000000000 +0100
 @@ -53,6 +53,7 @@
  #include "fastmatch.h"
  #endif
@@ -66,7 +98,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  {
  	char **aargv, **eargv, *eopts;
  	char *ep;
-@@ -360,8 +361,36 @@
+@@ -360,8 +361,37 @@
  	unsigned int aargc, eargc, i;
  	int c, lastc, needpattern, newarg, prevoptind;
  
@@ -74,6 +106,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -
 +    setlocale(LC_ALL, "");
 +    // Initialize all variables and flags:
++    optind = 1; opterr = 1; optreset = 1;
 +    patterns = pattern_sz = 0;
 +    fpatterns = fpattern_sz = 0;
 +    dpatterns = dpattern_sz = 0;
@@ -107,7 +140,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  #endif
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2017-12-05 16:48:00.000000000 +0100
++++ text_cmds/grep/util.c	2017-12-06 13:09:58.000000000 +0100
 @@ -59,6 +59,7 @@
  #include "fastmatch.h"
  #endif
@@ -118,7 +151,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  static int	 procline(struct str *l, int);
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2017-12-05 17:24:04.000000000 +0100
++++ text_cmds/wc/wc.c	2017-12-06 13:09:58.000000000 +0100
 @@ -62,24 +62,29 @@
  #include <unistd.h>
  #include <wchar.h>
