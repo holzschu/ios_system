@@ -11,7 +11,6 @@
 
 #include <stdarg.h>
 #include <pthread.h>
-#include <err.h>
 
 #ifdef _ERR_H_ // did we go through system err.h?
 static void myerrx(int i, const char * fmt, ...) {
