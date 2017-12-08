@@ -368,7 +368,7 @@
 				223498C91FD706A7007ED1A9 /* filter_fork_windows.c */,
 			);
 			name = libarchive;
-			path = ../libarchive/libarchive/libarchive;
+			path = ../libarchive_grp/libarchive;
 			sourceTree = "<group>";
 		};
 		22349A601FD706AF007ED1A9 /* libarchive_fe */ = {
@@ -385,7 +385,7 @@
 				22349A691FD706AF007ED1A9 /* pathmatch.h */,
 			);
 			name = libarchive_fe;
-			path = ../libarchive/libarchive/libarchive_fe;
+			path = ../libarchive_grp/libarchive_fe;
 			sourceTree = "<group>";
 		};
 		22349A731FD706B8007ED1A9 /* tar */ = {
@@ -407,7 +407,7 @@
 				22349A9B1FD706B8007ED1A9 /* write.c */,
 			);
 			name = tar;
-			path = ../libarchive/libarchive/tar;
+			path = ../libarchive_grp/tar;
 			sourceTree = "<group>";
 		};
 		22349AC51FD70C78007ED1A9 /* Frameworks */ = {

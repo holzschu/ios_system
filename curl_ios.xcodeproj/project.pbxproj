@@ -88,7 +88,6 @@
 		2219E13D1FD73D4500675252 /* file.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E0281FD73D4500675252 /* file.h */; };
 		2219E13E1FD73D4500675252 /* fileinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E0291FD73D4500675252 /* fileinfo.c */; };
 		2219E13F1FD73D4500675252 /* fileinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E02A1FD73D4500675252 /* fileinfo.h */; };
-		2219E1401FD73D4500675252 /* firefox-db2pem.sh in Resources */ = {isa = PBXBuildFile; fileRef = 2219E02B1FD73D4500675252 /* firefox-db2pem.sh */; };
 		2219E1411FD73D4500675252 /* formdata.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E02C1FD73D4500675252 /* formdata.c */; };
 		2219E1421FD73D4500675252 /* formdata.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E02D1FD73D4500675252 /* formdata.h */; };
 		2219E1431FD73D4500675252 /* ftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E02E1FD73D4500675252 /* ftp.c */; };
@@ -159,8 +158,6 @@
 		2219E18E1FD73D4600675252 /* nonblock.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E0791FD73D4500675252 /* nonblock.h */; };
 		2219E18F1FD73D4600675252 /* nwlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E07A1FD73D4500675252 /* nwlib.c */; };
 		2219E1901FD73D4600675252 /* nwos.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E07B1FD73D4500675252 /* nwos.c */; };
-		2219E1911FD73D4600675252 /* objnames-test08.sh in Resources */ = {isa = PBXBuildFile; fileRef = 2219E07C1FD73D4500675252 /* objnames-test08.sh */; };
-		2219E1921FD73D4600675252 /* objnames-test10.sh in Resources */ = {isa = PBXBuildFile; fileRef = 2219E07D1FD73D4500675252 /* objnames-test10.sh */; };
 		2219E1941FD73D4600675252 /* openldap.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E07F1FD73D4500675252 /* openldap.c */; };
 		2219E1951FD73D4600675252 /* parsedate.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E0801FD73D4500675252 /* parsedate.c */; };
 		2219E1961FD73D4600675252 /* parsedate.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E0811FD73D4500675252 /* parsedate.h */; };
@@ -445,7 +442,6 @@
 		2219E0281FD73D4500675252 /* file.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = file.h; sourceTree = "<group>"; };
 		2219E0291FD73D4500675252 /* fileinfo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fileinfo.c; sourceTree = "<group>"; };
 		2219E02A1FD73D4500675252 /* fileinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fileinfo.h; sourceTree = "<group>"; };
-		2219E02B1FD73D4500675252 /* firefox-db2pem.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "firefox-db2pem.sh"; sourceTree = "<group>"; };
 		2219E02C1FD73D4500675252 /* formdata.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = formdata.c; sourceTree = "<group>"; };
 		2219E02D1FD73D4500675252 /* formdata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = formdata.h; sourceTree = "<group>"; };
 		2219E02E1FD73D4500675252 /* ftp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftp.c; sourceTree = "<group>"; };
@@ -516,8 +512,6 @@
 		2219E0791FD73D4500675252 /* nonblock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = nonblock.h; sourceTree = "<group>"; };
 		2219E07A1FD73D4500675252 /* nwlib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = nwlib.c; sourceTree = "<group>"; };
 		2219E07B1FD73D4500675252 /* nwos.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = nwos.c; sourceTree = "<group>"; };
-		2219E07C1FD73D4500675252 /* objnames-test08.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "objnames-test08.sh"; sourceTree = "<group>"; };
-		2219E07D1FD73D4500675252 /* objnames-test10.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "objnames-test10.sh"; sourceTree = "<group>"; };
 		2219E07F1FD73D4500675252 /* openldap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = openldap.c; sourceTree = "<group>"; };
 		2219E0801FD73D4500675252 /* parsedate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = parsedate.c; sourceTree = "<group>"; };
 		2219E0811FD73D4500675252 /* parsedate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parsedate.h; sourceTree = "<group>"; };
@@ -843,7 +837,6 @@
 				2219E0281FD73D4500675252 /* file.h */,
 				2219E0291FD73D4500675252 /* fileinfo.c */,
 				2219E02A1FD73D4500675252 /* fileinfo.h */,
-				2219E02B1FD73D4500675252 /* firefox-db2pem.sh */,
 				2219E02C1FD73D4500675252 /* formdata.c */,
 				2219E02D1FD73D4500675252 /* formdata.h */,
 				2219E02E1FD73D4500675252 /* ftp.c */,
@@ -914,8 +907,6 @@
 				2219E0791FD73D4500675252 /* nonblock.h */,
 				2219E07A1FD73D4500675252 /* nwlib.c */,
 				2219E07B1FD73D4500675252 /* nwos.c */,
-				2219E07C1FD73D4500675252 /* objnames-test08.sh */,
-				2219E07D1FD73D4500675252 /* objnames-test10.sh */,
 				2219E07F1FD73D4500675252 /* openldap.c */,
 				2219E0801FD73D4500675252 /* parsedate.c */,
 				2219E0811FD73D4500675252 /* parsedate.h */,
@@ -1393,12 +1384,9 @@
 				2219E1711FD73D4500675252 /* libcurl.rc in Resources */,
 				2219E27A1FD7E58600675252 /* mkhelp.pl in Resources */,
 				2219E10F1FD73D4500675252 /* curl_config.h.in in Resources */,
-				2219E1401FD73D4500675252 /* firefox-db2pem.sh in Resources */,
-				2219E1911FD73D4600675252 /* objnames-test08.sh in Resources */,
 				2219E1831FD73D4600675252 /* mk-ca-bundle.pl in Resources */,
 				2219E10E1FD73D4500675252 /* curl_config.h.cmake in Resources */,
 				2219E1841FD73D4600675252 /* mk-ca-bundle.vbs in Resources */,
-				2219E1921FD73D4600675252 /* objnames-test10.sh in Resources */,
 				2219E1721FD73D4500675252 /* libcurl.vers.in in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
