@@ -23,11 +23,11 @@
 #define ARCHIVE_UTILITIES // libarchive_ios
 #define SHELL_UTILITIES  // shell_cmds_ios
 #define TEXT_UTILITIES  // text_cmds_ios
-// If we are inside Blinkshell, it's better to run curl separately
-#ifndef BLINKSHELL
 // to activate CURL, you need openSSL.framework and libssh2.framework
 // see, https://github.com/blinksh/blink or https://github.com/x2on/libssh2-for-iOS
-// Inside Blinkshell, we run CURL separately, statically, so it can access Blink keys.
+// Inside Blinkshell: add -DBLINKSHELL to CFLAGS, and link statically with curl_ios_static
+// if you want CURL to use Blinkshell key management system.
+#ifndef BLINKSHELL
 #define CURL_COMMANDS
 #endif
 // to activate TEX_COMMANDS, you need the lib-tex libraries:
