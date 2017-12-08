@@ -25,18 +25,14 @@
 #define TEXT_UTILITIES  // text_cmds_ios
 // to activate CURL, you need openSSL.framework and libssh2.framework
 // see, https://github.com/blinksh/blink or https://github.com/x2on/libssh2-for-iOS
-// Inside Blinkshell: add -DBLINKSHELL to CFLAGS, and link statically with curl_ios_static
-// if you want CURL to use Blinkshell key management system.
-#ifndef BLINKSHELL
 #define CURL_COMMANDS
-#endif
 // to activate TEX_COMMANDS, you need the lib-tex libraries:
 // See: https://github.com/holzschu/lib-tex
 #define TEX_COMMANDS    // pdftex, luatex, bibtex and the like
 // to activate Python, you need python-ios: https://github.com/holzschu/python_ios
-// #define FEAT_PYTHON
+#define FEAT_PYTHON
 // to activate Lua, you need lua-ios: https://github.com/holzschu/lua_ios
-// #define FEAT_LUA
+#define FEAT_LUA
 
 #ifdef FILE_UTILITIES
 // Most useful file utilities (file_cmds_ios)

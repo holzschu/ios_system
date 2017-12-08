@@ -1714,7 +1714,6 @@
 					"-DBUILDING_LIBCURL",
 					"-I",
 					"../libssh2-for-iOS/include/libssh2/",
-					"-v",
 				);
 				OTHER_LDFLAGS = (
 					"-F",
@@ -1748,7 +1747,6 @@
 					"-DBUILDING_LIBCURL",
 					"-I",
 					"../libssh2-for-iOS/include/libssh2/",
-					"-v",
 				);
 				OTHER_LDFLAGS = (
 					"-F",

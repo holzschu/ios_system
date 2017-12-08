@@ -362,7 +362,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2219DFCF1FD73AF500675252 /* curl_ios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = curl_ios.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		2219DFCF1FD73AF500675252 /* curl_ios_static.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = curl_ios_static.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2219DFD21FD73AF500675252 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = curl_ios.h; sourceTree = "<group>"; };
 		2219DFD31FD73AF500675252 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2219DFDB1FD73D4500675252 /* amigaos.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = amigaos.c; sourceTree = "<group>"; };
@@ -737,7 +737,7 @@
 				2219E2031FD741FD00675252 /* curl_config.h */,
 				2219DFDA1FD73D4500675252 /* lib */,
 				2219E2051FD7E58600675252 /* src */,
-				2219DFD11FD73AF500675252 /* curl_ios */,
+				2219DFD11FD73AF500675252 /* curl_ios_static */,
 				2219DFD01FD73AF500675252 /* Products */,
 				2219E2D01FD7EDE600675252 /* Frameworks */,
 			);
@@ -746,18 +746,18 @@
 		2219DFD01FD73AF500675252 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2219DFCF1FD73AF500675252 /* curl_ios.framework */,
+				2219DFCF1FD73AF500675252 /* curl_ios_static.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		2219DFD11FD73AF500675252 /* curl_ios */ = {
+		2219DFD11FD73AF500675252 /* curl_ios_static */ = {
 			isa = PBXGroup;
 			children = (
 				2219DFD21FD73AF500675252 /* curl_ios.h */,
 				2219DFD31FD73AF500675252 /* Info.plist */,
 			);
-			path = curl_ios;
+			path = curl_ios_static;
 			sourceTree = "<group>";
 		};
 		2219DFDA1FD73D4500675252 /* lib */ = {
@@ -1332,9 +1332,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		2219DFCE1FD73AF500675252 /* curl_ios */ = {
+		2219DFCE1FD73AF500675252 /* curl_ios_static */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2219DFD71FD73AF500675252 /* Build configuration list for PBXNativeTarget "curl_ios" */;
+			buildConfigurationList = 2219DFD71FD73AF500675252 /* Build configuration list for PBXNativeTarget "curl_ios_static" */;
 			buildPhases = (
 				2219DFCA1FD73AF500675252 /* Sources */,
 				2219DFCB1FD73AF500675252 /* Frameworks */,
@@ -1345,9 +1345,9 @@
 			);
 			dependencies = (
 			);
-			name = curl_ios;
+			name = curl_ios_static;
 			productName = curl_ios;
-			productReference = 2219DFCF1FD73AF500675252 /* curl_ios.framework */;
+			productReference = 2219DFCF1FD73AF500675252 /* curl_ios_static.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -1377,7 +1377,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2219DFCE1FD73AF500675252 /* curl_ios */,
+				2219DFCE1FD73AF500675252 /* curl_ios_static */,
 			);
 		};
 /* End PBXProject section */
@@ -1777,7 +1777,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		2219DFD71FD73AF500675252 /* Build configuration list for PBXNativeTarget "curl_ios" */ = {
+		2219DFD71FD73AF500675252 /* Build configuration list for PBXNativeTarget "curl_ios_static" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2219DFD81FD73AF500675252 /* Debug */,
