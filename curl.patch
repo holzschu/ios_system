@@ -1,6 +1,6 @@
 diff -Naur curl-105/config_iphone/curl_config.h curl/config_iphone/curl_config.h
 --- curl-105/config_iphone/curl_config.h	2017-05-24 02:47:37.000000000 +0200
-+++ curl/config_iphone/curl_config.h	2017-12-06 13:10:05.000000000 +0100
++++ curl/config_iphone/curl_config.h	2017-12-08 23:19:20.000000000 +0100
 @@ -410,6 +410,7 @@
  
  /* Define to 1 if you have the <libssh2.h> header file. */
@@ -36,7 +36,7 @@ diff -Naur curl-105/config_iphone/curl_config.h curl/config_iphone/curl_config.h
  /* #undef USE_NSS */
 diff -Naur curl-105/curl/include/curl/curl.h curl/curl/include/curl/curl.h
 --- curl-105/curl/include/curl/curl.h	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/include/curl/curl.h	2017-12-06 13:10:05.000000000 +0100
++++ curl/curl/include/curl/curl.h	2017-12-08 23:19:20.000000000 +0100
 @@ -2391,7 +2391,7 @@
                             callback functions */
    CURLSHOPT_LAST  /* never use */
@@ -48,7 +48,7 @@ diff -Naur curl-105/curl/include/curl/curl.h curl/curl/include/curl/curl.h
  CURL_EXTERN CURLSHcode curl_share_cleanup(CURLSH *);
 diff -Naur curl-105/curl/lib/netrc.c curl/curl/lib/netrc.c
 --- curl-105/curl/lib/netrc.c	2016-11-04 22:42:50.000000000 +0100
-+++ curl/curl/lib/netrc.c	2017-12-06 13:10:05.000000000 +0100
++++ curl/curl/lib/netrc.c	2017-12-08 23:19:20.000000000 +0100
 @@ -69,7 +69,8 @@
  
    if(!netrcfile) {
@@ -61,7 +61,7 @@ diff -Naur curl-105/curl/lib/netrc.c curl/curl/lib/netrc.c
  #if defined(HAVE_GETPWUID_R) && defined(HAVE_GETEUID)
 diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
 --- curl-105/curl/lib/ssh.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/ssh.c	2017-12-06 18:28:56.000000000 +0100
++++ curl/curl/lib/ssh.c	2017-12-08 23:19:20.000000000 +0100
 @@ -26,6 +26,13 @@
  
  #ifdef USE_LIBSSH2
@@ -242,7 +242,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
        }
 diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 --- curl-105/curl/src/tool_main.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.c	2017-12-08 14:30:40.000000000 +0100
++++ curl/curl/src/tool_main.c	2017-12-08 23:19:20.000000000 +0100
 @@ -229,7 +229,11 @@
  /*
  ** curl tool main function.
@@ -258,7 +258,7 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
    struct GlobalConfig global;
 diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
 --- curl-105/curl/src/tool_operate.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_operate.c	2017-12-06 13:10:05.000000000 +0100
++++ curl/curl/src/tool_operate.c	2017-12-08 23:19:20.000000000 +0100
 @@ -41,6 +41,9 @@
  
  #include "strcase.h"
