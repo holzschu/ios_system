@@ -1307,7 +1307,8 @@
 				22577F701FDB47B70050F312 /* util.c */,
 				22577F711FDB47B70050F312 /* write.c */,
 			);
-			path = tar;
+			name = tar;
+			path = libarchive/libarchive/tar;
 			sourceTree = "<group>";
 		};
 		22577F9D1FDB4D220050F312 /* curl_grp */ = {
