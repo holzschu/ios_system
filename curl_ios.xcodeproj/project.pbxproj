@@ -629,7 +629,7 @@
 		2219E0ED1FD73D4500675252 /* wildcard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wildcard.h; sourceTree = "<group>"; };
 		2219E0EE1FD73D4500675252 /* x509asn1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = x509asn1.c; sourceTree = "<group>"; };
 		2219E0EF1FD73D4500675252 /* x509asn1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x509asn1.h; sourceTree = "<group>"; };
-		2219E2031FD741FD00675252 /* curl_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = curl_config.h; path = ../curl/config_iphone/curl_config.h; sourceTree = "<group>"; };
+		2219E2031FD741FD00675252 /* curl_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = curl_config.h; path = curl/config_iphone/curl_config.h; sourceTree = "<group>"; };
 		2219E2171FD7E58600675252 /* mkhelp.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = mkhelp.pl; sourceTree = "<group>"; };
 		2219E2181FD7E58600675252 /* slist_wc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = slist_wc.c; sourceTree = "<group>"; };
 		2219E2191FD7E58600675252 /* slist_wc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = slist_wc.h; sourceTree = "<group>"; };
@@ -714,8 +714,8 @@
 		2219E2681FD7E58600675252 /* tool_writeout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tool_writeout.h; sourceTree = "<group>"; };
 		2219E2691FD7E58600675252 /* tool_xattr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tool_xattr.c; sourceTree = "<group>"; };
 		2219E26A1FD7E58600675252 /* tool_xattr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tool_xattr.h; sourceTree = "<group>"; };
-		2219E2D41FD7EE9700675252 /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = "../../libssh2-for-iOS/openssl.framework"; sourceTree = "<group>"; };
-		2219E2D61FD7EEB800675252 /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = "../../libssh2-for-iOS/libssh2.framework"; sourceTree = "<group>"; };
+		2219E2D41FD7EE9700675252 /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = "../libssh2-for-iOS/openssl.framework"; sourceTree = "<group>"; };
+		2219E2D61FD7EEB800675252 /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = "../libssh2-for-iOS/libssh2.framework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -992,7 +992,7 @@
 				2219E0EF1FD73D4500675252 /* x509asn1.h */,
 			);
 			name = lib;
-			path = ../curl/curl/lib;
+			path = curl/curl/lib;
 			sourceTree = "<group>";
 		};
 		2219E0C01FD73D4500675252 /* vauth */ = {
@@ -1137,7 +1137,7 @@
 				2219E26A1FD7E58600675252 /* tool_xattr.h */,
 			);
 			name = src;
-			path = ../curl/curl/src;
+			path = curl/curl/src;
 			sourceTree = "<group>";
 		};
 		2219E2D01FD7EDE600675252 /* Frameworks */ = {
@@ -1708,14 +1708,13 @@
 				OTHER_CFLAGS = (
 					"-DHAVE_CONFIG_H",
 					"-I",
-					../curl/curl/include/,
+					curl/curl/include/,
 					"-I",
-					../curl/curl/lib/,
+					curl/curl/lib/,
 					"-DBUILDING_LIBCURL",
 					"-I",
-					"../../libssh2-for-iOS/include/libssh2/",
-					"-DBLINKSHELL",
-					"-I../../Settings/Model/",
+					"../libssh2-for-iOS/include/libssh2/",
+					"-v",
 				);
 				OTHER_LDFLAGS = (
 					"-F",
@@ -1743,14 +1742,13 @@
 				OTHER_CFLAGS = (
 					"-DHAVE_CONFIG_H",
 					"-I",
-					../curl/curl/include/,
+					curl/curl/include/,
 					"-I",
-					../curl/curl/lib/,
+					curl/curl/lib/,
 					"-DBUILDING_LIBCURL",
 					"-I",
-					"../../libssh2-for-iOS/include/libssh2/",
-					"-DBLINKSHELL",
-					"-I../../Settings/Model/",
+					"../libssh2-for-iOS/include/libssh2/",
+					"-v",
 				);
 				OTHER_LDFLAGS = (
 					"-F",
