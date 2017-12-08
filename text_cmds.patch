@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2017-12-08 23:19:10.000000000 +0100
++++ text_cmds/cat/cat.c	2017-12-09 00:12:43.000000000 +0100
 @@ -63,9 +63,10 @@
  #include <string.h>
  #include <unistd.h>
@@ -80,7 +80,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  #ifndef NO_UDOM_SUPPORT
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2017-12-08 23:19:10.000000000 +0100
++++ text_cmds/grep/grep.c	2017-12-09 00:12:43.000000000 +0100
 @@ -53,6 +53,7 @@
  #include "fastmatch.h"
  #endif
@@ -140,7 +140,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  #endif
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2017-12-08 23:19:10.000000000 +0100
++++ text_cmds/grep/util.c	2017-12-09 00:12:43.000000000 +0100
 @@ -59,6 +59,7 @@
  #include "fastmatch.h"
  #endif
@@ -151,7 +151,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  static int	 procline(struct str *l, int);
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2017-12-08 23:19:10.000000000 +0100
++++ text_cmds/wc/wc.c	2017-12-09 00:12:43.000000000 +0100
 @@ -62,24 +62,29 @@
  #include <unistd.h>
  #include <wchar.h>
