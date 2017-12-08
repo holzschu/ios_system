@@ -1,6 +1,6 @@
 diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
 --- shell_cmds-203/date/date.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/date.c	2017-12-05 15:41:01.000000000 +0100
++++ shell_cmds/date/date.c	2017-12-08 15:33:44.000000000 +0100
 @@ -57,13 +57,14 @@
  #include <utmpx.h>
  
@@ -27,7 +27,15 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  {
  	struct timezone tz;
  	int ch, rflag;
-@@ -324,7 +325,7 @@
+@@ -107,6 +108,7 @@
+ 	tz.tz_dsttime = tz.tz_minuteswest = 0;
+ 	rflag = 0;
+ 	jflag = nflag = Rflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
+ 	set_timezone = 0;
+ 	while ((ch = getopt(argc, argv, "d:f:jnRr:t:uv:")) != -1)
+ 		switch((char)ch) {
+@@ -324,7 +326,7 @@
  
  	if (!jflag) {
  		/* set the time */
@@ -38,7 +46,7 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  			pututxline(&utx);
 diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 --- shell_cmds-203/env/env.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/env.c	2017-12-05 15:42:21.000000000 +0100
++++ shell_cmds/env/env.c	2017-12-07 23:05:23.000000000 +0100
 @@ -50,6 +50,7 @@
  #include <unistd.h>
  
@@ -56,9 +64,17 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  {
  	char *altpath, **ep, *p, **parg;
  	char *cleanenv[1];
+@@ -67,6 +68,7 @@
+ 
+ 	altpath = NULL;
+ 	want_clear = 0;
++    optind = 1; opterr = 1; optreset = 1;
+ 	while ((ch = getopt(argc, argv, "-iP:S:u:v")) != -1)
+ 		switch(ch) {
+ 		case '-':
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2017-12-05 15:55:18.000000000 +0100
++++ shell_cmds/id/id.c	2017-12-08 15:33:53.000000000 +0100
 @@ -62,18 +62,19 @@
  #include <stdlib.h>
  #include <string.h>
@@ -97,17 +113,18 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  {
  	struct group *gr;
  	struct passwd *pw;
-@@ -93,6 +94,9 @@
+@@ -93,6 +94,10 @@
  	Gflag = Mflag = Pflag = gflag = nflag = pflag = rflag = uflag = 0;
  	Aflag = 0;
  	Fflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
 +    // Initialize:
 +    isgroups = 0;
 +    iswhoami = 0;
  
  	myname = strrchr(argv[0], '/');
  	myname = (myname != NULL) ? myname + 1 : argv[0];
-@@ -483,6 +487,7 @@
+@@ -483,6 +488,7 @@
  	if (*u && !*ep && (pw = getpwuid(id)))
  		return(pw);
  	errx(1, "%s: no such user", u);
@@ -117,7 +134,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  
 diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
 --- shell_cmds-203/printenv/printenv.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/printenv/printenv.c	2017-12-05 15:44:07.000000000 +0100
++++ shell_cmds/printenv/printenv.c	2017-12-08 15:34:01.000000000 +0100
 @@ -48,8 +48,9 @@
  #include <stdio.h>
  #include <string.h>
@@ -129,7 +146,7 @@ diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
  extern char **environ;
  
  /*
-@@ -59,7 +60,7 @@
+@@ -59,11 +60,12 @@
   * February, 1979
   */
  int
@@ -138,7 +155,12 @@ diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
  {
  	char *cp, **ep;
  	size_t len;
-@@ -91,7 +92,7 @@
+ 	int ch;
++    optind = 1; opterr = 1; optreset = 1;
+ 
+ 	while ((ch = getopt(argc, argv, "")) != -1)
+ 		switch(ch) {
+@@ -91,7 +93,7 @@
  	exit(1);
  }
  
@@ -149,8 +171,8 @@ diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
  	(void)fprintf(stderr, "usage: printenv [name]\n");
 diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
 --- shell_cmds-203/pwd/pwd.c	2006-09-12 00:14:13.000000000 +0200
-+++ shell_cmds/pwd/pwd.c	2017-12-05 15:44:45.000000000 +0100
-@@ -50,12 +50,13 @@
++++ shell_cmds/pwd/pwd.c	2017-12-08 15:34:10.000000000 +0100
+@@ -50,16 +50,18 @@
  #include <stdio.h>
  #include <stdlib.h>
  #include <unistd.h>
@@ -166,7 +188,12 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  {
  	int physical;
  	int ch;
-@@ -97,7 +98,7 @@
+ 	char *p;
++    optind = 1; opterr = 1; optreset = 1;
+ 
+ 	// 4207130
+ 	physical = 0;
+@@ -97,7 +99,7 @@
  	exit(0);
  }
  
@@ -177,7 +204,7 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
 diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
 --- shell_cmds-203/uname/uname.c	2013-09-26 01:55:54.000000000 +0200
-+++ shell_cmds/uname/uname.c	2017-12-05 15:46:31.000000000 +0100
++++ shell_cmds/uname/uname.c	2017-12-08 15:34:19.000000000 +0100
 @@ -49,14 +49,15 @@
  
  #include <sys/sysctl.h>
@@ -206,9 +233,19 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
  	int argc;
  	char **argv;
  {
+@@ -81,7 +82,8 @@
+ 	int c;
+ 	int space = 0;
+ 	int print_mask = 0;
+-
++    optind = 1; opterr = 1; optreset = 1;
++    
+ 	(void)setlocale(LC_ALL, "");
+ 
+ 	while ((c = getopt(argc,argv,"amnprsv")) != -1) {
 diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
 --- shell_cmds-203/w/proc_compare.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/proc_compare.c	2017-12-05 15:49:38.000000000 +0100
++++ shell_cmds/w/proc_compare.c	2017-12-06 13:09:57.000000000 +0100
 @@ -38,13 +38,15 @@
  __FBSDID("$FreeBSD: src/usr.bin/w/proc_compare.c,v 1.9 2004/04/14 09:34:17 bde Exp $");
  #endif
@@ -228,7 +265,7 @@ diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
  
 diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
 --- shell_cmds-203/w/w.c	2007-10-03 11:55:12.000000000 +0200
-+++ shell_cmds/w/w.c	2017-12-05 15:52:22.000000000 +0100
++++ shell_cmds/w/w.c	2017-12-08 15:34:45.000000000 +0100
 @@ -50,15 +50,16 @@
   * This program is similar to the systat command on Tenex/Tops 10/20
   *
@@ -292,7 +329,15 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  {
  	struct kinfo_proc *kp;
  	struct kinfo_proc *kprocbuf;
-@@ -324,7 +326,7 @@
+@@ -200,6 +202,7 @@
+ 	use_ampm = (*nl_langinfo(T_FMT_AMPM) != '\0');
+ 	use_comma = (*nl_langinfo(RADIXCHAR) != ',');
+ #endif
++    optind = 1; opterr = 1; optreset = 1;
+ 
+ 	/* Are we w(1) or uptime(1)? */
+ 	if (this_is_uptime(argv[0]) == 0) {
+@@ -324,7 +327,7 @@
  			if (!usermatch)
  				continue;
  		}
@@ -301,7 +346,7 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  			errx(1, "calloc");
  		*nextp = ep;
  		nextp = &ep->next;
-@@ -489,7 +491,7 @@
+@@ -489,7 +492,7 @@
  	}
  	/* sort by idle time */
  	if (sortidle && ehead != NULL) {

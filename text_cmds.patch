@@ -151,7 +151,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  static int	 procline(struct str *l, int);
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2017-12-06 13:09:58.000000000 +0100
++++ text_cmds/wc/wc.c	2017-12-08 15:34:56.000000000 +0100
 @@ -62,24 +62,29 @@
  #include <unistd.h>
  #include <wchar.h>
@@ -181,7 +181,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 +    // Initialize flags:
 +    doline = doword = dochar =  domulti = 0;
 +    tlinect = twordct = tcharct = 0;
-+
++    optind = 1; opterr = 1; optreset = 1;
  
  	while ((ch = getopt(argc, argv, "clmw")) != -1)
  		switch((char)ch) {

@@ -431,8 +431,9 @@ int ios_system(char* inputCmd) {
             }
             // We go through the path, because that command may be a file in the path
             // i.e. user called /usr/local/bin/hg and it's ~/Library/bin/hg
-            NSString* fullPath = [NSString stringWithCString:getenv("PATH") encoding:NSASCIIStringEncoding];
-            NSArray *pathComponents = [fullPath componentsSeparatedByString:@":"];
+            // NSString* fullCommandPath = [NSString stringWithCString:getenv("PATH") encoding:NSASCIIStringEncoding];
+            NSString* fullCommandPath = [NSString stringWithCString:getenv("PATH")];
+            NSArray *pathComponents = [fullCommandPath componentsSeparatedByString:@":"];
             for (NSString* path in pathComponents) {
                 // If we don't have access to the path component, there's no point in continuing:
                 if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) continue;

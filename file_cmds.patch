@@ -1,6 +1,6 @@
 diff -Naur file_cmds-272/chflags/chflags.c file_cmds/chflags/chflags.c
 --- file_cmds-272/chflags/chflags.c	2010-03-19 04:52:40.000000000 +0100
-+++ file_cmds/chflags/chflags.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/chflags/chflags.c	2017-12-08 15:30:27.000000000 +0100
 @@ -52,11 +52,13 @@
  #include <stdlib.h>
  #include <string.h>
@@ -16,9 +16,18 @@ diff -Naur file_cmds-272/chflags/chflags.c file_cmds/chflags/chflags.c
  {
  	FTS *ftsp;
  	FTSENT *p;
+@@ -68,6 +70,8 @@
+ 	int (*change_flags)(const char *, u_int);
+ 
+ 	Hflag = Lflag = Rflag = fflag = hflag = vflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
++    
+ 	while ((ch = getopt(argc, argv, "HLPRfhv")) != -1)
+ 		switch (ch) {
+ 		case 'H':
 diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
 --- file_cmds-272/chmod/chmod.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/chmod/chmod.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/chmod/chmod.c	2017-12-08 15:30:45.000000000 +0100
 @@ -60,17 +60,19 @@
  
  #ifdef __APPLE__
@@ -43,7 +52,13 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  	FTS *ftsp = NULL;
  	FTSENT *p = NULL;
  	mode_t *set = NULL;
-@@ -93,7 +95,7 @@
+@@ -88,12 +90,13 @@
+ 	size_t acloptlen = 0;
+ 	int ace_arg_not_required = 0;
+ 	acl_t acl_input = NULL;
++    optind = 1; opterr = 1; optreset = 1;
+ #endif /* __APPLE__*/
+ 	int (*change_mode)(const char *, mode_t);
  
  	set = NULL;
  	omode = 0;
@@ -52,7 +67,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  #ifndef __APPLE__
  	while ((ch = getopt(argc, argv, "HLPRXfghorstuvwx")) != -1)
  #else
-@@ -118,7 +120,7 @@
+@@ -118,7 +121,7 @@
  			Rflag = 1;
  			break;
  		case 'f':
@@ -61,7 +76,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  			break;
  		case 'h':
  			/*
-@@ -188,19 +190,19 @@
+@@ -188,19 +191,19 @@
  			break;
  		case '?':
  		default:
@@ -84,7 +99,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  #endif	/* __APPLE__ */
  
  #ifdef __APPLE__
-@@ -222,7 +224,7 @@
+@@ -222,7 +225,7 @@
  		}
  		
  		if (argc < 3)
@@ -93,7 +108,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  
  		if (acloptlen > 2) {
  			for (index = 2; index < acloptlen; index++) {
-@@ -232,7 +234,7 @@
+@@ -232,7 +235,7 @@
  
  					if (argc < ((acloptflags & ACL_DELETE_FLAG)
  						    ? 3 : 4))
@@ -102,7 +117,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  					argv++;
  					argc--;
  					errno = 0;
-@@ -261,7 +263,7 @@
+@@ -261,7 +264,7 @@
  					break;
  				default:
  					errno = EINVAL;
@@ -111,7 +126,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  				}
  			}
  		}
-@@ -402,7 +404,7 @@
+@@ -402,7 +405,7 @@
  			newmode = oct ? omode : getmode(set, p->fts_statp->st_mode);
  			if ((newmode & ALLPERMS) == (p->fts_statp->st_mode & ALLPERMS))
  				continue;
@@ -120,7 +135,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  				warn("Unable to change file mode on %s", p->fts_path);
  				rval = 1;
  			} else {
-@@ -444,7 +446,7 @@
+@@ -444,7 +447,7 @@
  }
  
  void
@@ -217,7 +232,7 @@ diff -Naur file_cmds-272/chmod/chmod_acl.c file_cmds/chmod/chmod_acl.c
  		}
 diff -Naur file_cmds-272/chown/chown.c file_cmds/chown/chown.c
 --- file_cmds-272/chown/chown.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/chown/chown.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/chown/chown.c	2017-12-08 15:31:00.000000000 +0100
 @@ -60,26 +60,27 @@
  #include <string.h>
  #include <unistd.h>
@@ -257,9 +272,17 @@ diff -Naur file_cmds-272/chown/chown.c file_cmds/chown/chown.c
  {
  	FTS *ftsp;
  	FTSENT *p;
+@@ -96,6 +97,7 @@
+ 	ischown = (strcmp(cp, "chown") == 0);
+ 
+ 	Hflag = Lflag = Pflag = Rflag = fflag = hflag = vflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
+ 	while ((ch = getopt(argc, argv, "HLPRfhv")) != -1)
+ 		switch (ch) {
+ 		case 'H':
 diff -Naur file_cmds-272/cksum/cksum.c file_cmds/cksum/cksum.c
 --- file_cmds-272/cksum/cksum.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/cksum/cksum.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/cksum/cksum.c	2017-12-08 15:30:36.000000000 +0100
 @@ -61,11 +61,12 @@
  #include <unistd.h>
  
@@ -274,7 +297,15 @@ diff -Naur file_cmds-272/cksum/cksum.c file_cmds/cksum/cksum.c
  {
  	uint32_t val;
  	int ch, fd, rval;
-@@ -102,7 +103,7 @@
+@@ -75,6 +76,7 @@
+ 	void (*pfncn)(char *, u_int32_t, off_t);
+ 	
+ 	cfncn=NULL;
++    optind = 1; opterr = 1; optreset = 1;
+ 
+ 	if(*argv) {
+ 	  if ((p = rindex(argv[0], '/')) == NULL)
+@@ -102,7 +104,7 @@
  					cfncn = csum2;
  					pfncn = psum2;
  				} else if (!strcmp(optarg, "3")) {
@@ -307,7 +338,7 @@ diff -Naur file_cmds-272/cksum/extern.h file_cmds/cksum/extern.h
  __END_DECLS
 diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
 --- file_cmds-272/compress/compress.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/compress/compress.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/compress/compress.c	2017-12-08 15:31:06.000000000 +0100
 @@ -56,19 +56,20 @@
  #include <unistd.h>
  
@@ -338,19 +369,20 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
  {
  	enum {COMPRESS, DECOMPRESS} style;
  	size_t len;
-@@ -77,7 +78,8 @@
+@@ -77,7 +78,9 @@
  
  	if (argc < 1)
  		usage(1);
 -	cat = 0;
 +    // init all flags
 +    eval = force = verbose = cat = 0;
++    optind = 1; opterr = 1; optreset = 1;
  	if ((p = rindex(argv[0], '/')) == NULL)
  		p = argv[0];
  	else
 diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 --- file_cmds-272/cp/cp.c	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/cp.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/cp/cp.c	2017-12-08 15:31:16.000000000 +0100
 @@ -74,9 +74,10 @@
  
  #ifdef __APPLE__
@@ -373,7 +405,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  #ifdef __APPLE__
  int Xflag;
  #endif /* __APPLE__ */
-@@ -104,14 +105,20 @@
+@@ -104,14 +105,21 @@
  static void siginfo(int __unused);
  
  int
@@ -392,11 +424,12 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 +    Xflag = 0;
 +#endif /* __APPLE__ */
 +    Rflag = rflag = cflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
 +    
  	while ((ch = getopt(argc, argv, "cHLPRXafinprv")) != -1)
  		switch (ch) {
  		case 'c':
-@@ -136,7 +143,7 @@
+@@ -136,7 +144,7 @@
  			Xflag = 1;
  			break;
  		case 'f':
@@ -405,7 +438,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  			/* Determine if the STD is SUSv3 or Legacy */
  			if (COMPAT_MODE("bin/cp", "unix2003"))
  				nflag = 0;	/* reset nflag, but not iflag */
-@@ -146,13 +153,13 @@
+@@ -146,13 +154,13 @@
  		case 'i':
  			iflag = 1;
  			if (COMPAT_MODE("bin/cp", "unix2003"))
@@ -422,7 +455,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  			break;
  		case 'p':
  			pflag = 1;
-@@ -169,14 +176,14 @@
+@@ -169,14 +177,14 @@
  			Rflag = 1;
  			break;
  		default:
@@ -439,7 +472,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  
  	if (cflag && Xflag) {
  		errx(1, "the -c and -X options may not be specified together");
-@@ -245,7 +252,7 @@
+@@ -245,7 +253,7 @@
  		 * Case (1).  Target is not a directory.
  		 */
  		if (argc > 1) {
@@ -448,7 +481,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  			exit(1);
  		}
  		/*
-@@ -281,7 +288,7 @@
+@@ -281,7 +289,7 @@
  		 */
  		type = FILE_TO_DIR;
  
@@ -526,7 +559,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  	if (COMPAT_MODE("bin/cp", "unix2003")) {
 diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
 --- file_cmds-272/df/df.c	2015-05-13 02:57:59.000000000 +0200
-+++ file_cmds/df/df.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/df/df.c	2017-12-08 15:31:22.000000000 +0100
 @@ -72,10 +72,11 @@
  #include <sysexits.h>
  #include <unistd.h>
@@ -597,18 +630,19 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  {
  	struct stat stbuf;
  	struct statfs statfsbuf, *mntbuf;
-@@ -149,6 +151,10 @@
+@@ -149,6 +151,11 @@
  	long mntsize;
  	int ch, i, rv, tflag = 0, kludge_tflag = 0;
  	int kflag = 0;
 +    // always init the flags:
 +    aflag = hflag = iflag = nflag = 0;
 +    headerlen = 0; timesthrough = 0;
++    optind = 1; opterr = 1; optreset = 1;
 +
  	const char *options = "abgHhiklmnPt:T:";
  	if (COMPAT_MODE("bin/df", "unix2003")) {
  		/* Unix2003 requires -t be "include total capacity". which df
-@@ -156,7 +162,8 @@
+@@ -156,7 +163,8 @@
  		  *not* expect a string after -t (we provide -T in both cases
  		  to cover the old use of -t) */
  		options = "abgHhiklmnPtT:";
@@ -618,7 +652,7 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	}
  
  	vfslist = NULL;
-@@ -434,7 +441,7 @@
+@@ -434,7 +442,7 @@
  prtstat(struct statfs *sfsp, struct maxwidths *mwp)
  {
  	static long blocksize;
@@ -629,7 +663,7 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	char * avail_str;
 diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
 --- file_cmds-272/du/du.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/du/du.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/du/du.c	2017-12-08 15:31:27.000000000 +0100
 @@ -67,10 +67,11 @@
  #include <string.h>
  #include <sysexits.h>
@@ -683,6 +717,14 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  {
  	FTS		*fts;
  	FTSENT		*p;
+@@ -135,6 +136,7 @@
+ 	setlocale(LC_ALL, "");
+ 
+ 	Hflag = Lflag = Pflag = aflag = sflag = dflag = cflag = hflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
+ 
+ 	save = argv;
+ 	ftsoptions = FTS_NOCHDIR;
 diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 --- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
 +++ file_cmds/gzip/gzip.c	2017-12-07 22:15:33.000000000 +0100
@@ -937,8 +979,8 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		print_verbage(NULL, NULL, usize, gsize);
 diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
 --- file_cmds-272/ln/ln.c	2013-10-31 01:07:31.000000000 +0100
-+++ file_cmds/ln/ln.c	2017-12-06 13:09:53.000000000 +0100
-@@ -52,27 +52,29 @@
++++ file_cmds/ln/ln.c	2017-12-08 15:31:44.000000000 +0100
+@@ -52,27 +52,30 @@
  #include <stdlib.h>
  #include <string.h>
  #include <unistd.h>
@@ -977,10 +1019,11 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
 -
 +    
 +    fflag = Fflag = hflag = iflag = sflag = vflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
  	if (argc < 1)
  		usage();
  	/*
-@@ -92,7 +94,8 @@
+@@ -92,7 +95,8 @@
  		if (argc != 2)
  			usage();
  		linkf = link;
@@ -990,7 +1033,7 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  	}
  
  	while ((ch = getopt(argc, argv, "Ffhinsv")) != -1)
-@@ -138,9 +141,11 @@
+@@ -138,9 +142,11 @@
  		usage();
  		/* NOTREACHED */
  	case 1:				/* ln target */
@@ -1004,7 +1047,7 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  	default:
  		;
  	}
-@@ -163,7 +168,7 @@
+@@ -163,7 +169,7 @@
  	exit(exitval);
  }
  
@@ -1013,7 +1056,7 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  linkit(const char *target, const char *source, int isdir)
  {
  	struct stat sb;
-@@ -252,7 +257,7 @@
+@@ -252,7 +258,7 @@
  	return (0);
  }
  
@@ -1190,8 +1233,8 @@ diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
  #ifdef COLORLS
 diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
 --- file_cmds-272/mkdir/mkdir.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/mkdir/mkdir.c	2017-12-06 13:09:53.000000000 +0100
-@@ -57,18 +57,21 @@
++++ file_cmds/mkdir/mkdir.c	2017-12-08 15:31:56.000000000 +0100
+@@ -57,18 +57,22 @@
  #include <string.h>
  #include <sysexits.h>
  #include <unistd.h>
@@ -1212,13 +1255,14 @@ diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
 -
 +    // initialize flag
 +    vflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
 +    
  	pflag = 0;
  	mode = NULL;
  	while ((ch = getopt(argc, argv, "m:pv")) != -1)
 diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
 --- file_cmds-272/mv/mv.c	2015-08-04 22:32:26.000000000 +0200
-+++ file_cmds/mv/mv.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/mv/mv.c	2017-12-08 15:32:42.000000000 +0100
 @@ -74,22 +74,23 @@
  #endif
  
@@ -1233,7 +1277,8 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  #include "pathnames.h"
 +#include "ios_error.h"
  
- int fflg, iflg, nflg, vflg;
+-int fflg, iflg, nflg, vflg;
++static int fflg, iflg, nflg, vflg;
  
 -int	copy(char *, char *);
 -int	do_move(char *, char *);
@@ -1250,7 +1295,18 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  {
  	size_t baselen, len;
  	int rval;
-@@ -134,7 +135,8 @@
+@@ -100,6 +101,10 @@
+ #endif /* __APPLE__ */
+ 	int ch;
+ 	char path[PATH_MAX];
++    // initialize flags
++    fflg = iflg = nflg = vflg = 0;
++    optind = 1; opterr = 1; optreset = 1;
++
+ 
+ 	while ((ch = getopt(argc, argv, "finv")) != -1)
+ 		switch (ch) {
+@@ -134,7 +139,8 @@
  	if (stat(argv[argc - 1], &sb) || !S_ISDIR(sb.st_mode)) {
  		if (argc > 2)
  			usage();
@@ -1260,7 +1316,7 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  	}
  	
  #ifdef __APPLE__
-@@ -165,18 +167,21 @@
+@@ -165,18 +171,21 @@
  		}
  		for ( ; ; p--, q--) {
  			if (*p != *q)
@@ -1346,8 +1402,8 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	 * "unlink", for which the functionality provided is greatly
 diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
 --- file_cmds-272/rmdir/rmdir.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/rmdir/rmdir.c	2017-12-06 13:09:53.000000000 +0100
-@@ -52,12 +52,13 @@
++++ file_cmds/rmdir/rmdir.c	2017-12-08 15:33:09.000000000 +0100
+@@ -52,17 +52,20 @@
  #include <stdlib.h>
  #include <string.h>
  #include <unistd.h>
@@ -1364,9 +1420,16 @@ diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
  {
  	int ch, errors;
  	int pflag;
+ 
+ 	pflag = 0;
++    optind = 1; opterr = 1; optreset = 1;
++    
+ 	while ((ch = getopt(argc, argv, "p")) != -1)
+ 		switch(ch) {
+ 		case 'p':
 diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
 --- file_cmds-272/stat/stat.c	2014-02-11 01:17:24.000000000 +0100
-+++ file_cmds/stat/stat.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/stat/stat.c	2017-12-08 15:33:20.000000000 +0100
 @@ -67,6 +67,7 @@
  #include <string.h>
  #include <time.h>
@@ -1408,9 +1471,11 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  {
  	struct stat st;
  	int ch, rc, errs, am_readlink;
-@@ -217,7 +218,8 @@
+@@ -216,8 +217,10 @@
+ 	linkfail = 0;
  	statfmt = NULL;
  	timefmt = NULL;
++    optind = 1; opterr = 1; optreset = 1;
  
 -	if (strcmp(getprogname(), "readlink") == 0) {
 +    // if (strcmp(getprogname(), "readlink") == 0) {
@@ -1420,7 +1485,7 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  		synopsis = "[-n] [file ...]";
 diff -Naur file_cmds-272/touch/touch.c file_cmds/touch/touch.c
 --- file_cmds-272/touch/touch.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/touch/touch.c	2017-12-06 13:09:53.000000000 +0100
++++ file_cmds/touch/touch.c	2017-12-08 15:33:30.000000000 +0100
 @@ -58,16 +58,17 @@
  #include <string.h>
  #include <time.h>
@@ -1446,3 +1511,11 @@ diff -Naur file_cmds-272/touch/touch.c file_cmds/touch/touch.c
  {
  	struct stat sb;
  	struct timeval tv[2];
+@@ -79,6 +80,7 @@
+ 
+ 	myname = basename(argv[0]);
+ 	Aflag = aflag = cflag = fflag = mflag = timeset = 0;
++    optind = 1; opterr = 1; optreset = 1;
+ 	stat_f = stat;
+ 	utimes_f = utimes;
+ 	if (gettimeofday(&tv[0], NULL))
