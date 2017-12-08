@@ -12,6 +12,8 @@
 		2219DFC21FD739C900675252 /* libtexlua52.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBD1FD739C900675252 /* libtexlua52.5.dylib */; };
 		2219DFC31FD739C900675252 /* libpdftex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBE1FD739C900675252 /* libpdftex.dylib */; };
 		2219DFC41FD739C900675252 /* libkpathsea.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBF1FD739C900675252 /* libkpathsea.6.dylib */; };
+		22257E7F1FDA7C0000FBA97D /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22257E7E1FDA7C0000FBA97D /* libssh2.framework */; };
+		22257E811FDA7C0C00FBA97D /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22257E801FDA7C0C00FBA97D /* openssl.framework */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; settings = {COMPILER_FLAGS = "-D FEAT_LUA -D FEAT_PYTHON"; }; };
 		223497AC1FD6CF7A007ED1A9 /* file_cmds_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223497AA1FD6CF6D007ED1A9 /* file_cmds_ios.framework */; };
@@ -81,6 +83,8 @@
 		2219DFBD1FD739C900675252 /* libtexlua52.5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libtexlua52.5.dylib; path = ../blink/Frameworks/libtexlua52.5.dylib; sourceTree = "<group>"; };
 		2219DFBE1FD739C900675252 /* libpdftex.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpdftex.dylib; path = ../blink/Frameworks/libpdftex.dylib; sourceTree = "<group>"; };
 		2219DFBF1FD739C900675252 /* libkpathsea.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libkpathsea.6.dylib; path = ../blink/Frameworks/libkpathsea.6.dylib; sourceTree = "<group>"; };
+		22257E7E1FDA7C0000FBA97D /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = "../libssh2-for-iOS/libssh2.framework"; sourceTree = "<group>"; };
+		22257E801FDA7C0C00FBA97D /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = "../libssh2-for-iOS/openssl.framework"; sourceTree = "<group>"; };
 		223496AB1FD5FC71007ED1A9 /* ios_system.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ios_system.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		223496AE1FD5FC71007ED1A9 /* ios_system.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_system.h; sourceTree = "<group>"; };
 		223496AF1FD5FC71007ED1A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -99,6 +103,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22257E811FDA7C0C00FBA97D /* openssl.framework in Frameworks */,
+				22257E7F1FDA7C0000FBA97D /* libssh2.framework in Frameworks */,
 				2236F3351FDA76A2000D3229 /* curl_ios.framework in Frameworks */,
 				22C467B81FD9D6C500AB2C6E /* Python_ios.framework in Frameworks */,
 				22C467961FD9BA3C00AB2C6E /* lua_ios.framework in Frameworks */,
@@ -162,6 +168,8 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				22257E801FDA7C0C00FBA97D /* openssl.framework */,
+				22257E7E1FDA7C0000FBA97D /* libssh2.framework */,
 				2219DFB71FD739C900675252 /* libbibtex.dylib */,
 				2219DFBF1FD739C900675252 /* libkpathsea.6.dylib */,
 				2219DFBC1FD739C900675252 /* libluatex.dylib */,
@@ -515,7 +523,7 @@
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				OTHER_CFLAGS = "-DBLINKSHELL";
+				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
 					"-L",
 					../blink/Frameworks/,
@@ -547,7 +555,7 @@
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				OTHER_CFLAGS = "-DBLINKSHELL";
+				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
 					"-L",
 					../blink/Frameworks/,
