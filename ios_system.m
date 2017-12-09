@@ -92,6 +92,7 @@ extern int dllluatexmain(int argc, char *argv[]);
 extern int dllpdftexmain(int argc, char *argv[]);
 #endif
 
+extern int    __db_getopt_reset;
 typedef struct _functionParameters {
     int argc;
     char** argv;
@@ -103,6 +104,7 @@ static void* run_function(void* parameters) {
     optind = 1;
     opterr = 1;
     optreset = 1;
+    __db_getopt_reset = 1;
     functionParameters *p = (functionParameters *) parameters;
     p->function(p->argc, p->argv);
     return NULL;
@@ -519,6 +521,7 @@ int ios_system(char* inputCmd) {
         free(argv[1]);
     }
     free(argv);
+    free(originalCommand);
     // Did we write anything?
     long numCharWritten = 0;
     if (errorFileName) numCharWritten = ftell(stderr);
@@ -530,6 +533,5 @@ int ios_system(char* inputCmd) {
     stdin = push_stdin;
     stdout = push_stdout;
     stderr = push_stderr;
-    free(originalCommand);
     return (numCharWritten); // 0 = success, not 0 = failure
 }

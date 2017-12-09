@@ -16,4 +16,6 @@ FOUNDATION_EXPORT const unsigned char ios_systemVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <ios_system/PublicHeader.h>
 
+int ios_executable(char* inputCmd); // does this command exist? (executable file or builtin command)
+int ios_system(char* inputCmd); // execute this command (executable file or builtin command)
 
