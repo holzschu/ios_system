@@ -754,6 +754,11 @@
 		22CF27C61FDB43080087DDAD /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B71FDB43070087DDAD /* util.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
 		22CF27C81FDB43080087DDAD /* cat.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27BA1FDB43070087DDAD /* cat.c */; };
 		22CF27CC1FDB43080087DDAD /* wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27C01FDB43080087DDAD /* wc.c */; };
+		22FE48C01FDC796D00899DA7 /* libluatex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBC1FD739C900675252 /* libluatex.dylib */; };
+		22FE48C11FDC796D00899DA7 /* libpdftex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBE1FD739C900675252 /* libpdftex.dylib */; };
+		22FE48C21FDC796D00899DA7 /* libtexlua52.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBD1FD739C900675252 /* libtexlua52.5.dylib */; };
+		22FE48C31FDC796D00899DA7 /* libbibtex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFB71FD739C900675252 /* libbibtex.dylib */; };
+		22FE48C41FDC796D00899DA7 /* libkpathsea.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBF1FD739C900675252 /* libkpathsea.6.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -1530,6 +1535,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22FE48C01FDC796D00899DA7 /* libluatex.dylib in Frameworks */,
+				22FE48C11FDC796D00899DA7 /* libpdftex.dylib in Frameworks */,
+				22FE48C21FDC796D00899DA7 /* libtexlua52.5.dylib in Frameworks */,
+				22FE48C31FDC796D00899DA7 /* libbibtex.dylib in Frameworks */,
+				22FE48C41FDC796D00899DA7 /* libkpathsea.6.dylib in Frameworks */,
 				22319F951FDBF921004D875A /* libffi.a in Frameworks */,
 				22CF27AD1FDB42AF0087DDAD /* libbz2.tbd in Frameworks */,
 				22CF27AF1FDB42C80087DDAD /* libncurses.tbd in Frameworks */,
@@ -3703,7 +3713,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_BITCODE = NO;
+				ENABLE_BITCODE = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Frameworks",
@@ -3716,7 +3726,7 @@
 					"-L",
 					../blink/Frameworks/,
 					"-F",
-					../blink/Frameworks/,
+					"../libssh2-for-iOS/",
 					"-L",
 					../python_ios/,
 				);
@@ -3737,7 +3747,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_BITCODE = NO;
+				ENABLE_BITCODE = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Frameworks",
@@ -3750,7 +3760,7 @@
 					"-L",
 					../blink/Frameworks/,
 					"-F",
-					../blink/Frameworks/,
+					"../libssh2-for-iOS/",
 					"-L",
 					../python_ios/,
 				);

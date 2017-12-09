@@ -28,7 +28,7 @@
 #define CURL_COMMANDS
 // to activate TEX_COMMANDS, you need the lib-tex libraries:
 // See: https://github.com/holzschu/lib-tex
-// #define TEX_COMMANDS    // pdftex, luatex, bibtex and the like
+#define TEX_COMMANDS    // pdftex, luatex, bibtex and the like
 // to activate Python, you need python-ios: https://github.com/holzschu/python_ios
 #define FEAT_PYTHON
 // to activate Lua, you need lua-ios: https://github.com/holzschu/lua_ios
