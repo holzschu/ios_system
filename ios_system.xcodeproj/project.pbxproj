@@ -16,7 +16,6 @@
 		22257E811FDA7C0C00FBA97D /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22257E801FDA7C0C00FBA97D /* openssl.framework */; };
 		22319F951FDBF921004D875A /* libffi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 22319F941FDBF920004D875A /* libffi.a */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
-		22319FA11FDC2332004D875A /* getopt.h in Headers */ = {isa = PBXBuildFile; fileRef = 22319F9F1FDC2332004D875A /* getopt.h */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
 		22577E481FDB47A90050F312 /* err.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D451FDB47A90050F312 /* err.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H "; }; };
@@ -772,7 +771,6 @@
 		22257E801FDA7C0C00FBA97D /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = "../libssh2-for-iOS/openssl.framework"; sourceTree = "<group>"; };
 		22319F941FDBF920004D875A /* libffi.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libffi.a; path = ../python_ios/libffi.a; sourceTree = "<group>"; };
 		22319F9E1FDC2332004D875A /* getopt.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = getopt.c; sourceTree = "<group>"; };
-		22319F9F1FDC2332004D875A /* getopt.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = getopt.h; sourceTree = "<group>"; };
 		223496AB1FD5FC71007ED1A9 /* ios_system.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ios_system.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		223496AE1FD5FC71007ED1A9 /* ios_system.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_system.h; sourceTree = "<group>"; };
 		223496AF1FD5FC71007ED1A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -1558,7 +1556,6 @@
 			isa = PBXGroup;
 			children = (
 				22319F9E1FDC2332004D875A /* getopt.c */,
-				22319F9F1FDC2332004D875A /* getopt.h */,
 				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				226378091FDB3EC700AE8827 /* file_cmds_ios */,
 				226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */,
@@ -2833,7 +2830,6 @@
 				225781291FDB4D380050F312 /* config-symbian.h in Headers */,
 				2257828A1FDB4D390050F312 /* tool_vms.h in Headers */,
 				225781D41FDB4D390050F312 /* setup-vms.h in Headers */,
-				22319FA11FDC2332004D875A /* getopt.h in Headers */,
 				2257814F1FDB4D380050F312 /* curl_ntlm_core.h in Headers */,
 				225781B91FDB4D380050F312 /* nonblock.h in Headers */,
 				225781EC1FDB4D390050F312 /* strdup.h in Headers */,
