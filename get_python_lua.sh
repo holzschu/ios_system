@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # Optional: get also sources for Python and Lua:
 ( # Python_ios
