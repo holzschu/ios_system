@@ -1235,7 +1235,7 @@ diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
  int	 prn_octal(const char *);
 diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 --- file_cmds-272/ls/ls.c	2014-07-04 00:38:26.000000000 +0200
-+++ file_cmds/ls/ls.c	2017-12-09 00:12:38.000000000 +0100
++++ file_cmds/ls/ls.c	2017-12-09 14:39:43.000000000 +0100
 @@ -73,12 +73,13 @@
  #include <sys/acl.h>
  #include <sys/xattr.h>
@@ -1308,7 +1308,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  {
  	static char dot[] = ".", *dotav[] = {dot, NULL};
  	struct winsize win;
-@@ -157,11 +202,16 @@
+@@ -157,11 +202,15 @@
  #endif
  
  	if (argc < 1)
@@ -1316,7 +1316,6 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 +		ls_usage();
 +    // re-initialize all flags:
 +    initializeAllFlags();
-+    optind = 1; opterr = 1; optreset = 1;
 +    rval = 0;
  	(void)setlocale(LC_ALL, "");
  
@@ -1327,7 +1326,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		termwidth = 80;
  		if ((p = getenv("COLUMNS")) != NULL && *p != '\0')
  			termwidth = atoi(p);
-@@ -366,7 +416,7 @@
+@@ -366,7 +415,7 @@
  			break;
  		default:
  		case '?':
