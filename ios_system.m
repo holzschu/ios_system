@@ -111,6 +111,10 @@ static void* run_function(void* parameters) {
 }
 
 static NSDictionary *commandList = nil;
+// do recompute directoriesInPath only if $PATH has changed
+static NSString* fullCommandPath = @"";
+static NSArray *directoriesInPath;
+
 
 static void initializeCommandList()
 {
@@ -209,7 +213,6 @@ static void initializeCommandList()
                     @"mex"     : [NSValue valueWithPointer: dllpdftexmain],
                     @"mllatex"     : [NSValue valueWithPointer: dllpdftexmain],
                     @"mltex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"etex"     : [NSValue valueWithPointer: dllpdftexmain],
                     @"pdfcslatex"     : [NSValue valueWithPointer: dllpdftexmain],
                     @"pdfcsplain"     : [NSValue valueWithPointer: dllpdftexmain],
                     @"pdfetex"     : [NSValue valueWithPointer: dllpdftexmain],
@@ -254,7 +257,6 @@ int ios_system(char* inputCmd) {
     char* errorFileMarker = 0;
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
-    int result = 127;
     
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -355,12 +357,13 @@ int ios_system(char* inputCmd) {
     if (outputFileMarker) outputFileMarker[0] = 0x0;
     if (errorFileMarker) errorFileMarker[0] = 0x0;
     // Store previous values of stdin, stdout, stderr:
+    // fprintf(stdout, "before, stderr = %x\n", (void*)stderr);
     FILE* push_stdin = stdin;
     FILE* push_stdout = stdout;
     FILE* push_stderr = stderr;
     if (inputFileName) stdin = fopen(inputFileName, "r");
     if (outputFileName) stdout = fopen(outputFileName, "w");
-    if (sharedErrorOutput) stderr = stdout;
+    if (sharedErrorOutput && outputFileName) stderr = stdout;
     else if (errorFileName) stderr = fopen(errorFileName, "w");
     int argc = 0;
     size_t numSpaces = 0;
@@ -433,9 +436,12 @@ int ios_system(char* inputCmd) {
             }
             // We go through the path, because that command may be a file in the path
             // i.e. user called /usr/local/bin/hg and it's ~/Library/bin/hg
-            NSString* fullCommandPath = [NSString stringWithCString:getenv("PATH") encoding:NSASCIIStringEncoding];
-            NSArray *pathComponents = [fullCommandPath componentsSeparatedByString:@":"];
-            for (NSString* path in pathComponents) {
+            NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSASCIIStringEncoding];
+            if (! [fullCommandPath isEqualToString:checkingPath]) {
+                fullCommandPath = checkingPath;
+                directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
+            }
+            for (NSString* path in directoriesInPath) {
                 // If we don't have access to the path component, there's no point in continuing:
                 if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) continue;
                 if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
@@ -501,20 +507,18 @@ int ios_system(char* inputCmd) {
             // points where we can exit from a shell function.
             // Commands call pthread_exit instead of exit
             // thread is attached, could also be un-attached
-            result = 0;
             pthread_t _tid;
-            functionParameters* params = malloc(sizeof(functionParameters));;
-            params->argc = argc;
-            params->argv = argv;
-            params->function = function;
-            pthread_create(&_tid, NULL, run_function, params);
+            functionParameters params; // = malloc(sizeof(functionParameters));;
+            params.argc = argc;
+            params.argv = argv;
+            params.function = function;
+            pthread_create(&_tid, NULL, run_function, &params);
             pthread_join(_tid, NULL);
-            free(params);
+            // free(params);
         } else {
             fprintf(stderr, "%s: command not found\n", argv[0]);
-            result = 1;
         }
-    } else result = 127;
+    }
     // delete argv[0] and argv[1] *if* it's a command file
     if (scriptName) {
         free(argv[0]);
