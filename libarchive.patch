@@ -53,6 +53,17 @@ diff -Naur libarchive-54/libarchive/libarchive/archive_write_set_format_pax.c li
  
  struct pax {
  	uint64_t	entry_bytes_remaining;
+diff -Naur libarchive-54/libarchive/libarchive/archive_write_set_format_zip.c libarchive/libarchive/libarchive/archive_write_set_format_zip.c
+--- libarchive-54/libarchive/libarchive/archive_write_set_format_zip.c	2010-05-21 03:07:32.000000000 +0200
++++ libarchive/libarchive/libarchive/archive_write_set_format_zip.c	2017-12-12 15:47:42.000000000 +0100
+@@ -247,6 +247,7 @@
+ 	zip->len_buf = 65536;
+ 	zip->buf = malloc(zip->len_buf);
+ 	if (zip->buf == NULL) {
++        free(zip); 
+ 		archive_set_error(&a->archive, ENOMEM, "Can't allocate compression buffer");
+ 		return (ARCHIVE_FATAL);
+ 	}
 diff -Naur libarchive-54/libarchive/libarchive/filter_fork.c libarchive/libarchive/libarchive/filter_fork.c
 --- libarchive-54/libarchive/libarchive/filter_fork.c	2010-05-21 03:07:32.000000000 +0200
 +++ libarchive/libarchive/libarchive/filter_fork.c	2017-12-09 00:12:52.000000000 +0100
