@@ -362,9 +362,12 @@ int ios_system(char* inputCmd) {
     FILE* push_stdout = stdout;
     FILE* push_stderr = stderr;
     if (inputFileName) stdin = fopen(inputFileName, "r");
+    if (stdin == NULL) stdin = push_stdin; // open did not work
     if (outputFileName) stdout = fopen(outputFileName, "w");
+    if (stdout == NULL) stdout = push_stdout; // open did not work
     if (sharedErrorOutput && outputFileName) stderr = stdout;
     else if (errorFileName) stderr = fopen(errorFileName, "w");
+    if (stderr == NULL) stderr = push_stderr; // open did not work
     int argc = 0;
     size_t numSpaces = 0;
     // the number of arguments is *at most* the number of spaces plus one
@@ -483,10 +486,8 @@ int ios_system(char* inputCmd) {
                         argv = (char **)realloc(argv, sizeof(char*) * argc);
                         // Move everything one step up
                         for (int i = argc; i >= 1; i--) argv[i] = argv[i-1];
-                        argv[1] = malloc(strlen(locationName.UTF8String) * sizeof(char));
-                        strcpy(argv[1], locationName.UTF8String);
-                        argv[0] = malloc(strlen(scriptName) * sizeof(char));
-                        strcpy(argv[0], scriptName);
+                        argv[1] = strdup(locationName.UTF8String);
+                        argv[0] = strdup(scriptName);
                         break;
                     }
                 }
@@ -521,8 +522,8 @@ int ios_system(char* inputCmd) {
     }
     // delete argv[0] and argv[1] *if* it's a command file
     if (scriptName) {
-        free(argv[0]);
-        free(argv[1]);
+       free(argv[0]);
+       free(argv[1]);
     }
     free(argv);
     free(originalCommand);
