@@ -204,7 +204,7 @@ diff -Naur libarchive-54/libarchive/libarchive_fe/matching.c libarchive/libarchi
  #include "pathmatch.h"
 diff -Naur libarchive-54/libarchive/tar/bsdtar.c libarchive/libarchive/tar/bsdtar.c
 --- libarchive-54/libarchive/tar/bsdtar.c	2015-08-20 00:50:01.000000000 +0200
-+++ libarchive/libarchive/tar/bsdtar.c	2017-12-09 00:30:25.000000000 +0100
++++ libarchive/libarchive/tar/bsdtar.c	2017-12-13 15:55:52.000000000 +0100
 @@ -70,7 +70,8 @@
  #include <copyfile.h>
  
@@ -224,9 +224,21 @@ diff -Naur libarchive-54/libarchive/tar/bsdtar.c libarchive/libarchive/tar/bsdta
  {
  	struct bsdtar		*bsdtar, bsdtar_storage;
  	int			 opt, t;
+@@ -135,6 +136,11 @@
+ 	memset(bsdtar, 0, sizeof(*bsdtar));
+ 	bsdtar->fd = -1; /* Mark as "unused" */
+ 	option_o = 0;
++    // init all flags:
++    opt = 0;
++    possible_help_request = 0;
++    t = 0;
++    bsdtar_getopt(NULL); // init parsing too
+ 
+ #if defined(HAVE_SIGACTION) && (defined(SIGINFO) || defined(SIGUSR1))
+ 	{ /* Catch SIGINFO and SIGUSR1, if they exist. */
 diff -Naur libarchive-54/libarchive/tar/cmdline.c libarchive/libarchive/tar/cmdline.c
 --- libarchive-54/libarchive/tar/cmdline.c	2010-05-21 03:07:32.000000000 +0200
-+++ libarchive/libarchive/tar/cmdline.c	2017-12-09 00:30:38.000000000 +0100
++++ libarchive/libarchive/tar/cmdline.c	2017-12-13 16:01:40.000000000 +0100
 @@ -41,7 +41,7 @@
  #endif
  
@@ -245,12 +257,17 @@ diff -Naur libarchive-54/libarchive/tar/cmdline.c libarchive/libarchive/tar/cmdl
  	const char *name;
  	int required;      /* 1 if this option requires an argument. */
  	int equivalent;    /* Equivalent short option. */
-@@ -180,7 +180,7 @@
+@@ -180,7 +180,12 @@
  	static int state = state_start;
  	static char *opt_word;
  
 -	const struct option *popt, *match = NULL, *match2 = NULL;
-+	const struct tar_option *popt, *match = NULL, *match2 = NULL;
++    if (bsdtar == NULL) {
++        state = state_start;
++        return 0;
++    }
++    
++ 	const struct tar_option *popt, *match = NULL, *match2 = NULL;
  	const char *p, *long_prefix = "--";
  	size_t optlength;
  	int opt = '?';

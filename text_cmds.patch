@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2017-12-12 23:58:22.000000000 +0100
++++ text_cmds/cat/cat.c	2017-12-13 20:56:40.000000000 +0100
 @@ -55,7 +55,7 @@
  #endif
  
@@ -80,20 +80,23 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  }
  
  static void
-@@ -243,22 +252,34 @@
+@@ -241,24 +250,36 @@
+ 	ssize_t nr, nw;
+ 	static size_t bsize;
  	static char *buf = NULL;
- 	struct stat sbuf;
+-	struct stat sbuf;
++	// struct stat sbuf;
  
--	wfd = fileno(stdout);
-+	// wfd = fileno(stdout);
+ 	wfd = fileno(stdout);
  	if (buf == NULL) {
 -		if (fstat(wfd, &sbuf))
 -			err(1, "%s", filename);
-+		// if (fstat(wfd, &sbuf))
-+			// err(1, "%s", filename);
- 		bsize = MAX(sbuf.st_blksize, 1024);
+-		bsize = MAX(sbuf.st_blksize, 1024);
 -		if ((buf = malloc(bsize)) == NULL)
 -			err(1, "buffer");
++        // if (fstat(wfd, &sbuf))
++			// err(1, "%s", filename);
++        bsize = 1024; // MAX(sbuf.st_blksize, 1024);
 +        if ((buf = malloc(bsize)) == NULL) {
 +            // err(1, "buffer");
 +            fprintf(stderr, "cat: buffer\n");
