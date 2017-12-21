@@ -19,6 +19,10 @@
 #include <pthread.h>
 #include <sys/stat.h>
 
+// Note: we could use dlsym() to make this code simpler, but it would also make it harder
+// to be accepted in the AppleStore. Dynamic libraries are already loaded, so it would be:
+// function = dlsym(argv[0] + "_main", RTLD_DEFAULT);
+
 #define FILE_UTILITIES   // file_cmds_ios
 #define ARCHIVE_UTILITIES // libarchive_ios
 #define SHELL_UTILITIES  // shell_cmds_ios
@@ -100,13 +104,24 @@ typedef struct _functionParameters {
 } functionParameters;
 
 static void* run_function(void* parameters) {
+    static bool isMainThread = true;
     // re-initialize for getopt:
     optind = 1;
     opterr = 1;
     optreset = 1;
     __db_getopt_reset = 1;
     functionParameters *p = (functionParameters *) parameters;
-    p->function(p->argc, p->argv);
+    // Send a signal to the system that we're going to change the current directory:
+    if (isMainThread) {
+        NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
+        NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
+        NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
+        [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
+            isMainThread = false;
+            p->function(p->argc, p->argv);
+            isMainThread = true;
+        }];
+    } else p->function(p->argc, p->argv); // but don't do it if a command starts another command (would be overkill)
     return NULL;
 }
 
@@ -114,6 +129,7 @@ static NSDictionary *commandList = nil;
 // do recompute directoriesInPath only if $PATH has changed
 static NSString* fullCommandPath = @"";
 static NSArray *directoriesInPath;
+
 
 
 static void initializeCommandList()
@@ -494,7 +510,7 @@ int ios_system(char* inputCmd) {
                 if (cmdIsAFile) break; // else keep going through the path elements.
             }
         }
-        fprintf(stderr, "Command after parsing: ");
+        // fprintf(stderr, "Command after parsing: ");
         // for (int i = 0; i < argc; i++)
         //    fprintf(stderr, "[%s] ", argv[i]);
         // We've reached this point: either the command is a file, from a script we support,
@@ -502,6 +518,7 @@ int ios_system(char* inputCmd) {
         int (*function)(int ac, char** av) = NULL;
         if (commandList == nil) initializeCommandList();
         NSString* commandName = [NSString stringWithCString:argv[0] encoding:NSASCIIStringEncoding];
+        // Insert code here. With #ifdef ???
         function = [[commandList objectForKey: commandName] pointerValue];
         if (function) {
             // We run the function in a thread because there are several
