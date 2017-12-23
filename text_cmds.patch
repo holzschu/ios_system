@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2017-12-13 20:56:40.000000000 +0100
++++ text_cmds/cat/cat.c	2017-12-23 18:00:02.000000000 +0100
 @@ -55,7 +55,7 @@
  #endif
  
@@ -55,7 +55,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  		}
  		if (fd < 0) {
 -			warn("%s", path);
-+            fprintf(stderr, "cat: %s\n", path);
++            fprintf(stderr, "cat: %s: %s\n", path, strerror(errno));
 +            // warn("%s", path);
  			rval = 1;
  		} else if (cooked) {
@@ -65,7 +65,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  	}
  	if (ferror(fp)) {
 -		warn("%s", filename);
-+        fprintf(stderr, "cat: %s\n", filename);
++        fprintf(stderr, "cat: %s: %s\n", filename, strerror(errno));
 +        // warn("%s", filename);
  		rval = 1;
  		clearerr(fp);
@@ -74,7 +74,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 -		err(1, "stdout");
 +    if (ferror(stdout)) {
 +		// err(1, "stdout");
-+        fprintf(stderr, "cat: stdout\n");
++        fprintf(stderr, "cat: stdout: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  }
@@ -99,7 +99,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 +        bsize = 1024; // MAX(sbuf.st_blksize, 1024);
 +        if ((buf = malloc(bsize)) == NULL) {
 +            // err(1, "buffer");
-+            fprintf(stderr, "cat: buffer\n");
++            fprintf(stderr, "cat: buffer: %s\n", strerror(errno));
 +            pthread_exit(NULL);
 +        }
  	}
@@ -118,7 +118,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 +        }
  	if (nr < 0) {
 -		warn("%s", filename);
-+        fprintf(stderr, "cat: %s\n", filename);
++        fprintf(stderr, "cat: %s: %s\n", filename, strerror(errno));
 +        // warn("%s", filename);
  		rval = 1;
  	}
@@ -132,13 +132,13 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  		case O_RDONLY:
  			if (shutdown(fd, SHUT_WR) == -1)
 -				warn(NULL);
-+				fprintf(stderr, "\n");
++                fprintf(stderr, "cat: %s\n", strerror(errno));
 +                // warn(NULL);
  			break;
  		case O_WRONLY:
  			if (shutdown(fd, SHUT_RD) == -1)
 -				warn(NULL);
-+                fprintf(stderr, "\n");
++                fprintf(stderr, "cat: %s\n", strerror(errno));
 +				// warn(NULL);
  			break;
  		default:
@@ -157,7 +157,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  #ifndef WITHOUT_LZMA
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2017-12-12 23:58:22.000000000 +0100
++++ text_cmds/grep/grep.c	2017-12-23 17:56:26.000000000 +0100
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -210,7 +210,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -		err(2, "%s", fn);
 +    if ((f = fopen(fn, "r")) == NULL) {
 +		// err(2, "%s", fn);
-+        fprintf(stderr, "grep: %s\n", fn);
++        fprintf(stderr, "grep: %s: %s\n", fn, strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	if ((fstat(fileno(f), &st) == -1) || (S_ISDIR(st.st_mode))) {
@@ -223,7 +223,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -		err(2, "%s", fn);
 +    if (ferror(f)) {
 +		// err(2, "%s", fn);
-+        fprintf(stderr, "grep: %s\n", fn);
++        fprintf(stderr, "grep: %s: %s\n", fn, strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	fclose(f);
@@ -289,32 +289,38 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  	if (pn[0] == 'b' && pn[1] == 'z') {
  		filebehave = FILE_BZIP;
  		pn += 2;
-@@ -441,7 +482,8 @@
+@@ -441,7 +482,9 @@
  				Aflag = 0;
  			else if (Aflag > LLONG_MAX / 10) {
  				errno = ERANGE;
 -				err(2, NULL);
++                fprintf(stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +				// err(2, NULL);
  			}
  			Aflag = Bflag = (Aflag * 10) + (c - '0');
  			break;
-@@ -458,10 +500,12 @@
+@@ -457,11 +500,16 @@
+ 			errno = 0;
  			l = strtoull(optarg, &ep, 10);
  			if (((errno == ERANGE) && (l == ULLONG_MAX)) ||
- 			    ((errno == EINVAL) && (l == 0)))
+-			    ((errno == EINVAL) && (l == 0)))
 -				err(2, NULL);
++                ((errno == EINVAL) && (l == 0))) {
++                fprintf(stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
++            }
  			else if (ep[0] != '\0') {
  				errno = EINVAL;
 -				err(2, NULL);
++                fprintf(stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
  			}
  			if (c == 'A')
  				Aflag = l;
-@@ -484,8 +528,11 @@
+@@ -484,8 +532,11 @@
  				devbehave = DEV_SKIP;
  			else if (strcasecmp(optarg, "read") == 0)
  				devbehave = DEV_READ;
@@ -328,7 +334,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			break;
  		case 'd':
  			if (strcasecmp("recurse", optarg) == 0) {
-@@ -495,8 +542,11 @@
+@@ -495,8 +546,11 @@
  				dirbehave = DIR_SKIP;
  			else if (strcasecmp("read", optarg) == 0)
  				dirbehave = DIR_READ;
@@ -342,27 +348,32 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			break;
  		case 'E':
  			grepbehave = GREP_EXTENDED;
-@@ -533,7 +583,9 @@
+@@ -533,7 +587,9 @@
  		case 'J':
  #ifdef WITHOUT_BZIP2
  			errno = EOPNOTSUPP;
 -			err(2, "bzip2 support was disabled at compile-time");
 +			// err(2, "bzip2 support was disabled at compile-time");
-+            fprintf(stderr, "grep: bzip2 support was disabled at compile-time\n");
++                fprintf(stderr, "grep: bzip2 support was disabled at compile-time: %s\n", strerror(errno));
 +            pthread_exit(NULL);
  #endif
  			filebehave = FILE_BZIP;
  			break;
-@@ -551,16 +603,20 @@
+@@ -550,17 +606,24 @@
+ 			errno = 0;
  			mcount = strtoll(optarg, &ep, 10);
  			if (((errno == ERANGE) && (mcount == LLONG_MAX)) ||
- 			    ((errno == EINVAL) && (mcount == 0)))
+-			    ((errno == EINVAL) && (mcount == 0)))
 -				err(2, NULL);
++                ((errno == EINVAL) && (mcount == 0))) {
++                fprintf(stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
++            }
  			else if (ep[0] != '\0') {
  				errno = EINVAL;
 -				err(2, NULL);
++                fprintf(stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
  			}
@@ -372,12 +383,12 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			errno = EOPNOTSUPP;
 -			err(2, "lzma support was disabled at compile-time");
 +			// err(2, "lzma support was disabled at compile-time");
-+            fprintf(stderr, "grep: lzma support was disabled at compile-time\n");
++                fprintf(stderr, "grep: lzma support was disabled at compile-time: %s\n", strerror(errno));
 +            pthread_exit(NULL);
  #endif
  			filebehave = FILE_LZMA;
  			break;
-@@ -602,7 +658,7 @@
+@@ -602,7 +665,7 @@
  #endif
  			break;
  		case 'V':
@@ -386,18 +397,18 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			exit(0);
  		case 'v':
  			vflag = true;
-@@ -618,7 +674,9 @@
+@@ -618,7 +681,9 @@
  		case 'X':
  #ifdef WITHOUT_LZMA
  			errno = EOPNOTSUPP;
 -			err(2, "xz support was disabled at compile-time");
 +			// err(2, "xz support was disabled at compile-time");
-+            fprintf(stderr, "grep: xz support was disabled at compile-time\n");
++                fprintf(stderr, "grep: xz support was disabled at compile-time: %s\n", strerror(errno));
 +            pthread_exit(NULL);
  #endif
  			filebehave = FILE_XZ;
  			break;
-@@ -632,8 +690,11 @@
+@@ -632,8 +697,11 @@
  				binbehave = BINFILE_SKIP;
  			else if (strcasecmp("text", optarg) == 0)
  				binbehave = BINFILE_TEXT;
@@ -411,7 +422,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			break;
  		case COLOR_OPT:
  			color = NULL;
-@@ -652,8 +713,11 @@
+@@ -652,8 +720,11 @@
  				color = init_color("01;31");
  			} else if (strcasecmp("never", optarg) != 0 &&
  			    strcasecmp("none", optarg) != 0 &&
@@ -425,7 +436,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			cflags &= ~REG_NOSUB;
  			break;
  		case LABEL_OPT:
-@@ -748,7 +812,9 @@
+@@ -748,7 +819,9 @@
  			if (c != 0) {
  				regerror(c, &r_pattern[i], re_error,
  				    RE_ERROR_BUF);
@@ -438,7 +449,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  		}
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2017-12-12 23:58:22.000000000 +0100
++++ text_cmds/grep/util.c	2017-12-23 17:57:38.000000000 +0100
 @@ -39,7 +39,7 @@
  #endif
  
@@ -464,7 +475,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "fts_open");
 +    if (!(fts = fts_open(argv, fts_flags, NULL))) {
 +		// err(2, "fts_open");
-+        fprintf(stderr, "grep: fts_open\n");
++        fprintf(stderr, "grep: fts_open: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	while ((p = fts_read(fts)) != NULL) {
@@ -505,7 +516,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		file_err = true;
  		if (!sflag)
 -			warn("%s", fn);
-+            fprintf(stderr, "grep: %s\n", fn);
++            fprintf(stderr, "grep: %s: %s\n", fn, strerror(errno));
 +            // warn("%s", fn);
  		return (0);
  	}
@@ -518,7 +529,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "malloc");
 +    if ((ptr = malloc(size)) == NULL) {
 +		// err(2, "malloc");
-+        fprintf(stderr, "grep: malloc\n");
++        fprintf(stderr, "grep: malloc: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	return (ptr);
@@ -532,7 +543,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "calloc");
 +    if ((ptr = calloc(nmemb, size)) == NULL) {
 +        // err(2, "calloc");
-+        fprintf(stderr, "grep: malloc\n");
++        fprintf(stderr, "grep: calloc: %s\n", strerror(errno));
 +    pthread_exit(NULL);
 +}
  	return (ptr);
@@ -546,7 +557,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "realloc");
 +    if ((ptr = realloc(ptr, size)) == NULL) {
 +        // err(2, "realloc");
-+        fprintf(stderr, "grep: realloc\n");
++        fprintf(stderr, "grep: realloc: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	return (ptr);
@@ -560,7 +571,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "strdup");
 +    if ((ret = strdup(str)) == NULL) {
 +        // err(2, "strdup");
-+        fprintf(stderr, "grep: strdup\n");
++        fprintf(stderr, "grep: strdup: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	return (ret);
@@ -568,7 +579,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2017-12-12 23:58:22.000000000 +0100
++++ text_cmds/wc/wc.c	2017-12-23 17:58:31.000000000 +0100
 @@ -51,7 +51,7 @@
  #include <sys/stat.h>
  
@@ -624,7 +635,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	} else {
  		if ((fd = open(file, O_RDONLY, 0)) < 0) {
 -			warn("%s: open", file);
-+            fprintf(stderr, "wc: %s: open\n", file);
++            fprintf(stderr, "wc: %s: open: %s\n", file, strerror(errno));
 +			// warn("%s: open", file);
  			return (1);
  		}
@@ -634,7 +645,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  		while ((len = read(fd, buf, buf_size))) {
  			if (len == -1) {
 -				warn("%s: read", file);
-+                fprintf(stderr, "wc: %s: read\n", file);
++                fprintf(stderr, "wc: %s: read: %s\n", file, strerror(errno));
 +                // warn("%s: read", file);
  				(void)close(fd);
  				return (1);
@@ -644,7 +655,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	if (dochar || domulti) {
  		if (fstat(fd, &sb)) {
 -			warn("%s: fstat", file);
-+            fprintf(stderr, "wc: %s: fstat\n", file);
++            fprintf(stderr, "wc: %s: fstat: %s\n", file, strerror(errno));
 +            // warn("%s: fstat", file);
  			(void)close(fd);
  			return (1);
@@ -654,7 +665,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	while ((len = read(fd, buf, buf_size)) != 0) {
  		if (len == -1) {
 -			warn("%s: read", file);
-+            fprintf(stderr, "wc: %s: read\n", file);
++            fprintf(stderr, "wc: %s: read: %s\n", file, strerror(errno));
 +            // warn("%s: read", file);
  			(void)close(fd);
  			return (1);
@@ -664,7 +675,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  				if (!warned) {
  					errno = EILSEQ;
 -					warn("%s", file);
-+                    fprintf(stderr, "wc: %s\n", file);
++                    fprintf(stderr, "wc: %s: %s\n", file, strerror(errno));
 +                    // warn("%s", file);
  					warned = 1;
  				}
@@ -674,7 +685,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	if (domulti && MB_CUR_MAX > 1)
  		if (mbrtowc(NULL, NULL, 0, &mbs) == (size_t)-1 && !warned)
 -			warn("%s", file);
-+            fprintf(stderr, "wc: %s\n", file);
++            fprintf(stderr, "wc: %s: %s\n", file, strerror(errno));
 +            // warn("%s", file);
  	if (doline) {
  		tlinect += linect;
