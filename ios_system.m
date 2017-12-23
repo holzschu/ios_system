@@ -33,10 +33,8 @@
 // to activate TEX_COMMANDS, you need the lib-tex libraries:
 // See: https://github.com/holzschu/lib-tex
 #define TEX_COMMANDS    // pdftex, luatex, bibtex and the like
-// to activate Python, you need python-ios: https://github.com/holzschu/python_ios
-#define FEAT_PYTHON
-// to activate Lua, you need lua-ios: https://github.com/holzschu/lua_ios
-#define FEAT_LUA
+#define FEAT_PYTHON // if you don't need Python, you can remove Python_grp
+#define FEAT_LUA // if you don't need Lua, you can remove lua_grp
 
 #ifdef FILE_UTILITIES
 // Most useful file utilities (file_cmds_ios)

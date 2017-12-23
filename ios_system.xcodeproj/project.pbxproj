@@ -533,6 +533,11 @@
 		226378B31FDB3EE400AE8827 /* futimens.c in Sources */ = {isa = PBXBuildFile; fileRef = 2263785B1FDB3EE300AE8827 /* futimens.c */; };
 		226378B71FDB3EE400AE8827 /* gzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 2263785F1FDB3EE300AE8827 /* gzip.c */; };
 		226378C91FDB3EE400AE8827 /* chown.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378721FDB3EE300AE8827 /* chown.c */; };
+		2279697C1FEE42F100F01013 /* connection.h in Headers */ = {isa = PBXBuildFile; fileRef = 227969741FEE42F100F01013 /* connection.h */; };
+		2279697D1FEE42F100F01013 /* multiprocessing.c in Sources */ = {isa = PBXBuildFile; fileRef = 227969751FEE42F100F01013 /* multiprocessing.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../blink/Frameworks/"; }; };
+		2279697E1FEE42F100F01013 /* multiprocessing.h in Headers */ = {isa = PBXBuildFile; fileRef = 227969761FEE42F100F01013 /* multiprocessing.h */; };
+		227969801FEE42F100F01013 /* semaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 227969781FEE42F100F01013 /* semaphore.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../blink/Frameworks/"; }; };
+		227969811FEE42F100F01013 /* socket_connection.c in Sources */ = {isa = PBXBuildFile; fileRef = 227969791FEE42F100F01013 /* socket_connection.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../blink/Frameworks/"; }; };
 		22C891851FDBCF09006CDE47 /* _warnings.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C891391FDBCF08006CDE47 /* _warnings.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
 		22C891861FDBCF09006CDE47 /* asdl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8913A1FDBCF08006CDE47 /* asdl.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
 		22C891871FDBCF09006CDE47 /* ast.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8913B1FDBCF08006CDE47 /* ast.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
@@ -1295,6 +1300,11 @@
 		2263785B1FDB3EE300AE8827 /* futimens.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = futimens.c; sourceTree = "<group>"; };
 		2263785F1FDB3EE300AE8827 /* gzip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gzip.c; sourceTree = "<group>"; };
 		226378721FDB3EE300AE8827 /* chown.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = chown.c; sourceTree = "<group>"; };
+		227969741FEE42F100F01013 /* connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = connection.h; sourceTree = "<group>"; };
+		227969751FEE42F100F01013 /* multiprocessing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = multiprocessing.c; sourceTree = "<group>"; };
+		227969761FEE42F100F01013 /* multiprocessing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = multiprocessing.h; sourceTree = "<group>"; };
+		227969781FEE42F100F01013 /* semaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = semaphore.c; sourceTree = "<group>"; };
+		227969791FEE42F100F01013 /* socket_connection.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = socket_connection.c; sourceTree = "<group>"; };
 		22C891391FDBCF08006CDE47 /* _warnings.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = _warnings.c; sourceTree = "<group>"; };
 		22C8913A1FDBCF08006CDE47 /* asdl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = asdl.c; sourceTree = "<group>"; };
 		22C8913B1FDBCF08006CDE47 /* ast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ast.c; sourceTree = "<group>"; };
@@ -2393,6 +2403,18 @@
 			path = shell_cmds_ios;
 			sourceTree = "<group>";
 		};
+		227969721FEE42F100F01013 /* _multiprocessing */ = {
+			isa = PBXGroup;
+			children = (
+				227969741FEE42F100F01013 /* connection.h */,
+				227969751FEE42F100F01013 /* multiprocessing.c */,
+				227969761FEE42F100F01013 /* multiprocessing.h */,
+				227969781FEE42F100F01013 /* semaphore.c */,
+				227969791FEE42F100F01013 /* socket_connection.c */,
+			);
+			path = _multiprocessing;
+			sourceTree = "<group>";
+		};
 		22C891381FDBCF08006CDE47 /* Python */ = {
 			isa = PBXGroup;
 			children = (
@@ -2535,6 +2557,7 @@
 		22C892A51FDBF104006CDE47 /* Modules */ = {
 			isa = PBXGroup;
 			children = (
+				227969721FEE42F100F01013 /* _multiprocessing */,
 				22C892AB1FDBF104006CDE47 /* _ctypes */,
 				22C894561FDBF104006CDE47 /* _io */,
 				22C894B51FDBF105006CDE47 /* expat */,
@@ -2800,6 +2823,7 @@
 				225781561FDB4D380050F312 /* curl_sasl.h in Headers */,
 				225782251FDB4D390050F312 /* schannel.h in Headers */,
 				225782671FDB4D390050F312 /* tool_hugehelp.h in Headers */,
+				2279697E1FEE42F100F01013 /* multiprocessing.h in Headers */,
 				2257818D1FDB4D380050F312 /* http_ntlm.h in Headers */,
 				225781DB1FDB4D390050F312 /* smb.h in Headers */,
 				225781401FDB4D380050F312 /* curl_fnmatch.h in Headers */,
@@ -2969,6 +2993,7 @@
 				2257812D1FDB4D380050F312 /* config-win32ce.h in Headers */,
 				225781C91FDB4D390050F312 /* progress.h in Headers */,
 				2257811C1FDB4D380050F312 /* amigaos.h in Headers */,
+				2279697C1FEE42F100F01013 /* connection.h in Headers */,
 				22C891B01FDBCF09006CDE47 /* opcode_targets.h in Headers */,
 				22577F7A1FDB47B70050F312 /* config_freebsd.h in Headers */,
 				22577F751FDB47B70050F312 /* bsdtar_platform.h in Headers */,
@@ -3187,6 +3212,7 @@
 				22C895521FDBF106006CDE47 /* _bisectmodule.c in Sources */,
 				225782F01FDBC9B40050F312 /* ldebug.c in Sources */,
 				22C897211FDBF108006CDE47 /* cmathmodule.c in Sources */,
+				227969811FEE42F100F01013 /* socket_connection.c in Sources */,
 				225781411FDB4D380050F312 /* curl_gethostname.c in Sources */,
 				22577E721FDB47A90050F312 /* archive_read_support_compression_compress.c in Sources */,
 				225781911FDB4D380050F312 /* if2ip.c in Sources */,
@@ -3493,6 +3519,7 @@
 				22577E891FDB47A90050F312 /* archive_windows.c in Sources */,
 				22577E911FDB47A90050F312 /* archive_write_open_fd.c in Sources */,
 				22C891B51FDBCF09006CDE47 /* pymath.c in Sources */,
+				2279697D1FEE42F100F01013 /* multiprocessing.c in Sources */,
 				2257827A1FDB4D390050F312 /* tool_parsecfg.c in Sources */,
 				2257820D1FDB4D390050F312 /* vauth.c in Sources */,
 				22577E5C1FDB47A90050F312 /* archive_entry_stat.c in Sources */,
@@ -3502,6 +3529,7 @@
 				22C896D21FDBF108006CDE47 /* _iomodule.c in Sources */,
 				225781DA1FDB4D390050F312 /* smb.c in Sources */,
 				22CF27C11FDB43080087DDAD /* file.c in Sources */,
+				227969801FEE42F100F01013 /* semaphore.c in Sources */,
 				225782481FDB4D390050F312 /* tool_cb_prg.c in Sources */,
 				2257813F1FDB4D380050F312 /* curl_fnmatch.c in Sources */,
 				2263788A1FDB3EE400AE8827 /* crc32.c in Sources */,
