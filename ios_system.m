@@ -258,6 +258,18 @@ int ios_executable(char* inputCmd) {
 }
 
 
+
+char* commandsAsString() {
+
+	initializeCommandList();
+
+	NSError * err;
+	NSData * jsonData = [NSJSONSerialization  dataWithJSONObject:commandList.allKeys options:0 error:&err];
+	NSString * myString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+
+	return myString.cString;
+}
+
 int ios_system(char* inputCmd) {
     char* command;
     // The names of the files for stdin, stdout, stderr
@@ -278,9 +290,13 @@ int ios_system(char* inputCmd) {
     // fprintf(stderr, "Command sent: %s \n", cmd); fflush(stderr);
     if (cmd[0] == '"') {
         // Command was enclosed in quotes (almost always with Vim)
-        cmd = cmd + 1; // remove starting quote
-        cmd[strlen(cmd) - 1] = 0x00; // remove ending quote
-        assert(cmd + strlen(cmd) < maxPointer);
+        char* endCmd = strstr(cmd + 1, "\""); // find closing quote
+        if (endCmd) {
+            cmd = cmd + 1; // remove starting quote
+            endCmd[0] = 0x0;
+            assert(endCmd < maxPointer);
+        }
+        // assert(cmd + strlen(cmd) < maxPointer);
     }
     if (cmd[0] == '(') {
         // Standard vim encoding: command between parentheses
@@ -372,6 +388,10 @@ int ios_system(char* inputCmd) {
     if (errorFileMarker) errorFileMarker[0] = 0x0;
     // Store previous values of stdin, stdout, stderr:
     // fprintf(stdout, "before, stderr = %x\n", (void*)stderr);
+    // strip filenames of quotes, if any:
+    if (outputFileName && (outputFileName[0] == '\'')) { outputFileName = outputFileName + 1; outputFileName[strlen(outputFileName) - 1] = 0x0; }
+    if (inputFileName && (inputFileName[0] == '\'')) { inputFileName = inputFileName + 1; inputFileName[strlen(inputFileName) - 1] = 0x0; }
+    if (errorFileName && (errorFileName[0] == '\'')) { errorFileName = errorFileName + 1; errorFileName[strlen(errorFileName) - 1] = 0x0; }
     FILE* push_stdin = stdin;
     FILE* push_stdout = stdout;
     FILE* push_stderr = stderr;
@@ -508,7 +528,7 @@ int ios_system(char* inputCmd) {
                 if (cmdIsAFile) break; // else keep going through the path elements.
             }
         }
-        // fprintf(stderr, "Command after parsing: ");
+        fprintf(stderr, "Command after parsing: ");
         // for (int i = 0; i < argc; i++)
         //    fprintf(stderr, "[%s] ", argv[i]);
         // We've reached this point: either the command is a file, from a script we support,
@@ -532,6 +552,7 @@ int ios_system(char* inputCmd) {
             pthread_join(_tid, NULL);
             // free(params);
         } else {
+            // TODO: this should also raise an exception, for python scripts
             fprintf(stderr, "%s: command not found\n", argv[0]);
         }
     }
