@@ -6,6 +6,7 @@
 //  Copyright © 2017 Nicolas Holzschuch. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
 //! Project version number for ios_system.
@@ -19,3 +20,4 @@ FOUNDATION_EXPORT const unsigned char ios_systemVersionString[];
 int ios_executable(char* inputCmd); // does this command exist? (executable file or builtin command)
 int ios_system(char* inputCmd); // execute this command (executable file or builtin command)
 
+char* commandsAsString();
