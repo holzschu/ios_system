@@ -93,6 +93,9 @@ extern int bibtex_main(int argc, char *argv[]);
 extern int dllluatexmain(int argc, char *argv[]);
 extern int dllpdftexmain(int argc, char *argv[]);
 #endif
+// local commands
+static int setenv_main(int argc, char *argv[]);
+static int unsetenv_main(int argc, char *argv[]);
 
 extern int    __db_getopt_reset;
 typedef struct _functionParameters {
@@ -244,7 +247,33 @@ static void initializeCommandList()
                     // BibTeX
                     @"bibtex"     : [NSValue valueWithPointer: bibtex_main],
 #endif
+                    // local commands
+                    @"setenv"     : [NSValue valueWithPointer: setenv_main],
+                    @"unsetenv"     : [NSValue valueWithPointer: unsetenv_main],
+
                     };
+}
+
+static int setenv_main(int argc, char** argv) {
+    if (argc <= 1) return env_main(argc, argv);
+    if (argc > 2) {
+        fprintf(stderr, "setenv: Too many arguments\n"); fflush(stderr);
+        return 0;
+    }
+    // setenv VARIABLE value
+    if (argv[2] != NULL) setenv(argv[1], argv[2], 1);
+    else setenv(argv[1], "", 1); // if there's no value, pass an empty string instead of a null pointer
+    return 0;
+}
+
+static int unsetenv_main(int argc, char** argv) {
+    if (argc <= 1) {
+        fprintf(stderr, "unsetenv: Too few arguments\n"); fflush(stderr);
+        return 0;
+    }
+    // unsetenv acts on all parameters
+    for (int i = 1; i < argc; i++) unsetenv(argv[i]);
+    return 0;
 }
 
 int ios_executable(char* inputCmd) {
@@ -528,7 +557,7 @@ int ios_system(char* inputCmd) {
                 if (cmdIsAFile) break; // else keep going through the path elements.
             }
         }
-        fprintf(stderr, "Command after parsing: ");
+        // fprintf(stderr, "Command after parsing: ");
         // for (int i = 0; i < argc; i++)
         //    fprintf(stderr, "[%s] ", argv[i]);
         // We've reached this point: either the command is a file, from a script we support,
