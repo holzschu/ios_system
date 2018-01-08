@@ -256,7 +256,7 @@ static void initializeCommandList()
 
 static int setenv_main(int argc, char** argv) {
     if (argc <= 1) return env_main(argc, argv);
-    if (argc > 2) {
+    if (argc > 3) {
         fprintf(stderr, "setenv: Too many arguments\n"); fflush(stderr);
         return 0;
     }
