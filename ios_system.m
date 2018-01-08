@@ -509,6 +509,16 @@ int ios_system(char* inputCmd) {
         while (str && (str[0] == ' ')) str++; // skip multiple spaces
     }
     argv[argc] = NULL;
+    // So far, all arguments are pointers into originalCommand.
+    // We need to change them (environment variables expansion, ~ expansion, etc)
+    // Duplicate everything so we can realloc:
+    char** argv_copy = (char **)malloc(sizeof(char*) * (argc + 1));
+    for (int i = 0; i < argc; i++) argv_copy[i] = strdup(argv[i]);
+    argv_copy[argc] = NULL;
+    free(argv);
+    argv = argv_copy;
+    // We have the arguments. Parse them for environment variables, ~, etc.
+    
     if (argc != 0) {
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
@@ -591,8 +601,9 @@ int ios_system(char* inputCmd) {
                         argv = (char **)realloc(argv, sizeof(char*) * argc);
                         // Move everything one step up
                         for (int i = argc; i >= 1; i--) argv[i] = argv[i-1];
-                        argv[1] = strdup(locationName.UTF8String);
-                        argv[0] = strdup(scriptName);
+                        argv[1] = realloc(argv[1], strlen(locationName.UTF8String));
+                        strcpy(argv[1], locationName.UTF8String);
+                        argv[0] = strdup(scriptName); // this one is new
                         break;
                     }
                 }
@@ -627,13 +638,9 @@ int ios_system(char* inputCmd) {
             fprintf(stderr, "%s: command not found\n", argv[0]);
         }
     }
-    // delete argv[0] and argv[1] *if* it's a command file
-    if (scriptName) {
-       free(argv[0]);
-       free(argv[1]);
-    }
+    for (int i = 0; i < argc; i++) free(argv[i]);
     free(argv);
-    free(originalCommand);
+    free(originalCommand); // releases cmd
     // Did we write anything?
     long numCharWritten = 0;
     if (errorFileName) numCharWritten = ftell(stderr);
