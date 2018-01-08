@@ -131,6 +131,47 @@ static NSDictionary *commandList = nil;
 static NSString* fullCommandPath = @"";
 static NSArray *directoriesInPath;
 
+void initializeEnvironment() {
+    // setup a few useful environment variables
+    // Initialize paths for application files, including history.txt and keys
+    NSString *docsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+    NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
+    
+    // Where the executables are stored: $PATH + ~/Library/bin + ~/Documents/bin
+    // Add content of old PATH to this. PATH *is* defined in iOS, surprising as it may be.
+    // I'm not going to erase it, so we just add ourselves.
+    // Sometimes, we go through main several times, so make sure we only append to PATH once
+    NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSASCIIStringEncoding];
+    if (! [fullCommandPath isEqualToString:checkingPath]) {
+        fullCommandPath = checkingPath;
+    }
+    if (![fullCommandPath containsString:@"Library/bin"]) {
+        NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+    }
+    if (![fullCommandPath containsString:@"Documents/bin"]) {
+        NSString *binPath = [docsPath stringByAppendingPathComponent:@"bin"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+    }
+    setenv("APPDIR", [[NSBundle mainBundle] resourcePath].UTF8String, 1);
+    setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
+    directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
+    
+    // We can't write in $HOME so we need to set the position of config files:
+    setenv("SSH_HOME", docsPath.UTF8String, 0);  // SSH keys in ~/Documents/.ssh/
+    setenv("CURL_HOME", docsPath.UTF8String, 0); // CURL config in ~/Documents/
+    setenv("TMPDIR", NSTemporaryDirectory().UTF8String, 0); // tmp directory
+    setenv("SSL_CERT_FILE", [docsPath stringByAppendingPathComponent:@"cacert.pem"].UTF8String, 0); // SLL cacert.pem in ~/Documents/cacert.pem
+    // iOS already defines "HOME" as the home dir of the application
+#ifdef FEAT_PYTHON
+    // if we use Python, we define a few more environment variables:
+    setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python scripts in ~/Library/lib/python3.6/
+    setenv("PYZMQ_BACKEND", "cffi", 0);
+    setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
+    // hg config file in ~/Documents/.hgrc
+    setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
+#endif
+}
 
 
 static void initializeCommandList()
@@ -250,7 +291,6 @@ static void initializeCommandList()
                     // local commands
                     @"setenv"     : [NSValue valueWithPointer: setenv_main],
                     @"unsetenv"     : [NSValue valueWithPointer: unsetenv_main],
-
                     };
 }
 
@@ -275,6 +315,8 @@ static int unsetenv_main(int argc, char** argv) {
     for (int i = 1; i < argc; i++) unsetenv(argv[i]);
     return 0;
 }
+
+// static void
 
 int ios_executable(char* inputCmd) {
  // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
