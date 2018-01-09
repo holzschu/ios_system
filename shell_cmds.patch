@@ -703,7 +703,7 @@ diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
  
 diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
 --- shell_cmds-203/w/w.c	2007-10-03 11:55:12.000000000 +0200
-+++ shell_cmds/w/w.c	2018-01-07 17:01:48.000000000 +0100
++++ shell_cmds/w/w.c	2018-01-09 14:42:12.000000000 +0100
 @@ -50,15 +50,16 @@
   * This program is similar to the systat command on Tenex/Tops 10/20
   *
@@ -762,7 +762,7 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
   */
 -struct	entry {
 -	struct	entry *next;
-+struct	utmp_entry {
++static struct	utmp_entry {
 +	struct	utmp_entry *next;
  #if HAVE_UTMPX
  	struct	utmpx utmp;
