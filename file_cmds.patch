@@ -1,6 +1,6 @@
 diff -Naur file_cmds-272/chflags/chflags.c file_cmds/chflags/chflags.c
 --- file_cmds-272/chflags/chflags.c	2010-03-19 04:52:40.000000000 +0100
-+++ file_cmds/chflags/chflags.c	2017-12-23 17:16:29.000000000 +0100
++++ file_cmds/chflags/chflags.c	2018-01-07 17:01:51.000000000 +0100
 @@ -45,18 +45,20 @@
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -134,7 +134,7 @@ diff -Naur file_cmds-272/chflags/chflags.c file_cmds/chflags/chflags.c
  
 diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
 --- file_cmds-272/chmod/chmod.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/chmod/chmod.c	2017-12-23 17:18:19.000000000 +0100
++++ file_cmds/chmod/chmod.c	2018-01-07 17:01:51.000000000 +0100
 @@ -49,7 +49,7 @@
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -443,7 +443,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  	(void)fprintf(stderr,
 diff -Naur file_cmds-272/chmod/chmod_acl.c file_cmds/chmod/chmod_acl.c
 --- file_cmds-272/chmod/chmod_acl.c	2015-08-04 22:32:26.000000000 +0200
-+++ file_cmds/chmod/chmod_acl.c	2017-12-23 17:25:02.000000000 +0100
++++ file_cmds/chmod/chmod_acl.c	2018-01-07 17:01:51.000000000 +0100
 @@ -30,7 +30,7 @@
   * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
   * SUCH DAMAGE.
@@ -952,7 +952,7 @@ diff -Naur file_cmds-272/chmod/chmod_acl.c file_cmds/chmod/chmod_acl.c
  	}
 diff -Naur file_cmds-272/chown/chown.c file_cmds/chown/chown.c
 --- file_cmds-272/chown/chown.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/chown/chown.c	2017-12-23 17:26:04.000000000 +0100
++++ file_cmds/chown/chown.c	2018-01-07 17:01:51.000000000 +0100
 @@ -50,7 +50,7 @@
  #include <sys/param.h>
  #include <sys/stat.h>
@@ -1134,7 +1134,7 @@ diff -Naur file_cmds-272/chown/chown.c file_cmds/chown/chown.c
  void
 diff -Naur file_cmds-272/cksum/cksum.c file_cmds/cksum/cksum.c
 --- file_cmds-272/cksum/cksum.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/cksum/cksum.c	2017-12-23 17:26:16.000000000 +0100
++++ file_cmds/cksum/cksum.c	2018-01-07 17:01:51.000000000 +0100
 @@ -52,7 +52,7 @@
  
  #include <sys/types.h>
@@ -1201,7 +1201,7 @@ diff -Naur file_cmds-272/cksum/cksum.c file_cmds/cksum/cksum.c
  			pfncn(fn, val, len);
 diff -Naur file_cmds-272/cksum/crc32.c file_cmds/cksum/crc32.c
 --- file_cmds-272/cksum/crc32.c	2012-03-14 00:22:38.000000000 +0100
-+++ file_cmds/cksum/crc32.c	2017-12-09 00:12:38.000000000 +0100
++++ file_cmds/cksum/crc32.c	2018-01-07 17:01:51.000000000 +0100
 @@ -98,7 +98,7 @@
  uint32_t crc32_total = 0;
  
@@ -1213,7 +1213,7 @@ diff -Naur file_cmds-272/cksum/crc32.c file_cmds/cksum/crc32.c
      ssize_t nr;
 diff -Naur file_cmds-272/cksum/extern.h file_cmds/cksum/extern.h
 --- file_cmds-272/cksum/extern.h	2006-12-09 07:36:49.000000000 +0100
-+++ file_cmds/cksum/extern.h	2017-12-09 00:12:38.000000000 +0100
++++ file_cmds/cksum/extern.h	2018-01-07 17:01:51.000000000 +0100
 @@ -43,5 +43,5 @@
  void	psum2(char *, uint32_t, off_t);
  int	csum1(int, uint32_t *, off_t *);
@@ -1223,7 +1223,7 @@ diff -Naur file_cmds-272/cksum/extern.h file_cmds/cksum/extern.h
  __END_DECLS
 diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
 --- file_cmds-272/compress/compress.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/compress/compress.c	2017-12-12 23:58:45.000000000 +0100
++++ file_cmds/compress/compress.c	2018-01-07 17:01:51.000000000 +0100
 @@ -56,28 +56,31 @@
  #include <unistd.h>
  
@@ -1319,7 +1319,7 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
  			if (unlink(out))
 diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 --- file_cmds-272/cp/cp.c	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/cp.c	2017-12-23 17:31:24.000000000 +0100
++++ file_cmds/cp/cp.c	2018-01-07 17:01:51.000000000 +0100
 @@ -62,7 +62,7 @@
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -1714,7 +1714,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  
 diff -Naur file_cmds-272/cp/extern.h file_cmds/cp/extern.h
 --- file_cmds-272/cp/extern.h	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/extern.h	2017-12-09 00:12:38.000000000 +0100
++++ file_cmds/cp/extern.h	2018-01-07 17:01:51.000000000 +0100
 @@ -37,11 +37,11 @@
  } PATH_T;
  
@@ -1738,7 +1738,7 @@ diff -Naur file_cmds-272/cp/extern.h file_cmds/cp/extern.h
  __END_DECLS
 diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
 --- file_cmds-272/cp/utils.c	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/utils.c	2017-12-23 17:36:16.000000000 +0100
++++ file_cmds/cp/utils.c	2018-01-07 17:01:51.000000000 +0100
 @@ -43,7 +43,7 @@
  #include <sys/mman.h>
  #endif
@@ -2132,7 +2132,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  	if (COMPAT_MODE("bin/cp", "unix2003")) {
 diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
 --- file_cmds-272/df/df.c	2015-05-13 02:57:59.000000000 +0200
-+++ file_cmds/df/df.c	2017-12-23 17:37:57.000000000 +0100
++++ file_cmds/df/df.c	2018-01-07 17:01:51.000000000 +0100
 @@ -61,7 +61,7 @@
  #include <sys/stat.h>
  #include <sys/mount.h>
@@ -2364,7 +2364,7 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	}
 diff -Naur file_cmds-272/df/vfslist.c file_cmds/df/vfslist.c
 --- file_cmds-272/df/vfslist.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/df/vfslist.c	2017-12-23 17:50:46.000000000 +0100
++++ file_cmds/df/vfslist.c	2018-01-07 17:01:51.000000000 +0100
 @@ -40,9 +40,12 @@
    "$FreeBSD: src/sbin/mount/vfslist.c,v 1.4 1999/08/28 00:13:27 peter Exp $";
  #endif /* not lint */
@@ -2391,7 +2391,7 @@ diff -Naur file_cmds-272/df/vfslist.c file_cmds/df/vfslist.c
  	nextcp = strdup(fslist);
 diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
 --- file_cmds-272/du/du.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/du/du.c	2017-12-23 17:38:29.000000000 +0100
++++ file_cmds/du/du.c	2018-01-07 17:01:51.000000000 +0100
 @@ -55,7 +55,7 @@
  #include <sys/stat.h>
  #include <sys/attr.h>
@@ -2622,7 +2622,7 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  
 diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 --- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
-+++ file_cmds/gzip/gzip.c	2017-12-23 17:38:48.000000000 +0100
++++ file_cmds/gzip/gzip.c	2018-01-07 17:01:51.000000000 +0100
 @@ -68,9 +68,14 @@
  #ifdef __APPLE__
  #include <sys/attr.h>
@@ -2898,7 +2898,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
 diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
 --- file_cmds-272/ln/ln.c	2013-10-31 01:07:31.000000000 +0100
-+++ file_cmds/ln/ln.c	2017-12-23 17:39:52.000000000 +0100
++++ file_cmds/ln/ln.c	2018-01-07 17:01:51.000000000 +0100
 @@ -44,7 +44,7 @@
  #include <sys/param.h>
  #include <sys/stat.h>
@@ -3084,7 +3084,7 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  	(void)fprintf(stderr, "%s\n%s\n%s\n",
 diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
 --- file_cmds-272/ls/extern.h	2010-05-13 01:09:37.000000000 +0200
-+++ file_cmds/ls/extern.h	2017-12-09 00:12:38.000000000 +0100
++++ file_cmds/ls/extern.h	2018-01-07 17:01:51.000000000 +0100
 @@ -51,7 +51,7 @@
  void	 printlong(DISPLAY *);
  void	 printscol(DISPLAY *);
@@ -3096,7 +3096,7 @@ diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
  int	 prn_octal(const char *);
 diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 --- file_cmds-272/ls/ls.c	2014-07-04 00:38:26.000000000 +0200
-+++ file_cmds/ls/ls.c	2017-12-23 17:40:42.000000000 +0100
++++ file_cmds/ls/ls.c	2018-01-07 17:01:51.000000000 +0100
 @@ -54,7 +54,7 @@
  #include <sys/ioctl.h>
  
@@ -3342,7 +3342,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  				(void)strcpy(np->user, user);
 diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 --- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
-+++ file_cmds/ls/print.c	2017-12-23 17:50:46.000000000 +0100
++++ file_cmds/ls/print.c	2018-01-07 17:01:51.000000000 +0100
 @@ -56,7 +56,7 @@
  #include <uuid/uuid.h>
  #endif
@@ -3403,7 +3403,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  #endif /* COLORLS */
 diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
 --- file_cmds-272/ls/util.c	2008-03-12 21:31:12.000000000 +0100
-+++ file_cmds/ls/util.c	2017-12-12 23:58:22.000000000 +0100
++++ file_cmds/ls/util.c	2018-01-07 17:01:51.000000000 +0100
 @@ -42,7 +42,7 @@
  #include <sys/stat.h>
  
@@ -3432,7 +3432,7 @@ diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
  #ifdef COLORLS
 diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
 --- file_cmds-272/mkdir/mkdir.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/mkdir/mkdir.c	2017-12-23 17:41:47.000000000 +0100
++++ file_cmds/mkdir/mkdir.c	2018-01-07 17:01:51.000000000 +0100
 @@ -49,7 +49,7 @@
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -3515,7 +3515,7 @@ diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
  	}
 diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
 --- file_cmds-272/mv/mv.c	2015-08-04 22:32:26.000000000 +0200
-+++ file_cmds/mv/mv.c	2017-12-23 17:45:14.000000000 +0100
++++ file_cmds/mv/mv.c	2018-01-07 17:01:51.000000000 +0100
 @@ -55,7 +55,7 @@
  #include <sys/stat.h>
  #include <sys/mount.h>
@@ -3845,7 +3845,7 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  {
 diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
 --- file_cmds-272/rm/rm.c	2016-09-16 18:43:23.000000000 +0200
-+++ file_cmds/rm/rm.c	2017-12-23 17:47:30.000000000 +0100
++++ file_cmds/rm/rm.c	2018-01-07 17:01:51.000000000 +0100
 @@ -51,7 +51,7 @@
  #include <sys/param.h>
  #include <sys/mount.h>
@@ -4056,7 +4056,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  				continue;
 diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
 --- file_cmds-272/rmdir/rmdir.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/rmdir/rmdir.c	2017-12-23 17:47:47.000000000 +0100
++++ file_cmds/rmdir/rmdir.c	2018-01-07 17:01:51.000000000 +0100
 @@ -46,23 +46,26 @@
  #include <sys/cdefs.h>
  __RCSID("$FreeBSD: src/bin/rmdir/rmdir.c,v 1.13 2002/06/30 05:15:03 obrien Exp $");
@@ -4110,7 +4110,7 @@ diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
  	}
 diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
 --- file_cmds-272/stat/stat.c	2014-02-11 01:17:24.000000000 +0100
-+++ file_cmds/stat/stat.c	2017-12-23 17:48:25.000000000 +0100
++++ file_cmds/stat/stat.c	2018-01-07 17:01:51.000000000 +0100
 @@ -58,7 +58,7 @@
  #include <sys/stat.h>
  
@@ -4282,7 +4282,7 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  	}
 diff -Naur file_cmds-272/touch/touch.c file_cmds/touch/touch.c
 --- file_cmds-272/touch/touch.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/touch/touch.c	2017-12-23 17:50:18.000000000 +0100
++++ file_cmds/touch/touch.c	2018-01-07 17:01:51.000000000 +0100
 @@ -49,7 +49,7 @@
  #include <sys/stat.h>
  #include <sys/time.h>

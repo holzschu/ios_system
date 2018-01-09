@@ -80,6 +80,8 @@ extern int w_main(int argc, char *argv[]); // also uptime
 extern int cat_main(int argc, char *argv[]);
 extern int grep_main(int argc, char *argv[]);
 extern int wc_main(int argc, char *argv[]);
+extern int ed_main(int argc, char *argv[]);
+extern int sed_main(int argc, char *argv[]);
 #endif
 #ifdef FEAT_LUA
 extern int lua_main(int argc, char *argv[]);
@@ -181,7 +183,7 @@ static char* parseArgument(char* argument) {
     NSString* argumentString = [NSString stringWithCString:argument encoding:NSASCIIStringEncoding];
     // 1) expand environment variables, + "~" (not wildcards ? and *)
     bool cannotExpand = false;
-    while ([argumentString containsString:@"$"]) {
+    while ([argumentString containsString:@"$"] && !cannotExpand) {
         // It has environment variables inside. Work on them one by one.
         // position of first "$" sign:
         NSRange r1 = [argumentString rangeOfString:@"$"];
@@ -293,6 +295,10 @@ static void initializeCommandList()
                     // Commands from Apple text_cmds:
                     @"cat"    : [NSValue valueWithPointer: cat_main],
                     @"wc"     : [NSValue valueWithPointer: wc_main],
+                    // compiled, but deactivated until we have interactive mode
+//                    @"ed"     : [NSValue valueWithPointer: ed_main],
+//                    @"red"     : [NSValue valueWithPointer: ed_main],
+                    @"sed"     : [NSValue valueWithPointer: sed_main],
                     @"grep"   : [NSValue valueWithPointer: grep_main],
                     @"egrep"  : [NSValue valueWithPointer: grep_main],
                     @"fgrep"  : [NSValue valueWithPointer: grep_main],
@@ -308,8 +314,8 @@ static void initializeCommandList()
                     // http, https, ftp... should be OK.
                     @"curl"   : [NSValue valueWithPointer: curl_main],
                     // scp / sftp require conversion to curl, rewriting arguments
-                    // @"scp"    : [NSValue valueWithPointer: curl_main],
-                    // @"sftp"   : [NSValue valueWithPointer: curl_main],
+                    @"scp"    : [NSValue valueWithPointer: curl_main],
+                    @"sftp"   : [NSValue valueWithPointer: curl_main],
 #endif
 #ifdef FEAT_PYTHON
                     // from python:
@@ -575,10 +581,12 @@ int ios_system(char* inputCmd) {
     char* str = command;
     while(*str) if (*str++ == ' ') ++numSpaces;
     char** argv = (char **)malloc(sizeof(char*) * (numSpaces + 2));
+    bool* dontExpand = malloc(sizeof(bool) * (numSpaces + 2));
     // n spaces = n+1 arguments, plus null at the end
     str = command;
     while (*str) {
         argv[argc] = str;
+        dontExpand[argc] = false;
         argc += 1;
         if (str[0] == '\'') { // argument begins with a quote.
             // everything until next quote is part of the argument
@@ -587,6 +595,7 @@ int ios_system(char* inputCmd) {
             if (!end) break;
             end[0] = 0x0;
             str = end + 1;
+            dontExpand[argc-1] = true; // don't expand arguments in quotes
         } if (str[0] == '\"') { // argument begins with a double quote.
             // everything until next double quote is part of the argument
             argv[argc-1] = str + 1;
@@ -594,6 +603,7 @@ int ios_system(char* inputCmd) {
             if (!end) break;
             end[0] = 0x0;
             str = end + 1;
+            dontExpand[argc-1] = true; // don't expand arguments in quotes
         } else {
             // skip to next space:
             char* end = strstr(str, " ");
@@ -605,18 +615,19 @@ int ios_system(char* inputCmd) {
         while (str && (str[0] == ' ')) str++; // skip multiple spaces
     }
     argv[argc] = NULL;
-    // So far, all arguments are pointers into originalCommand.
-    // We need to change them (environment variables expansion, ~ expansion, etc)
-    // Duplicate everything so we can realloc:
-    char** argv_copy = (char **)malloc(sizeof(char*) * (argc + 1));
-    for (int i = 0; i < argc; i++) argv_copy[i] = strdup(argv[i]);
-    argv_copy[argc] = NULL;
-    free(argv);
-    argv = argv_copy;
-    // We have the arguments. Parse them for environment variables, ~, etc.
-    for (int i = 1; i < argc; i++) argv[i] = parseArgument(argv[i]);
-    
     if (argc != 0) {
+        // So far, all arguments are pointers into originalCommand.
+        // We need to change them (environment variables expansion, ~ expansion, etc)
+        // Duplicate everything so we can realloc:
+        char** argv_copy = (char **)malloc(sizeof(char*) * (argc + 1));
+        for (int i = 0; i < argc; i++) argv_copy[i] = strdup(argv[i]);
+        argv_copy[argc] = NULL;
+        free(argv);
+        argv = argv_copy;
+        // We have the arguments. Parse them for environment variables, ~, etc.
+        bool canHaveRemoteFiles = (strcmp(argv[0], "scp") == 0) || (strcmp(argv[0], "sftp") == 0);
+        for (int i = 1; i < argc; i++) if (!dontExpand[i]) argv[i] = parseArgument(argv[i]);
+    
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
         //   if so, does it exist, does it have +x bit set, does it have #! python or #! lua on the first line?
@@ -733,9 +744,9 @@ int ios_system(char* inputCmd) {
         } else {
             // TODO: this should also raise an exception, for python scripts
             fprintf(stderr, "%s: command not found\n", argv[0]);
-        }
-    }
-    for (int i = 0; i < argc; i++) free(argv[i]);
+        } // if (function)
+        for (int i = 0; i < argc; i++) free(argv[i]);
+    } // argc != 0
     free(argv);
     free(originalCommand); // releases cmd
     // Did we write anything?

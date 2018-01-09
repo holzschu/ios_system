@@ -1,6 +1,6 @@
 diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
 --- shell_cmds-203/date/date.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/date.c	2017-12-23 17:52:01.000000000 +0100
++++ shell_cmds/date/date.c	2018-01-07 17:01:47.000000000 +0100
 @@ -47,7 +47,7 @@
  #include <sys/stat.h>
  
@@ -136,7 +136,7 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  
 diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
 --- shell_cmds-203/date/vary.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/vary.c	2017-12-23 17:52:01.000000000 +0100
++++ shell_cmds/date/vary.c	2018-01-07 17:01:47.000000000 +0100
 @@ -27,11 +27,14 @@
  #include <sys/cdefs.h>
  __FBSDID("$FreeBSD$");
@@ -169,7 +169,7 @@ diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
    return result;
 diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 --- shell_cmds-203/env/env.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/env.c	2017-12-23 17:53:00.000000000 +0100
++++ shell_cmds/env/env.c	2018-01-07 17:01:47.000000000 +0100
 @@ -42,7 +42,7 @@
  #include <sys/cdefs.h>
  __FBSDID("$FreeBSD$");
@@ -247,7 +247,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  		(void)printf("%s\n", *ep);
 diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
 --- shell_cmds-203/env/envopts.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/envopts.c	2017-12-23 17:53:17.000000000 +0100
++++ shell_cmds/env/envopts.c	2018-01-07 17:01:47.000000000 +0100
 @@ -33,7 +33,7 @@
  
  #include <sys/stat.h>
@@ -336,7 +336,7 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  	 * We now know we have a valid environment variable name, so update
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2017-12-23 17:54:12.000000000 +0100
++++ shell_cmds/id/id.c	2018-01-07 17:01:48.000000000 +0100
 @@ -54,7 +54,7 @@
  #include <bsm/audit.h>
  #endif
@@ -494,7 +494,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  	(void)printf("%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n", pw->pw_name,
 diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
 --- shell_cmds-203/printenv/printenv.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/printenv/printenv.c	2017-12-09 00:12:42.000000000 +0100
++++ shell_cmds/printenv/printenv.c	2018-01-07 17:01:47.000000000 +0100
 @@ -48,8 +48,9 @@
  #include <stdio.h>
  #include <string.h>
@@ -531,7 +531,7 @@ diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
  	(void)fprintf(stderr, "usage: printenv [name]\n");
 diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
 --- shell_cmds-203/pwd/pwd.c	2006-09-12 00:14:13.000000000 +0200
-+++ shell_cmds/pwd/pwd.c	2017-12-23 17:54:25.000000000 +0100
++++ shell_cmds/pwd/pwd.c	2018-01-07 17:01:47.000000000 +0100
 @@ -45,21 +45,24 @@
  #include <sys/stat.h>
  #include <sys/types.h>
@@ -582,7 +582,7 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
 diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
 --- shell_cmds-203/uname/uname.c	2013-09-26 01:55:54.000000000 +0200
-+++ shell_cmds/uname/uname.c	2017-12-23 15:07:03.000000000 +0100
++++ shell_cmds/uname/uname.c	2018-01-07 17:01:47.000000000 +0100
 @@ -42,21 +42,23 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -643,7 +643,7 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
  #ifndef __APPLE__
 diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
 --- shell_cmds-203/w/fmt.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/fmt.c	2017-12-12 23:58:22.000000000 +0100
++++ shell_cmds/w/fmt.c	2018-01-07 17:01:48.000000000 +0100
 @@ -39,13 +39,13 @@
  #include <sys/time.h>
  #include <sys/resource.h>
@@ -683,7 +683,7 @@ diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
  	if (*argv == 0) {
 diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
 --- shell_cmds-203/w/proc_compare.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/proc_compare.c	2017-12-09 00:12:42.000000000 +0100
++++ shell_cmds/w/proc_compare.c	2018-01-07 17:01:48.000000000 +0100
 @@ -38,13 +38,15 @@
  __FBSDID("$FreeBSD: src/usr.bin/w/proc_compare.c,v 1.9 2004/04/14 09:34:17 bde Exp $");
  #endif
@@ -703,7 +703,7 @@ diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
  
 diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
 --- shell_cmds-203/w/w.c	2007-10-03 11:55:12.000000000 +0200
-+++ shell_cmds/w/w.c	2017-12-23 17:55:00.000000000 +0100
++++ shell_cmds/w/w.c	2018-01-07 17:01:48.000000000 +0100
 @@ -50,15 +50,16 @@
   * This program is similar to the systat command on Tenex/Tops 10/20
   *
