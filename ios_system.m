@@ -82,6 +82,7 @@ extern int grep_main(int argc, char *argv[]);
 extern int wc_main(int argc, char *argv[]);
 extern int ed_main(int argc, char *argv[]);
 extern int sed_main(int argc, char *argv[]);
+extern int awk_main(int argc, char *argv[]);
 #endif
 #ifdef FEAT_LUA
 extern int lua_main(int argc, char *argv[]);
@@ -299,6 +300,7 @@ static void initializeCommandList()
 //                    @"ed"     : [NSValue valueWithPointer: ed_main],
 //                    @"red"     : [NSValue valueWithPointer: ed_main],
                     @"sed"     : [NSValue valueWithPointer: sed_main],
+                    @"awk"     : [NSValue valueWithPointer: awk_main],
                     @"grep"   : [NSValue valueWithPointer: grep_main],
                     @"egrep"  : [NSValue valueWithPointer: grep_main],
                     @"fgrep"  : [NSValue valueWithPointer: grep_main],
@@ -624,6 +626,9 @@ int ios_system(char* inputCmd) {
         argv_copy[argc] = NULL;
         free(argv);
         argv = argv_copy;
+        // Because some commands change argv, keep a local copy for release.
+        char** argv_ref = (char **)malloc(sizeof(char*) * (argc + 1));
+        for (int i = 0; i < argc; i++) argv_ref[i] = argv[i];
         // We have the arguments. Parse them for environment variables, ~, etc.
         bool canHaveRemoteFiles = (strcmp(argv[0], "scp") == 0) || (strcmp(argv[0], "sftp") == 0);
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) argv[i] = parseArgument(argv[i]);
@@ -745,7 +750,7 @@ int ios_system(char* inputCmd) {
             // TODO: this should also raise an exception, for python scripts
             fprintf(stderr, "%s: command not found\n", argv[0]);
         } // if (function)
-        for (int i = 0; i < argc; i++) free(argv[i]);
+        for (int i = 0; i < argc; i++) free(argv_ref[i]);
     } // argc != 0
     free(argv);
     free(originalCommand); // releases cmd
