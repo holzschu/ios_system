@@ -13,6 +13,18 @@
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
+		2248DB082004A5F900F2944C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB002004A5F800F2944C /* main.c */; };
+		2248DB092004A5F900F2944C /* glbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB012004A5F800F2944C /* glbl.c */; };
+		2248DB0A2004A5F900F2944C /* io.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB022004A5F800F2944C /* io.c */; };
+		2248DB0B2004A5F900F2944C /* undo.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB032004A5F900F2944C /* undo.c */; };
+		2248DB0C2004A5F900F2944C /* sub.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB042004A5F900F2944C /* sub.c */; };
+		2248DB0D2004A5F900F2944C /* cbc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB052004A5F900F2944C /* cbc.c */; };
+		2248DB0E2004A5F900F2944C /* buf.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB062004A5F900F2944C /* buf.c */; settings = {COMPILER_FLAGS = "-x objective-c"; }; };
+		2248DB0F2004A5F900F2944C /* re.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB072004A5F900F2944C /* re.c */; };
+		2248DB152004C5DB00F2944C /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB112004C5DB00F2944C /* misc.c */; };
+		2248DB162004C5DB00F2944C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB122004C5DB00F2944C /* main.c */; };
+		2248DB172004C5DB00F2944C /* process.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB132004C5DB00F2944C /* process.c */; };
+		2248DB182004C5DB00F2944C /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB142004C5DB00F2944C /* compile.c */; };
 		22577E481FDB47A90050F312 /* err.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D451FDB47A90050F312 /* err.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H "; }; };
 		22577E491FDB47A90050F312 /* lafe_err.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577D461FDB47A90050F312 /* lafe_err.h */; };
 		22577E4A1FDB47A90050F312 /* lafe_platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577D471FDB47A90050F312 /* lafe_platform.h */; };
@@ -124,10 +136,10 @@
 		2257811B1FDB4D380050F312 /* amigaos.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577F9F1FDB4D370050F312 /* amigaos.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257811C1FDB4D380050F312 /* amigaos.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FA01FDB4D370050F312 /* amigaos.h */; };
 		2257811D1FDB4D380050F312 /* arpa_telnet.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FA11FDB4D370050F312 /* arpa_telnet.h */; };
-		2257811E1FDB4D380050F312 /* asyn-ares.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA21FDB4D370050F312 /* asyn-ares.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		2257811F1FDB4D380050F312 /* asyn-thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA31FDB4D370050F312 /* asyn-thread.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257811E1FDB4D380050F312 /* asyn-ares.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA21FDB4D370050F312 /* asyn-ares.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257811F1FDB4D380050F312 /* asyn-thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA31FDB4D370050F312 /* asyn-thread.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781201FDB4D380050F312 /* asyn.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FA41FDB4D370050F312 /* asyn.h */; };
-		225781211FDB4D380050F312 /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA51FDB4D370050F312 /* base64.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781211FDB4D380050F312 /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA51FDB4D370050F312 /* base64.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781241FDB4D380050F312 /* config-amigaos.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FA81FDB4D370050F312 /* config-amigaos.h */; };
 		225781251FDB4D380050F312 /* config-dos.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FA91FDB4D370050F312 /* config-dos.h */; };
 		225781261FDB4D380050F312 /* config-mac.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FAA1FDB4D370050F312 /* config-mac.h */; };
@@ -138,105 +150,105 @@
 		2257812B1FDB4D380050F312 /* config-vxworks.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FAF1FDB4D370050F312 /* config-vxworks.h */; };
 		2257812C1FDB4D380050F312 /* config-win32.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FB01FDB4D370050F312 /* config-win32.h */; };
 		2257812D1FDB4D380050F312 /* config-win32ce.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FB11FDB4D370050F312 /* config-win32ce.h */; };
-		2257812E1FDB4D380050F312 /* conncache.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB21FDB4D370050F312 /* conncache.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257812E1FDB4D380050F312 /* conncache.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB21FDB4D370050F312 /* conncache.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257812F1FDB4D380050F312 /* conncache.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FB31FDB4D370050F312 /* conncache.h */; };
-		225781301FDB4D380050F312 /* connect.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB41FDB4D370050F312 /* connect.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/"; }; };
+		225781301FDB4D380050F312 /* connect.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB41FDB4D370050F312 /* connect.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/"; }; };
 		225781311FDB4D380050F312 /* connect.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FB51FDB4D370050F312 /* connect.h */; };
-		225781321FDB4D380050F312 /* content_encoding.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB61FDB4D370050F312 /* content_encoding.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781321FDB4D380050F312 /* content_encoding.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB61FDB4D370050F312 /* content_encoding.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781331FDB4D380050F312 /* content_encoding.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FB71FDB4D370050F312 /* content_encoding.h */; };
-		225781341FDB4D380050F312 /* cookie.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB81FDB4D370050F312 /* cookie.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781341FDB4D380050F312 /* cookie.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB81FDB4D370050F312 /* cookie.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781351FDB4D380050F312 /* cookie.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FB91FDB4D370050F312 /* cookie.h */; };
-		225781361FDB4D380050F312 /* curl_addrinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBA1FDB4D370050F312 /* curl_addrinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781361FDB4D380050F312 /* curl_addrinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBA1FDB4D370050F312 /* curl_addrinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781371FDB4D380050F312 /* curl_addrinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FBB1FDB4D370050F312 /* curl_addrinfo.h */; };
 		225781381FDB4D380050F312 /* curl_base64.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FBC1FDB4D370050F312 /* curl_base64.h */; };
-		2257813B1FDB4D380050F312 /* curl_des.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBF1FDB4D370050F312 /* curl_des.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257813B1FDB4D380050F312 /* curl_des.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBF1FDB4D370050F312 /* curl_des.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257813C1FDB4D380050F312 /* curl_des.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FC01FDB4D370050F312 /* curl_des.h */; };
-		2257813D1FDB4D380050F312 /* curl_endian.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC11FDB4D370050F312 /* curl_endian.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257813D1FDB4D380050F312 /* curl_endian.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC11FDB4D370050F312 /* curl_endian.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257813E1FDB4D380050F312 /* curl_endian.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FC21FDB4D370050F312 /* curl_endian.h */; };
-		2257813F1FDB4D380050F312 /* curl_fnmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC31FDB4D370050F312 /* curl_fnmatch.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257813F1FDB4D380050F312 /* curl_fnmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC31FDB4D370050F312 /* curl_fnmatch.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781401FDB4D380050F312 /* curl_fnmatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FC41FDB4D370050F312 /* curl_fnmatch.h */; };
-		225781411FDB4D380050F312 /* curl_gethostname.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC51FDB4D370050F312 /* curl_gethostname.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781411FDB4D380050F312 /* curl_gethostname.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC51FDB4D370050F312 /* curl_gethostname.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781421FDB4D380050F312 /* curl_gethostname.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FC61FDB4D370050F312 /* curl_gethostname.h */; };
-		225781431FDB4D380050F312 /* curl_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC71FDB4D370050F312 /* curl_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781431FDB4D380050F312 /* curl_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC71FDB4D370050F312 /* curl_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781441FDB4D380050F312 /* curl_gssapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FC81FDB4D370050F312 /* curl_gssapi.h */; };
 		225781451FDB4D380050F312 /* curl_hmac.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FC91FDB4D370050F312 /* curl_hmac.h */; };
 		225781461FDB4D380050F312 /* curl_ldap.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FCA1FDB4D370050F312 /* curl_ldap.h */; };
 		225781471FDB4D380050F312 /* curl_md4.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FCB1FDB4D370050F312 /* curl_md4.h */; };
 		225781481FDB4D380050F312 /* curl_md5.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FCC1FDB4D370050F312 /* curl_md5.h */; };
 		225781491FDB4D380050F312 /* curl_memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FCD1FDB4D370050F312 /* curl_memory.h */; };
-		2257814A1FDB4D380050F312 /* curl_memrchr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FCE1FDB4D370050F312 /* curl_memrchr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257814A1FDB4D380050F312 /* curl_memrchr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FCE1FDB4D370050F312 /* curl_memrchr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257814B1FDB4D380050F312 /* curl_memrchr.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FCF1FDB4D370050F312 /* curl_memrchr.h */; };
-		2257814C1FDB4D380050F312 /* curl_multibyte.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD01FDB4D370050F312 /* curl_multibyte.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257814C1FDB4D380050F312 /* curl_multibyte.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD01FDB4D370050F312 /* curl_multibyte.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257814D1FDB4D380050F312 /* curl_multibyte.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FD11FDB4D370050F312 /* curl_multibyte.h */; };
-		2257814E1FDB4D380050F312 /* curl_ntlm_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD21FDB4D370050F312 /* curl_ntlm_core.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257814E1FDB4D380050F312 /* curl_ntlm_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD21FDB4D370050F312 /* curl_ntlm_core.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257814F1FDB4D380050F312 /* curl_ntlm_core.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FD31FDB4D370050F312 /* curl_ntlm_core.h */; };
-		225781501FDB4D380050F312 /* curl_ntlm_wb.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD41FDB4D370050F312 /* curl_ntlm_wb.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781501FDB4D380050F312 /* curl_ntlm_wb.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD41FDB4D370050F312 /* curl_ntlm_wb.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781511FDB4D380050F312 /* curl_ntlm_wb.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FD51FDB4D370050F312 /* curl_ntlm_wb.h */; };
 		225781521FDB4D380050F312 /* curl_printf.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FD61FDB4D370050F312 /* curl_printf.h */; };
-		225781531FDB4D380050F312 /* curl_rtmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD71FDB4D370050F312 /* curl_rtmp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781531FDB4D380050F312 /* curl_rtmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD71FDB4D370050F312 /* curl_rtmp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781541FDB4D380050F312 /* curl_rtmp.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FD81FDB4D370050F312 /* curl_rtmp.h */; };
-		225781551FDB4D380050F312 /* curl_sasl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD91FDB4D370050F312 /* curl_sasl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781551FDB4D380050F312 /* curl_sasl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD91FDB4D370050F312 /* curl_sasl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781561FDB4D380050F312 /* curl_sasl.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FDA1FDB4D370050F312 /* curl_sasl.h */; };
 		225781571FDB4D380050F312 /* curl_sec.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FDB1FDB4D370050F312 /* curl_sec.h */; };
 		225781581FDB4D380050F312 /* curl_setup.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FDC1FDB4D370050F312 /* curl_setup.h */; };
 		225781591FDB4D380050F312 /* curl_setup_once.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FDD1FDB4D370050F312 /* curl_setup_once.h */; };
-		2257815A1FDB4D380050F312 /* curl_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FDE1FDB4D370050F312 /* curl_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257815A1FDB4D380050F312 /* curl_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FDE1FDB4D370050F312 /* curl_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257815B1FDB4D380050F312 /* curl_sspi.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FDF1FDB4D370050F312 /* curl_sspi.h */; };
-		2257815C1FDB4D380050F312 /* curl_threads.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE01FDB4D370050F312 /* curl_threads.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257815C1FDB4D380050F312 /* curl_threads.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE01FDB4D370050F312 /* curl_threads.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257815D1FDB4D380050F312 /* curl_threads.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FE11FDB4D370050F312 /* curl_threads.h */; };
 		2257815E1FDB4D380050F312 /* curlx.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FE21FDB4D370050F312 /* curlx.h */; };
-		2257815F1FDB4D380050F312 /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE31FDB4D370050F312 /* dict.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257815F1FDB4D380050F312 /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE31FDB4D370050F312 /* dict.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781601FDB4D380050F312 /* dict.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FE41FDB4D370050F312 /* dict.h */; };
 		225781611FDB4D380050F312 /* dotdot.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE51FDB4D370050F312 /* dotdot.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781621FDB4D380050F312 /* dotdot.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FE61FDB4D370050F312 /* dotdot.h */; };
-		225781631FDB4D380050F312 /* easy.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE71FDB4D370050F312 /* easy.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781631FDB4D380050F312 /* easy.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE71FDB4D370050F312 /* easy.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781641FDB4D380050F312 /* easyif.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FE81FDB4D370050F312 /* easyif.h */; };
-		225781651FDB4D380050F312 /* escape.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE91FDB4D370050F312 /* escape.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781651FDB4D380050F312 /* escape.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE91FDB4D370050F312 /* escape.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781661FDB4D380050F312 /* escape.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FEA1FDB4D370050F312 /* escape.h */; };
-		225781671FDB4D380050F312 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FEB1FDB4D370050F312 /* file.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781671FDB4D380050F312 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FEB1FDB4D370050F312 /* file.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781681FDB4D380050F312 /* file.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FEC1FDB4D370050F312 /* file.h */; };
-		225781691FDB4D380050F312 /* fileinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FED1FDB4D370050F312 /* fileinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781691FDB4D380050F312 /* fileinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FED1FDB4D370050F312 /* fileinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257816A1FDB4D380050F312 /* fileinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FEE1FDB4D370050F312 /* fileinfo.h */; };
-		2257816C1FDB4D380050F312 /* formdata.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF01FDB4D370050F312 /* formdata.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257816C1FDB4D380050F312 /* formdata.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF01FDB4D370050F312 /* formdata.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257816D1FDB4D380050F312 /* formdata.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FF11FDB4D370050F312 /* formdata.h */; };
-		2257816E1FDB4D380050F312 /* ftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF21FDB4D370050F312 /* ftp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257816E1FDB4D380050F312 /* ftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF21FDB4D370050F312 /* ftp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257816F1FDB4D380050F312 /* ftp.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FF31FDB4D370050F312 /* ftp.h */; };
-		225781701FDB4D380050F312 /* ftplistparser.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF41FDB4D370050F312 /* ftplistparser.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781701FDB4D380050F312 /* ftplistparser.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF41FDB4D370050F312 /* ftplistparser.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781711FDB4D380050F312 /* ftplistparser.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FF51FDB4D370050F312 /* ftplistparser.h */; };
 		225781721FDB4D380050F312 /* getenv.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF61FDB4D370050F312 /* getenv.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781731FDB4D380050F312 /* getinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF71FDB4D370050F312 /* getinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781731FDB4D380050F312 /* getinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF71FDB4D370050F312 /* getinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781741FDB4D380050F312 /* getinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FF81FDB4D370050F312 /* getinfo.h */; };
-		225781751FDB4D380050F312 /* gopher.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF91FDB4D370050F312 /* gopher.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781751FDB4D380050F312 /* gopher.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF91FDB4D370050F312 /* gopher.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781761FDB4D380050F312 /* gopher.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FFA1FDB4D370050F312 /* gopher.h */; };
 		225781771FDB4D380050F312 /* hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFB1FDB4D370050F312 /* hash.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781781FDB4D380050F312 /* hash.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577FFC1FDB4D370050F312 /* hash.h */; };
 		225781791FDB4D380050F312 /* hmac.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFD1FDB4D370050F312 /* hmac.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		2257817A1FDB4D380050F312 /* hostasyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFE1FDB4D370050F312 /* hostasyn.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		2257817B1FDB4D380050F312 /* hostcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFF1FDB4D370050F312 /* hostcheck.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257817A1FDB4D380050F312 /* hostasyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFE1FDB4D370050F312 /* hostasyn.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257817B1FDB4D380050F312 /* hostcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFF1FDB4D370050F312 /* hostcheck.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257817C1FDB4D380050F312 /* hostcheck.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780001FDB4D370050F312 /* hostcheck.h */; };
-		2257817D1FDB4D380050F312 /* hostip.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780011FDB4D370050F312 /* hostip.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257817D1FDB4D380050F312 /* hostip.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780011FDB4D370050F312 /* hostip.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257817E1FDB4D380050F312 /* hostip.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780021FDB4D370050F312 /* hostip.h */; };
-		2257817F1FDB4D380050F312 /* hostip4.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780031FDB4D370050F312 /* hostip4.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781801FDB4D380050F312 /* hostip6.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780041FDB4D370050F312 /* hostip6.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781811FDB4D380050F312 /* hostsyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780051FDB4D370050F312 /* hostsyn.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781821FDB4D380050F312 /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780061FDB4D370050F312 /* http.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257817F1FDB4D380050F312 /* hostip4.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780031FDB4D370050F312 /* hostip4.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781801FDB4D380050F312 /* hostip6.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780041FDB4D370050F312 /* hostip6.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781811FDB4D380050F312 /* hostsyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780051FDB4D370050F312 /* hostsyn.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781821FDB4D380050F312 /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780061FDB4D370050F312 /* http.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781831FDB4D380050F312 /* http.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780071FDB4D370050F312 /* http.h */; };
 		225781841FDB4D380050F312 /* http2.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780081FDB4D370050F312 /* http2.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781851FDB4D380050F312 /* http2.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780091FDB4D370050F312 /* http2.h */; };
-		225781861FDB4D380050F312 /* http_chunks.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800A1FDB4D370050F312 /* http_chunks.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781861FDB4D380050F312 /* http_chunks.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800A1FDB4D370050F312 /* http_chunks.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781871FDB4D380050F312 /* http_chunks.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257800B1FDB4D370050F312 /* http_chunks.h */; };
-		225781881FDB4D380050F312 /* http_digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800C1FDB4D370050F312 /* http_digest.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781881FDB4D380050F312 /* http_digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800C1FDB4D370050F312 /* http_digest.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781891FDB4D380050F312 /* http_digest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257800D1FDB4D370050F312 /* http_digest.h */; };
 		2257818A1FDB4D380050F312 /* http_negotiate.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800E1FDB4D370050F312 /* http_negotiate.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257818B1FDB4D380050F312 /* http_negotiate.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257800F1FDB4D370050F312 /* http_negotiate.h */; };
-		2257818C1FDB4D380050F312 /* http_ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780101FDB4D370050F312 /* http_ntlm.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257818C1FDB4D380050F312 /* http_ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780101FDB4D370050F312 /* http_ntlm.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257818D1FDB4D380050F312 /* http_ntlm.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780111FDB4D370050F312 /* http_ntlm.h */; };
-		2257818E1FDB4D380050F312 /* http_proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780121FDB4D370050F312 /* http_proxy.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257818E1FDB4D380050F312 /* http_proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780121FDB4D370050F312 /* http_proxy.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257818F1FDB4D380050F312 /* http_proxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780131FDB4D370050F312 /* http_proxy.h */; };
 		225781901FDB4D380050F312 /* idn_win32.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780141FDB4D370050F312 /* idn_win32.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781911FDB4D380050F312 /* if2ip.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780151FDB4D370050F312 /* if2ip.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781921FDB4D380050F312 /* if2ip.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780161FDB4D370050F312 /* if2ip.h */; };
-		225781931FDB4D380050F312 /* imap.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780171FDB4D370050F312 /* imap.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781931FDB4D380050F312 /* imap.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780171FDB4D370050F312 /* imap.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781941FDB4D380050F312 /* imap.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780181FDB4D370050F312 /* imap.h */; };
 		225781951FDB4D380050F312 /* inet_ntop.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780191FDB4D370050F312 /* inet_ntop.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781961FDB4D380050F312 /* inet_ntop.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257801A1FDB4D370050F312 /* inet_ntop.h */; };
@@ -251,7 +263,7 @@
 		225781AC1FDB4D380050F312 /* memdebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780301FDB4D380050F312 /* memdebug.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781AD1FDB4D380050F312 /* memdebug.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780311FDB4D380050F312 /* memdebug.h */; };
 		225781B01FDB4D380050F312 /* mprintf.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780341FDB4D380050F312 /* mprintf.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781B11FDB4D380050F312 /* multi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780351FDB4D380050F312 /* multi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781B11FDB4D380050F312 /* multi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780351FDB4D380050F312 /* multi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781B21FDB4D380050F312 /* multihandle.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780361FDB4D380050F312 /* multihandle.h */; };
 		225781B31FDB4D380050F312 /* multiif.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780371FDB4D380050F312 /* multiif.h */; };
 		225781B41FDB4D380050F312 /* netrc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780381FDB4D380050F312 /* netrc.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
@@ -265,50 +277,50 @@
 		225781BF1FDB4D380050F312 /* openldap.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780431FDB4D380050F312 /* openldap.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781C01FDB4D380050F312 /* parsedate.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780441FDB4D380050F312 /* parsedate.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781C11FDB4D380050F312 /* parsedate.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780451FDB4D380050F312 /* parsedate.h */; };
-		225781C21FDB4D380050F312 /* pingpong.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780461FDB4D380050F312 /* pingpong.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781C21FDB4D380050F312 /* pingpong.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780461FDB4D380050F312 /* pingpong.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781C31FDB4D380050F312 /* pingpong.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780471FDB4D380050F312 /* pingpong.h */; };
-		225781C41FDB4D380050F312 /* pipeline.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780481FDB4D380050F312 /* pipeline.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781C41FDB4D380050F312 /* pipeline.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780481FDB4D380050F312 /* pipeline.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781C51FDB4D380050F312 /* pipeline.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780491FDB4D380050F312 /* pipeline.h */; };
-		225781C61FDB4D380050F312 /* pop3.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804A1FDB4D380050F312 /* pop3.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781C61FDB4D380050F312 /* pop3.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804A1FDB4D380050F312 /* pop3.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781C71FDB4D390050F312 /* pop3.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257804B1FDB4D380050F312 /* pop3.h */; };
-		225781C81FDB4D390050F312 /* progress.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804C1FDB4D380050F312 /* progress.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781C81FDB4D390050F312 /* progress.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804C1FDB4D380050F312 /* progress.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781C91FDB4D390050F312 /* progress.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257804D1FDB4D380050F312 /* progress.h */; };
-		225781CA1FDB4D390050F312 /* rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804E1FDB4D380050F312 /* rand.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781CA1FDB4D390050F312 /* rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804E1FDB4D380050F312 /* rand.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781CB1FDB4D390050F312 /* rand.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257804F1FDB4D380050F312 /* rand.h */; };
-		225781CC1FDB4D390050F312 /* rtsp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780501FDB4D380050F312 /* rtsp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781CC1FDB4D390050F312 /* rtsp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780501FDB4D380050F312 /* rtsp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781CD1FDB4D390050F312 /* rtsp.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780511FDB4D380050F312 /* rtsp.h */; };
 		225781CE1FDB4D390050F312 /* security.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780521FDB4D380050F312 /* security.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781CF1FDB4D390050F312 /* select.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780531FDB4D380050F312 /* select.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781CF1FDB4D390050F312 /* select.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780531FDB4D380050F312 /* select.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781D01FDB4D390050F312 /* select.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780541FDB4D380050F312 /* select.h */; };
-		225781D11FDB4D390050F312 /* sendf.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780551FDB4D380050F312 /* sendf.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781D11FDB4D390050F312 /* sendf.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780551FDB4D380050F312 /* sendf.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781D21FDB4D390050F312 /* sendf.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780561FDB4D380050F312 /* sendf.h */; };
 		225781D31FDB4D390050F312 /* setup-os400.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780571FDB4D380050F312 /* setup-os400.h */; };
 		225781D41FDB4D390050F312 /* setup-vms.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780581FDB4D380050F312 /* setup-vms.h */; };
-		225781D51FDB4D390050F312 /* share.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780591FDB4D380050F312 /* share.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781D51FDB4D390050F312 /* share.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780591FDB4D380050F312 /* share.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781D61FDB4D390050F312 /* share.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257805A1FDB4D380050F312 /* share.h */; };
 		225781D71FDB4D390050F312 /* sigpipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257805B1FDB4D380050F312 /* sigpipe.h */; };
 		225781D81FDB4D390050F312 /* slist.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257805C1FDB4D380050F312 /* slist.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781D91FDB4D390050F312 /* slist.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257805D1FDB4D380050F312 /* slist.h */; };
-		225781DA1FDB4D390050F312 /* smb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257805E1FDB4D380050F312 /* smb.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781DA1FDB4D390050F312 /* smb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257805E1FDB4D380050F312 /* smb.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781DB1FDB4D390050F312 /* smb.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257805F1FDB4D380050F312 /* smb.h */; };
-		225781DC1FDB4D390050F312 /* smtp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780601FDB4D380050F312 /* smtp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/"; }; };
+		225781DC1FDB4D390050F312 /* smtp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780601FDB4D380050F312 /* smtp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/"; }; };
 		225781DD1FDB4D390050F312 /* smtp.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780611FDB4D380050F312 /* smtp.h */; };
 		225781DE1FDB4D390050F312 /* sockaddr.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780621FDB4D380050F312 /* sockaddr.h */; };
-		225781DF1FDB4D390050F312 /* socks.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780631FDB4D380050F312 /* socks.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781DF1FDB4D390050F312 /* socks.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780631FDB4D380050F312 /* socks.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781E01FDB4D390050F312 /* socks.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780641FDB4D380050F312 /* socks.h */; };
-		225781E11FDB4D390050F312 /* socks_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780651FDB4D380050F312 /* socks_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781E21FDB4D390050F312 /* socks_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780661FDB4D380050F312 /* socks_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225781E31FDB4D390050F312 /* speedcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780671FDB4D380050F312 /* speedcheck.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781E11FDB4D390050F312 /* socks_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780651FDB4D380050F312 /* socks_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781E21FDB4D390050F312 /* socks_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780661FDB4D380050F312 /* socks_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781E31FDB4D390050F312 /* speedcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780671FDB4D380050F312 /* speedcheck.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781E41FDB4D390050F312 /* speedcheck.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780681FDB4D380050F312 /* speedcheck.h */; };
 		225781E51FDB4D390050F312 /* splay.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780691FDB4D380050F312 /* splay.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781E61FDB4D390050F312 /* splay.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257806A1FDB4D380050F312 /* splay.h */; };
-		225781E71FDB4D390050F312 /* ssh.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806B1FDB4D380050F312 /* ssh.c */; settings = {COMPILER_FLAGS = "-x objective-c -DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781E71FDB4D390050F312 /* ssh.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806B1FDB4D380050F312 /* ssh.c */; settings = {COMPILER_FLAGS = "-x objective-c -DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781E81FDB4D390050F312 /* ssh.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257806C1FDB4D380050F312 /* ssh.h */; };
 		225781E91FDB4D390050F312 /* strcase.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806D1FDB4D380050F312 /* strcase.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781EA1FDB4D390050F312 /* strcase.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257806E1FDB4D380050F312 /* strcase.h */; };
 		225781EB1FDB4D390050F312 /* strdup.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806F1FDB4D380050F312 /* strdup.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781EC1FDB4D390050F312 /* strdup.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780701FDB4D380050F312 /* strdup.h */; };
-		225781ED1FDB4D390050F312 /* strerror.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780711FDB4D380050F312 /* strerror.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781ED1FDB4D390050F312 /* strerror.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780711FDB4D380050F312 /* strerror.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781EE1FDB4D390050F312 /* strerror.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780721FDB4D380050F312 /* strerror.h */; };
 		225781EF1FDB4D390050F312 /* strtok.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780731FDB4D380050F312 /* strtok.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781F01FDB4D390050F312 /* strtok.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780741FDB4D380050F312 /* strtok.h */; };
@@ -316,38 +328,38 @@
 		225781F21FDB4D390050F312 /* strtoofft.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780761FDB4D380050F312 /* strtoofft.h */; };
 		225781F31FDB4D390050F312 /* system_win32.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780771FDB4D380050F312 /* system_win32.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781F41FDB4D390050F312 /* system_win32.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780781FDB4D380050F312 /* system_win32.h */; };
-		225781F51FDB4D390050F312 /* telnet.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780791FDB4D380050F312 /* telnet.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781F51FDB4D390050F312 /* telnet.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780791FDB4D380050F312 /* telnet.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781F61FDB4D390050F312 /* telnet.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257807A1FDB4D380050F312 /* telnet.h */; };
-		225781F71FDB4D390050F312 /* tftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807B1FDB4D380050F312 /* tftp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781F71FDB4D390050F312 /* tftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807B1FDB4D380050F312 /* tftp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781F81FDB4D390050F312 /* tftp.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257807C1FDB4D380050F312 /* tftp.h */; };
 		225781F91FDB4D390050F312 /* timeval.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807D1FDB4D380050F312 /* timeval.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781FA1FDB4D390050F312 /* timeval.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257807E1FDB4D380050F312 /* timeval.h */; };
-		225781FB1FDB4D390050F312 /* transfer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807F1FDB4D380050F312 /* transfer.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781FB1FDB4D390050F312 /* transfer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807F1FDB4D380050F312 /* transfer.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781FC1FDB4D390050F312 /* transfer.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780801FDB4D380050F312 /* transfer.h */; };
-		225781FD1FDB4D390050F312 /* url.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780811FDB4D380050F312 /* url.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225781FD1FDB4D390050F312 /* url.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780811FDB4D380050F312 /* url.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225781FE1FDB4D390050F312 /* url.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780821FDB4D380050F312 /* url.h */; };
 		225781FF1FDB4D390050F312 /* urldata.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780831FDB4D380050F312 /* urldata.h */; };
-		225782001FDB4D390050F312 /* cleartext.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780851FDB4D380050F312 /* cleartext.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/"; }; };
-		225782011FDB4D390050F312 /* cram.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780861FDB4D380050F312 /* cram.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/"; }; };
-		225782021FDB4D390050F312 /* digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780871FDB4D380050F312 /* digest.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225782001FDB4D390050F312 /* cleartext.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780851FDB4D380050F312 /* cleartext.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/"; }; };
+		225782011FDB4D390050F312 /* cram.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780861FDB4D380050F312 /* cram.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/"; }; };
+		225782021FDB4D390050F312 /* digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780871FDB4D380050F312 /* digest.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782031FDB4D390050F312 /* digest.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780881FDB4D380050F312 /* digest.h */; };
 		225782041FDB4D390050F312 /* digest_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780891FDB4D380050F312 /* digest_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782051FDB4D390050F312 /* krb5_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808A1FDB4D380050F312 /* krb5_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782061FDB4D390050F312 /* krb5_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808B1FDB4D380050F312 /* krb5_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		225782071FDB4D390050F312 /* ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808C1FDB4D380050F312 /* ntlm.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225782071FDB4D390050F312 /* ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808C1FDB4D380050F312 /* ntlm.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782081FDB4D390050F312 /* ntlm.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257808D1FDB4D380050F312 /* ntlm.h */; };
-		225782091FDB4D390050F312 /* ntlm_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808E1FDB4D380050F312 /* ntlm_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		2257820A1FDB4D390050F312 /* oauth2.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808F1FDB4D380050F312 /* oauth2.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225782091FDB4D390050F312 /* ntlm_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808E1FDB4D380050F312 /* ntlm_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257820A1FDB4D390050F312 /* oauth2.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808F1FDB4D380050F312 /* oauth2.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257820B1FDB4D390050F312 /* spnego_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780901FDB4D380050F312 /* spnego_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257820C1FDB4D390050F312 /* spnego_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780911FDB4D380050F312 /* spnego_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257820D1FDB4D390050F312 /* vauth.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780921FDB4D380050F312 /* vauth.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257820E1FDB4D390050F312 /* vauth.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780931FDB4D380050F312 /* vauth.h */; };
-		2257820F1FDB4D390050F312 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780941FDB4D380050F312 /* version.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257820F1FDB4D390050F312 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780941FDB4D380050F312 /* version.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782101FDB4D390050F312 /* axtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780961FDB4D380050F312 /* axtls.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782111FDB4D390050F312 /* axtls.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780971FDB4D380050F312 /* axtls.h */; };
 		225782121FDB4D390050F312 /* cyassl.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780981FDB4D380050F312 /* cyassl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782131FDB4D390050F312 /* cyassl.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780991FDB4D380050F312 /* cyassl.h */; };
-		225782141FDB4D390050F312 /* darwinssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809A1FDB4D380050F312 /* darwinssl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225782141FDB4D390050F312 /* darwinssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809A1FDB4D380050F312 /* darwinssl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782151FDB4D390050F312 /* darwinssl.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257809B1FDB4D380050F312 /* darwinssl.h */; };
 		225782161FDB4D390050F312 /* gskit.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809C1FDB4D380050F312 /* gskit.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782171FDB4D390050F312 /* gskit.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257809D1FDB4D380050F312 /* gskit.h */; };
@@ -365,7 +377,7 @@
 		225782231FDB4D390050F312 /* polarssl_threadlock.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780A91FDB4D380050F312 /* polarssl_threadlock.h */; };
 		225782241FDB4D390050F312 /* schannel.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AA1FDB4D380050F312 /* schannel.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782251FDB4D390050F312 /* schannel.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780AB1FDB4D380050F312 /* schannel.h */; };
-		225782261FDB4D390050F312 /* vtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AC1FDB4D380050F312 /* vtls.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		225782261FDB4D390050F312 /* vtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AC1FDB4D380050F312 /* vtls.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782271FDB4D390050F312 /* vtls.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780AD1FDB4D380050F312 /* vtls.h */; };
 		225782281FDB4D390050F312 /* warnless.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AE1FDB4D380050F312 /* warnless.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782291FDB4D390050F312 /* warnless.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780AF1FDB4D380050F312 /* warnless.h */; };
@@ -421,7 +433,7 @@
 		2257826B1FDB4D390050F312 /* tool_main.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780F41FDB4D380050F312 /* tool_main.h */; };
 		2257826C1FDB4D390050F312 /* tool_metalink.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F51FDB4D380050F312 /* tool_metalink.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257826D1FDB4D390050F312 /* tool_metalink.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780F61FDB4D380050F312 /* tool_metalink.h */; };
-		2257826E1FDB4D390050F312 /* tool_mfiles.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F71FDB4D380050F312 /* tool_mfiles.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
+		2257826E1FDB4D390050F312 /* tool_mfiles.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F71FDB4D380050F312 /* tool_mfiles.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		2257826F1FDB4D390050F312 /* tool_mfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780F81FDB4D380050F312 /* tool_mfiles.h */; };
 		225782701FDB4D390050F312 /* tool_msgs.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F91FDB4D380050F312 /* tool_msgs.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		225782711FDB4D390050F312 /* tool_msgs.h in Headers */ = {isa = PBXBuildFile; fileRef = 225780FA1FDB4D380050F312 /* tool_msgs.h */; };
@@ -647,12 +659,12 @@
 		22C895561FDBF106006CDE47 /* _csv.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C892AA1FDBF104006CDE47 /* _csv.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C895571FDBF106006CDE47 /* _ctypes.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C892AC1FDBF104006CDE47 /* _ctypes.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/libffi-3.2.1//build_iphoneos-arm64/include/ -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C8955A1FDBF106006CDE47 /* callbacks.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C892AF1FDBF104006CDE47 /* callbacks.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/libffi-3.2.1//build_iphoneos-arm64/include/ -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
-		22C8955B1FDBF106006CDE47 /* callproc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C892B01FDBF104006CDE47 /* callproc.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/libffi-3.2.1//build_iphoneos-arm64/include/ -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
+		22C8955B1FDBF106006CDE47 /* callproc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C892B01FDBF104006CDE47 /* callproc.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/libffi-3.2.1//build_iphoneos-arm64/include/ -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../../../libssh2-for-iOS/include/"; }; };
 		22C8955C1FDBF106006CDE47 /* cfield.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C892B11FDBF104006CDE47 /* cfield.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/libffi-3.2.1//build_iphoneos-arm64/include/ -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C896C91FDBF108006CDE47 /* malloc_closure.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8944D1FDBF104006CDE47 /* malloc_closure.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/libffi-3.2.1//build_iphoneos-arm64/include/ -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C896CA1FDBF108006CDE47 /* stgdict.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8944E1FDBF104006CDE47 /* stgdict.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/libffi-3.2.1//build_iphoneos-arm64/include/ -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C896CE1FDBF108006CDE47 /* _functoolsmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894521FDBF104006CDE47 /* _functoolsmodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
-		22C896CF1FDBF108006CDE47 /* _hashopenssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894531FDBF104006CDE47 /* _hashopenssl.c */; settings = {COMPILER_FLAGS = "-v -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../blink/Frameworks/"; }; };
+		22C896CF1FDBF108006CDE47 /* _hashopenssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894531FDBF104006CDE47 /* _hashopenssl.c */; settings = {COMPILER_FLAGS = "-v -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../../../blink/Frameworks/"; }; };
 		22C896D01FDBF108006CDE47 /* _heapqmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894541FDBF104006CDE47 /* _heapqmodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C896D11FDBF108006CDE47 /* _hotshot.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894551FDBF104006CDE47 /* _hotshot.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C896D21FDBF108006CDE47 /* _iomodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894571FDBF104006CDE47 /* _iomodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
@@ -668,7 +680,7 @@
 		22C896DD1FDBF108006CDE47 /* _math.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894621FDBF104006CDE47 /* _math.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C896E61FDBF108006CDE47 /* _randommodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8946C1FDBF104006CDE47 /* _randommodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C896FA1FDBF108006CDE47 /* _sre.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894811FDBF104006CDE47 /* _sre.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
-		22C896FB1FDBF108006CDE47 /* _ssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894821FDBF104006CDE47 /* _ssl.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../blink/Frameworks/"; }; };
+		22C896FB1FDBF108006CDE47 /* _ssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894821FDBF104006CDE47 /* _ssl.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../../../blink/Frameworks/"; }; };
 		22C896FD1FDBF108006CDE47 /* _struct.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894841FDBF104006CDE47 /* _struct.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C897001FDBF108006CDE47 /* _weakref.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894871FDBF104006CDE47 /* _weakref.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C897041FDBF108006CDE47 /* arraymodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8948B1FDBF104006CDE47 /* arraymodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
@@ -706,7 +718,7 @@
 		22C897631FDBF109006CDE47 /* mmapmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894EC1FDBF105006CDE47 /* mmapmodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C897651FDBF109006CDE47 /* operator.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894EE1FDBF105006CDE47 /* operator.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C897671FDBF109006CDE47 /* parsermodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894F01FDBF105006CDE47 /* parsermodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
-		22C897681FDBF109006CDE47 /* posixmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894F11FDBF105006CDE47 /* posixmodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../blink/Frameworks/"; }; };
+		22C897681FDBF109006CDE47 /* posixmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894F11FDBF105006CDE47 /* posixmodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -F ../../../blink/Frameworks/"; }; };
 		22C8976A1FDBF109006CDE47 /* puremodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894F31FDBF105006CDE47 /* puremodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C8976B1FDBF109006CDE47 /* pwdmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894F41FDBF105006CDE47 /* pwdmodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		22C8976C1FDBF109006CDE47 /* pyexpat.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894F51FDBF105006CDE47 /* pyexpat.c */; settings = {COMPILER_FLAGS = "-I ../python_ios/Python-2.7.13/Modules/expat/ -D HAVE_EXPAT_CONFIG_H -DUSE_PYEXPAT_CAPI -DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
@@ -780,6 +792,18 @@
 		223496AE1FD5FC71007ED1A9 /* ios_system.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_system.h; sourceTree = "<group>"; };
 		223496AF1FD5FC71007ED1A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		223496B61FD5FC89007ED1A9 /* ios_system.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ios_system.m; sourceTree = "<group>"; };
+		2248DB002004A5F800F2944C /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = text_cmds/ed/main.c; sourceTree = SOURCE_ROOT; };
+		2248DB012004A5F800F2944C /* glbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glbl.c; path = text_cmds/ed/glbl.c; sourceTree = SOURCE_ROOT; };
+		2248DB022004A5F800F2944C /* io.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = io.c; path = text_cmds/ed/io.c; sourceTree = SOURCE_ROOT; };
+		2248DB032004A5F900F2944C /* undo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = undo.c; path = text_cmds/ed/undo.c; sourceTree = SOURCE_ROOT; };
+		2248DB042004A5F900F2944C /* sub.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sub.c; path = text_cmds/ed/sub.c; sourceTree = SOURCE_ROOT; };
+		2248DB052004A5F900F2944C /* cbc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cbc.c; path = text_cmds/ed/cbc.c; sourceTree = SOURCE_ROOT; };
+		2248DB062004A5F900F2944C /* buf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = buf.c; path = text_cmds/ed/buf.c; sourceTree = SOURCE_ROOT; };
+		2248DB072004A5F900F2944C /* re.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = re.c; path = text_cmds/ed/re.c; sourceTree = SOURCE_ROOT; };
+		2248DB112004C5DB00F2944C /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = text_cmds/sed/misc.c; sourceTree = SOURCE_ROOT; };
+		2248DB122004C5DB00F2944C /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = text_cmds/sed/main.c; sourceTree = SOURCE_ROOT; };
+		2248DB132004C5DB00F2944C /* process.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = process.c; path = text_cmds/sed/process.c; sourceTree = SOURCE_ROOT; };
+		2248DB142004C5DB00F2944C /* compile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compile.c; path = text_cmds/sed/compile.c; sourceTree = SOURCE_ROOT; };
 		22577D451FDB47A90050F312 /* err.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = err.c; sourceTree = "<group>"; };
 		22577D461FDB47A90050F312 /* lafe_err.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lafe_err.h; sourceTree = "<group>"; };
 		22577D471FDB47A90050F312 /* lafe_platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lafe_platform.h; sourceTree = "<group>"; };
@@ -1614,6 +1638,33 @@
 				2219DFBD1FD739C900675252 /* libtexlua52.5.dylib */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2248DAFF2004A58600F2944C /* ed */ = {
+			isa = PBXGroup;
+			children = (
+				2248DB062004A5F900F2944C /* buf.c */,
+				2248DB052004A5F900F2944C /* cbc.c */,
+				2248DB012004A5F800F2944C /* glbl.c */,
+				2248DB022004A5F800F2944C /* io.c */,
+				2248DB002004A5F800F2944C /* main.c */,
+				2248DB072004A5F900F2944C /* re.c */,
+				2248DB042004A5F900F2944C /* sub.c */,
+				2248DB032004A5F900F2944C /* undo.c */,
+			);
+			name = ed;
+			path = text_cmds_grp/ed;
+			sourceTree = "<group>";
+		};
+		2248DB102004C5C500F2944C /* sed */ = {
+			isa = PBXGroup;
+			children = (
+				2248DB142004C5DB00F2944C /* compile.c */,
+				2248DB122004C5DB00F2944C /* main.c */,
+				2248DB112004C5DB00F2944C /* misc.c */,
+				2248DB132004C5DB00F2944C /* process.c */,
+			);
+			path = sed;
 			sourceTree = "<group>";
 		};
 		22577D401FDB478E0050F312 /* libarchive_grp */ = {
@@ -2481,8 +2532,8 @@
 				22C891831FDBCF08006CDE47 /* traceback.c */,
 			);
 			name = Python;
-			path = "../../python_ios/Python-2.7.13/Python";
-			sourceTree = "<group>";
+			path = "../python_ios/Python-2.7.13/Python";
+			sourceTree = SOURCE_ROOT;
 		};
 		22C891D21FDBD309006CDE47 /* Objects */ = {
 			isa = PBXGroup;
@@ -2529,8 +2580,8 @@
 				22C8920B1FDBD309006CDE47 /* weakrefobject.c */,
 			);
 			name = Objects;
-			path = "../../python_ios/Python-2.7.13/Objects";
-			sourceTree = "<group>";
+			path = "../python_ios/Python-2.7.13/Objects";
+			sourceTree = SOURCE_ROOT;
 		};
 		22C892761FDBD7B6006CDE47 /* Parser */ = {
 			isa = PBXGroup;
@@ -2551,8 +2602,8 @@
 				22C8928B1FDBD7B6006CDE47 /* tokenizer.c */,
 			);
 			name = Parser;
-			path = "../../python_ios/Python-2.7.13/Parser";
-			sourceTree = "<group>";
+			path = "../python_ios/Python-2.7.13/Parser";
+			sourceTree = SOURCE_ROOT;
 		};
 		22C892A51FDBF104006CDE47 /* Modules */ = {
 			isa = PBXGroup;
@@ -2636,8 +2687,8 @@
 				22C8954B1FDBF105006CDE47 /* zlibmodule.c */,
 			);
 			name = Modules;
-			path = "../../python_ios/Python-2.7.13/Modules";
-			sourceTree = "<group>";
+			path = "../python_ios/Python-2.7.13/Modules";
+			sourceTree = SOURCE_ROOT;
 		};
 		22C892AB1FDBF104006CDE47 /* _ctypes */ = {
 			isa = PBXGroup;
@@ -2753,6 +2804,8 @@
 		22CF27B01FDB42F50087DDAD /* text_cmds_grp */ = {
 			isa = PBXGroup;
 			children = (
+				2248DB102004C5C500F2944C /* sed */,
+				2248DAFF2004A58600F2944C /* ed */,
 				22CF27B81FDB43070087DDAD /* cat */,
 				22CF27B11FDB43070087DDAD /* grep */,
 				22CF27BE1FDB43080087DDAD /* wc */,
@@ -3152,6 +3205,7 @@
 				2263788C1FDB3EE400AE8827 /* print.c in Sources */,
 				22CF27C61FDB43080087DDAD /* util.c in Sources */,
 				225781D11FDB4D390050F312 /* sendf.c in Sources */,
+				2248DB0F2004A5F900F2944C /* re.c in Sources */,
 				225782861FDB4D390050F312 /* tool_util.c in Sources */,
 				22CF27C81FDB43080087DDAD /* cat.c in Sources */,
 				22577E671FDB47A90050F312 /* archive_read_disk_entry_from_file.c in Sources */,
@@ -3170,6 +3224,7 @@
 				226378971FDB3EE400AE8827 /* util.c in Sources */,
 				225781431FDB4D380050F312 /* curl_gssapi.c in Sources */,
 				226378991FDB3EE400AE8827 /* df.c in Sources */,
+				2248DB182004C5DB00F2944C /* compile.c in Sources */,
 				22577E811FDB47A90050F312 /* archive_read_support_format_xar.c in Sources */,
 				22C897451FDBF109006CDE47 /* fcntlmodule.c in Sources */,
 				22577E6E1FDB47A90050F312 /* archive_read_open_memory.c in Sources */,
@@ -3200,6 +3255,7 @@
 				225782FB1FDBC9B40050F312 /* lundump.c in Sources */,
 				226378771FDB3EE400AE8827 /* mv.c in Sources */,
 				22C897401FDBF109006CDE47 /* xmltok.c in Sources */,
+				2248DB0C2004A5F900F2944C /* sub.c in Sources */,
 				225782F71FDBC9B40050F312 /* lmathlib.c in Sources */,
 				22577F971FDB47B70050F312 /* util.c in Sources */,
 				22C892961FDBD7B7006CDE47 /* listnode.c in Sources */,
@@ -3228,18 +3284,21 @@
 				22577EA91FDB47A90050F312 /* filter_fork.c in Sources */,
 				225782761FDB4D390050F312 /* tool_panykey.c in Sources */,
 				2257825E1FDB4D390050F312 /* tool_getpass.c in Sources */,
+				2248DB082004A5F900F2944C /* main.c in Sources */,
 				225781F31FDB4D390050F312 /* system_win32.c in Sources */,
 				2257826E1FDB4D390050F312 /* tool_mfiles.c in Sources */,
 				226378A41FDB3EE400AE8827 /* du.c in Sources */,
 				22577F951FDB47B70050F312 /* tree.c in Sources */,
 				2257826A1FDB4D390050F312 /* tool_main.c in Sources */,
 				225782101FDB4D390050F312 /* axtls.c in Sources */,
+				2248DB172004C5DB00F2944C /* process.c in Sources */,
 				22C891B31FDBCF09006CDE47 /* pyctype.c in Sources */,
 				225781EF1FDB4D390050F312 /* strtok.c in Sources */,
 				22C897261FDBF108006CDE47 /* cryptmodule.c in Sources */,
 				22C897551FDBF109006CDE47 /* imageop.c in Sources */,
 				2263787C1FDB3EE400AE8827 /* cp.c in Sources */,
 				22C8974C1FDBF109006CDE47 /* gcmodule.c in Sources */,
+				2248DB152004C5DB00F2944C /* misc.c in Sources */,
 				225781321FDB4D380050F312 /* content_encoding.c in Sources */,
 				22577E751FDB47A90050F312 /* archive_read_support_compression_program.c in Sources */,
 				22C8921C1FDBD30A006CDE47 /* fileobject.c in Sources */,
@@ -3324,6 +3383,7 @@
 				22C8920E1FDBD30A006CDE47 /* bufferobject.c in Sources */,
 				225782DE1FDBC9B40050F312 /* lauxlib.c in Sources */,
 				22577E9B1FDB47A90050F312 /* archive_write_set_compression_xz.c in Sources */,
+				2248DB0B2004A5F900F2944C /* undo.c in Sources */,
 				22C892271FDBD30A006CDE47 /* memoryobject.c in Sources */,
 				22C897671FDBF109006CDE47 /* parsermodule.c in Sources */,
 				225782661FDB4D390050F312 /* tool_hugehelp.c in Sources */,
@@ -3337,6 +3397,7 @@
 				225782F11FDBC9B40050F312 /* lgc.c in Sources */,
 				225782EF1FDBC9B40050F312 /* ldo.c in Sources */,
 				22C8976A1FDBF109006CDE47 /* puremodule.c in Sources */,
+				2248DB0D2004A5F900F2944C /* cbc.c in Sources */,
 				22577E921FDB47A90050F312 /* archive_write_open_file.c in Sources */,
 				225782DB1FDBC9B40050F312 /* lvm.c in Sources */,
 				225781901FDB4D380050F312 /* idn_win32.c in Sources */,
@@ -3373,6 +3434,7 @@
 				225782E91FDBC9B40050F312 /* luac.c in Sources */,
 				22577E9D1FDB47A90050F312 /* archive_write_set_format_ar.c in Sources */,
 				22577E931FDB47A90050F312 /* archive_write_open_filename.c in Sources */,
+				2248DB092004A5F900F2944C /* glbl.c in Sources */,
 				225781971FDB4D380050F312 /* inet_pton.c in Sources */,
 				22C891BF1FDBCF09006CDE47 /* structmember.c in Sources */,
 				22577EA51FDB47A90050F312 /* archive_write_set_format_zip.c in Sources */,
@@ -3401,6 +3463,7 @@
 				2257814A1FDB4D380050F312 /* curl_memrchr.c in Sources */,
 				225781821FDB4D380050F312 /* http.c in Sources */,
 				225781531FDB4D380050F312 /* curl_rtmp.c in Sources */,
+				2248DB0A2004A5F900F2944C /* io.c in Sources */,
 				22C897291FDBF108006CDE47 /* datetimemodule.c in Sources */,
 				2263789D1FDB3EE400AE8827 /* ln.c in Sources */,
 				22C897441FDBF109006CDE47 /* xmltok_ns.c in Sources */,
@@ -3433,6 +3496,7 @@
 				225781791FDB4D380050F312 /* hmac.c in Sources */,
 				2257814C1FDB4D380050F312 /* curl_multibyte.c in Sources */,
 				22C895571FDBF106006CDE47 /* _ctypes.c in Sources */,
+				2248DB0E2004A5F900F2944C /* buf.c in Sources */,
 				2257815C1FDB4D380050F312 /* curl_threads.c in Sources */,
 				22C892281FDBD30A006CDE47 /* methodobject.c in Sources */,
 				225782DD1FDBC9B40050F312 /* ldump.c in Sources */,
@@ -3564,6 +3628,7 @@
 				225782E31FDBC9B40050F312 /* lobject.c in Sources */,
 				2257817F1FDB4D380050F312 /* hostip4.c in Sources */,
 				22C896E61FDBF108006CDE47 /* _randommodule.c in Sources */,
+				2248DB162004C5DB00F2944C /* main.c in Sources */,
 				225782E61FDBC9B40050F312 /* lzio.c in Sources */,
 				225781AB1FDB4D380050F312 /* md5.c in Sources */,
 				22C891CF1FDBCF09006CDE47 /* traceback.c in Sources */,
@@ -3753,9 +3818,9 @@
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
 					"-L",
-					../blink/Frameworks/,
+					../../../blink/Frameworks/,
 					"-F",
-					"../libssh2-for-iOS/",
+					"../../../libssh2-for-iOS/",
 					"-L",
 					../python_ios/,
 				);
@@ -3788,9 +3853,9 @@
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
 					"-L",
-					../blink/Frameworks/,
+					../../../blink/Frameworks/,
 					"-F",
-					"../libssh2-for-iOS/",
+					"../../../libssh2-for-iOS/",
 					"-L",
 					../python_ios/,
 				);
