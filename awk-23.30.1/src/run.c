@@ -1735,12 +1735,16 @@ void closeall(void)
 
 	for (i = 0; i < FOPEN_MAX; i++) {
 		if (files[i].fp) {
+            // Do not close stdin or the others
+            if (files[i].fp == stdin) continue;
+            if (files[i].fp == stdout) continue;
+            if (files[i].fp == stderr) continue;
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
 			if (files[i].mode == '|' || files[i].mode == LE)
 				stat = pclose(files[i].fp);
             else {
-				stat = fclose(files[i].fp);
+                stat = fclose(files[i].fp);
                 files[i].fp = 0;
             }
 			if (stat == EOF)
