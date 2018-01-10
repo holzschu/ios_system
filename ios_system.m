@@ -179,8 +179,9 @@ void initializeEnvironment() {
 #endif
 }
 
-static char* parseArgument(char* argument) {
+static char* parseArgument(char* argument, char* command) {
     // expand all environment variables, convert "~" to $HOME (only if localFile)
+    // we also pass the shell command for some specific behaviour (don't do this for that command)
     NSString* argumentString = [NSString stringWithCString:argument encoding:NSASCIIStringEncoding];
     // 1) expand environment variables, + "~" (not wildcards ? and *)
     bool cannotExpand = false;
@@ -218,23 +219,26 @@ static char* parseArgument(char* argument) {
     }
     // Also convert ":~something" in PATH style variables
     // We don't use these yet, but we could.
-    // This is something we need to avoid if the command is "scp" or "sftp"
-    if ([argumentString containsString:@":~"]) {
-        // Only 1 possibility: ":~" (same as $HOME)
-        if (getenv("HOME")) {
-            if ([argumentString containsString:@":~/"]) {
-                NSString* test_string = @":~/";
-                NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSASCIIStringEncoding] stringByAppendingString:[NSString stringWithCString:(getenv("HOME")) encoding:NSASCIIStringEncoding]];
-                replacement_string = [replacement_string stringByAppendingString:[NSString stringWithCString:"/" encoding:NSASCIIStringEncoding]];
-                argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string];
-            } else if ([argumentString hasSuffix:@":~"]) {
-                NSString* test_string = @":~";
-                NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSASCIIStringEncoding] stringByAppendingString:[NSString stringWithCString:(getenv("HOME")) encoding:NSASCIIStringEncoding]];
-                argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange([argumentString length] - 2, 2)];
-            } else if ([argumentString hasSuffix:@":"]) {
-                NSString* test_string = @":";
-                NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSASCIIStringEncoding] stringByAppendingString:[NSString stringWithCString:(getenv("HOME")) encoding:NSASCIIStringEncoding]];
-                argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange([argumentString length] - 2, 2)];
+    // We do this expansion only for setenv
+    if (strcmp(command, "setenv") == 0) {
+        // This is something we need to avoid if the command is "scp" or "sftp"
+        if ([argumentString containsString:@":~"]) {
+            // Only 1 possibility: ":~" (same as $HOME)
+            if (getenv("HOME")) {
+                if ([argumentString containsString:@":~/"]) {
+                    NSString* test_string = @":~/";
+                    NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSASCIIStringEncoding] stringByAppendingString:[NSString stringWithCString:(getenv("HOME")) encoding:NSASCIIStringEncoding]];
+                    replacement_string = [replacement_string stringByAppendingString:[NSString stringWithCString:"/" encoding:NSASCIIStringEncoding]];
+                    argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string];
+                } else if ([argumentString hasSuffix:@":~"]) {
+                    NSString* test_string = @":~";
+                    NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSASCIIStringEncoding] stringByAppendingString:[NSString stringWithCString:(getenv("HOME")) encoding:NSASCIIStringEncoding]];
+                    argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange([argumentString length] - 2, 2)];
+                } else if ([argumentString hasSuffix:@":"]) {
+                    NSString* test_string = @":";
+                    NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSASCIIStringEncoding] stringByAppendingString:[NSString stringWithCString:(getenv("HOME")) encoding:NSASCIIStringEncoding]];
+                    argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange([argumentString length] - 2, 2)];
+                }
             }
         }
     }
@@ -626,13 +630,11 @@ int ios_system(char* inputCmd) {
         argv_copy[argc] = NULL;
         free(argv);
         argv = argv_copy;
+        // We have the arguments. Parse them for environment variables, ~, etc.
+        for (int i = 1; i < argc; i++) if (!dontExpand[i]) argv[i] = parseArgument(argv[i], argv[0]);
         // Because some commands change argv, keep a local copy for release.
         char** argv_ref = (char **)malloc(sizeof(char*) * (argc + 1));
         for (int i = 0; i < argc; i++) argv_ref[i] = argv[i];
-        // We have the arguments. Parse them for environment variables, ~, etc.
-        bool canHaveRemoteFiles = (strcmp(argv[0], "scp") == 0) || (strcmp(argv[0], "sftp") == 0);
-        for (int i = 1; i < argc; i++) if (!dontExpand[i]) argv[i] = parseArgument(argv[i]);
-    
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
         //   if so, does it exist, does it have +x bit set, does it have #! python or #! lua on the first line?
@@ -751,6 +753,7 @@ int ios_system(char* inputCmd) {
             fprintf(stderr, "%s: command not found\n", argv[0]);
         } // if (function)
         for (int i = 0; i < argc; i++) free(argv_ref[i]);
+        free(argv_ref);
     } // argc != 0
     free(argv);
     free(originalCommand); // releases cmd
