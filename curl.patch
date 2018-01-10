@@ -252,8 +252,8 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
        }
 diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 --- curl-105/curl/src/tool_main.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.c	2018-01-10 10:06:49.000000000 +0100
-@@ -227,10 +227,90 @@
++++ curl/curl/src/tool_main.c	2018-01-10 15:21:09.000000000 +0100
+@@ -227,10 +227,89 @@
  }
  
  /*
@@ -269,7 +269,7 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 +static int scp_convert(int argc, char* argv[]) {
 +    int argc2 = 0;
 +    int i = 1;
-+    char** argv2 = (char**) malloc((argc + 1) * sizeof(char*));
++    char** argv2 = (char**) malloc((argc + 2) * sizeof(char*));
 +    char* localFileName = NULL;
 +    char* distantFileName = NULL;
 +    char* protocol = argv[0];
@@ -282,8 +282,7 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 +            // distant file
 +            distantFileName = position + 1; // after the ":"
 +            *position = 0; // split argv[i] into "user@host" and distantFileName
-+            argv2[argc2] = malloc(sizeof(char) * (strlen(argv[i]) + strlen(protocol) + 4 + strlen(distantFileName)));
-+            sprintf(argv2[argc2], "%s://%s/%s", protocol, argv[i], distantFileName);
++            asprintf(argv2 + argc2, "%s://%s/%s", protocol, argv[i], distantFileName);
 +            // get the actual filename
 +            while ((position = strstr(distantFileName, "/")) != NULL) distantFileName = position + 1;
 +        } else {
@@ -299,19 +298,19 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 +                if ((strlen(argv[i]) == 1) && (strcmp(argv[i], ".") == 0)) argv2[argc2] = strdup("-O");
 +                else {
 +                    argv2[argc2] = strdup("-o"); argc2++;
-+                    if (argv[i][strlen(argv[i] - 1)] == '/') {
-+                        argv2[argc2] = malloc(sizeof(char) * (strlen(distantFileName) + strlen(argv[i])));
-+                        sprintf(argv2[argc2], "%s%s", argv[i], distantFileName);
++                    if (argv[i][strlen(argv[i]) - 1] == '/') {
++                        // if localFileName ends with '/' we assume it's a directory
++                        asprintf(argv2 + argc2, "%s%s", localFileName, distantFileName);
 +                    } else {
 +                        struct stat localFileBuf;
-+                        if (!stat(localFileName, &localFileBuf)) fprintf(stderr, "%s: %s: permission denied\n", protocol, localFileName);
-+                        else {
-+                            if (S_ISDIR(localFileBuf.st_mode)) {
-+                                argv2[argc2] = malloc(sizeof(char) * (strlen(distantFileName) + strlen(argv[i]) + 1));
-+                                sprintf(argv2[argc2], "%s/%s", argv[i], distantFileName);
-+                            } else {
-+                                argv2[argc2] = strdup(distantFileName);
-+                            }
++                        bool localFileExists = (stat(localFileName, &localFileBuf) == 0);
++                        int localFileIsDir = S_ISDIR(localFileBuf.st_mode);
++                        if (localFileExists && localFileIsDir) {
++                            // localFileName exists *and* is a directory: concatenate distantFileName to directory
++                            asprintf(argv2 + argc2, "%s/%s", localFileName, distantFileName);
++                        } else {
++                            // all other cases: localFileName is name of output
++                            argv2[argc2] = strdup(argv[i]);
 +                        }
 +                    }
 +                }
