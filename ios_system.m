@@ -601,7 +601,6 @@ int ios_system(char* inputCmd) {
             if (!end) break;
             end[0] = 0x0;
             str = end + 1;
-            dontExpand[argc-1] = true; // don't expand arguments in quotes
         } if (str[0] == '\"') { // argument begins with a double quote.
             // everything until next double quote is part of the argument
             argv[argc-1] = str + 1;
@@ -632,6 +631,7 @@ int ios_system(char* inputCmd) {
         argv = argv_copy;
         // We have the arguments. Parse them for environment variables, ~, etc.
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) argv[i] = parseArgument(argv[i], argv[0]);
+        free(dontExpand); 
         // Because some commands change argv, keep a local copy for release.
         char** argv_ref = (char **)malloc(sizeof(char*) * (argc + 1));
         for (int i = 0; i < argc; i++) argv_ref[i] = argv[i];
