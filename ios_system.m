@@ -68,6 +68,7 @@ extern int curl_main(int argc, char **argv);
 
 #ifdef SHELL_UTILITIES
 extern int date_main(int argc, char *argv[]);
+extern int echo_main(int argc, char *argv[]);
 extern int env_main(int argc, char *argv[]);     // does the same as printenv
 extern int hostname_main(int argc, char *argv[]);
 extern int id_main(int argc, char *argv[]); // also groups, whoami
@@ -293,6 +294,7 @@ static void initializeCommandList()
 #endif
 #ifdef SHELL_UTILITIES
                     // Commands from Apple shell_cmds:
+                    @"echo" : [NSValue valueWithPointer: echo_main], 
                     @"printenv": [NSValue valueWithPointer: printenv_main],
                     @"pwd"    : [NSValue valueWithPointer: pwd_main],
                     @"uname"  : [NSValue valueWithPointer: uname_main],

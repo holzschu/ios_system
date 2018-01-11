@@ -780,6 +780,7 @@
 		22CF27C61FDB43080087DDAD /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B71FDB43070087DDAD /* util.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
 		22CF27C81FDB43080087DDAD /* cat.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27BA1FDB43070087DDAD /* cat.c */; };
 		22CF27CC1FDB43080087DDAD /* wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27C01FDB43080087DDAD /* wc.c */; };
+		22D8DEB6200791BB00FAADB7 /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
 		22FE48C01FDC796D00899DA7 /* libluatex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBC1FD739C900675252 /* libluatex.dylib */; };
 		22FE48C11FDC796D00899DA7 /* libpdftex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBE1FD739C900675252 /* libpdftex.dylib */; };
 		22FE48C21FDC796D00899DA7 /* libtexlua52.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBD1FD739C900675252 /* libtexlua52.5.dylib */; };
@@ -1580,6 +1581,7 @@
 		22CF27B71FDB43070087DDAD /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
 		22CF27BA1FDB43070087DDAD /* cat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cat.c; sourceTree = "<group>"; };
 		22CF27C01FDB43080087DDAD /* wc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wc.c; sourceTree = "<group>"; };
+		22D8DEB5200791BB00FAADB7 /* echo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = echo.c; path = shell_cmds/echo/echo.c; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2477,6 +2479,7 @@
 		226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
+				22D8DEB4200791A500FAADB7 /* echo */,
 				22CF276F1FDB3FDA0087DDAD /* date */,
 				22CF276A1FDB3FDA0087DDAD /* env */,
 				22CF27851FDB3FDA0087DDAD /* id */,
@@ -2878,6 +2881,14 @@
 			name = wc;
 			path = text_cmds/wc;
 			sourceTree = SOURCE_ROOT;
+		};
+		22D8DEB4200791A500FAADB7 /* echo */ = {
+			isa = PBXGroup;
+			children = (
+				22D8DEB5200791BB00FAADB7 /* echo.c */,
+			);
+			path = echo;
+			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
@@ -3460,6 +3471,7 @@
 				22C8919F1FDBCF09006CDE47 /* getargs.c in Sources */,
 				22C8976C1FDBF109006CDE47 /* pyexpat.c in Sources */,
 				226378801FDB3EE400AE8827 /* touch.c in Sources */,
+				22D8DEB6200791BB00FAADB7 /* echo.c in Sources */,
 				225781771FDB4D380050F312 /* hash.c in Sources */,
 				226378B11FDB3EE400AE8827 /* zopen.c in Sources */,
 				22C892261FDBD30A006CDE47 /* longobject.c in Sources */,
