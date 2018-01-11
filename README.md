@@ -44,11 +44,12 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 
 ## Integration with your app:
 
-The simplest way to integrate `ios_system` into your app is to just replace all calls to `system()` with calls to `ios_system()`. There are helper functions if you need more information: 
+The simplest way to integrate `ios_system` into your app is to just replace all calls to `system()` with calls to `ios_system()`. If you need more control and information, the following functions are available: 
 
-- `NSArray* commandsAsArray();`: returns an array with all the commands available, if you need them for helping users. 
-- `NSString* commandsAsString();`: same, but with a `NSString*`. 
-- `initializeEnvironment()`: sets environment variables to sensible defaults. 
-- `ios_executable(char* inputCmd)`: returns true if `inputCmd` is one of the commands defined inside `ios_system`. 
-- `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences);`: lets you replace an existing command implementation with your own. 
-Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`. Replaces all calls to `ls` to calls to `gnu_ls_main`. The last argument tells whether you want to replace only the function associated with `ls` (if `false`) or all the commands that used the function previously associated with `ls`(if true). For example, `compress` and `uncompress` are both done with the same function, `compress_main` (and the actual behaviour depends on `argv[0]`). Only you can know whether your replacement function handles both roles, or only one of them. 
+- `NSArray* commandsAsArray()` returns an array with all the commands available, if you need them for helping users. 
+- `NSString* commandsAsString()` same, but with a `NSString*`. 
+- `initializeEnvironment()` sets environment variables to sensible defaults. 
+- `ios_executable(char* inputCmd)` returns true if `inputCmd` is one of the commands defined inside `ios_system`. 
+- `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences)` lets you replace an existing command implementation with your own. 
+
+Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `ls` to calls to `gnu_ls_main`. The last argument tells whether you want to replace only the function associated with `ls` (if `false`) or all the commands that used the function previously associated with `ls`(if true). For example, `compress` and `uncompress` are both done with the same function, `compress_main` (and the actual behaviour depends on `argv[0]`). Only you can know whether your replacement function handles both roles, or only one of them. 
