@@ -23,4 +23,5 @@ int ios_system(char* inputCmd); // execute this command (executable file or buil
 NSString* commandsAsString();
 NSArray* commandsAsArray();
 void initializeEnvironment();
+int ios_setMiniRoot(NSString*);  // restric operations to a certain hierarchy
 void replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences);
