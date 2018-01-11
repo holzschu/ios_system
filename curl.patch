@@ -252,7 +252,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
        }
 diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 --- curl-105/curl/src/tool_main.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.c	2018-01-10 15:21:09.000000000 +0100
++++ curl/curl/src/tool_main.c	2018-01-11 13:19:37.000000000 +0100
 @@ -227,10 +227,89 @@
  }
  
