@@ -161,6 +161,7 @@ void initializeEnvironment() {
     }
     setenv("APPDIR", [[NSBundle mainBundle] resourcePath].UTF8String, 1);
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
+    setenv("TERM", "xterm", 1); // 1 = override existing value
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     
     // We can't write in $HOME so we need to set the position of config files:
@@ -471,6 +472,11 @@ NSString* commandsAsString() {
 	NSString * myString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 
 	return myString;
+}
+
+NSArray* commandsAsArray() {
+    if (commandList == nil) initializeCommandList();
+    return commandList.allKeys;
 }
 
 int ios_system(char* inputCmd) {

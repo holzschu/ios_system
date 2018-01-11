@@ -21,5 +21,6 @@ int ios_executable(char* inputCmd); // does this command exist? (executable file
 int ios_system(char* inputCmd); // execute this command (executable file or builtin command)
 
 NSString* commandsAsString();
+NSArray* commandsAsArray();
 void initializeEnvironment();
 void replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences);
