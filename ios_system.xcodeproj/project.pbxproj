@@ -781,6 +781,10 @@
 		22CF27C81FDB43080087DDAD /* cat.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27BA1FDB43070087DDAD /* cat.c */; };
 		22CF27CC1FDB43080087DDAD /* wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27C01FDB43080087DDAD /* wc.c */; };
 		22D8DEB6200791BB00FAADB7 /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
+		22D8DEBC20079E4C00FAADB7 /* cset.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB820079E4C00FAADB7 /* cset.c */; };
+		22D8DEBD20079E4C00FAADB7 /* cmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB920079E4C00FAADB7 /* cmap.c */; };
+		22D8DEBE20079E4C00FAADB7 /* tr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBA20079E4C00FAADB7 /* tr.c */; };
+		22D8DEBF20079E4C00FAADB7 /* str.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBB20079E4C00FAADB7 /* str.c */; };
 		22FE48C01FDC796D00899DA7 /* libluatex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBC1FD739C900675252 /* libluatex.dylib */; };
 		22FE48C11FDC796D00899DA7 /* libpdftex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBE1FD739C900675252 /* libpdftex.dylib */; };
 		22FE48C21FDC796D00899DA7 /* libtexlua52.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBD1FD739C900675252 /* libtexlua52.5.dylib */; };
@@ -1582,6 +1586,10 @@
 		22CF27BA1FDB43070087DDAD /* cat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cat.c; sourceTree = "<group>"; };
 		22CF27C01FDB43080087DDAD /* wc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wc.c; sourceTree = "<group>"; };
 		22D8DEB5200791BB00FAADB7 /* echo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = echo.c; path = shell_cmds/echo/echo.c; sourceTree = SOURCE_ROOT; };
+		22D8DEB820079E4C00FAADB7 /* cset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cset.c; path = text_cmds/tr/cset.c; sourceTree = SOURCE_ROOT; };
+		22D8DEB920079E4C00FAADB7 /* cmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmap.c; path = text_cmds/tr/cmap.c; sourceTree = SOURCE_ROOT; };
+		22D8DEBA20079E4C00FAADB7 /* tr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tr.c; path = text_cmds/tr/tr.c; sourceTree = SOURCE_ROOT; };
+		22D8DEBB20079E4C00FAADB7 /* str.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = str.c; path = text_cmds/tr/str.c; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2842,6 +2850,7 @@
 		22CF27B01FDB42F50087DDAD /* text_cmds_grp */ = {
 			isa = PBXGroup;
 			children = (
+				22D8DEB720079E4100FAADB7 /* tr */,
 				2248DB102004C5C500F2944C /* sed */,
 				2248DAFF2004A58600F2944C /* ed */,
 				22CF27B81FDB43070087DDAD /* cat */,
@@ -2888,6 +2897,17 @@
 				22D8DEB5200791BB00FAADB7 /* echo.c */,
 			);
 			path = echo;
+			sourceTree = "<group>";
+		};
+		22D8DEB720079E4100FAADB7 /* tr */ = {
+			isa = PBXGroup;
+			children = (
+				22D8DEB920079E4C00FAADB7 /* cmap.c */,
+				22D8DEB820079E4C00FAADB7 /* cset.c */,
+				22D8DEBB20079E4C00FAADB7 /* str.c */,
+				22D8DEBA20079E4C00FAADB7 /* tr.c */,
+			);
+			path = tr;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -3377,6 +3397,7 @@
 				22C896DA1FDBF108006CDE47 /* _json.c in Sources */,
 				22C8977C1FDBF109006CDE47 /* signalmodule.c in Sources */,
 				22C891A71FDBCF09006CDE47 /* import.c in Sources */,
+				22D8DEBC20079E4C00FAADB7 /* cset.c in Sources */,
 				2257819A1FDB4D380050F312 /* ldap.c in Sources */,
 				225781BF1FDB4D380050F312 /* openldap.c in Sources */,
 				225781651FDB4D380050F312 /* escape.c in Sources */,
@@ -3427,6 +3448,7 @@
 				2257825C1FDB4D390050F312 /* tool_getparam.c in Sources */,
 				225782241FDB4D390050F312 /* schannel.c in Sources */,
 				22C8918B1FDBCF09006CDE47 /* codecs.c in Sources */,
+				22D8DEBD20079E4C00FAADB7 /* cmap.c in Sources */,
 				22577E761FDB47A90050F312 /* archive_read_support_compression_rpm.c in Sources */,
 				22577E831FDB47A90050F312 /* archive_string.c in Sources */,
 				22C8920E1FDBD30A006CDE47 /* bufferobject.c in Sources */,
@@ -3657,6 +3679,7 @@
 				225782641FDB4D390050F312 /* tool_homedir.c in Sources */,
 				22577E9F1FDB47A90050F312 /* archive_write_set_format_cpio.c in Sources */,
 				22C8973E1FDBF109006CDE47 /* xmlrole.c in Sources */,
+				22D8DEBF20079E4C00FAADB7 /* str.c in Sources */,
 				225782781FDB4D390050F312 /* tool_paramhlp.c in Sources */,
 				2257822C1FDB4D390050F312 /* x509asn1.c in Sources */,
 				22C891851FDBCF09006CDE47 /* _warnings.c in Sources */,
@@ -3692,6 +3715,7 @@
 				22C8920D1FDBD30A006CDE47 /* boolobject.c in Sources */,
 				22C892201FDBD30A006CDE47 /* genobject.c in Sources */,
 				22C897821FDBF109006CDE47 /* stropmodule.c in Sources */,
+				22D8DEBE20079E4C00FAADB7 /* tr.c in Sources */,
 				2257827D1FDB4D390050F312 /* tool_setopt.c in Sources */,
 				22C8972C1FDBF108006CDE47 /* errnomodule.c in Sources */,
 				22577E781FDB47A90050F312 /* archive_read_support_compression_xz.c in Sources */,

@@ -82,6 +82,7 @@ extern int cat_main(int argc, char *argv[]);
 extern int grep_main(int argc, char *argv[]);
 extern int wc_main(int argc, char *argv[]);
 extern int ed_main(int argc, char *argv[]);
+extern int tr_main(int argc, char *argv[]);
 extern int sed_main(int argc, char *argv[]);
 extern int awk_main(int argc, char *argv[]);
 #endif
@@ -310,6 +311,7 @@ static void initializeCommandList()
                     // Commands from Apple text_cmds:
                     @"cat"    : [NSValue valueWithPointer: cat_main],
                     @"wc"     : [NSValue valueWithPointer: wc_main],
+                    @"tr"     : [NSValue valueWithPointer: tr_main],
                     // compiled, but deactivated until we have interactive mode
 //                    @"ed"     : [NSValue valueWithPointer: ed_main],
 //                    @"red"     : [NSValue valueWithPointer: ed_main],
