@@ -66,5 +66,5 @@ As much as possible, I used the BSD version of the tools. More precisely:
 - cat, chflag, compress, cp, date, echo, env, link, ln, printenv, pwd, sed, tar, uncompress, uptime, w: <a href="https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")">Revised BSD License</a> (a.k.a. 3-clause BSD license).
 - chgrp, chksum, chmod, chown, df, du, groups, id, ls, mkdir, mv, readlink, rm, rmdir, stat, sum, touch, tr, uname, wc, whoami: <a href="https://en.wikipedia.org/wiki/BSD_licenses#4-clause_license_(original_"BSD_License")">Original BSD License</a> (4-clause BSD license)
 - pdftex, luatex and all TeX-based programs: <a href="https://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.
-- 
+
 

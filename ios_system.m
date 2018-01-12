@@ -470,8 +470,6 @@ static int cd_main(int argc, char** argv) {
     return 0;
 }
 
-// static void
-
 int ios_executable(char* inputCmd) {
  // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
     int (*function)(int ac, char** av) = NULL;
