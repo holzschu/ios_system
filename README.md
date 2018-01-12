@@ -53,3 +53,16 @@ The simplest way to integrate `ios_system` into your app is to just replace all 
 - `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences)` lets you replace an existing command implementation with your own. 
 
 Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `ls` to calls to `gnu_ls_main`. The last argument tells whether you want to replace only the function associated with `ls` (if `false`) or all the commands that used the function previously associated with `ls`(if true). For example, `compress` and `uncompress` are both done with the same function, `compress_main` (and the actual behaviour depends on `argv[0]`). Only you can know whether your replacement function handles both roles, or only one of them. 
+
+### Licensing:
+
+As much as possible, I used the BSD version of the tools. More precisely:
+- awk: <a href="https://github.com/onetrueawk/awk/blob/master/LICENSE">OpenSource license</a>.
+- curl: <a href="https://curl.haxx.se/docs/copyright.html">MIT/X derivate license</a>.
+- lua: <a href="https://www.lua.org/license.html">MIT License</a>.
+- python: <a href="https://docs.python.org/2.7/license.html">Python license</a>.
+- cat, chflag, compress, cp, date, uncompress: Revised BSD License (a.k.a. 3-clause license). 
+- chgrp, chksum, chmod, chown, df, sum: Original BSD License (4-clause license)
+- pdftex, luatex and all TeX-based programs: <a href="https://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.
+- 
+
