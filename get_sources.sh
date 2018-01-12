@@ -67,4 +67,3 @@ rm $curl.tar.gz
 mv $curl curl
 (cd curl ; patch -p1 < ../curl.patch ; cd ..)
 
-

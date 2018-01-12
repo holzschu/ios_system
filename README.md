@@ -50,6 +50,7 @@ The simplest way to integrate `ios_system` into your app is to just replace all 
 - `NSString* commandsAsString()` same, but with a `NSString*`. 
 - `initializeEnvironment()` sets environment variables to sensible defaults. 
 - `ios_executable(char* inputCmd)` returns true if `inputCmd` is one of the commands defined inside `ios_system`. 
+- `int ios_setMiniRoot(NSString* mRoot)` lets you set the sandbox directory, so users are not exposed to files outside the sandbox. The argument is the path to a directory. It will not be possible to `cd` to directories above this one. Returns 1 if succesful, 0 if not. 
 - `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences)` lets you replace an existing command implementation with your own. 
 
 Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `ls` to calls to `gnu_ls_main`. The last argument tells whether you want to replace only the function associated with `ls` (if `false`) or all the commands that used the function previously associated with `ls`(if true). For example, `compress` and `uncompress` are both done with the same function, `compress_main` (and the actual behaviour depends on `argv[0]`). Only you can know whether your replacement function handles both roles, or only one of them. 
@@ -58,11 +59,12 @@ Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `
 
 As much as possible, I used the BSD version of the tools. More precisely:
 - awk: <a href="https://github.com/onetrueawk/awk/blob/master/LICENSE">OpenSource license</a>.
-- curl: <a href="https://curl.haxx.se/docs/copyright.html">MIT/X derivate license</a>.
+- curl, scp, sftp: <a href="https://curl.haxx.se/docs/copyright.html">MIT/X derivate license</a>.
 - lua: <a href="https://www.lua.org/license.html">MIT License</a>.
 - python: <a href="https://docs.python.org/2.7/license.html">Python license</a>.
-- cat, chflag, compress, cp, date, uncompress: Revised BSD License (a.k.a. 3-clause license). 
-- chgrp, chksum, chmod, chown, df, sum: Original BSD License (4-clause license)
+- egrep, fgrep, grep, gzip, gunzip: <a href="https://en.wikipedia.org/wiki/BSD_licenses#2-clause_license_("Simplified_BSD_License"_or_"FreeBSD_License")">Simplified BSD License</a> (2-clause BSD license).
+- cat, chflag, compress, cp, date, echo, env, link, ln, printenv, pwd, sed, tar, uncompress, uptime, w: <a href="https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")">Revised BSD License</a> (a.k.a. 3-clause BSD license).
+- chgrp, chksum, chmod, chown, df, du, groups, id, ls, mkdir, mv, readlink, rm, rmdir, stat, sum, touch, tr, uname, wc, whoami: <a href="https://en.wikipedia.org/wiki/BSD_licenses#4-clause_license_(original_"BSD_License")">Original BSD License</a> (4-clause BSD license)
 - pdftex, luatex and all TeX-based programs: <a href="https://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.
 - 
 
