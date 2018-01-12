@@ -18,6 +18,7 @@
 
 #include <pthread.h>
 #include <sys/stat.h>
+#define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH)) // is executable, looking at "x" bit. Other methods fails on iOS
 
 // Note: we could use dlsym() to make this code simpler, but it would also make it harder
 // to be accepted in the AppleStore. Dynamic libraries are already loaded, so it would be:
@@ -720,7 +721,7 @@ int ios_system(char* inputCmd) {
             if ([[NSFileManager defaultManager] fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
                 // File exists, is a file.
                 struct stat sb;
-                if ((stat(commandName.UTF8String, &sb) == 0 && (sb.st_mode & S_IXUSR))) {
+                if ((stat(commandName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode)) {
                     // File exists, is executable, not a directory.
                     cmdIsAFile = true;
                 }
@@ -753,7 +754,7 @@ int ios_system(char* inputCmd) {
                     // isExecutableFileAtPath replies "NO" even if file has x-bit set.
                     // if (![[NSFileManager defaultManager]  isExecutableFileAtPath:cmdname]) continue;
                     struct stat sb;
-                    if (!(stat(locationName.UTF8String, &sb) == 0 && (sb.st_mode & S_IXUSR))) continue;
+                    if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
                     // File exists, is executable, not a directory.
                 } else
                     // if (cmdIsAFile) we are now ready to execute this file:
