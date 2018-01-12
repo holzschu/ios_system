@@ -422,10 +422,10 @@ int ios_setMiniRoot(NSString* mRoot) {
                 // also don't set the miniRoot if we can't go in there
                 // get the real name for miniRoot:
                 miniRoot = [[NSFileManager defaultManager] currentDirectoryPath];
+                // Back to where we we before:
+                [[NSFileManager defaultManager] changeCurrentDirectoryPath:currentDir];
                 return 1; // mission accomplished
             }
-            // Back to where we we before:
-            [[NSFileManager defaultManager] changeCurrentDirectoryPath:currentDir];
         }
     }
     return 0;
