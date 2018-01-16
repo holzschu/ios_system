@@ -674,7 +674,7 @@ int ios_system(char* inputCmd) {
             if (!end) break;
             end[0] = 0x0;
             str = end + 1;
-        } if (str[0] == '\"') { // argument begins with a double quote.
+        } else if (str[0] == '\"') { // argument begins with a double quote.
             // everything until next double quote is part of the argument
             argv[argc-1] = str + 1;
             char* end = strstr(argv[argc-1], "\"");
