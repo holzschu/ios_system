@@ -358,7 +358,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  #ifndef WITHOUT_LZMA
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-01-07 17:01:48.000000000 +0100
++++ text_cmds/grep/grep.c	2018-01-18 14:41:27.000000000 +0100
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -385,7 +385,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  #ifdef __APPLE__
  /* 4*/	"usage: %s [-abcDEFGHhIiJLlmnOoqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n",
  #else
-@@ -158,13 +159,16 @@
+@@ -158,16 +159,19 @@
  int	 tail;		/* lines left to print */
  bool	 file_err;	/* file reading error */
  
@@ -398,11 +398,17 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  usage(void)
  {
 -	fprintf(stderr, getstr(4), getprogname());
-+	// fprintf(stderr, getstr(4), getprogname());
-+    fprintf(stderr, getstr(4), progname);
- 	fprintf(stderr, "%s", getstr(5));
- 	fprintf(stderr, "%s", getstr(6));
- 	fprintf(stderr, "%s", getstr(7));
+-	fprintf(stderr, "%s", getstr(5));
+-	fprintf(stderr, "%s", getstr(6));
+-	fprintf(stderr, "%s", getstr(7));
++	// fprintf(thread_stderr, getstr(4), getprogname());
++    fprintf(thread_stderr, getstr(4), progname);
++	fprintf(thread_stderr, "%s", getstr(5));
++	fprintf(thread_stderr, "%s", getstr(6));
++	fprintf(thread_stderr, "%s", getstr(7));
+ 	exit(2);
+ }
+ 
 @@ -328,16 +332,22 @@
  	char *line;
  	size_t len;
@@ -411,7 +417,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -		err(2, "%s", fn);
 +    if ((f = fopen(fn, "r")) == NULL) {
 +		// err(2, "%s", fn);
-+        fprintf(stderr, "grep: %s: %s\n", fn, strerror(errno));
++        fprintf(thread_stderr, "grep: %s: %s\n", fn, strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	if ((fstat(fileno(f), &st) == -1) || (S_ISDIR(st.st_mode))) {
@@ -424,7 +430,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -		err(2, "%s", fn);
 +    if (ferror(f)) {
 +		// err(2, "%s", fn);
-+        fprintf(stderr, "grep: %s: %s\n", fn, strerror(errno));
++        fprintf(thread_stderr, "grep: %s: %s\n", fn, strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	fclose(f);
@@ -495,7 +501,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			else if (Aflag > LLONG_MAX / 10) {
  				errno = ERANGE;
 -				err(2, NULL);
-+                fprintf(stderr, "grep: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +				// err(2, NULL);
  			}
@@ -508,14 +514,14 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -			    ((errno == EINVAL) && (l == 0)))
 -				err(2, NULL);
 +                ((errno == EINVAL) && (l == 0))) {
-+                fprintf(stderr, "grep: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
 +            }
  			else if (ep[0] != '\0') {
  				errno = EINVAL;
 -				err(2, NULL);
-+                fprintf(stderr, "grep: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
  			}
@@ -529,7 +535,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -				errx(2, getstr(3), "--devices");
 +            else {
 +				// errx(2, getstr(3), "--devices");
-+                fprintf(stderr, getstr(3), "--devices");
++                fprintf(thread_stderr, getstr(3), "--devices");
 +                pthread_exit(NULL);
 +            }
  			break;
@@ -543,7 +549,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -				errx(2, getstr(3), "--directories");
 +            else {
 +				// errx(2, getstr(3), "--directories");
-+                fprintf(stderr, getstr(3), "--directories");
++                fprintf(thread_stderr, getstr(3), "--directories");
 +                pthread_exit(NULL);
 +            }
  			break;
@@ -555,7 +561,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			errno = EOPNOTSUPP;
 -			err(2, "bzip2 support was disabled at compile-time");
 +			// err(2, "bzip2 support was disabled at compile-time");
-+                fprintf(stderr, "grep: bzip2 support was disabled at compile-time: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: bzip2 support was disabled at compile-time: %s\n", strerror(errno));
 +            pthread_exit(NULL);
  #endif
  			filebehave = FILE_BZIP;
@@ -567,14 +573,14 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -			    ((errno == EINVAL) && (mcount == 0)))
 -				err(2, NULL);
 +                ((errno == EINVAL) && (mcount == 0))) {
-+                fprintf(stderr, "grep: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
 +            }
  			else if (ep[0] != '\0') {
  				errno = EINVAL;
 -				err(2, NULL);
-+                fprintf(stderr, "grep: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
 +                pthread_exit(NULL);
 +                // err(2, NULL);
  			}
@@ -584,7 +590,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			errno = EOPNOTSUPP;
 -			err(2, "lzma support was disabled at compile-time");
 +			// err(2, "lzma support was disabled at compile-time");
-+                fprintf(stderr, "grep: lzma support was disabled at compile-time: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: lzma support was disabled at compile-time: %s\n", strerror(errno));
 +            pthread_exit(NULL);
  #endif
  			filebehave = FILE_LZMA;
@@ -594,7 +600,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			break;
  		case 'V':
 -			printf(getstr(9), getprogname(), VERSION);
-+			printf(getstr(9), progname, VERSION);
++			fprintf(thread_stdout, getstr(9), progname, VERSION);
  			exit(0);
  		case 'v':
  			vflag = true;
@@ -604,7 +610,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			errno = EOPNOTSUPP;
 -			err(2, "xz support was disabled at compile-time");
 +			// err(2, "xz support was disabled at compile-time");
-+                fprintf(stderr, "grep: xz support was disabled at compile-time: %s\n", strerror(errno));
++                fprintf(thread_stderr, "grep: xz support was disabled at compile-time: %s\n", strerror(errno));
 +            pthread_exit(NULL);
  #endif
  			filebehave = FILE_XZ;
@@ -617,7 +623,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -				errx(2, getstr(3), "--binary-files");
 +            else {
 +				// errx(2, getstr(3), "--binary-files");
-+                fprintf(stderr, getstr(3), "--binary-files");
++                fprintf(thread_stderr, getstr(3), "--binary-files");
 +                pthread_exit(NULL);
 +            }
  			break;
@@ -631,7 +637,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 -				errx(2, getstr(3), "--color");
 +                strcasecmp("no", optarg) != 0) {
 +				// errx(2, getstr(3), "--color");
-+                fprintf(stderr, getstr(3), "--color");
++                fprintf(thread_stderr, getstr(3), "--color");
 +                pthread_exit(NULL);
 +            }
  			cflags &= ~REG_NOSUB;
@@ -643,14 +649,23 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  				    RE_ERROR_BUF);
 -				errx(2, "%s", re_error);
 +				// errx(2, "%s", re_error);
-+                fprintf(stderr, "grep: %s\n", re_error);
++                fprintf(thread_stderr, "grep: %s\n", re_error);
 +                pthread_exit(NULL);
  			}
  #ifndef WITHOUT_FASTMATCH
  		}
+@@ -756,7 +829,7 @@
+ 	}
+ 
+ 	if (lbflag)
+-		setlinebuf(stdout);
++		setlinebuf(thread_stdout);
+ 
+ 	if ((aargc == 0 || aargc == 1) && !Hflag)
+ 		hflag = true;
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-01-07 17:01:48.000000000 +0100
++++ text_cmds/grep/util.c	2018-01-18 14:50:52.000000000 +0100
 @@ -39,7 +39,7 @@
  #endif
  
@@ -676,7 +691,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "fts_open");
 +    if (!(fts = fts_open(argv, fts_flags, NULL))) {
 +		// err(2, "fts_open");
-+        fprintf(stderr, "grep: fts_open: %s\n", strerror(errno));
++        fprintf(thread_stderr, "grep: fts_open: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	while ((p = fts_read(fts)) != NULL) {
@@ -687,7 +702,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  			file_err = true;
  			if(!sflag)
 -				warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
-+                fprintf(stderr, "grep: %s: %s\n", p->fts_path, strerror(p->fts_errno));
++                fprintf(thread_stderr, "grep: %s: %s\n", p->fts_path, strerror(p->fts_errno));
 +                // warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
  			break;
  		case FTS_D:
@@ -698,7 +713,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  			/* Print a warning for recursive directory loop */
 -			warnx("warning: %s: recursive directory loop",
 +			// warnx("warning: %s: recursive directory loop",
-+                fprintf(stderr, "grep; warning: %s: recursive directory loop\n",
++                fprintf(thread_stderr, "grep; warning: %s: recursive directory loop\n",
  				p->fts_path);
  			break;
  		default:
@@ -707,7 +722,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		/* 4053512, 10290183 */
  		if (dirbehave == DIR_RECURSE && isatty(STDIN_FILENO)) {
 -			warnx("warning: recursive search of stdin");
-+            fprintf(stderr, "grep: warning: recursive search of stdin\n");
++            fprintf(thread_stderr, "grep: warning: recursive search of stdin\n");
 +            // warnx("warning: recursive search of stdin");
  		}
  #endif
@@ -717,11 +732,47 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		file_err = true;
  		if (!sflag)
 -			warn("%s", fn);
-+            fprintf(stderr, "grep: %s: %s\n", fn, strerror(errno));
++            fprintf(thread_stderr, "grep: %s: %s\n", fn, strerror(errno));
 +            // warn("%s", fn);
  		return (0);
  	}
  
+@@ -266,16 +274,16 @@
+ 	if (cflag) {
+ #endif
+ 		if (!hflag)
+-			printf("%s:", ln.file);
+-		printf("%u\n", c);
++			fprintf(thread_stdout, "%s:", ln.file);
++		fprintf(thread_stdout, "%u\n", c);
+ 	}
+ 	if (lflag && !qflag && c != 0)
+-		printf("%s%c", fn, nullflag ? 0 : '\n');
++		fprintf(thread_stdout, "%s%c", fn, nullflag ? 0 : '\n');
+ 	if (Lflag && !qflag && c == 0)
+-		printf("%s%c", fn, nullflag ? 0 : '\n');
++		fprintf(thread_stdout, "%s%c", fn, nullflag ? 0 : '\n');
+ 	if (c && !cflag && !lflag && !Lflag &&
+ 	    binbehave == BINFILE_BIN && f->binary && !qflag)
+-		printf(getstr(8), fn);
++		fprintf(thread_stdout, getstr(8), fn);
+ 
+ 	free(ln.file);
+ 	free(f);
+@@ -459,11 +467,11 @@
+ 	if ((tail || c) && !cflag && !qflag && !lflag && !Lflag) {
+ 		if (c) {
+ 			if (!first && !prev && !tail && Aflag)
+-				printf("--\n");
++				fprintf(thread_stdout, "--\n");
+ 			tail = Aflag;
+ 			if (Bflag > 0) {
+ 				if (!first && !prev)
+-					printf("--\n");
++					fprintf(thread_stdout, "--\n");
+ 				printqueue();
+ 			}
+ 			linesqueued = 0;
 @@ -494,8 +502,11 @@
  {
  	void *ptr;
@@ -730,7 +781,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "malloc");
 +    if ((ptr = malloc(size)) == NULL) {
 +		// err(2, "malloc");
-+        fprintf(stderr, "grep: malloc: %s\n", strerror(errno));
++        fprintf(thread_stderr, "grep: malloc: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	return (ptr);
@@ -744,7 +795,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "calloc");
 +    if ((ptr = calloc(nmemb, size)) == NULL) {
 +        // err(2, "calloc");
-+        fprintf(stderr, "grep: calloc: %s\n", strerror(errno));
++        fprintf(thread_stderr, "grep: calloc: %s\n", strerror(errno));
 +    pthread_exit(NULL);
 +}
  	return (ptr);
@@ -758,7 +809,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "realloc");
 +    if ((ptr = realloc(ptr, size)) == NULL) {
 +        // err(2, "realloc");
-+        fprintf(stderr, "grep: realloc: %s\n", strerror(errno));
++        fprintf(thread_stderr, "grep: realloc: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	return (ptr);
@@ -772,12 +823,73 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 -		err(2, "strdup");
 +    if ((ret = strdup(str)) == NULL) {
 +        // err(2, "strdup");
-+        fprintf(stderr, "grep: strdup: %s\n", strerror(errno));
++        fprintf(thread_stderr, "grep: strdup: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	return (ret);
  }
  
+@@ -548,23 +568,23 @@
+ 
+ 	if (!hflag) {
+ 		if (!nullflag) {
+-			fputs(line->file, stdout);
++			fputs(line->file, thread_stdout);
+ 			++n;
+ 		} else {
+-			printf("%s", line->file);
++			fprintf(thread_stdout, "%s", line->file);
+ 			putchar(0);
+ 		}
+ 	}
+ 	if (nflag) {
+ 		if (n > 0)
+ 			putchar(sep);
+-		printf("%d", line->line_no);
++		fprintf(thread_stdout, "%d", line->line_no);
+ 		++n;
+ 	}
+ 	if (bflag) {
+ 		if (n > 0)
+ 			putchar(sep);
+-		printf("%lld", (long long)line->off);
++		fprintf(thread_stdout, "%lld", (long long)line->off);
+ 		++n;
+ 	}
+ 	if (n)
+@@ -574,26 +594,26 @@
+ 		for (i = 0; i < m; i++) {
+ 			if (!oflag)
+ 				fwrite(line->dat + a, matches[i].rm_so - a, 1,
+-				    stdout);
++				    thread_stdout);
+ 			if (color) 
+-				fprintf(stdout, "\33[%sm\33[K", color);
++				fprintf(thread_stdout, "\33[%sm\33[K", color);
+ 
+ 				fwrite(line->dat + matches[i].rm_so, 
+ 				    matches[i].rm_eo - matches[i].rm_so, 1,
+-				    stdout);
++				    thread_stdout);
+ 			if (color) 
+-				fprintf(stdout, "\33[m\33[K");
++				fprintf(thread_stdout, "\33[m\33[K");
+ 			a = matches[i].rm_eo;
+ 			if (oflag)
+ 				putchar('\n');
+ 		}
+ 		if (!oflag) {
+ 			if (line->len - a > 0)
+-				fwrite(line->dat + a, line->len - a, 1, stdout);
++				fwrite(line->dat + a, line->len - a, 1, thread_stdout);
+ 			putchar('\n');
+ 		}
+ 	} else {
+-		fwrite(line->dat, line->len, 1, stdout);
++		fwrite(line->dat, line->len, 1, thread_stdout);
+ 		putchar('\n');
+ 	}
+ }
 diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 --- text_cmds-99/sed/compile.c	2006-12-05 23:29:30.000000000 +0100
 +++ text_cmds/sed/compile.c	2018-01-09 13:36:26.000000000 +0100
