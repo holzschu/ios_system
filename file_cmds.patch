@@ -3096,7 +3096,7 @@ diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
  int	 prn_octal(const char *);
 diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 --- file_cmds-272/ls/ls.c	2014-07-04 00:38:26.000000000 +0200
-+++ file_cmds/ls/ls.c	2018-01-07 17:01:51.000000000 +0100
++++ file_cmds/ls/ls.c	2018-01-18 14:33:32.000000000 +0100
 @@ -54,7 +54,7 @@
  #include <sys/ioctl.h>
  
@@ -3219,7 +3219,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		}
  #else
 -		(void)fprintf(stderr, "Color support not compiled in.\n");
-+    (void)fprintf(stderr, "Color support not compiled in.\n");
++    (void)fprintf(thread_stderr, "Color support not compiled in.\n");
  #endif /*COLORLS*/
  
  #ifdef COLORLS
@@ -3239,7 +3239,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 -		err(1, "fts_open");
 +         fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL) {
 +		// err(1, "fts_open");
-+        fprintf(stderr, "ls: fts_open: %s\n", strerror(errno));
++        fprintf(thread_stderr, "ls: fts_open: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  
@@ -3250,7 +3250,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		switch (p->fts_info) {
  		case FTS_DC:
 -			warnx("%s: directory causes a cycle", p->fts_name);
-+                fprintf(stderr, "ls: %s: directory causes a cycle\n", p->fts_name);
++                fprintf(thread_stderr, "ls: %s: directory causes a cycle\n", p->fts_name);
 +            //    warnx("%s: directory causes a cycle", p->fts_name);
  			if (COMPAT_MODE("bin/ls", "Unix2003")) {
  				rval = 1;
@@ -3260,17 +3260,29 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		case FTS_ERR:
 -			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
 +			// warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
-+            fprintf(stderr, "ls: %s: %s\n", p->fts_name, strerror(p->fts_errno));
++            fprintf(thread_stderr, "ls: %s: %s\n", p->fts_name, strerror(p->fts_errno));
  			rval = 1;
  			break;
  		case FTS_D:
+@@ -548,9 +603,9 @@
+ 			 * directory with its name.
+ 			 */
+ 			if (output)
+-				(void)printf("\n%s:\n", p->fts_path);
++				(void)fprintf(thread_stdout, "\n%s:\n", p->fts_path);
+ 			else if (argc > 1) {
+-				(void)printf("%s:\n", p->fts_path);
++				(void)fprintf(thread_stdout, "%s:\n", p->fts_path);
+ 				output = 1;
+ 			}
+ 			chp = fts_children(ftsp, ch_options);
 @@ -569,7 +624,8 @@
  		case FTS_SLNONE:	/* Same as default unless Unix conformance */
  			if (COMPAT_MODE("bin/ls", "Unix2003")) {
  				if ((options & FTS_LOGICAL)!=0) {	/* -L was specified */
 -					warnx("%s: %s", p->fts_name, strerror(p->fts_errno ?: ENOENT));
 +					// warnx("%s: %s", p->fts_name, strerror(p->fts_errno ?: ENOENT));
-+                    fprintf(stderr, "ls: %s: %s\n", p->fts_name, strerror(p->fts_errno ?: ENOENT));
++                    fprintf(thread_stderr, "ls: %s: %s\n", p->fts_name, strerror(p->fts_errno ?: ENOENT));
  					rval = 1;
  				}
  			}
@@ -3281,7 +3293,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 -	if (errno)
 -		err(1, "fts_read");
 +    if (errno) {
-+        fprintf(stderr, "ls: fts_read: %s\n", strerror(errno));
++        fprintf(thread_stderr, "ls: fts_read: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +		// err(1, "fts_read");
 +    }
@@ -3295,7 +3307,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 -		if (jinitmax == NULL)
 -			err(1, "malloc");
 +        if (jinitmax == NULL) {
-+            fprintf(stderr, "ls: malloc: %s\n", strerror((errno)));
++            fprintf(thread_stderr, "ls: malloc: %s\n", strerror((errno)));
 +            pthread_exit(NULL);
 +            // err(1, "malloc");
 +        }
@@ -3308,7 +3320,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
 -			warnx("%s: %s",
 -			    cur->fts_name, strerror(cur->fts_errno));
-+            fprintf(stderr, "ls: %s: %s\n", cur->fts_name, strerror(cur->fts_errno));
++            fprintf(thread_stderr, "ls: %s: %s\n", cur->fts_name, strerror(cur->fts_errno));
 +			// warnx("%s: %s", cur->fts_name, strerror(cur->fts_errno));
  			cur->fts_number = NO_PRINT;
  			rval = 1;
@@ -3320,7 +3332,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 -					if (flags == NULL)
 -						err(1, "fflagstostr");
 +                    if (flags == NULL) {
-+                        fprintf(stderr, "ls: fflagstostr: %s\n", strerror(errno));
++                        fprintf(thread_stderr, "ls: fflagstostr: %s\n", strerror(errno));
 +                        pthread_exit(NULL);
 +                        // err(1, "fflagstostr");
 +                    }
@@ -3333,7 +3345,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  				    ulen + glen + flen + 4)) == NULL)
 -					err(1, "malloc");
 +                {
-+                    fprintf(stderr, "ls: malloc: %s\n", strerror(errno));
++                    fprintf(thread_stderr, "ls: malloc: %s\n", strerror(errno));
 +                    // err(1, "malloc");
 +                    pthread_exit(NULL);
 +                }
@@ -3342,7 +3354,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  				(void)strcpy(np->user, user);
 diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 --- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
-+++ file_cmds/ls/print.c	2018-01-07 17:01:51.000000000 +0100
++++ file_cmds/ls/print.c	2018-01-18 14:37:51.000000000 +0100
 @@ -56,7 +56,7 @@
  #include <uuid/uuid.h>
  #endif
@@ -3370,27 +3382,206 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  
  static int	printaname(FTSENT *, u_long, u_long);
  static void	printlink(FTSENT *);
+@@ -131,7 +133,7 @@
+ 	assert(dp);
+ 	if (COMPAT_MODE("bin/ls", "Unix2003") && (dp->list != NULL)) {
+ 		if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
+-			(void)printf("total %qu\n", (u_int64_t)howmany(dp->btotal, blocksize));
++			(void)fprintf(thread_stdout, "total %qu\n", (u_int64_t)howmany(dp->btotal, blocksize));
+ 	}
+ 
+ 	for (p = dp->list; p; p = p->fts_link) {
 @@ -209,7 +211,9 @@
  	name = (char *) malloc(MAXNAMETAG);
  	
  	if (NULL == name) {
 -		err(1, "malloc");
-+        fprintf(stderr, "ls: malloc: %s\n", strerror(errno));
++        fprintf(thread_stderr, "ls: malloc: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +        // err(1, "malloc");
  	}
  	
  	if (f_numericonly) {
+@@ -281,7 +285,7 @@
+ 			type = "unknown";
+ 		}
+ 
+-		(void)printf(" %d: %s%s %s ",
++		(void)fprintf(thread_stdout, " %d: %s%s %s ",
+ 		    index,
+ 		    name,
+ 		    acl_get_flag_np(flags, ACL_ENTRY_INHERITED) ? " inherited" : "",
+@@ -295,14 +299,14 @@
+ 				continue;
+ 			if (!(acl_perms[i].flags & (isdir ? ACL_PERM_DIR : ACL_PERM_FILE)))
+ 				continue;
+-			(void)printf("%s%s", first++ ? "," : "", acl_perms[i].name);
++			(void)fprintf(thread_stdout, "%s%s", first++ ? "," : "", acl_perms[i].name);
+ 		}
+ 		for (i = 0; acl_flags[i].name != NULL; i++) {
+ 			if (acl_get_flag_np(flags, acl_flags[i].flag) == 0)
+ 				continue;
+ 			if (!(acl_flags[i].flags & (isdir ? ACL_PERM_DIR : ACL_PERM_FILE)))
+ 				continue;
+-			(void)printf("%s%s", first++ ? "," : "", acl_flags[i].name);
++			(void)fprintf(thread_stdout, "%s%s", first++ ? "," : "", acl_flags[i].name);
+ 		}
+ 			
+ 		(void)putchar('\n');
+@@ -322,7 +326,7 @@
+ #endif
+ 
+ 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
+-		(void)printf("total %qu\n", (u_int64_t)howmany(dp->btotal, blocksize));
++		(void)fprintf(thread_stdout, "total %qu\n", (u_int64_t)howmany(dp->btotal, blocksize));
+ 
+ 	for (p = dp->list; p; p = p->fts_link) {
+ 		if (IS_NOPRINT(p))
+@@ -330,12 +334,12 @@
+ 		sp = p->fts_statp;
+ 		if (f_inode) 
+ #if _DARWIN_FEATURE_64_BIT_INODE
+-			(void)printf("%*llu ", dp->s_inode, (u_quad_t)sp->st_ino);
++			(void)fprintf(thread_stdout, "%*llu ", dp->s_inode, (u_quad_t)sp->st_ino);
+ #else
+-			(void)printf("%*lu ", dp->s_inode, (u_long)sp->st_ino);
++			(void)fprintf(thread_stdout, "%*lu ", dp->s_inode, (u_long)sp->st_ino);
+ #endif
+ 		if (f_size)
+-			(void)printf("%*qu ",
++			(void)fprintf(thread_stdout, "%*qu ",
+ 			    dp->s_block, (u_int64_t)howmany(sp->st_blocks, blocksize));
+ 		strmode(sp->st_mode, buf);
+ 		np = p->fts_pointer;
+@@ -345,54 +349,54 @@
+ #endif /* __APPLE__ */
+ 		if (f_group && f_owner) {	/* means print neither */
+ #ifdef __APPLE__
+-			(void)printf("%s%s %*u   ", buf, str, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s%s %*u   ", buf, str, dp->s_nlink,
+ 				     sp->st_nlink);
+ #else  /* ! __APPLE__ */
+-			(void)printf("%s %*u   ", buf, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s %*u   ", buf, dp->s_nlink,
+ 				     sp->st_nlink);
+ #endif /* __APPLE__ */
+ 		}
+ 		else if (f_group) {
+ #ifdef __APPLE__
+-			(void)printf("%s%s %*u %-*s  ", buf, str, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s%s %*u %-*s  ", buf, str, dp->s_nlink,
+ 				     sp->st_nlink, dp->s_group, np->group);
+ #else  /* ! __APPLE__ */
+-			(void)printf("%s %*u %-*s  ", buf, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s %*u %-*s  ", buf, dp->s_nlink,
+ 				     sp->st_nlink, dp->s_group, np->group);
+ #endif /* __APPLE__ */
+ 		}
+ 		else if (f_owner) {
+ #ifdef __APPLE__
+-			(void)printf("%s%s %*u %-*s  ", buf, str, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s%s %*u %-*s  ", buf, str, dp->s_nlink,
+ 				     sp->st_nlink, dp->s_user, np->user);
+ #else  /* ! __APPLE__ */
+-			(void)printf("%s %*u %-*s  ", buf, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s %*u %-*s  ", buf, dp->s_nlink,
+ 				     sp->st_nlink, dp->s_user, np->user);
+ #endif /* __APPLE__ */
+ 		}
+ 		else {
+ #ifdef __APPLE__
+-			(void)printf("%s%s %*u %-*s  %-*s  ", buf, str, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s%s %*u %-*s  %-*s  ", buf, str, dp->s_nlink,
+ 				     sp->st_nlink, dp->s_user, np->user, dp->s_group,
+ 				     np->group);
+ #else  /* ! __APPLE__ */
+-			(void)printf("%s %*u %-*s  %-*s  ", buf, dp->s_nlink,
++			(void)fprintf(thread_stdout, "%s %*u %-*s  %-*s  ", buf, dp->s_nlink,
+ 				     sp->st_nlink, dp->s_user, np->user, dp->s_group,
+ 				     np->group);
+ #endif /* ! __APPLE__ */
+ 		}
+ 		if (f_flags)
+-			(void)printf("%-*s ", dp->s_flags, np->flags);
++			(void)fprintf(thread_stdout, "%-*s ", dp->s_flags, np->flags);
+ 		if (S_ISCHR(sp->st_mode) || S_ISBLK(sp->st_mode))
+ 			if (minor(sp->st_rdev) > 255 || minor(sp->st_rdev) < 0)
+-				(void)printf("%3d, 0x%08x ",
++				(void)fprintf(thread_stdout, "%3d, 0x%08x ",
+ 				    major(sp->st_rdev),
+ 				    (u_int)minor(sp->st_rdev));
+ 			else
+-				(void)printf("%3d, %3d ",
++				(void)fprintf(thread_stdout, "%3d, %3d ",
+ 				    major(sp->st_rdev), minor(sp->st_rdev));
+ 		else if (dp->bcfile)
+-			(void)printf("%*s%*qu ",
++			(void)fprintf(thread_stdout, "%*s%*qu ",
+ 			    8 - dp->s_size, "", dp->s_size, (u_int64_t)sp->st_size);
+ 		else
+ 			printsize(dp->s_size, sp->st_size);
+@@ -446,7 +450,7 @@
+ 		}
+ 		chcnt += printaname(p, dp->s_inode, dp->s_block);
+ 		if (p->fts_link) {
+-			printf(", ");
++			fprintf(thread_stdout, ", ");
+ 			chcnt += 2;
+ 		}
+ 	}
 @@ -485,7 +489,8 @@
  	if ((lastentries == -1) || (dp->entries > lastentries)) {
  		lastentries = dp->entries;
  		if ((array = realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
 -			warn(NULL);
 +			// warn(NULL);
-+            fprintf(stderr, "%s\n", strerror(errno));
++            fprintf(thread_stderr, "%s\n", strerror(errno));
  			printscol(dp);
  			return;
  		}
+@@ -515,7 +520,7 @@
+ 
+ 	assert(dp->list);
+ 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
+-		(void)printf("total %qu\n", (u_int64_t)howmany(dp->btotal, blocksize));
++		(void)fprintf(thread_stdout, "total %qu\n", (u_int64_t)howmany(dp->btotal, blocksize));
+ 
+ 	base = 0;
+ 	for (row = 0; row < numrows; ++row) {
+@@ -561,12 +566,12 @@
+ 	chcnt = 0;
+ 	if (f_inode)
+ #if _DARWIN_FEATURE_64_BIT_INODE
+-		chcnt += printf("%*llu ", (int)inodefield, (u_quad_t)sp->st_ino);
++		chcnt += fprintf(thread_stdout, "%*llu ", (int)inodefield, (u_quad_t)sp->st_ino);
+ #else
+-		chcnt += printf("%*lu ", (int)inodefield, (u_long)sp->st_ino);
++		chcnt += fprintf(thread_stdout, "%*lu ", (int)inodefield, (u_long)sp->st_ino);
+ #endif
+ 	if (f_size)
+-		chcnt += printf("%*qu ",
++		chcnt += fprintf(thread_stdout, "%*qu ",
+ 		    (int)sizefield, (u_int64_t)howmany(sp->st_blocks, blocksize));
+ #ifdef COLORLS
+ 	if (f_color)
+@@ -767,7 +772,7 @@
+ 			if (c[j] >= '0' && c[j] <= '7') {
+ 				colors[i].num[j] = c[j] - '0';
+ 				if (!legacy_warn) {
+-					fprintf(stderr,
++					fprintf(thread_stderr,
+ 					    "warn: LSCOLORS should use "
+ 					    "characters a-h instead of 0-9 ("
+ 					    "see the manual page)\n");
+@@ -781,7 +786,7 @@
+ 			} else if (tolower((unsigned char)c[j] == 'x'))
+ 				colors[i].num[j] = -1;
+ 			else {
+-				fprintf(stderr,
++				fprintf(thread_stderr,
+ 				    "error: invalid character '%c' in LSCOLORS"
+ 				    " env var\n", c[j]);
+ 				colors[i].num[j] = -1;
 @@ -796,7 +801,8 @@
  	endcolor(sig);
  
@@ -3401,9 +3592,33 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
  
  #endif /* COLORLS */
+@@ -814,11 +820,11 @@
+ 		(void)snprintf(name, sizeof(name),
+ 		    "%s/%s", p->fts_parent->fts_accpath, p->fts_name);
+ 	if ((lnklen = readlink(name, path, sizeof(path) - 1)) == -1) {
+-		(void)fprintf(stderr, "\nls: %s: %s\n", name, strerror(errno));
++		(void)fprintf(thread_stderr, "\nls: %s: %s\n", name, strerror(errno));
+ 		return;
+ 	}
+ 	path[lnklen] = '\0';
+-	(void)printf(" -> ");
++	(void)fprintf(thread_stdout, " -> ");
+ 	(void)printname(path);
+ }
+ 
+@@ -831,7 +837,7 @@
+ 
+     humanize_number(buf, sizeof(buf), (int64_t)bytes, "",
+ 		    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+-    (void)printf("%5s ", buf);
++    (void)fprintf(thread_stdout, "%5s ", buf);
+   } else
+-    (void)printf("%*jd ", (u_int)width, (intmax_t)bytes);
++    (void)fprintf(thread_stdout, "%*jd ", (u_int)width, (intmax_t)bytes);
+ }
 diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
 --- file_cmds-272/ls/util.c	2008-03-12 21:31:12.000000000 +0100
-+++ file_cmds/ls/util.c	2018-01-07 17:01:51.000000000 +0100
++++ file_cmds/ls/util.c	2018-01-18 14:36:26.000000000 +0100
 @@ -42,7 +42,7 @@
  #include <sys/stat.h>
  
@@ -3421,15 +3636,27 @@ diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
  
  int
  prn_normal(const char *s)
-@@ -218,7 +219,7 @@
+@@ -66,7 +67,7 @@
+ 	n = 0;
+ 	while ((clen = mbrtowc(&wc, s, MB_LEN_MAX, &mbs)) != 0) {
+ 		if (clen == (size_t)-2) {
+-			n += printf("%s", s);
++			n += fprintf(thread_stdout, "%s", s);
+ 			break;
+ 		}
+ 		if (clen == (size_t)-1) {
+@@ -218,9 +219,9 @@
  }
  
  void
 -usage(void)
 +ls_usage(void)
  {
- 	(void)fprintf(stderr,
+-	(void)fprintf(stderr,
++	(void)fprintf(thread_stderr,
  #ifdef COLORLS
+ 	"usage: ls [-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1]"
+ #else
 diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
 --- file_cmds-272/mkdir/mkdir.c	2013-10-05 00:39:00.000000000 +0200
 +++ file_cmds/mkdir/mkdir.c	2018-01-07 17:01:51.000000000 +0100

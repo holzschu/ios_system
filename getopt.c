@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "ios_error.h"
 
 __thread int    __db_getopt_reset;    /* global reset for VxWorks. */
 
@@ -125,7 +126,7 @@ const char *ostr;
         if (!*place)
             ++optind;
         if (opterr && *ostr != ':')
-            (void)fprintf(stderr,
+            (void)fprintf(thread_stderr,
                           "%s: illegal option -- %c\n", progname, optopt);
         return (BADCH);
     }
@@ -142,7 +143,7 @@ const char *ostr;
             if (*ostr == ':')
                 return (BADARG);
             if (opterr)
-                (void)fprintf(stderr,
+                (void)fprintf(thread_stderr,
                               "%s: option requires an argument -- %c\n",
                               progname, optopt);
             return (BADCH);
