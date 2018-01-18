@@ -105,10 +105,15 @@ static int unsetenv_main(int argc, char *argv[]);
 static int cd_main(int argc, char *argv[]);
 
 extern int    __db_getopt_reset;
+__thread FILE* thread_stdin;
+__thread FILE* thread_stdout;
+__thread FILE* thread_stderr;
+
 typedef struct _functionParameters {
     int argc;
     char** argv;
     int (*function)(int ac, char** av);
+    FILE *stdin, *stdout, *stderr;
 } functionParameters;
 
 static void* run_function(void* parameters) {
@@ -126,6 +131,9 @@ static void* run_function(void* parameters) {
         NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
         [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
             isMainThread = false;
+            thread_stdin  = p->stdin;
+            thread_stdout = p->stdout;
+            thread_stderr = p->stderr;
             p->function(p->argc, p->argv);
             isMainThread = true;
         }];
@@ -644,16 +652,15 @@ int ios_system(char* inputCmd) {
     if (outputFileName && (outputFileName[0] == '\'')) { outputFileName = outputFileName + 1; outputFileName[strlen(outputFileName) - 1] = 0x0; }
     if (inputFileName && (inputFileName[0] == '\'')) { inputFileName = inputFileName + 1; inputFileName[strlen(inputFileName) - 1] = 0x0; }
     if (errorFileName && (errorFileName[0] == '\'')) { errorFileName = errorFileName + 1; errorFileName[strlen(errorFileName) - 1] = 0x0; }
-    FILE* push_stdin = stdin;
-    FILE* push_stdout = stdout;
-    FILE* push_stderr = stderr;
-    if (inputFileName) stdin = fopen(inputFileName, "r");
-    if (stdin == NULL) stdin = push_stdin; // open did not work
-    if (outputFileName) stdout = fopen(outputFileName, "w");
-    if (stdout == NULL) stdout = push_stdout; // open did not work
-    if (sharedErrorOutput && outputFileName) stderr = stdout;
-    else if (errorFileName) stderr = fopen(errorFileName, "w");
-    if (stderr == NULL) stderr = push_stderr; // open did not work
+    //
+    functionParameters params;
+    if (inputFileName) params.stdin = fopen(inputFileName, "r");
+    if (params.stdin == NULL) params.stdin = stdin; // open did not work
+    if (outputFileName) params.stdout = fopen(outputFileName, "w");
+    if (params.stdout == NULL) params.stdout = stdout; // open did not work
+    if (sharedErrorOutput && outputFileName) params.stderr = params.stdout;
+    else if (errorFileName) params.stderr = fopen(errorFileName, "w");
+    if (params.stderr == NULL) params.stderr = stderr; // open did not work
     int argc = 0;
     size_t numSpaces = 0;
     // the number of arguments is *at most* the number of spaces plus one
@@ -815,7 +822,6 @@ int ios_system(char* inputCmd) {
             // Commands call pthread_exit instead of exit
             // thread is attached, could also be un-attached
             pthread_t _tid;
-            functionParameters params;
             params.argc = argc;
             params.argv = argv;
             params.function = function;
@@ -838,8 +844,5 @@ int ios_system(char* inputCmd) {
     if (inputFileName) fclose(stdin);
     if (outputFileName) fclose(stdout);
     if (!sharedErrorOutput && errorFileName) fclose(stderr);
-    stdin = push_stdin;
-    stdout = push_stdout;
-    stderr = push_stderr;
     return (numCharWritten); // 0 = success, not 0 = failure
 }

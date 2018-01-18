@@ -48,8 +48,9 @@
 #include <string.h>
 #include <unistd.h>
 
-int    __db_getopt_reset;    /* global reset for VxWorks. */
+__thread int    __db_getopt_reset;    /* global reset for VxWorks. */
 
+// Not __thread unless I rename them. 
 int    opterr = 1,        /* if error message should be printed */
 optind = 1,        /* index into parent argv vector */
 optopt,            /* character checked for validity */
