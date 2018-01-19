@@ -10,11 +10,14 @@
 // ios_system(cmd): Executes the command in "cmd". The goal is to be a drop-in replacement for system(), as much as possible.
 // We assume cmd is the command. If vim has prepared '/bin/sh -c "(command -arguments) < inputfile > outputfile",
 // it is easier to remove the "/bin/sh -c" part before calling ios_system than inside ios_system.
-// See example in os_unix.c
+// See example in (iVim) os_unix.c
 //
 // ios_executable(cmd): returns true if the command is one of the commands defined in ios_system, and can be executed.
 // This is because mch_can_exe (called by executable()) checks for the existence of binaries with the same name in the
-// path. Our commands don't exist in the path. 
+// path. Our commands don't exist in the path.
+//
+// ios_popen(cmd, type): returns a FILE*, executes cmd, and thread_output into input of cmd (if type=="r") or
+// the reverse (if type == "w").
 
 #include <pthread.h>
 #include <sys/stat.h>
@@ -480,6 +483,13 @@ int ios_executable(char* inputCmd) {
     if (function) return 1;
     else return 0;
 }
+
+FILE* ios_popen(char* inputCmd, char* type) {
+
+    
+
+}
+
 
 // For customization:
 // replaces a function pointer (e.g. ls_main) with another one, provided by the user (ls_mine_main)
