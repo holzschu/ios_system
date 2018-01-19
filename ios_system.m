@@ -104,7 +104,7 @@ static int setenv_main(int argc, char *argv[]);
 static int unsetenv_main(int argc, char *argv[]);
 static int cd_main(int argc, char *argv[]);
 
-extern int    __db_getopt_reset;
+extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
@@ -117,27 +117,20 @@ typedef struct _functionParameters {
 } functionParameters;
 
 static void* run_function(void* parameters) {
-    static bool isMainThread = true;
     // re-initialize for getopt:
     optind = 1;
     opterr = 1;
     optreset = 1;
     __db_getopt_reset = 1;
     functionParameters *p = (functionParameters *) parameters;
-    // Send a signal to the system that we're going to change the current directory:
-    if (isMainThread) {
-        NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
-        NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
-        NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
-        [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
-            isMainThread = false;
-            thread_stdin  = p->stdin;
-            thread_stdout = p->stdout;
-            thread_stderr = p->stderr;
-            p->function(p->argc, p->argv);
-            isMainThread = true;
-        }];
-    } else p->function(p->argc, p->argv); // but don't do it if a command starts another command (would be overkill)
+    thread_stdin  = p->stdin;
+    thread_stdout = p->stdout;
+    thread_stderr = p->stderr;
+    p->function(p->argc, p->argv);
+    // Don't close the thread_std*, otherwise the system hangs.
+    thread_stdin = 0;
+    thread_stdout = 0;
+    thread_stderr = 0;
     return NULL;
 }
 
@@ -543,7 +536,13 @@ int ios_system(char* inputCmd) {
     char* errorFileMarker = 0;
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
+    static bool isMainThread = true;
     
+    // initialize:
+    if (thread_stdin == 0) thread_stdin = stdin;
+    if (thread_stdout == 0) thread_stdout = stdout;
+    if (thread_stderr == 0) thread_stderr = stderr;
+
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
     char* originalCommand = cmd;
@@ -576,7 +575,9 @@ int ios_system(char* inputCmd) {
     // Search for input file "< " and output file " >"
     if (!inputFileMarker) inputFileMarker = command;
     outputFileMarker = inputFileMarker;
-    // scan until first "<"
+    functionParameters params;
+    params.stdin = params.stdout = params.stderr = 0;
+   // scan until first "<" (input file)
     inputFileMarker = strstr(inputFileMarker, "<");
     // scan until first non-space character:
     if (inputFileMarker) {
@@ -584,23 +585,45 @@ int ios_system(char* inputCmd) {
         // skip past all spaces
         while ((inputFileName[0] == ' ') && strlen(inputFileName) > 0) inputFileName++;
     }
+    // is there a pipe ("|", "&|" or "|&")
+    // We assume here a logical command order: < before pipe, pipe before >.
+    // TODO: check what happens for unlogical commands. Refuse them, but gently.
+    // TODO: implement tee, because that has been removed
+    char* pipeMarker = strstr (outputFileMarker,"&|");
+    if (!pipeMarker) pipeMarker = strstr (outputFileMarker,"|&"); // both seem to work
+    if (pipeMarker) {
+        params.stderr = params.stdout = ios_popen(pipeMarker+2, "r");
+        pipeMarker[0] = 0x0;
+        sharedErrorOutput = true;
+    } else {
+        pipeMarker = strstr (outputFileMarker,"|");
+        if (pipeMarker) {
+            params.stdout = ios_popen(pipeMarker+1, "r");
+            pipeMarker[0] = 0x0;
+        }
+    }
+    // We have removed the pipe part. Still need to parse the rest of the command
     // Must scan in strstr by reverse order of inclusion. So "2>&1" before "2>" before ">"
-    errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
-    // output file name will be after "&>"
-    if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
-    else {
-        errorFileMarker = strstr (outputFileMarker,"2>&1| tee "); // Same, but expressed differently
-        if (errorFileMarker) { outputFileName = errorFileMarker + 10; outputFileMarker = errorFileMarker; }
-        else {
-            errorFileMarker = strstr (outputFileMarker,"2>&1"); // Same, but output file name will be after ">"
-            if (errorFileMarker) {
+    if (params.stdout == 0) {
+        errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
+        // output file name will be after "&>"
+        if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
+    }
+    if (!errorFileMarker && (params.stderr == 0)) {
+        // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
+        // Currently, we don't check for that.
+        // ...except with a pipe.
+        errorFileMarker = strstr (outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
+        if (errorFileMarker) {
+            if (params.stdout) params.stderr = params.stdout;
+            else {
                 outputFileMarker = strstr(outputFileMarker, ">");
                 if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
             }
         }
     }
     if (errorFileMarker) { sharedErrorOutput = true; }
-    else {
+    else if (params.stderr == 0) {
         // specific name for error file?
         errorFileMarker = strstr(outputFileMarker,"2>");
         if (errorFileMarker) {
@@ -610,7 +633,7 @@ int ios_system(char* inputCmd) {
         }
     }
     // scan until first ">"
-    if (!sharedErrorOutput) {
+    if (!sharedErrorOutput && (params.stdout == 0)) {
         outputFileMarker = strstr(outputFileMarker, ">");
         if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
     }
@@ -646,21 +669,18 @@ int ios_system(char* inputCmd) {
     if (inputFileMarker) inputFileMarker[0] = 0x0;
     if (outputFileMarker) outputFileMarker[0] = 0x0;
     if (errorFileMarker) errorFileMarker[0] = 0x0;
-    // Store previous values of stdin, stdout, stderr:
-    // fprintf(stdout, "before, stderr = %x\n", (void*)stderr);
     // strip filenames of quotes, if any:
     if (outputFileName && (outputFileName[0] == '\'')) { outputFileName = outputFileName + 1; outputFileName[strlen(outputFileName) - 1] = 0x0; }
     if (inputFileName && (inputFileName[0] == '\'')) { inputFileName = inputFileName + 1; inputFileName[strlen(inputFileName) - 1] = 0x0; }
     if (errorFileName && (errorFileName[0] == '\'')) { errorFileName = errorFileName + 1; errorFileName[strlen(errorFileName) - 1] = 0x0; }
     //
-    functionParameters params;
     if (inputFileName) params.stdin = fopen(inputFileName, "r");
-    if (params.stdin == NULL) params.stdin = stdin; // open did not work
+    if (params.stdin == NULL) params.stdin = thread_stdin; // open did not work
     if (outputFileName) params.stdout = fopen(outputFileName, "w");
-    if (params.stdout == NULL) params.stdout = stdout; // open did not work
-    if (sharedErrorOutput && outputFileName) params.stderr = params.stdout;
+    if (params.stdout == NULL) params.stdout = thread_stdout; // open did not work
+    if (sharedErrorOutput) params.stderr = params.stdout;
     else if (errorFileName) params.stderr = fopen(errorFileName, "w");
-    if (params.stderr == NULL) params.stderr = stderr; // open did not work
+    if (params.stderr == NULL) params.stderr = thread_stderr; // open did not work
     int argc = 0;
     size_t numSpaces = 0;
     // the number of arguments is *at most* the number of spaces plus one
@@ -825,8 +845,22 @@ int ios_system(char* inputCmd) {
             params.argc = argc;
             params.argv = argv;
             params.function = function;
-            pthread_create(&_tid, NULL, run_function, &params);
-            pthread_join(_tid, NULL);
+            if (isMainThread) {
+                // Send a signal to the system that we're going to change the current directory:
+                NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
+                NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
+                NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
+                [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
+                    isMainThread = false;
+                    pthread_create(&_tid, NULL, run_function, &params);
+                    pthread_join(_tid, NULL);
+                    isMainThread = true;
+                }];
+            } else {
+                // Don't send signal if not in main thread. Also, don't join threads.
+                fprintf(thread_stderr, "Not in main thread\n");
+                pthread_create(&_tid, NULL, run_function, &params);
+            }
         } else {
             // TODO: this should also raise an exception, for python scripts
             fprintf(stderr, "%s: command not found\n", argv[0]);
@@ -838,11 +872,7 @@ int ios_system(char* inputCmd) {
     free(originalCommand); // releases cmd
     // Did we write anything?
     long numCharWritten = 0;
-    if (errorFileName) numCharWritten = ftell(stderr);
-    else if (sharedErrorOutput && outputFileName) numCharWritten = ftell(stdout);
-    // restore previous values of stdin, stdout, stderr:
-    if (inputFileName) fclose(stdin);
-    if (outputFileName) fclose(stdout);
-    if (!sharedErrorOutput && errorFileName) fclose(stderr);
+    if (errorFileName) numCharWritten = ftell(thread_stderr);
+    else if (sharedErrorOutput && outputFileName) numCharWritten = ftell(thread_stdout);
     return (numCharWritten); // 0 = success, not 0 = failure
 }

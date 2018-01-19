@@ -19,9 +19,10 @@ FOUNDATION_EXPORT const unsigned char ios_systemVersionString[];
 
 int ios_executable(char* inputCmd); // does this command exist? (executable file or builtin command)
 int ios_system(char* inputCmd); // execute this command (executable file or builtin command)
+FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 
 NSString* commandsAsString();
-NSArray* commandsAsArray();
+NSArray* commandsAsArray();      // set of all commands, in an NSArrays
 void initializeEnvironment();
 int ios_setMiniRoot(NSString*);  // restric operations to a certain hierarchy
 void replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences);
