@@ -485,9 +485,9 @@ int ios_executable(char* inputCmd) {
 }
 
 FILE* ios_popen(char* inputCmd, char* type) {
-
+    // TODO.
     
-
+    return NULL;
 }
 
 
@@ -621,8 +621,8 @@ int ios_system(char* inputCmd) {
     }
     if (!errorFileMarker && (params.stderr == 0)) {
         // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
-        // Currently, we don't check for that.
         // ...except with a pipe.
+        // Currently, we don't check for that.
         errorFileMarker = strstr (outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
         if (errorFileMarker) {
             if (params.stdout) params.stderr = params.stdout;
