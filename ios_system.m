@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#include "ios_system.h"
 
 // ios_system(cmd): Executes the command in "cmd". The goal is to be a drop-in replacement for system(), as much as possible.
 // We assume cmd is the command. If vim has prepared '/bin/sh -c "(command -arguments) < inputfile > outputfile",
@@ -474,7 +475,7 @@ static int cd_main(int argc, char** argv) {
     return 0;
 }
 
-int ios_executable(char* inputCmd) {
+int ios_executable(const char* inputCmd) {
  // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
     int (*function)(int ac, char** av) = NULL;
     if (commandList == nil) initializeCommandList();
@@ -484,9 +485,37 @@ int ios_executable(char* inputCmd) {
     else return 0;
 }
 
-FILE* ios_popen(char* inputCmd, char* type) {
-    // TODO.
-    
+FILE* ios_popen(const char* inputCmd, const char* type) {
+    // Save existing streams:
+    int fd[2] = {0};
+    FILE* push_stdin = thread_stdin;
+    FILE* push_stdout = thread_stdout;
+    const char* command = inputCmd;
+    // skip past all spaces
+    while ((command[0] == ' ') && strlen(command) > 0) command++;
+    // TODO: skip past "/bin/sh -c" and "sh -c"
+    if (pipe(fd) < 0) { return NULL; } // Nothing we can do if pipe fails
+    // NOTES: fd[0] is set up for reading, fd[1] is set up for writing
+    // fpout = fdopen(fd[1], "w");
+    // fpin = fdopen(fd[0], "r");
+    if (type[0] == 'r') {
+        // open pipe for reading
+        thread_stdin = fdopen(fd[0], "r");
+        // launch command:
+        ios_system(command);
+        // Restore streams:
+        thread_stdin = push_stdin;
+        thread_stdout = fdopen(fd[1], "w");
+    } else if (type[0] == 'w') {
+        // open pipe for writing
+        // set up streams for thread
+        thread_stdout = fdopen(fd[1], "w");
+        // launch command:
+        ios_system(command);
+        // restore streams
+        thread_stdin = fdopen(fd[0], "r");
+        thread_stdout = push_stdout;
+    }
     return NULL;
 }
 
@@ -533,7 +562,7 @@ NSArray* commandsAsArray() {
     return commandList.allKeys;
 }
 
-int ios_system(char* inputCmd) {
+int ios_system(const char* inputCmd) {
     char* command;
     // The names of the files for stdin, stdout, stderr
     char* inputFileName = 0;
@@ -602,7 +631,7 @@ int ios_system(char* inputCmd) {
     char* pipeMarker = strstr (outputFileMarker,"&|");
     if (!pipeMarker) pipeMarker = strstr (outputFileMarker,"|&"); // both seem to work
     if (pipeMarker) {
-        params.stderr = params.stdout = ios_popen(pipeMarker+2, "r");
+        params.stdout = ios_popen(pipeMarker+2, "r");
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
     } else {
