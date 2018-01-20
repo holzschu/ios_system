@@ -84,7 +84,7 @@ To add a command:
     - compile, edit `ios_system.m`, and run. That's it. Test a lot. Side effects appear after several launches.
     - if your command has a large code base, work out the difference in your edits and make a patch, rather than commit the entire code. See `get_sources_for_patching.sh` for an example. 
 
-*Frequently asked commands:* here is a list of commands that are often asked, and my experience with them:
+**Frequently asked commands:** here is a list of commands that are often requested, and my experience with them:
 - `ping`: easy, but remember there is no interaction, so limit the number of tests (9 is a good value).
 - `traceroute` and most network analysis tools: require root privilege, so impossible inside a sandbox.
 - `nano`, `ed`: require user interaction, so currently impossible. [iVim](https://github.com/holzschu/iVim) can launch shell commands with `:!`. It's easier to make an editor start commands than to make a terminal run an editor.
