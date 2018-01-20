@@ -87,6 +87,7 @@ To add a command:
 **Frequently asked commands:** here is a list of commands that are often requested, and my experience with them:
 - `ping`: easy, but remember there is no interaction, so limit the number of tests (9 is a good value).
 - `traceroute` and most network analysis tools: require root privilege, so impossible inside a sandbox.
+- `unzip`: use `tar -xz`. 
 - `nano`, `ed`: require user interaction, so currently impossible. [iVim](https://github.com/holzschu/iVim) can launch shell commands with `:!`. It's easier to make an editor start commands than to make a terminal run an editor.
 - `sh`, `bash`, `zsh`: shells are hard to compile, even without the sandbox/API limitations. They also tend to take a lot of memory, which is a limited asset.
 - `telnet`: both hard to compile and limited without interaction. 
