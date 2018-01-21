@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2018-01-07 17:01:48.000000000 +0100
++++ text_cmds/cat/cat.c	2018-01-21 16:37:54.000000000 +0100
 @@ -55,7 +55,7 @@
  #endif
  
@@ -39,6 +39,15 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  
  	while ((ch = getopt(argc, argv, "benstuv")) != -1)
  		switch (ch) {
+@@ -102,7 +106,7 @@
+ 			tflag = vflag = 1;	/* -t implies -v */
+ 			break;
+ 		case 'u':
+-			setbuf(stdout, NULL);
++			setbuf(thread_stdout, NULL);
+ 			break;
+ 		case 'v':
+ 			vflag = 1;
 @@ -116,8 +120,8 @@
  		scanfiles(argv, 1);
  	else
@@ -50,31 +59,86 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  	exit(rval);
  	/* NOTREACHED */
  }
-@@ -152,7 +156,8 @@
+@@ -125,7 +129,7 @@
+ static void
+ usage(void)
+ {
+-	fprintf(stderr, "usage: cat [-benstuv] [file ...]\n");
++	fprintf(thread_stderr, "usage: cat [-benstuv] [file ...]\n");
+ 	exit(1);
+ 	/* NOTREACHED */
+ }
+@@ -142,7 +146,7 @@
+ 
+ 		if (path == NULL || strcmp(path, "-") == 0) {
+ 			filename = "stdin";
+-			fd = STDIN_FILENO;
++			fd = fileno(thread_stdin);
+ 		} else {
+ 			filename = path;
+ 			fd = open(path, O_RDONLY);
+@@ -152,11 +156,12 @@
  #endif
  		}
  		if (fd < 0) {
 -			warn("%s", path);
-+            fprintf(stderr, "cat: %s: %s\n", path, strerror(errno));
++            fprintf(thread_stderr, "cat: %s: %s\n", path, strerror(errno));
 +            // warn("%s", path);
  			rval = 1;
  		} else if (cooked) {
- 			if (fd == STDIN_FILENO)
+-			if (fd == STDIN_FILENO)
+-				cook_cat(stdin);
++			if (fd == fileno(thread_stdin))
++				cook_cat(thread_stdin);
+ 			else {
+ 				fp = fdopen(fd, "r");
+ 				cook_cat(fp);
+@@ -164,7 +169,7 @@
+ 			}
+ 		} else {
+ 			raw_cat(fd);
+-			if (fd != STDIN_FILENO)
++			if (fd != fileno(thread_stdin))
+ 				close(fd);
+ 		}
+ 		if (path == NULL)
+@@ -179,8 +184,8 @@
+ 	int ch, gobble, line, prev;
+ 
+ 	/* Reset EOF condition on stdin. */
+-	if (fp == stdin && feof(stdin))
+-		clearerr(stdin);
++	if (fp == thread_stdin && feof(thread_stdin))
++		clearerr(thread_stdin);
+ 
+ 	line = gobble = 0;
+ 	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
+@@ -194,8 +199,8 @@
+ 					gobble = 0;
+ 			}
+ 			if (nflag && (!bflag || ch != '\n')) {
+-				(void)fprintf(stdout, "%6d\t", ++line);
+-				if (ferror(stdout))
++				(void)fprintf(thread_stdout, "%6d\t", ++line);
++				if (ferror(thread_stdout))
+ 					break;
+ 			}
+ 		}
 @@ -226,12 +231,16 @@
  			break;
  	}
  	if (ferror(fp)) {
 -		warn("%s", filename);
-+        fprintf(stderr, "cat: %s: %s\n", filename, strerror(errno));
++        fprintf(thread_stderr, "cat: %s: %s\n", filename, strerror(errno));
 +        // warn("%s", filename);
  		rval = 1;
  		clearerr(fp);
  	}
 -	if (ferror(stdout))
 -		err(1, "stdout");
-+    if (ferror(stdout)) {
++    if (ferror(thread_stdout)) {
 +		// err(1, "stdout");
-+        fprintf(stderr, "cat: stdout: %s\n", strerror(errno));
++        fprintf(thread_stderr, "cat: stdout: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  }
@@ -87,7 +151,8 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 -	struct stat sbuf;
 +	// struct stat sbuf;
  
- 	wfd = fileno(stdout);
+-	wfd = fileno(stdout);
++	wfd = fileno(thread_stdout);
  	if (buf == NULL) {
 -		if (fstat(wfd, &sbuf))
 -			err(1, "%s", filename);
@@ -99,7 +164,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 +        bsize = 1024; // MAX(sbuf.st_blksize, 1024);
 +        if ((buf = malloc(bsize)) == NULL) {
 +            // err(1, "buffer");
-+            fprintf(stderr, "cat: buffer: %s\n", strerror(errno));
++            fprintf(thread_stderr, "cat: buffer: %s\n", strerror(errno));
 +            pthread_exit(NULL);
 +        }
  	}
@@ -111,14 +176,14 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 +            // We can't write to the fd of stdout, so we write to stdout
 +            nw = 0; // number of bytes written
 +            for (int i = 0; i < nr; i++) {
-+                fputc(*(buf+off+nw), stdout);
++                fputc(*(buf+off+nw), thread_stdout);
 +                nw += 1;
 +            }
 +			// if ((nw = write(wfd, buf + off, (size_t)nr)) < 0) err(1, "stdout");
 +        }
  	if (nr < 0) {
 -		warn("%s", filename);
-+        fprintf(stderr, "cat: %s: %s\n", filename, strerror(errno));
++        fprintf(thread_stderr, "cat: %s: %s\n", filename, strerror(errno));
 +        // warn("%s", filename);
  		rval = 1;
  	}
@@ -132,20 +197,20 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  		case O_RDONLY:
  			if (shutdown(fd, SHUT_WR) == -1)
 -				warn(NULL);
-+                fprintf(stderr, "cat: %s\n", strerror(errno));
++                fprintf(thread_stderr, "cat: %s\n", strerror(errno));
 +                // warn(NULL);
  			break;
  		case O_WRONLY:
  			if (shutdown(fd, SHUT_RD) == -1)
 -				warn(NULL);
-+                fprintf(stderr, "cat: %s\n", strerror(errno));
++                fprintf(thread_stderr, "cat: %s\n", strerror(errno));
 +				// warn(NULL);
  			break;
  		default:
  			break;
 diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
 --- text_cmds-99/ed/buf.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/buf.c	2018-01-09 10:30:08.000000000 +0100
++++ text_cmds/ed/buf.c	2018-01-21 16:24:21.000000000 +0100
 @@ -33,6 +33,10 @@
  #include <sys/stat.h>
  
@@ -157,6 +222,51 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  
  
  FILE *sfp;				/* scratch file pointer */
+@@ -57,7 +61,7 @@
+ 	if (sfseek != lp->seek) {
+ 		sfseek = lp->seek;
+ 		if (fseeko(sfp, sfseek, SEEK_SET) < 0) {
+-			fprintf(stderr, "%s\n", strerror(errno));
++			fprintf(thread_stderr, "%s\n", strerror(errno));
+ 			errmsg = "cannot seek temp file";
+ 			return NULL;
+ 		}
+@@ -65,7 +69,7 @@
+ 	len = lp->len;
+ 	REALLOC(sfbuf, sfbufsz, len + 1, NULL);
+ 	if ((ct = fread(sfbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
+-		fprintf(stderr, "%s\n", strerror(errno));
++		fprintf(thread_stderr, "%s\n", strerror(errno));
+ 		errmsg = "cannot read temp file";
+ 		return NULL;
+ 	}
+@@ -85,7 +89,7 @@
+ 	const char *s;
+ 
+ 	if ((lp = (line_t *) malloc(sizeof(line_t))) == NULL) {
+-		fprintf(stderr, "%s\n", strerror(errno));
++		fprintf(thread_stderr, "%s\n", strerror(errno));
+ 		errmsg = "out of memory";
+ 		return NULL;
+ 	}
+@@ -100,7 +104,7 @@
+ 	/* out of position */
+ 	if (seek_write) {
+ 		if (fseeko(sfp, (off_t)0, SEEK_END) < 0) {
+-			fprintf(stderr, "%s\n", strerror(errno));
++			fprintf(thread_stderr, "%s\n", strerror(errno));
+ 			errmsg = "cannot seek temp file";
+ 			return NULL;
+ 		}
+@@ -110,7 +114,7 @@
+ 	/* assert: SPL1() */
+ 	if ((ct = fwrite(cs, sizeof(char), len, sfp)) < 0 || ct != len) {
+ 		sfseek = -1;
+-		fprintf(stderr, "%s\n", strerror(errno));
++		fprintf(thread_stderr, "%s\n", strerror(errno));
+ 		errmsg = "cannot write temp file";
+ 		return NULL;
+ 	}
 @@ -185,7 +189,7 @@
  
  extern int newline_added;
@@ -178,6 +288,15 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  	if ((fd = mkstemp(sfn)) == -1 ||
  	    (sfp = fdopen(fd, "w+")) == NULL) {
  		if (fd != -1)
+@@ -217,7 +224,7 @@
+ {
+ 	if (sfp) {
+ 		if (fclose(sfp) < 0) {
+-			fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
++			fprintf(thread_stderr, "%s: %s\n", sfn, strerror(errno));
+ 			errmsg = "cannot close temp file";
+ 			return ERR;
+ 		}
 @@ -237,7 +244,8 @@
  		fclose(sfp);
  		unlink(sfn);
@@ -188,6 +307,20 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  }
  
  
+@@ -255,11 +263,11 @@
+ 	   !cat
+ 	   hello, world
+ 	   EOF */
+-	setbuffer(stdin, stdinbuf, 1);
++	setbuffer(thread_stdin, stdinbuf, 1);
+ 
+ 	/* Ensure stdout is line buffered. This avoids bogus delays
+ 	   of output if stdout is piped through utilities to a terminal. */
+-	setvbuf(stdout, NULL, _IOLBF, 0);
++	setvbuf(thread_stdout, NULL, _IOLBF, 0);
+ 	if (open_sbuf() < 0)
+ 		quit(2);
+ 	REQUE(&buffer_head, &buffer_head);
 diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 --- text_cmds-99/ed/ed.h	2005-09-20 23:36:44.000000000 +0200
 +++ text_cmds/ed/ed.h	2018-01-09 14:40:03.000000000 +0100
@@ -200,10 +333,128 @@ diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
  extern long second_addr;
  extern long u_addr_last;
  extern long u_current_addr;
+diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
+--- text_cmds-99/ed/glbl.c	2005-09-20 23:36:44.000000000 +0200
++++ text_cmds/ed/glbl.c	2018-01-21 17:48:49.000000000 +0100
+@@ -34,6 +34,7 @@
+ #include <sys/wait.h>
+ 
+ #include "ed.h"
++#include "ios_error.h"
+ 
+ 
+ /* build_active_list:  add line matching a pattern to the global-active list */
+@@ -101,7 +102,7 @@
+ 				return ERR;
+ 			while ((n = get_tty_line()) > 0 &&
+ 			    ibuf[n - 1] != '\n')
+-				clearerr(stdin);
++				clearerr(thread_stdin);
+ 			if (n < 0)
+ 				return ERR;
+ 			else if (n == 0) {
+@@ -154,7 +155,7 @@
+ #endif
+ 			if ((ts = (line_t **) realloc(active_list,
+ 			    (ti += MINBUFSZ) * sizeof(line_t **))) == NULL) {
+-				fprintf(stderr, "%s\n", strerror(errno));
++				fprintf(thread_stderr, "%s\n", strerror(errno));
+ 				errmsg = "out of memory";
+ 				SPL0();
+ 				return ERR;
+@@ -163,7 +164,7 @@
+ 		} else {
+ 			if ((ts = (line_t **) malloc((ti += MINBUFSZ) *
+ 			    sizeof(line_t **))) == NULL) {
+-				fprintf(stderr, "%s\n", strerror(errno));
++				fprintf(thread_stderr, "%s\n", strerror(errno));
+ 				errmsg = "out of memory";
+ 				SPL0();
+ 				return ERR;
 diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
 --- text_cmds-99/ed/io.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/io.c	2018-01-09 14:39:26.000000000 +0100
-@@ -267,7 +267,7 @@
++++ text_cmds/ed/io.c	2018-01-21 18:11:19.000000000 +0100
+@@ -29,6 +29,7 @@
+ __FBSDID("$FreeBSD: src/bin/ed/io.c,v 1.14 2003/01/01 18:48:39 schweikh Exp $");
+ 
+ #include "ed.h"
++#include "ios_error.h"
+ 
+ 
+ extern int scripted;
+@@ -43,17 +44,17 @@
+ 
+ 	fp = (*fn == '!') ? popen(fn + 1, "r") : fopen(strip_escapes(fn), "r");
+ 	if (fp == NULL) {
+-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
++		fprintf(thread_stderr, "%s: %s\n", fn, strerror(errno));
+ 		errmsg = "cannot open input file";
+ 		return ERR;
+ 	} else if ((size = read_stream(fp, n)) < 0)
+ 		return ERR;
+ 	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
+-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
++		fprintf(thread_stderr, "%s: %s\n", fn, strerror(errno));
+ 		errmsg = "cannot close input file";
+ 		return ERR;
+ 	}
+-	fprintf(stdout, !scripted ? "%lu\n" : "", size);
++	fprintf(thread_stdout, !scripted ? "%lu\n" : "", size);
+ 	return current_addr - n;
+ }
+ 
+@@ -98,9 +99,9 @@
+ 	if (len < 0)
+ 		return ERR;
+ 	if (appended && size && o_isbinary && o_newline_added)
+-		fputs("newline inserted\n", stderr);
++		fputs("newline inserted\n", thread_stderr);
+ 	else if (newline_added && (!appended || (!isbinary && !o_isbinary)))
+-		fputs("newline appended\n", stderr);
++		fputs("newline appended\n", thread_stderr);
+ 	if (isbinary && newline_added && !appended)
+ 	    	size += 1;
+ 	if (!size)
+@@ -130,7 +131,7 @@
+ 	if (c == '\n')
+ 		sbuf[i++] = c;
+ 	else if (ferror(fp)) {
+-		fprintf(stderr, "%s\n", strerror(errno));
++		fprintf(thread_stderr, "%s\n", strerror(errno));
+ 		errmsg = "cannot read input file";
+ 		return ERR;
+ 	} else if (i) {
+@@ -151,17 +152,17 @@
+ 
+ 	fp = (*fn == '!') ? popen(fn+1, "w") : fopen(strip_escapes(fn), mode);
+ 	if (fp == NULL) {
+-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
++		fprintf(thread_stderr, "%s: %s\n", fn, strerror(errno));
+ 		errmsg = "cannot open output file";
+ 		return ERR;
+ 	} else if ((size = write_stream(fp, n, m)) < 0)
+ 		return ERR;
+ 	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
+-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
++		fprintf(thread_stderr, "%s: %s\n", fn, strerror(errno));
+ 		errmsg = "cannot close output file";
+ 		return ERR;
+ 	}
+-	fprintf(stdout, !scripted ? "%lu\n" : "", size);
++	fprintf(thread_stdout, !scripted ? "%lu\n" : "", size);
+ 	return n ? m - n + 1 : 0;
+ }
+ 
+@@ -201,7 +202,7 @@
+ {
+ 	while (len--)
+ 		if ((des ? put_des_char(*s++, fp) : fputc(*s++, fp)) < 0) {
+-			fprintf(stderr, "%s\n", strerror(errno));
++			fprintf(thread_stderr, "%s\n", strerror(errno));
+ 			errmsg = "cannot write file";
+ 			return ERR;
+ 		}
+@@ -267,19 +268,19 @@
  			if (!(ibuf[i++] = c)) isbinary = 1;
  			if (c != '\n')
  				continue;
@@ -212,9 +463,40 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  			ibuf[i] = '\0';
  			ibufp = ibuf;
  			return i;
+ 		case EOF:
+-			if (ferror(stdin)) {
+-				fprintf(stderr, "stdin: %s\n", strerror(errno));
++			if (ferror(thread_stdin)) {
++				fprintf(thread_stderr, "stdin: %s\n", strerror(errno));
+ 				errmsg = "cannot read stdin";
+-				clearerr(stdin);
++				clearerr(thread_stdin);
+ 				ibufp = NULL;
+ 				return ERR;
+ 			} else {
+-				clearerr(stdin);
++				clearerr(thread_stdin);
+ 				if (i != oi) {
+ 					oi = i;
+ 					continue;
+@@ -307,12 +308,12 @@
+ 	char *cp;
+ 
+ 	if ((gflag & GNP) && !(gflag & GINT)) {
+-		printf("%ld\t", n);
++		fprintf(thread_stdout, "%ld\t", n);
+ 		col = 8;
+ 	}
+ 	for (; l--; s++) {
+ 		if ((gflag & GLS) && ++col > cols) {
+-			fputs("\\\n", stdout);
++			fputs("\\\n", thread_stdout);
+ 			col = 1;
+ 		}
+ 		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-01-09 14:39:52.000000000 +0100
++++ text_cmds/ed/main.c	2018-01-21 18:11:19.000000000 +0100
 @@ -59,13 +59,17 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -287,66 +569,312 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  #if __GNUC__
  	/* Avoid longjmp clobbering */
  	(void) &argc;
-@@ -141,8 +173,9 @@
+@@ -136,13 +168,14 @@
+ #ifdef DES
+ 			des = get_keyword();
+ #else
+-			fprintf(stderr, "crypt unavailable\n?\n");
++			fprintf(thread_stderr, "crypt unavailable\n?\n");
+ #endif
  			break;
  
  		default:
 -			fprintf(stderr, usage, red ? "red" : "ed");
 -			exit(1);
-+			fprintf(stderr, ed_usage, red ? "red" : "ed");
++			fprintf(thread_stderr, ed_usage, red ? "red" : "ed");
 +            pthread_exit(NULL);
 +			// exit(1);
  		}
  	argv += optind;
  	argc -= optind;
-@@ -210,7 +243,7 @@
+@@ -169,7 +202,7 @@
+ 	if ((status = setjmp(env)))
+ #endif
+ 	{
+-		fputs("\n?\n", stderr);
++		fputs("\n?\n", thread_stderr);
+ 		errmsg = "interrupt";
+ 	} else {
+ 		init_buffers();
+@@ -181,12 +214,12 @@
+ 				if (strlen(*argv) < sizeof(old_filename)) {
+ 					strcpy(old_filename, *argv);
+ 				} else {
+-					fprintf(stderr, "%s: filename too long\n", *argv);
++					fprintf(thread_stderr, "%s: filename too long\n", *argv);
+ 					quit(2);
+ 				}
+ 			}
+ 		} else if (argc>0) {
+-			fputs("?\n", stdout);
++			fputs("?\n", thread_stdout);
+ 			if (**argv == '\0')
+ 				errmsg = "invalid filename";
+ 			if (!isatty(0))
+@@ -195,25 +228,25 @@
+ 	}
+ 	for (;;) {
+ 		if (status < 0 && garrulous)
+-			fprintf(stderr, "%s\n", errmsg);
++			fprintf(thread_stderr, "%s\n", errmsg);
+ 		if (prompt) {
+-			printf("%s", prompt);
+-			fflush(stdout);
++			fprintf(thread_stdout, "%s", prompt);
++			fflush(thread_stdout);
+ 		}
+ 		if ((n = get_tty_line()) < 0) {
+ 			status = ERR;
+ 			continue;
+ 		} else if (n == 0) {
+ 			if (modified && !scripted) {
+-				fputs("?\n", stderr);
++				fputs("?\n", thread_stderr);
+ 				errmsg = "warning: file modified";
  				if (!isatty(0)) {
- 					fprintf(stderr, garrulous ?
+-					fprintf(stderr, garrulous ?
++					fprintf(thread_stderr, garrulous ?
  					    "script, line %d: %s\n" :
 -					    "", lineno, errmsg);
 +					    "", ed_lineno, errmsg);
  					quit(2);
  				}
- 				clearerr(stdin);
-@@ -243,7 +276,7 @@
+-				clearerr(stdin);
++				clearerr(thread_stdin);
+ 				modified = 0;
+ 				status = EMOD;
+ 				continue;
+@@ -222,7 +255,7 @@
+ 		} else if (ibuf[n - 1] != '\n') {
+ 			/* discard line */
+ 			errmsg = "unexpected end-of-file";
+-			clearerr(stdin);
++			clearerr(thread_stdin);
+ 			status = ERR;
+ 			continue;
+ 		}
+@@ -238,30 +271,30 @@
+ 			quit(0);
+ 		case EMOD:
+ 			modified = 0;
+-			fputs("?\n", stderr);		/* give warning */
++			fputs("?\n", thread_stderr);		/* give warning */
+ 			errmsg = "warning: file modified";
  			if (!isatty(0)) {
- 				fprintf(stderr, garrulous ?
+-				fprintf(stderr, garrulous ?
++				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" :
 -				    "", lineno, errmsg);
 +				    "", ed_lineno, errmsg);
  				quit(2);
  			}
  			break;
-@@ -251,7 +284,7 @@
+ 		case FATAL:
  			if (!isatty(0))
- 				fprintf(stderr, garrulous ?
+-				fprintf(stderr, garrulous ?
++				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
 +				    ed_lineno, errmsg);
  			else
- 				fprintf(stderr, garrulous ? "%s\n" : "",
+-				fprintf(stderr, garrulous ? "%s\n" : "",
++				fprintf(thread_stderr, garrulous ? "%s\n" : "",
  				    errmsg);
-@@ -261,7 +294,7 @@
+ 			quit(3);
+ 		default:
+-			fputs("?\n", stdout);
++			fputs("?\n", thread_stdout);
  			if (!isatty(0)) {
- 				fprintf(stderr, garrulous ?
+-				fprintf(stderr, garrulous ?
++				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
 +				    ed_lineno, errmsg);
  				quit(2);
  			}
  			break;
-@@ -888,7 +921,7 @@
+@@ -519,7 +552,7 @@
+ 			if (strlen(fnp) < sizeof(old_filename)) {
+ 				strcpy(old_filename, fnp);
+ 			} else {
+-				fprintf(stderr, "%s: filename too long\n", fnp);
++				fprintf(thread_stderr, "%s: filename too long\n", fnp);
+ 				quit(2);
+ 			}
+ 		}
+@@ -552,11 +585,11 @@
+ 			if (strlen(fnp) < sizeof(old_filename)) {
+ 				strcpy(old_filename, fnp);
+ 			} else {
+-				fprintf(stderr, "%s: filename too long\n", fnp);
++				fprintf(thread_stderr, "%s: filename too long\n", fnp);
+ 				quit(2);
+ 			}
+ 		}
+-		printf("%s\n", strip_escapes(old_filename));
++		fprintf(thread_stdout, "%s\n", strip_escapes(old_filename));
+ 		break;
+ 	case 'g':
+ 	case 'v':
+@@ -584,7 +617,7 @@
+ 			return ERR;
+ 		}
  		GET_COMMAND_SUFFIX();
- 		if (sflags) printf("%s\n", shcmd + 1);
- 		fflush(stdout);
+-		if (*errmsg) fprintf(stderr, "%s\n", errmsg);
++		if (*errmsg) fprintf(thread_stderr, "%s\n", errmsg);
+ 		break;
+ 	case 'H':
+ 		if (addr_cnt > 0) {
+@@ -593,7 +626,7 @@
+ 		}
+ 		GET_COMMAND_SUFFIX();
+ 		if ((garrulous = 1 - garrulous) && *errmsg)
+-			fprintf(stderr, "%s\n", errmsg);
++			fprintf(thread_stderr, "%s\n", errmsg);
+ 		break;
+ 	case 'i':
+ 		if (second_addr == 0) {
+@@ -693,7 +726,7 @@
+ 			if (strlen(fnp) < sizeof(old_filename)) {
+ 				strcpy(old_filename, fnp);
+ 			} else {
+-				fprintf(stderr, "%s: filename too long\n", fnp);
++				fprintf(thread_stderr, "%s: filename too long\n", fnp);
+ 				quit(2);
+ 			}
+ 		}
+@@ -835,7 +868,7 @@
+ 			if  (strlen(fnp) < sizeof(old_filename)) {
+ 				strcpy(old_filename, fnp);
+ 			} else {
+-				fprintf(stderr, "%s: filename too long\n", fnp);
++				fprintf(thread_stderr, "%s: filename too long\n", fnp);
+ 				quit(2);
+ 			}
+ 		}
+@@ -877,7 +910,7 @@
+ 		break;
+ 	case '=':
+ 		GET_COMMAND_SUFFIX();
+-		printf("%ld\n", addr_cnt ? second_addr : addr_last);
++		fprintf(thread_stdout, "%ld\n", addr_cnt ? second_addr : addr_last);
+ 		break;
+ 	case '!':
+ 		if (addr_cnt > 0) {
+@@ -886,10 +919,10 @@
+ 		} else if ((sflags = get_shell_command()) < 0)
+ 			return ERR;
+ 		GET_COMMAND_SUFFIX();
+-		if (sflags) printf("%s\n", shcmd + 1);
+-		fflush(stdout);
 -		system(shcmd + 1);
+-		if (!scripted) printf("!\n");
++		if (sflags) fprintf(thread_stdout, "%s\n", shcmd + 1);
++		fflush(thread_stdout);
 +		ios_system(shcmd + 1);
- 		if (!scripted) printf("!\n");
++		if (!scripted) fprintf(thread_stdout, "!\n");
  		break;
  	case '\n':
+ 		if (check_addr_range(first_addr = 1, current_addr + (posixly_correct ? !isglobal : 1)) < 0
+@@ -969,7 +1002,7 @@
+ 			if ((n = get_shell_command()) < 0)
+ 				return NULL;
+ 			if (n)
+-				printf("%s\n", shcmd + 1);
++				fprintf(thread_stdout, "%s\n", shcmd + 1);
+ 			return shcmd;
+ 		} else if (n > PATH_MAX) {
+ 			errmsg = "filename too long";
+@@ -1065,7 +1098,7 @@
+ 			if ((l = get_tty_line()) < 0)
+ 				return ERR;
+ 			else if (l == 0 || ibuf[l - 1] != '\n') {
+-				clearerr(stdin);
++				clearerr(thread_stdin);
+ 				return  l ? EOF : 0;
+ 			}
+ 			lp = ibuf;
+@@ -1330,7 +1363,7 @@
+ 	line_t *np;
+ 
+ 	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
+-		fprintf(stderr, "%s\n", strerror(errno));
++		fprintf(thread_stderr, "%s\n", strerror(errno));
+ 		errmsg = "out of memory";
+ 		return NULL;
+ 	}
+diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
+--- text_cmds-99/ed/re.c	2005-09-20 23:36:44.000000000 +0200
++++ text_cmds/ed/re.c	2018-01-21 17:38:35.000000000 +0100
+@@ -30,6 +30,7 @@
+ __FBSDID("$FreeBSD: src/bin/ed/re.c,v 1.20 2003/07/20 10:24:09 ru Exp $");
+ 
+ #include "ed.h"
++#include "ios_error.h"
+ 
+ 
+ extern int patlock;
+@@ -61,7 +62,7 @@
+ 	if (expr && !patlock)
+ 		regfree(expr);
+ 	else if ((expr = (pattern_t *) malloc(sizeof(pattern_t))) == NULL) {
+-		fprintf(stderr, "%s\n", strerror(errno));
++		fprintf(thread_stderr, "%s\n", strerror(errno));
+ 		errmsg = "out of memory";
+ 		return NULL;
+ 	}
+diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
+--- text_cmds-99/ed/sub.c	2005-09-20 23:36:44.000000000 +0200
++++ text_cmds/ed/sub.c	2018-01-21 17:43:36.000000000 +0100
+@@ -30,6 +30,7 @@
+ __FBSDID("$FreeBSD: src/bin/ed/sub.c,v 1.15 2002/06/30 05:13:53 obrien Exp $");
+ 
+ #include "ed.h"
++#include "ios_error.h"
+ 
+ 
+ char *rhbuf;			/* rhs substitution buffer */
+@@ -94,7 +95,7 @@
+ 		else if (!isglobal) {
+ 			while ((n = get_tty_line()) == 0 ||
+ 			    (n > 0 && ibuf[n - 1] != '\n'))
+-				clearerr(stdin);
++				clearerr(thread_stdin);
+ 			if (n < 0)
+ 				return NULL;
+ 		}
+diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
+--- text_cmds-99/ed/undo.c	2005-09-20 23:36:44.000000000 +0200
++++ text_cmds/ed/undo.c	2018-01-21 17:46:30.000000000 +0100
+@@ -29,6 +29,7 @@
+ __FBSDID("$FreeBSD: src/bin/ed/undo.c,v 1.12 2002/06/30 05:13:53 obrien Exp $");
+ 
+ #include "ed.h"
++#include "ios_error.h"
+ 
+ 
+ #define USIZE 100				/* undo stack size */
+@@ -45,7 +46,7 @@
+ #if defined(sun) || defined(NO_REALLOC_NULL)
+ 	if (ustack == NULL &&
+ 	    (ustack = (undo_t *) malloc((usize = USIZE) * sizeof(undo_t))) == NULL) {
+-		fprintf(stderr, "%s\n", strerror(errno));
++		fprintf(thread_stderr, "%s\n", strerror(errno));
+ 		errmsg = "out of memory";
+ 		return NULL;
+ 	}
+@@ -60,7 +61,7 @@
+ 		return ustack + u_p++;
+ 	}
+ 	/* out of memory - release undo stack */
+-	fprintf(stderr, "%s\n", strerror(errno));
++	fprintf(thread_stderr, "%s\n", strerror(errno));
+ 	errmsg = "out of memory";
+ 	clear_undo_stack();
+ 	free(ustack);
 diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
 --- text_cmds-99/grep/file.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/file.c	2018-01-07 17:01:48.000000000 +0100
++++ text_cmds/grep/file.c	2018-01-21 16:22:40.000000000 +0100
 @@ -38,7 +38,7 @@
  #include <sys/stat.h>
  #include <sys/types.h>
@@ -356,9 +884,34 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  #include <errno.h>
  #include <fcntl.h>
  #ifndef WITHOUT_LZMA
+@@ -57,6 +57,7 @@
+ #endif
+ 
+ #include "grep.h"
++#include "ios_error.h"
+ 
+ #define	MAXBUFSIZ	(32 * 1024)
+ #define	LNBUFBUMP	80
+@@ -262,7 +263,7 @@
+ 	if (path == NULL) {
+ 		/* Processing stdin implies --line-buffered. */
+ 		lbflag = true;
+-		f->fd = STDIN_FILENO;
++		f->fd = fileno(thread_stdin);
+ 	} else if ((f->fd = open(path, O_RDONLY)) == -1)
+ 		goto error1;
+ 
+@@ -284,6 +285,7 @@
+ 			fsiz = st.st_size;
+ 			buffer = mmap(NULL, fsiz, PROT_READ, flags,
+ 			     f->fd, (off_t)0);
++            fprintf(thread_stderr, "Read buffer: %s\n", buffer);
+ 			if (buffer == MAP_FAILED)
+ 				filebehave = FILE_STDIO;
+ 			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-01-18 14:41:27.000000000 +0100
++++ text_cmds/grep/grep.c	2018-01-21 16:17:22.000000000 +0100
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -629,6 +1182,15 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			break;
  		case COLOR_OPT:
  			color = NULL;
+@@ -643,7 +711,7 @@
+ 				char *term;
+ 
+ 				term = getenv("TERM");
+-				if (isatty(STDOUT_FILENO) && term != NULL &&
++				if (isatty(fileno(thread_stdout)) && term != NULL &&
+ 				    strcasecmp(term, "dumb") != 0)
+ 					color = init_color("01;31");
+ 			} else if (strcasecmp("always", optarg) == 0 ||
 @@ -652,8 +720,11 @@
  				color = init_color("01;31");
  			} else if (strcasecmp("never", optarg) != 0 &&
@@ -654,7 +1216,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			}
  #ifndef WITHOUT_FASTMATCH
  		}
-@@ -756,7 +829,7 @@
+@@ -756,13 +829,16 @@
  	}
  
  	if (lbflag)
@@ -663,9 +1225,20 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  
  	if ((aargc == 0 || aargc == 1) && !Hflag)
  		hflag = true;
+ 
+-	if (aargc == 0)
+-		exit(!procfile("-"));
++    if (aargc == 0) {
++        procfile("-");
++        pthread_exit(NULL);
++		// exit(!procfile("-"));
++    }
+ 
+ 	if (dirbehave == DIR_RECURSE)
+ 		c = grep_tree(aargv);
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-01-18 14:50:52.000000000 +0100
++++ text_cmds/grep/util.c	2018-01-20 23:05:09.000000000 +0100
 @@ -39,7 +39,7 @@
  #endif
  
@@ -717,11 +1290,13 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				p->fts_path);
  			break;
  		default:
-@@ -195,7 +201,8 @@
+@@ -194,8 +200,9 @@
+ 	if (strcmp(fn, "-") == 0) {
  #ifdef __APPLE__
  		/* 4053512, 10290183 */
- 		if (dirbehave == DIR_RECURSE && isatty(STDIN_FILENO)) {
+-		if (dirbehave == DIR_RECURSE && isatty(STDIN_FILENO)) {
 -			warnx("warning: recursive search of stdin");
++		if (dirbehave == DIR_RECURSE && isatty(fileno(thread_stdin))) {
 +            fprintf(thread_stderr, "grep: warning: recursive search of stdin\n");
 +            // warnx("warning: recursive search of stdin");
  		}
@@ -892,7 +1467,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  }
 diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 --- text_cmds-99/sed/compile.c	2006-12-05 23:29:30.000000000 +0100
-+++ text_cmds/sed/compile.c	2018-01-09 13:36:26.000000000 +0100
++++ text_cmds/sed/compile.c	2018-01-21 16:22:38.000000000 +0100
 @@ -54,12 +54,13 @@
  
  #include "defs.h"
@@ -916,10 +1491,10 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	else if ((appends = malloc(sizeof(struct s_appends) * appendnum)) ==
  	    NULL)
 -		err(1, "malloc");
-+    { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	if ((match = malloc((maxnsub + 1) * sizeof(regmatch_t))) == NULL)
 -		err(1, "malloc");
-+    { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  }
  
  #define EATSPACE() do {							\
@@ -928,7 +1503,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  		if ((p = cu_fgets(lbuf, sizeof(lbuf), NULL)) == NULL) {
  			if (stack != 0)
 -				errx(1, "%lu: %s: unexpected EOF (pending }'s)",
-+            { fprintf(stderr, "sed: %lu: %s: unexpected EOF (pending }'s)\n",
++            { fprintf(thread_stderr, "sed: %lu: %s: unexpected EOF (pending }'s)\n",
 +				// errx(1, "%lu: %s: unexpected EOF (pending }'s)",
  							linenum, fname);
 +                pthread_exit(NULL);
@@ -941,7 +1516,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  		}
  		if ((*link = cmd = malloc(sizeof(struct s_command))) == NULL)
 -			err(1, "malloc");
-+        { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  		link = &cmd->next;
  		cmd->nonsel = cmd->inrange = 0;
  		/* First parse the addresses */
@@ -950,7 +1525,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			naddr++;
  			if ((cmd->a1 = malloc(sizeof(struct s_addr))) == NULL)
 -				err(1, "malloc");
-+            { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++            { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  			p = compile_addr(p, cmd->a1);
  			EATSPACE();				/* EXTENSION */
  			if (*p == ',') {
@@ -959,7 +1534,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  				if ((cmd->a2 = malloc(sizeof(struct s_addr)))
  				    == NULL)
 -					err(1, "malloc");
-+                { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  				p = compile_addr(p, cmd->a2);
  				EATSPACE();
  			} else
@@ -968,7 +1543,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  nonsel:		/* Now parse the command */
  		if (!*p)
 -			errx(1, "%lu: %s: command expected", linenum, fname);
-+        { fprintf(stderr, "sed: %lu: %s: command expected\n", linenum, fname); pthread_exit(NULL); }
++        { fprintf(thread_stderr, "sed: %lu: %s: command expected\n", linenum, fname); pthread_exit(NULL); }
 +            // errx(1, "%lu: %s: command expected", linenum, fname);
  		cmd->code = *p;
  		for (fp = cmd_fmts; fp->code; fp++)
@@ -976,13 +1551,13 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  				break;
  		if (!fp->code)
 -			errx(1, "%lu: %s: invalid command code %c", linenum, fname, *p);
-+        { fprintf(stderr, "sed: %lu: %s: invalid command code %c\n", linenum, fname, *p); pthread_exit(NULL); }
++        { fprintf(thread_stderr, "sed: %lu: %s: invalid command code %c\n", linenum, fname, *p); pthread_exit(NULL); }
 +			// errx(1, "%lu: %s: invalid command code %c", linenum, fname, *p);
  		if (naddr > fp->naddr)
 -			errx(1,
 -				"%lu: %s: command %c expects up to %d address(es), found %d",
 -				linenum, fname, *p, fp->naddr, naddr);
-+        { fprintf(stderr,
++        { fprintf(thread_stderr,
 +                  "sed: %lu: %s: command %c expects up to %d address(es), found %d\n",
 +                 linenum, fname, *p, fp->naddr, naddr);
 +            pthread_exit(NULL);
@@ -998,7 +1573,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			cmd->nonsel = 1;
  			if (stack == 0)
 -				errx(1, "%lu: %s: unexpected }", linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: unexpected }\n", linenum, fname); pthread_exit(NULL); }
++            { fprintf(thread_stderr, "sed: %lu: %s: unexpected }\n", linenum, fname); pthread_exit(NULL); }
 +                // errx(1, "%lu: %s: unexpected }", linenum, fname);
  			cmd2 = stack;
  			stack = cmd2->next;
@@ -1009,7 +1584,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (*p)
 -				errx(1, "%lu: %s: extra characters at the end of %c command",
 -						linenum, fname, cmd->code);
-+            { fprintf(stderr, "sed: %lu: %s: extra characters at the end of %c command\n", linenum, fname, cmd->code); pthread_exit(NULL); }
++            { fprintf(thread_stderr, "sed: %lu: %s: extra characters at the end of %c command\n", linenum, fname, cmd->code); pthread_exit(NULL); }
 +				// errx(1, "%lu: %s: extra characters at the end of %c command",
 +						// linenum, fname, cmd->code);
  			break;
@@ -1019,7 +1594,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (*p != '\\')
 -				errx(1,
 -"%lu: %s: command %c expects \\ followed by text", linenum, fname, cmd->code);
-+            { fprintf(stderr,
++            { fprintf(thread_stderr,
 +                      "sed: %lu: %s: command %c expects \\ followed by text\n", linenum, fname, cmd->code);
 +                pthread_exit(NULL);
 +            }
@@ -1031,7 +1606,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 -				errx(1,
 -				"%lu: %s: extra characters after \\ at the end of %c command",
 -				linenum, fname, cmd->code);
-+            { fprintf(stderr,
++            { fprintf(thread_stderr,
 +                      "sed: %lu: %s: extra characters after \\ at the end of %c command\n",
 +                     linenum, fname, cmd->code);
 +                pthread_exit(NULL);
@@ -1047,7 +1622,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			EATSPACE();
  			if (*p == '\0')
 -				errx(1, "%lu: %s: filename expected", linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: filename expected\n", linenum, fname);
++            { fprintf(thread_stderr, "sed: %lu: %s: filename expected\n", linenum, fname);
 +                pthread_exit(NULL);
 +            }
 +             //   errx(1, "%lu: %s: filename expected", linenum, fname);
@@ -1058,14 +1633,14 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
  			    DEFFILEMODE)) == -1)
 -				err(1, "%s", p);
-+            { fprintf(stderr, "sed: %s: %s\n", p, strerror(errno)); pthread_exit(NULL); }  // err(1, "%s", p);
++            { fprintf(thread_stderr, "sed: %s: %s\n", p, strerror(errno)); pthread_exit(NULL); }  // err(1, "%s", p);
  			break;
  		case RFILE:			/* r */
  			p++;
  			EATSPACE();
  			if (*p == '\0')
 -				errx(1, "%lu: %s: filename expected", linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: filename expected\n", linenum, fname);
++            { fprintf(thread_stderr, "sed: %lu: %s: filename expected\n", linenum, fname);
 +                pthread_exit(NULL);
 +            }
 +				// errx(1, "%lu: %s: filename expected", linenum, fname);
@@ -1077,7 +1652,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			cmd->t = duptoeol(p, "label");
  			if (strlen(p) == 0)
 -				errx(1, "%lu: %s: empty label", linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: empty label\n", linenum, fname);
++            { fprintf(thread_stderr, "sed: %lu: %s: empty label\n", linenum, fname);
 +                pthread_exit(NULL);
 +            }
 +			//	errx(1, "%lu: %s: empty label", linenum, fname);
@@ -1089,7 +1664,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 -				errx(1,
 -"%lu: %s: substitute pattern can not be delimited by newline or backslash",
 -					linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: substitute pattern can not be delimited by newline or backslash\n", linenum, fname);
++            { fprintf(thread_stderr, "sed: %lu: %s: substitute pattern can not be delimited by newline or backslash\n", linenum, fname);
 +                pthread_exit(NULL);
 +            }
 +				// errx(1,
@@ -1097,12 +1672,12 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 +	//				linenum, fname);
  			if ((cmd->u.s = malloc(sizeof(struct s_subst))) == NULL)
 -				err(1, "malloc");
-+            { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++            { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  			p = compile_re(p, &cmd->u.s->re);
  			if (p == NULL)
 -				errx(1,
 -				"%lu: %s: unterminated substitute pattern", linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: unterminated substitute pattern\n", linenum, fname);
++            { fprintf(thread_stderr, "sed: %lu: %s: unterminated substitute pattern\n", linenum, fname);
 +                pthread_exit(NULL);
 +            }
 +				//errx(1,
@@ -1116,7 +1691,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (*p)
 -				errx(1,
 -"%lu: %s: extra text at the end of a transform command", linenum, fname);
-+            { fprintf(stderr,
++            { fprintf(thread_stderr,
 +                      "sed: %lu: %s: extra text at the end of a transform command\n", linenum, fname);
 +                pthread_exit(NULL);
 +            }
@@ -1130,14 +1705,14 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  		return (NULL);
  	else if (c == '\\')
 -		errx(1, "%lu: %s: \\ can not be used as a string delimiter",
-+    { fprintf(stderr, "sed: %lu: %s: \\ can not be used as a string delimiter\n",
++    { fprintf(thread_stderr, "sed: %lu: %s: \\ can not be used as a string delimiter\n",
 +             //errx(1, "%lu: %s: \\ can not be used as a string delimiter",
  				linenum, fname);
 +        pthread_exit(NULL);
 +    }
  	else if (c == '\n')
 -		errx(1, "%lu: %s: newline can not be used as a string delimiter",
-+    { fprintf(stderr, "sed: %lu: %s: newline can not be used as a string delimiter\n",
++    { fprintf(thread_stderr, "sed: %lu: %s: newline can not be used as a string delimiter\n",
 +              // errx(1, "%lu: %s: newline can not be used as a string delimiter",
  				linenum, fname);
 +        pthread_exit(NULL);
@@ -1146,7 +1721,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  		if (*p == '[' && c != *p) {
  			if ((d = compile_ccl(&p, d)) == NULL)
 -				errx(1, "%lu: %s: unbalanced brackets ([])", linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: unbalanced brackets ([])", linenum, fname);
++            { fprintf(thread_stderr, "sed: %lu: %s: unbalanced brackets ([])", linenum, fname);
 +				//errx(1, "%lu: %s: unbalanced brackets ([])", linenum, fname);
 +                pthread_exit(NULL);
 +            }
@@ -1158,10 +1733,10 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	}
  	if ((*repp = malloc(sizeof(regex_t))) == NULL)
 -		err(1, "malloc");
-+    { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	if (p && (eval = regcomp(*repp, re, rflags)) != 0)
 -		errx(1, "%lu: %s: RE error: %s",
-+    { fprintf(stderr, "sed: %lu: %s: RE error: %s\n",
++    { fprintf(thread_stderr, "sed: %lu: %s: RE error: %s\n",
 +		// errx(1, "%lu: %s: RE error: %s",
  				linenum, fname, strregerror(eval, *repp));
 +        pthread_exit(NULL);
@@ -1174,7 +1749,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	asize = 2 * _POSIX2_LINE_MAX + 1;
  	if ((text = malloc(asize)) == NULL)
 -		err(1, "malloc");
-+    { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	size = 0;
  	do {
  		op = sp = text + size;
@@ -1183,7 +1758,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  					if (s->re != NULL &&
  					    ref > s->re->re_nsub)
 -						errx(1, "%lu: %s: \\%c not defined in the RE",
-+                    { fprintf(stderr, "sed: %lu: %s: \\%c not defined in the RE\n",
++                    { fprintf(thread_stderr, "sed: %lu: %s: \\%c not defined in the RE\n",
 +						// errx(1, "%lu: %s: \\%c not defined in the RE",
  								linenum, fname, *p);
 +                        pthread_exit(NULL);
@@ -1196,12 +1771,12 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  				size += sp - op;
  				if ((s->new = realloc(text, size)) == NULL)
 -					err(1, "realloc");
-+                { fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                { fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  				return (p);
  			} else if (*p == '\n') {
 -				errx(1,
 -"%lu: %s: unescaped newline inside substitute pattern", linenum, fname);
-+				fprintf(stderr,
++				fprintf(thread_stderr,
 +                    // errx(1,
 +                        "sed: %lu: %s: unescaped newline inside substitute pattern\n", linenum, fname);
 +                pthread_exit(NULL);
@@ -1213,11 +1788,11 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			asize *= 2;
  			if ((text = realloc(text, asize)) == NULL)
 -				err(1, "realloc");
-+            { fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++            { fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  		}
  	} while (cu_fgets(p = lbuf, sizeof(lbuf), &more));
 -	errx(1, "%lu: %s: unterminated substitute in regular expression",
-+    fprintf(stderr, "sed: %lu: %s: unterminated substitute in regular expression\n",
++    fprintf(thread_stderr, "sed: %lu: %s: unterminated substitute in regular expression\n",
 +         // errx(1, "%lu: %s: unterminated substitute in regular expression",
  			linenum, fname);
 +    pthread_exit(NULL);
@@ -1230,7 +1805,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (gn)
 -				errx(1,
 -"%lu: %s: more than one number or 'g' in substitute flags", linenum, fname);
-+            { fprintf(stderr,
++            { fprintf(thread_stderr,
 +                     //errx(1,
 +                      "sed: %lu: %s: more than one number or 'g' in substitute flags\n", linenum, fname);
 +                pthread_exit(NULL);
@@ -1244,7 +1819,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (gn)
 -				errx(1,
 -"%lu: %s: more than one number or 'g' in substitute flags", linenum, fname);
-+            { fprintf(stderr,
++            { fprintf(thread_stderr,
 +				// errx(1,
 +                      "sed: %lu: %s: more than one number or 'g' in substitute flags\n", linenum, fname);
 +                pthread_exit(NULL);
@@ -1255,7 +1830,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (errno == ERANGE || nval > INT_MAX)
 -				errx(1,
 -"%lu: %s: overflow in the 'N' substitute flag", linenum, fname);
-+            { fprintf(stderr,
++            { fprintf(thread_stderr,
 +				//errx(1,
 +                      "sed: %lu: %s: overflow in the 'N' substitute flag\n", linenum, fname);
 +                pthread_exit(NULL);
@@ -1278,7 +1853,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			*q = '\0';
  			if (q == wfile)
 -				errx(1, "%lu: %s: no wfile specified", linenum, fname);
-+            { fprintf(stderr, "sed: %lu: %s: no wfile specified\n", linenum, fname);
++            { fprintf(thread_stderr, "sed: %lu: %s: no wfile specified\n", linenum, fname);
 +                pthread_exit(NULL);
 +            }
 +                // errx(1, "%lu: %s: no wfile specified", linenum, fname);
@@ -1287,11 +1862,11 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
  			    DEFFILEMODE)) == -1)
 -				err(1, "%s", wfile);
-+            { fprintf(stderr, "sed: %s: %s\n", wfile, strerror(errno)); pthread_exit(NULL); } // err(1, "%s", wfile);
++            { fprintf(thread_stderr, "sed: %s: %s\n", wfile, strerror(errno)); pthread_exit(NULL); } // err(1, "%s", wfile);
  			return (p);
  		default:
 -			errx(1, "%lu: %s: bad flag in substitute command: '%c'",
-+                fprintf(stderr, "sed: %lu: %s: bad flag in substitute command: '%c'\n",
++                fprintf(thread_stderr, "sed: %lu: %s: bad flag in substitute command: '%c'\n",
 +			// errx(1, "%lu: %s: bad flag in substitute command: '%c'",
  					linenum, fname, *p);
 +                pthread_exit(NULL);
@@ -1303,14 +1878,14 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  
  	if ((*py = y = malloc(sizeof(*y))) == NULL)
 -		err(1, NULL);
-+    { fprintf(stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	y->multis = NULL;
  	y->nmultis = 0;
  
  	if (*p == '\0' || *p == '\\')
 -		errx(1,
 -	"%lu: %s: transform pattern can not be delimited by newline or backslash",
-+    { fprintf(stderr,
++    { fprintf(thread_stderr,
 +             // errx(1,
 +              "sed: %lu: %s: transform pattern can not be delimited by newline or backslash\n",
  			linenum, fname);
@@ -1319,7 +1894,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	p = compile_delimited(p, old, 1);
  	if (p == NULL)
 -		errx(1, "%lu: %s: unterminated transform source string",
-+    { fprintf(stderr, "sed: %lu: %s: unterminated transform source string\n",
++    { fprintf(thread_stderr, "sed: %lu: %s: unterminated transform source string\n",
 +		// errx(1, "%lu: %s: unterminated transform source string",
  				linenum, fname);
 +        pthread_exit(NULL);
@@ -1327,7 +1902,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	p = compile_delimited(p - 1, new, 1);
  	if (p == NULL)
 -		errx(1, "%lu: %s: unterminated transform target string",
-+    { fprintf(stderr, "sed: %lu: %s: unterminated transform target string\n",
++    { fprintf(thread_stderr, "sed: %lu: %s: unterminated transform target string\n",
 +		// errx(1, "%lu: %s: unterminated transform target string",
  				linenum, fname);
 +        pthread_exit(NULL);
@@ -1337,15 +1912,15 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	oldlen = mbsrtowcs(NULL, &op, 0, NULL);
  	if (oldlen == (size_t)-1)
 -		err(1, NULL);
-+    { fprintf(stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	np = new;
  	newlen = mbsrtowcs(NULL, &np, 0, NULL);
  	if (newlen == (size_t)-1)
 -		err(1, NULL);
-+    { fprintf(stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	if (newlen != oldlen)
 -		errx(1, "%lu: %s: transform strings are not the same length",
-+    { fprintf(stderr, "sed: %lu: %s: transform strings are not the same length\n",
++    { fprintf(thread_stderr, "sed: %lu: %s: transform strings are not the same length\n",
 +		// errx(1, "%lu: %s: transform strings are not the same length",
  				linenum, fname);
 +        pthread_exit(NULL);
@@ -1358,7 +1933,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  				    (y->nmultis + 1) * sizeof(*y->multis));
  				if (y->multis == NULL)
 -					err(1, NULL);
-+                { fprintf(stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                { fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  				i = y->nmultis++;
  				y->multis[i].fromlen = oclen;
  				memcpy(y->multis[i].from, op, oclen);
@@ -1367,7 +1942,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	asize = 2 * _POSIX2_LINE_MAX + 1;
  	if ((text = malloc(asize)) == NULL)
 -		err(1, "malloc");
-+    { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	size = 0;
  	while (cu_fgets(lbuf, sizeof(lbuf), NULL)) {
  		op = s = text + size;
@@ -1376,13 +1951,13 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			asize *= 2;
  			if ((text = realloc(text, asize)) == NULL)
 -				err(1, "realloc");
-+            { fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++            { fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  		}
  	}
  	text[size] = '\0';
  	if ((p = realloc(text, size + 1)) == NULL)
 -		err(1, "realloc");
-+    { fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	return (p);
  }
  
@@ -1391,7 +1966,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  		p = compile_re(p, &a->u.r);
  		if (p == NULL)
 -			errx(1, "%lu: %s: unterminated regular expression", linenum, fname);
-+        { fprintf(stderr, "sed: %lu: %s: unterminated regular expression\n", linenum, fname);
++        { fprintf(thread_stderr, "sed: %lu: %s: unterminated regular expression\n", linenum, fname);
 +            pthread_exit(NULL);
 +         //   errx(1, "%lu: %s: unterminated regular expression", linenum, fname);
 +        }
@@ -1403,7 +1978,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  		return (end);
  	default:
 -		errx(1, "%lu: %s: expected context address", linenum, fname);
-+            fprintf(stderr, "sed: %lu: %s: expected context address\n", linenum, fname);
++            fprintf(thread_stderr, "sed: %lu: %s: expected context address\n", linenum, fname);
 +            pthread_exit(NULL);
 +		// errx(1, "%lu: %s: expected context address", linenum, fname);
  		return (NULL);
@@ -1414,12 +1989,12 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	*s = '\0';
  	if (ws)
 -		warnx("%lu: %s: whitespace after %s", linenum, fname, ctype);
-+        fprintf(stderr, "sed: %lu: %s: whitespace after %s\n", linenum, fname, ctype);
++        fprintf(thread_stderr, "sed: %lu: %s: whitespace after %s\n", linenum, fname, ctype);
 +		// warnx("%lu: %s: whitespace after %s", linenum, fname, ctype);
  	len = s - start + 1;
  	if ((p = malloc(len)) == NULL)
 -		err(1, "malloc");
-+    { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	return (memmove(p, start, len));
  }
  
@@ -1428,7 +2003,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			}
  			if ((cp->u.c = findlabel(cp->t)) == NULL)
 -				errx(1, "%lu: %s: undefined label '%s'", linenum, fname, cp->t);
-+            { fprintf(stderr, "sed: %lu: %s: undefined label '%s'\n", linenum, fname, cp->t);
++            { fprintf(thread_stderr, "sed: %lu: %s: undefined label '%s'\n", linenum, fname, cp->t);
 +                pthread_exit(NULL);
 +                // errx(1, "%lu: %s: undefined label '%s'", linenum, fname, cp->t);
 +            }
@@ -1440,13 +2015,13 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	for (lh = *lhp; lh != NULL; lh = lh->lh_next)
  		if (lh->lh_hash == h && strcmp(cp->t, lh->lh_cmd->t) == 0)
 -			errx(1, "%lu: %s: duplicate label '%s'", linenum, fname, cp->t);
-+        { fprintf(stderr, "sed: %lu: %s: duplicate label '%s'\n", linenum, fname, cp->t);
++        { fprintf(thread_stderr, "sed: %lu: %s: duplicate label '%s'\n", linenum, fname, cp->t);
 +            pthread_exit(NULL);
 +    // errx(1, "%lu: %s: duplicate label '%s'", linenum, fname, cp->t);
 +        }
  	if ((lh = malloc(sizeof *lh)) == NULL)
 -		err(1, "malloc");
-+    { fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++    { fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
  	lh->lh_next = *lhp;
  	lh->lh_hash = h;
  	lh->lh_cmd = cp;
@@ -1456,7 +2031,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (!lh->lh_ref)
 -				warnx("%lu: %s: unused label '%s'",
 -				    linenum, fname, lh->lh_cmd->t);
-+                fprintf(stderr, "sed: %lu: %s: unused label '%s'\n", linenum, fname, lh->lh_cmd->t);
++                fprintf(thread_stderr, "sed: %lu: %s: unused label '%s'\n", linenum, fname, lh->lh_cmd->t);
 +            // warnx("%lu: %s: unused label '%s'", linenum, fname, lh->lh_cmd->t);
  			free(lh);
  		}
@@ -1475,7 +2050,7 @@ diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
  extern int rflags;	/* regex flags to use */
 diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 --- text_cmds-99/sed/main.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/main.c	2018-01-09 17:28:31.000000000 +0100
++++ text_cmds/sed/main.c	2018-01-21 16:37:54.000000000 +0100
 @@ -64,6 +64,9 @@
  
  #include "defs.h"
@@ -1533,16 +2108,18 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  			eflag = 1;
  			if ((temp_arg = malloc(strlen(optarg) + 2)) == NULL)
 -				err(1, "malloc");
-+                fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
++                fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
  			strcpy(temp_arg, optarg);
  			strcat(temp_arg, "\n");
  			add_compunit(CU_STRING, temp_arg);
-@@ -153,10 +170,10 @@
+@@ -152,11 +169,11 @@
+ 			inplace = optarg;
  			break;
  		case 'l':
- 			if(setlinebuf(stdout) != 0)
+-			if(setlinebuf(stdout) != 0)
 -				warnx("setlinebuf() failed");
-+                fprintf(stderr, "sed: setlinebuf() failed\n"); // warnx("setlinebuf() failed");
++			if(setlinebuf(thread_stdout) != 0)
++                fprintf(thread_stderr, "sed: setlinebuf() failed\n"); // warnx("setlinebuf() failed");
  			break;
  		case 'n':
 -			nflag = 1;
@@ -1550,7 +2127,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  			break;
  		default:
  		case '?':
-@@ -181,9 +198,12 @@
+@@ -181,18 +198,22 @@
  		add_file(NULL);
  	process();
  	cfclose(prog, NULL);
@@ -1560,14 +2137,16 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 +	// if (fclose(stdout))
 +	//	err(1, "stdout");
 +	// exit(rval);
-+    if ((infile != NULL) && (infile != stdin)) fclose(infile);
-+    if ((outfile != NULL) && (outfile != stdout)) fclose(outfile);
++    if ((infile != NULL) && (infile != thread_stdin)) fclose(infile);
++    if ((outfile != NULL) && (outfile != thread_stdout)) fclose(outfile);
 +    return 0;
  }
  
  static void
-@@ -192,7 +212,8 @@
- 	(void)fprintf(stderr, "%s\n%s\n",
+ usage(void)
+ {
+-	(void)fprintf(stderr, "%s\n%s\n",
++	(void)fprintf(thread_stderr, "%s\n%s\n",
  		"usage: sed script [-Ealn] [-i extension] [file ...]",
  		"       sed [-Ealn] [-i extension] [-e script] ... [-f script_file] ... [file ...]");
 -	exit(1);
@@ -1581,7 +2160,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  		case CU_FILE:
  			if ((f = fopen(script->s, "r")) == NULL)
 -				err(1, "%s", script->s);
-+                fprintf(stderr, "sed: %s: %s\n", script->s, strerror(errno)); // err(1, "%s", script->s);
++                fprintf(thread_stderr, "sed: %s: %s\n", script->s, strerror(errno)); // err(1, "%s", script->s);
  			fname = script->s;
  			state = ST_FILE;
  			goto again;
@@ -1603,25 +2182,36 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  		p = buf;
  		for (;;) {
  			if (n-- <= 1) {
-@@ -308,7 +329,7 @@
+@@ -308,10 +329,10 @@
  		/* stdin? */
  		if (files->fname == NULL) {
  			if (inplace != NULL)
 -				errx(1, "-i may not be used with stdin");
-+                fprintf(stderr, "sed: -i may not be used with stdin\n"); //errx(1, "-i may not be used with stdin");
- 			infile = stdin;
+-			infile = stdin;
++                fprintf(thread_stderr, "sed: -i may not be used with stdin\n"); //errx(1, "-i may not be used with stdin");
++			infile = thread_stdin;
  			fname = "stdin";
- 			outfile = stdout;
-@@ -328,12 +349,13 @@
+-			outfile = stdout;
++			outfile = thread_stdout;
+ 			outfname = "stdout";
+ 		}
+ 		firstfile = 1;
+@@ -323,22 +344,23 @@
+ 			break;
+ 		}
+ 		/* If we are here then either eof or no files are open yet */
+-		if (infile == stdin) {
++		if (infile == thread_stdin) {
+ 			sp->len = 0;
  			return (0);
  		}
  		if (infile != NULL) {
 -			fclose(infile);
-+			if (infile != stdin) fclose(infile);
++			if (infile != thread_stdin) fclose(infile);
  			if (*oldfname != '\0') {
  				if (rename(fname, oldfname) != 0) {
 -					warn("rename()");
-+                    fprintf(stderr, "sed: rename(): %s\n", strerror(errno)); // warn("rename()");
++                    fprintf(thread_stderr, "sed: rename(): %s\n", strerror(errno)); // warn("rename()");
  					unlink(tmpfname);
 -					exit(1);
 +                    pthread_exit(NULL);
@@ -1629,17 +2219,23 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  				}
  				*oldfname = '\0';
  			}
-@@ -357,27 +379,32 @@
+ 			if (*tmpfname != '\0') {
+-				if (outfile != NULL && outfile != stdout)
++				if (outfile != NULL && outfile != thread_stdout)
+ 					fclose(outfile);
+ 				outfile = NULL;
+ 				rename(tmpfname, fname);
+@@ -357,36 +379,41 @@
  		fname = files->fname;
  		if (inplace != NULL) {
  			if (lstat(fname, &sb) != 0)
 -				err(1, "%s", fname);
-+                fprintf(stderr, "sed: %s: %s\n", fname, strerror(errno)); // err(1, "%s", fname);
++                fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno)); // err(1, "%s", fname);
  			if (!(sb.st_mode & S_IFREG))
 -				errx(1, "%s: %s %s", fname,
 -				    "in-place editing only",
 -				    "works for regular files");
-+                fprintf(stderr, "sed: %s: %s %s\n", fname,
++                fprintf(thread_stderr, "sed: %s: %s %s\n", fname,
 +                     "in-place editing only",
 +                     "works for regular files");
 +				//errx(1, "%s: %s %s", fname,
@@ -1652,7 +2248,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  				    sizeof(oldfname));
  				if (len > sizeof(oldfname))
 -					errx(1, "%s: name too long", fname);
-+                    fprintf(stderr, "sed: %s: name too long\n", fname);
++                    fprintf(thread_stderr, "sed: %s: name too long\n", fname);
 +                // errx(1, "%s: name too long", fname);
  			}
  			len = snprintf(tmpfname, sizeof(tmpfname),
@@ -1660,21 +2256,23 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  			    basename(fname));
  			if (len >= sizeof(tmpfname))
 -				errx(1, "%s: name too long", fname);
-+                fprintf(stderr, "sed: %s: name too long\n", fname);
++                fprintf(thread_stderr, "sed: %s: name too long\n", fname);
 +				// errx(1, "%s: name too long", fname);
  			unlink(tmpfname);
  			if ((outfile = fopen(tmpfname, "w")) == NULL)
 -				err(1, "%s", fname);
-+                fprintf(stderr, "sed: %s: %s\n", fname, strerror(errno)); // err(1, "%s", fname);
++                fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno)); // err(1, "%s", fname);
  			fchown(fileno(outfile), sb.st_uid, sb.st_gid);
  			fchmod(fileno(outfile), sb.st_mode & ALLPERMS);
  			outfname = tmpfname;
-@@ -386,7 +413,7 @@
+ 		} else {
+-			outfile = stdout;
++			outfile = thread_stdout;
  			outfname = "stdout";
  		}
  		if ((infile = fopen(fname, "r")) == NULL) {
 -			warn("%s", fname);
-+            fprintf(stderr, "sed: %s: %s\n", fname, strerror(errno)); // warn("%s", fname);
++            fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno)); // warn("%s", fname);
  			rval = 1;
  			continue;
  		}
@@ -1683,7 +2281,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  	p = fgetln(infile, &len);
  	if (ferror(infile))
 -		errx(1, "%s: %s", fname, strerror(errno ? errno : EIO));
-+        fprintf(stderr, "sed: %s: %s\n", fname, strerror(errno ? errno : EIO));
++        fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno ? errno : EIO));
 +        // errx(1, "%s: %s", fname, strerror(errno ? errno : EIO));
  	if (len != 0 && p[len - 1] == '\n')
  		len--;
@@ -1693,7 +2291,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  
  	if ((cu = malloc(sizeof(struct s_compunit))) == NULL)
 -		err(1, "malloc");
-+        fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
++        fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
  	cu->type = type;
  	cu->s = s;
  	cu->next = NULL;
@@ -1702,7 +2300,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  
  	if ((fp = malloc(sizeof(struct s_flist))) == NULL)
 -		err(1, "malloc");
-+        fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
++        fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
  	fp->next = NULL;
 +    // That's the stuff:
  	*fl_nextp = fp;
@@ -1710,7 +2308,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  	fl_nextp = &fp->next;
 diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
 --- text_cmds-99/sed/misc.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/misc.c	2018-01-09 10:54:57.000000000 +0100
++++ text_cmds/sed/misc.c	2018-01-21 16:22:39.000000000 +0100
 @@ -49,6 +49,9 @@
  
  #include "defs.h"
@@ -1726,13 +2324,13 @@ diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
  	s = regerror(errcode, preg, NULL, 0);
  	if ((oe = malloc(s)) == NULL)
 -		err(1, "malloc");
-+        fprintf(stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
++        fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
  	(void)regerror(errcode, preg, oe, s);
  	return (oe);
  }
 diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 --- text_cmds-99/sed/process.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/process.c	2018-01-09 13:39:22.000000000 +0100
++++ text_cmds/sed/process.c	2018-01-21 16:37:54.000000000 +0100
 @@ -58,6 +58,7 @@
  
  #include "defs.h"
@@ -1746,7 +2344,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  					    sizeof(struct s_appends) *
  					    (appendnum *= 2))) == NULL)
 -						err(1, "realloc");
-+                        fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
++                        fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
  				appends[appendx].type = AP_STRING;
  				appends[appendx].s = cp->t;
  				appends[appendx].len = strlen(cp->t);
@@ -1759,7 +2357,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  					OUT(ps)
  				flush_appends();
  				if (!mf_fgets(&PS, REPLACE))
-@@ -198,7 +199,7 @@
+@@ -198,17 +199,17 @@
  					psl = oldpsl;
  				break;
  			case 'q':
@@ -1767,13 +2365,16 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 +				if (!sed_nflag && !pd)
  					OUT(ps)
  				flush_appends();
- 				lseek(STDIN_FILENO, ftell(stdin), SEEK_SET);
-@@ -208,7 +209,7 @@
+-				lseek(STDIN_FILENO, ftell(stdin), SEEK_SET);
++				lseek(fileno(thread_stdin), ftell(thread_stdin), SEEK_SET);
+ 				exit(0);
+ 			case 'r':
+ 				if (appendx >= appendnum)
  					if ((appends = realloc(appends,
  					    sizeof(struct s_appends) *
  					    (appendnum *= 2))) == NULL)
 -						err(1, "realloc");
-+						        fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
++						        fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
  				appends[appendx].type = AP_FILE;
  				appends[appendx].s = cp->t;
  				appends[appendx].len = strlen(cp->t);
@@ -1782,11 +2383,11 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  				    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
  				    DEFFILEMODE)) == -1)
 -					err(1, "%s", cp->t);
-+                    fprintf(stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
++                    fprintf(thread_stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
  				if (write(cp->u.fd, ps, psl) != psl ||
  				    write(cp->u.fd, "\n", 1) != 1)
 -					err(1, "%s", cp->t);
-+                    fprintf(stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
++                    fprintf(thread_stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
  				break;
  			case 'x':
  				if (hs == NULL)
@@ -1804,7 +2405,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		if (defpreg != NULL && cp->u.s->maxbref > defpreg->re_nsub) {
  			linenum = cp->u.s->linenum;
 -			errx(1, "%lu: %s: \\%d not defined in the RE",
-+            fprintf(stderr, "sed: %lu: %s: \\%d not defined in the RE\n",
++            fprintf(thread_stderr, "sed: %lu: %s: \\%d not defined in the RE\n",
 +			// errx(1, "%lu: %s: \\%d not defined in the RE",
  					linenum, fname, cp->u.s->maxbref);
 +            pthread_exit(NULL);
@@ -1816,11 +2417,11 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		if (cp->u.s->wfd == -1 && (cp->u.s->wfd = open(cp->u.s->wfile,
  		    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1)
 -			err(1, "%s", cp->u.s->wfile);
-+            fprintf(stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
++            fprintf(thread_stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
  		if (write(cp->u.s->wfd, ps, psl) != psl ||
  		    write(cp->u.s->wfd, "\n", 1) != 1)
 -			err(1, "%s", cp->u.s->wfile);
-+            fprintf(stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
++            fprintf(thread_stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
  	}
  	return (1);
  }
@@ -1829,13 +2430,28 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		}
  	if (ferror(outfile))
 -		errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
-+    { fprintf(stderr, "sed: %s: %s\n", outfname, strerror(errno ? errno : EIO));
++    { fprintf(thread_stderr, "sed: %s: %s\n", outfname, strerror(errno ? errno : EIO));
 +        pthread_exit(NULL);
 +    // errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
 +    }
  	appendx = sdone = 0;
  }
  
+@@ -527,12 +533,12 @@
+ 	wchar_t wc;
+ 	mbstate_t mbs;
+ 
+-	if (outfile != stdout)
++	if (outfile != thread_stdout)
+ 		termwidth = 60;
+ 	if (termwidth == -1) {
+ 		if ((p = getenv("COLUMNS")) && *p != '\0')
+ 			termwidth = atoi(p);
+-		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
++		else if (ioctl(fileno(thread_stdout), TIOCGWINSZ, &win) == 0 &&
+ 		    win.ws_col > 0)
+ 			termwidth = win.ws_col;
+ 		else
 @@ -589,8 +595,11 @@
  		fprintf(outfile, "\\\n");
  	(void)fputc('$', outfile);
@@ -1843,7 +2459,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 -	if (ferror(outfile))
 -		errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
 +    if (ferror(outfile)) {
-+        fprintf(stderr, "sed: %s: %s\n", outfname, strerror(errno ? errno : EIO));
++        fprintf(thread_stderr, "sed: %s: %s\n", outfname, strerror(errno ? errno : EIO));
 +        // errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
 +        pthread_exit(NULL);
 +    }
@@ -1855,7 +2471,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  	if (preg == NULL) {
  		if (defpreg == NULL)
 -			errx(1, "first RE may not be empty");
-+        { fprintf(stderr, "sed: first RE may not be empty\n");
++        { fprintf(thread_stderr, "sed: first RE may not be empty\n");
 +            // errx(1, "first RE may not be empty");
 +            pthread_exit(NULL);
 +        }
@@ -1867,7 +2483,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		return (0);
  	}
 -	errx(1, "RE error: %s", strregerror(eval, defpreg));
-+    fprintf(stderr, "sed: RE error: %s\n", strregerror(eval, defpreg));
++    fprintf(thread_stderr, "sed: RE error: %s\n", strregerror(eval, defpreg));
 +    pthread_exit(NULL);
 +    // errx(1, "RE error: %s", strregerror(eval, defpreg));
  	/* NOTREACHED */
@@ -1878,7 +2494,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		if ((sp->space = sp->back = realloc(sp->back, sp->blen)) \
  		    == NULL)						\
 -			err(1, "realloc");				\
-+            fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); \
++            fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); \
  		dst = sp->space + sp->len;				\
  	}
 +    // err(1, "realloc");
@@ -1890,7 +2506,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		if ((sp->space = sp->back = realloc(sp->back, sp->blen)) ==
  		    NULL)
 -			err(1, "realloc");
-+			        fprintf(stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
++			        fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
  	}
  
  	if (spflag == REPLACE)
@@ -1899,19 +2515,19 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		case 's':
  			if (cp->u.s->wfd != -1 && close(cp->u.s->wfd))
 -				err(1, "%s", cp->u.s->wfile);
-+                fprintf(stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
++                fprintf(thread_stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
  			cp->u.s->wfd = -1;
  			break;
  		case 'w':
  			if (cp->u.fd != -1 && close(cp->u.fd))
 -				err(1, "%s", cp->t);
-+                fprintf(stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
++                fprintf(thread_stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
  			cp->u.fd = -1;
  			break;
  		case '{':
 diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 --- text_cmds-99/tr/str.c	2005-08-18 23:20:18.000000000 +0200
-+++ text_cmds/tr/str.c	2018-01-11 14:47:09.000000000 +0100
++++ text_cmds/tr/str.c	2018-01-21 16:22:39.000000000 +0100
 @@ -53,6 +53,10 @@
  #include <wctype.h>
  
@@ -1930,7 +2546,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 -	if ((s->cclass = wctype(s->str)) == 0)
 -		errx(1, "unknown class %s", s->str);
 +    if ((s->cclass = wctype(s->str)) == 0) {
-+		fprintf(stderr, "tr: unknown class %s\n", s->str); // errx
++		fprintf(thread_stderr, "tr: unknown class %s\n", s->str); // errx
 +        pthread_exit(NULL);
 +    }
  	s->cnt = 0;
@@ -1943,7 +2559,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 -		if (*s->str != '=')
 -			errx(1, "misplaced equivalence equals sign");
 +        if (*s->str != '=') {
-+			fprintf(stderr, "tr: misplaced equivalence equals sign\n"); // errx
++			fprintf(thread_stderr, "tr: misplaced equivalence equals sign\n"); // errx
 +            pthread_exit(NULL);
 +        }
  		s->str += 2;
@@ -1956,7 +2572,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 -			errx(1, "misplaced equivalence equals sign");
 -		s->str += clen + 2;
 +        if (s->str[clen] != '=') {
-+			fprintf(stderr, "tr: misplaced equivalence equals sign\n"); // errx
++			fprintf(thread_stderr, "tr: misplaced equivalence equals sign\n"); // errx
 +            pthread_exit(NULL);
 +        }
 +        s->str += clen + 2;
@@ -1971,7 +2587,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 -		err(1, "genrange() malloc");
 +    if ((s->set = p = malloc((NCHARS_SB + 1) * sizeof(int))) == NULL) {
 +		// err(1, "genrange() malloc");
-+        fprintf(stderr, "tr: genrange() malloc: %s", strerror(errno));
++        fprintf(thread_stderr, "tr: genrange() malloc: %s", strerror(errno));
 +        pthread_exit(NULL);
 +    }
  	for (cnt = 0; cnt < NCHARS_SB; cnt++)
@@ -1984,7 +2600,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 -	if (s->which == STRING1)
 -		errx(1, "sequences only valid in string2");
 +    if (s->which == STRING1) {
-+		fprintf(stderr, "tr: sequences only valid in string2\n"); // errx
++		fprintf(thread_stderr, "tr: sequences only valid in string2\n"); // errx
 +        pthread_exit(NULL);
 +    }
 +        
@@ -1998,7 +2614,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 -	if (*s->str != '*')
 -		errx(1, "misplaced sequence asterisk");
 +    if (*s->str != '*') {
-+		fprintf(stderr, "tr: misplaced sequence asterisk\n"); // errx
++		fprintf(thread_stderr, "tr: misplaced sequence asterisk\n"); // errx
 +        pthread_exit(NULL);
 +    }
  
@@ -2009,14 +2625,14 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
  			}
  		}
 -		errx(1, "illegal sequence count");
-+		fprintf(stderr, "tr: illegal sequence count\n"); // errx
++		fprintf(thread_stderr, "tr: illegal sequence count\n"); // errx
 +        pthread_exit(NULL);
  		/* NOTREACHED */
  	}
  
 diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 --- text_cmds-99/tr/tr.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/tr/tr.c	2018-01-11 16:09:44.000000000 +0100
++++ text_cmds/tr/tr.c	2018-01-21 16:37:54.000000000 +0100
 @@ -61,6 +61,9 @@
  #include "cmap.h"
  #include "cset.h"
@@ -2101,17 +2717,27 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  
  	(void)setlocale(LC_ALL, "");
  
+@@ -98,7 +157,7 @@
+ 			sflag = 1;
+ 			break;
+ 		case 'u':
+-			setbuf(stdout, (char *)NULL);
++			setbuf(thread_stdout, (char *)NULL);
+ 			break;
+ 		case '?':
+ 		default:
 @@ -138,11 +197,13 @@
  			if (!cset_in(delete, ch) &&
  			    (lastch != ch || !cset_in(squeeze, ch))) {
  				lastch = ch;
 -				(void)putwchar(ch);
-+                (void)putwc(ch, stdout); // (void)putwchar(ch);
++                (void)putwc(ch, thread_stdout); // (void)putwchar(ch);
  			}
- 		if (ferror(stdin))
+-		if (ferror(stdin))
 -			err(1, NULL);
 -		exit(0);
-+            fprintf(stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
++		if (ferror(thread_stdin))
++            fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
 +        cset_free(delete);
 +        cset_free(squeeze);
 +        pthread_exit(NULL); // exit(0);
@@ -2123,11 +2749,12 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  		while ((ch = getwchar()) != WEOF)
  			if (!cset_in(delete, ch))
 -				(void)putwchar(ch);
-+				(void)putwc(ch, stdout); // (void)putwchar(ch);
- 		if (ferror(stdin))
+-		if (ferror(stdin))
 -			err(1, NULL);
 -		exit(0);
-+            fprintf(stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
++				(void)putwc(ch, thread_stdout); // (void)putwchar(ch);
++		if (ferror(thread_stdin))
++            fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
 +        cset_free(delete);
 +		pthread_exit(NULL); // exit(0);
  	}
@@ -2138,12 +2765,13 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  			if (lastch != ch || !cset_in(squeeze, ch)) {
  				lastch = ch;
 -				(void)putwchar(ch);
-+				(void)putwc(ch, stdout); // (void)putwchar(ch);
++				(void)putwc(ch, thread_stdout); // (void)putwchar(ch);
  			}
- 		if (ferror(stdin))
+-		if (ferror(stdin))
 -			err(1, NULL);
 -		exit(0);
-+			fprintf(stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
++		if (ferror(thread_stdin))
++			fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
 +        cset_free(squeeze);
 +		pthread_exit(NULL); // exit(0);
  	}
@@ -2154,11 +2782,11 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  	map = cmap_alloc();
  	if (map == NULL)
 -		err(1, NULL);
-+    { fprintf(stderr, "tr: %s\n", strerror(errno)); pthread_exit(NULL); }// err(1, NULL);
++    { fprintf(thread_stderr, "tr: %s\n", strerror(errno)); pthread_exit(NULL); }// err(1, NULL);
  	squeeze = cset_alloc();
  	if (squeeze == NULL)
 -		err(1, NULL);
-+    { fprintf(stderr, "tr: %s\n", strerror(errno)); cmap_free(map); pthread_exit(NULL); } // err(1, NULL);
++    { fprintf(thread_stderr, "tr: %s\n", strerror(errno)); cmap_free(map); pthread_exit(NULL); } // err(1, NULL);
  
  	s1.str = argv[0];
  
@@ -2167,7 +2795,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -		if ((s2.str = strdup(argv[1])) == NULL)
 -			errx(1, "strdup(argv[1])");
 +        if ((s2.str = strdup(argv[1])) == NULL) { // potential memory leak
-+			fprintf(stderr, "tr: %s\n", "strdup(argv[1])"); // errx
++			fprintf(thread_stderr, "tr: %s\n", "strdup(argv[1])"); // errx
 +            cset_free(squeeze);
 +            cmap_free(map);
 +            pthread_exit(NULL);
@@ -2178,7 +2806,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -	if (!next(&s2))
 -		errx(1, "empty string2");
 +    if (!next(&s2)) {
-+        fprintf(stderr, "tr: %s\n", "empty string2"); // errx
++        fprintf(thread_stderr, "tr: %s\n", "empty string2"); // errx
 +        cset_free(squeeze);
 +        cmap_free(map);
 +        pthread_exit(NULL);
@@ -2191,7 +2819,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  			if (lastch != ch || !cset_in(squeeze, ch)) {
  				lastch = ch;
 -				(void)putwchar(ch);
-+				(void)putwc(ch, stdout); // (void)putwchar(ch);
++				(void)putwc(ch, thread_stdout); // (void)putwchar(ch);
  			}
  		}
  	else
@@ -2199,12 +2827,13 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  			if (!Cflag || iswrune(ch))
  				ch = cmap_lookup(map, ch);
 -			(void)putwchar(ch);
-+			(void)putwc(ch, stdout); // (void)putwchar(ch);
++			(void)putwc(ch, thread_stdout); // (void)putwchar(ch);
  		}
- 	if (ferror(stdin))
+-	if (ferror(stdin))
 -		err(1, NULL);
 -	exit (0);
-+		fprintf(stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
++	if (ferror(thread_stdin))
++		fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
 +    cset_free(squeeze);
 +    cmap_free(map);
 +    pthread_exit(NULL);
@@ -2217,11 +2846,17 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  	cs = cset_alloc();
  	if (cs == NULL)
 -		err(1, NULL);
-+    { fprintf(stderr, "tr: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, NULL);
++    { fprintf(thread_stderr, "tr: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, NULL);
  	str->str = arg;
  	while (next(str))
  		cset_add(cs, str->lastch);
-@@ -374,5 +448,5 @@
+@@ -369,10 +443,10 @@
+ static void
+ usage(void)
+ {
+-	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
++	(void)fprintf(thread_stderr, "%s\n%s\n%s\n%s\n",
+ 		"usage: tr [-Ccsu] string1 string2",
  		"       tr [-Ccu] -d string1",
  		"       tr [-Ccu] -s string1",
  		"       tr [-Ccu] -ds string1 string2");
@@ -2230,7 +2865,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  }
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2018-01-07 17:01:48.000000000 +0100
++++ text_cmds/wc/wc.c	2018-01-21 18:11:19.000000000 +0100
 @@ -51,7 +51,7 @@
  #include <sys/stat.h>
  
@@ -2273,20 +2908,49 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  
  	while ((ch = getopt(argc, argv, "clmw")) != -1)
  		switch((char)ch) {
-@@ -133,6 +138,7 @@
- 			(void)printf(" %7ju", tcharct);
- 		(void)printf(" total\n");
+@@ -114,25 +119,26 @@
+ 		if (cnt((char *)NULL) != 0)
+ 			++errors;
+ 		else
+-			(void)printf("\n");
++			(void)fprintf(thread_stdout, "\n");
+ 	}
+ 	else do {
+ 		if (cnt(*argv) != 0)
+ 			++errors;
+ 		else
+-			(void)printf(" %s\n", *argv);
++			(void)fprintf(thread_stdout, " %s\n", *argv);
+ 		++total;
+ 	} while(*++argv);
+ 
+ 	if (total > 1) {
+ 		if (doline)
+-			(void)printf(" %7ju", tlinect);
++			(void)fprintf(thread_stdout, " %7ju", tlinect);
+ 		if (doword)
+-			(void)printf(" %7ju", twordct);
++			(void)fprintf(thread_stdout, " %7ju", twordct);
+ 		if (dochar || domulti)
+-			(void)printf(" %7ju", tcharct);
+-		(void)printf(" total\n");
++			(void)fprintf(thread_stdout, " %7ju", tcharct);
++		(void)fprintf(thread_stdout, " total\n");
  	}
 +    optarg = NULL; opterr = 0; optind = 0;
  	exit(errors == 0 ? 0 : 1);
  }
  
-@@ -159,7 +165,8 @@
- 		fd = STDIN_FILENO;
+@@ -156,10 +162,11 @@
+ 	linect = wordct = charct = 0;
+ 	if (file == NULL) {
+ 		file = "stdin";
+-		fd = STDIN_FILENO;
++		fd = fileno(thread_stdin);
  	} else {
  		if ((fd = open(file, O_RDONLY, 0)) < 0) {
 -			warn("%s: open", file);
-+            fprintf(stderr, "wc: %s: open: %s\n", file, strerror(errno));
++            fprintf(thread_stderr, "wc: %s: open: %s\n", file, strerror(errno));
 +			// warn("%s: open", file);
  			return (1);
  		}
@@ -2296,27 +2960,46 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  		while ((len = read(fd, buf, buf_size))) {
  			if (len == -1) {
 -				warn("%s: read", file);
-+                fprintf(stderr, "wc: %s: read: %s\n", file, strerror(errno));
++                fprintf(thread_stderr, "wc: %s: read: %s\n", file, strerror(errno));
 +                // warn("%s: read", file);
  				(void)close(fd);
  				return (1);
  			}
-@@ -213,7 +221,8 @@
+@@ -199,10 +207,10 @@
+ 					++linect;
+ 		}
+ 		tlinect += linect;
+-		(void)printf(" %7ju", linect);
++		(void)fprintf(thread_stdout, " %7ju", linect);
+ 		if (dochar) {
+ 			tcharct += charct;
+-			(void)printf(" %7ju", charct);
++			(void)fprintf(thread_stdout, " %7ju", charct);
+ 		}
+ 		(void)close(fd);
+ 		return (0);
+@@ -213,12 +221,13 @@
  	 */
  	if (dochar || domulti) {
  		if (fstat(fd, &sb)) {
 -			warn("%s: fstat", file);
-+            fprintf(stderr, "wc: %s: fstat: %s\n", file, strerror(errno));
++            fprintf(thread_stderr, "wc: %s: fstat: %s\n", file, strerror(errno));
 +            // warn("%s: fstat", file);
  			(void)close(fd);
  			return (1);
  		}
+ 		if (S_ISREG(sb.st_mode)) {
+-			(void)printf(" %7lld", (long long)sb.st_size);
++			(void)fprintf(thread_stdout, " %7lld", (long long)sb.st_size);
+ 			tcharct += sb.st_size;
+ 			(void)close(fd);
+ 			return (0);
 @@ -231,7 +240,8 @@
  	memset(&mbs, 0, sizeof(mbs));
  	while ((len = read(fd, buf, buf_size)) != 0) {
  		if (len == -1) {
 -			warn("%s: read", file);
-+            fprintf(stderr, "wc: %s: read: %s\n", file, strerror(errno));
++            fprintf(thread_stderr, "wc: %s: read: %s\n", file, strerror(errno));
 +            // warn("%s: read", file);
  			(void)close(fd);
  			return (1);
@@ -2326,18 +3009,40 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  				if (!warned) {
  					errno = EILSEQ;
 -					warn("%s", file);
-+                    fprintf(stderr, "wc: %s: %s\n", file, strerror(errno));
++                    fprintf(thread_stderr, "wc: %s: %s\n", file, strerror(errno));
 +                    // warn("%s", file);
  					warned = 1;
  				}
  				memset(&mbs, 0, sizeof(mbs));
-@@ -269,7 +280,8 @@
+@@ -269,18 +280,19 @@
  	}
  	if (domulti && MB_CUR_MAX > 1)
  		if (mbrtowc(NULL, NULL, 0, &mbs) == (size_t)-1 && !warned)
 -			warn("%s", file);
-+            fprintf(stderr, "wc: %s: %s\n", file, strerror(errno));
++            fprintf(thread_stderr, "wc: %s: %s\n", file, strerror(errno));
 +            // warn("%s", file);
  	if (doline) {
  		tlinect += linect;
- 		(void)printf(" %7ju", linect);
+-		(void)printf(" %7ju", linect);
++		(void)fprintf(thread_stdout, " %7ju", linect);
+ 	}
+ 	if (doword) {
+ 		twordct += wordct;
+-		(void)printf(" %7ju", wordct);
++		(void)fprintf(thread_stdout, " %7ju", wordct);
+ 	}
+ 	if (dochar || domulti) {
+ 		tcharct += charct;
+-		(void)printf(" %7ju", charct);
++		(void)fprintf(thread_stdout, " %7ju", charct);
+ 	}
+ 	(void)close(fd);
+ 	return (0);
+@@ -289,6 +301,6 @@
+ static void
+ usage()
+ {
+-	(void)fprintf(stderr, "usage: wc [-clmw] [file ...]\n");
++	(void)fprintf(thread_stderr, "usage: wc [-clmw] [file ...]\n");
+ 	exit(1);
+ }

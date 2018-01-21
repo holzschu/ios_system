@@ -37,7 +37,7 @@ typedef	unsigned char uschar;
 #define	DEBUG
 #ifdef	DEBUG
 			/* uses have to be doubly parenthesized */
-#	define	dprintf(x)	if (dbg) printf x
+#	define	dprintf(x)	if (dbg) fprintf x
 #else
 #	define	dprintf(x)
 #endif
