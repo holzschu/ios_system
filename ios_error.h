@@ -17,10 +17,14 @@
 #define err compileError
 #define warn compileError
 #define warnx compileError
-// #define printf compileError
+#ifndef printf
+#define printf compileError
+#endif
 
 #define exit(a) pthread_exit(NULL)
 #define _exit(a) pthread_exit(NULL)
+#define putchar(a) fputc(a, thread_stdout)
+#define getchar() fgetc(thread_stdin)
 
 // Thread-local input and output streams
 extern __thread FILE* thread_stdin;
