@@ -1349,7 +1349,7 @@ diff -Naur file_cmds-272/cksum/print.c file_cmds/cksum/print.c
  }
 diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
 --- file_cmds-272/compress/compress.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/compress/compress.c	2018-01-21 17:35:49.000000000 +0100
++++ file_cmds/compress/compress.c	2018-01-21 20:47:10.000000000 +0100
 @@ -56,28 +56,31 @@
  #include <unistd.h>
  
@@ -1475,19 +1475,20 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
  				    ((float)isb.st_size / sb.st_size) * 100.0);
  		}
  	}
-@@ -412,9 +424,9 @@
+@@ -412,9 +424,10 @@
  {
  	int ch, first;
  
 -	if (!isatty(fileno(stderr)))
-+	if (!isatty(fileno(thread_stderr)))
++//	if (!isatty(fileno(thread_stderr)))
++    if (!(fileno(thread_stderr) == fileno(stderr)))
  		return (0);
 -	(void)fprintf(stderr, "overwrite %s? ", fname);
 +	(void)fprintf(thread_stderr, "overwrite %s? ", fname);
  	first = ch = getchar();
  	while (ch != '\n' && ch != EOF)
  		ch = getchar();
-@@ -425,10 +437,10 @@
+@@ -425,10 +438,10 @@
  usage(int iscompress)
  {
  	if (iscompress)
@@ -2984,7 +2985,7 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  
 diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 --- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
-+++ file_cmds/gzip/gzip.c	2018-01-21 18:11:19.000000000 +0100
++++ file_cmds/gzip/gzip.c	2018-01-21 20:48:56.000000000 +0100
 @@ -68,9 +68,14 @@
  #ifdef __APPLE__
  #include <sys/attr.h>
@@ -3085,12 +3086,13 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  				suffixes[0].zipped = optarg;
  				suffixes[0].ziplen = len;
  			} else {
-@@ -1181,14 +1200,14 @@
+@@ -1181,14 +1200,15 @@
  	if (lflag == 0 && stat(outfile, &sb) == 0) {
  		if (fflag)
  			unlink(outfile);
 -		else if (isatty(STDIN_FILENO)) {
-+		else if (isatty(fileno(thread_stdin))) {
++//		else if (isatty(fileno(thread_stdin))) {
++        else if (fileno(thread_stdin) == fileno(stdin)) {
  			char ans[10] = { 'n', '\0' };	/* default */
  
 -			fprintf(stderr, "%s already exists -- do you wish to "
@@ -3104,7 +3106,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  				ok = 0;
  			} else
  				unlink(outfile);
-@@ -1336,14 +1355,14 @@
+@@ -1336,14 +1356,14 @@
  		out = open(outfile, O_WRONLY | O_CREAT | O_EXCL, 0600);
  		if (out == -1) {
  			maybe_warn("could not create output: %s", outfile);
@@ -3121,7 +3123,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
  	insize = gz_compress(in, out, &size, basename(file), (uint32_t)isb.st_mtime);
  
-@@ -1520,10 +1539,10 @@
+@@ -1520,10 +1540,10 @@
  
  	if (cflag == 0 && lflag == 0) {
  		zfd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
@@ -3134,7 +3136,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		}
  		if (zfd == -1) {
  			maybe_warn("can't open %s", outfile);
-@@ -1533,7 +1552,7 @@
+@@ -1533,7 +1553,7 @@
  		remove_file = outfile;
  #endif
  	} else
@@ -3143,7 +3145,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
  	switch (method) {
  #ifndef NO_BZIP2_SUPPORT
-@@ -1630,7 +1649,7 @@
+@@ -1630,7 +1650,7 @@
  
  	if (close(fd) != 0)
  		maybe_warn("couldn't close input");
@@ -3152,7 +3154,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		maybe_warn("couldn't close output");
  
  	if (size == -1) {
-@@ -1688,7 +1707,7 @@
+@@ -1688,7 +1708,7 @@
      lose:
  	if (fd != -1)
  		close(fd);
@@ -3161,7 +3163,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		close(fd);
  	return -1;
  }
-@@ -1702,7 +1721,7 @@
+@@ -1702,7 +1722,7 @@
  	ssize_t w;
  
  	in_tot = count;
@@ -3170,7 +3172,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	if (w == -1 || (size_t)w != count) {
  		maybe_warn("write to stdout");
  		return -1;
-@@ -1718,7 +1737,7 @@
+@@ -1718,7 +1738,7 @@
  			break;
  		}
  
@@ -3179,16 +3181,17 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			maybe_warn("write to stdout");
  			break;
  		}
-@@ -1743,7 +1762,7 @@
+@@ -1743,7 +1763,8 @@
  #endif
  
  #ifndef SMALL
 -	if (fflag == 0 && lflag == 0 && isatty(STDIN_FILENO)) {
-+	if (fflag == 0 && lflag == 0 && isatty(fileno(thread_stdin))) {
++//    if (fflag == 0 && lflag == 0 && isatty(fileno(thread_stdin))) {
++	if (fflag == 0 && lflag == 0 && (fileno(thread_stdin) == fileno(stdin))) {
  		maybe_warnx("standard input is a terminal -- ignoring");
  		return;
  	}
-@@ -1753,15 +1772,15 @@
+@@ -1753,15 +1774,15 @@
  		struct stat isb;
  
  		/* XXX could read the whole file, etc. */
@@ -3207,7 +3210,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	if (bytes_read == -1) {
  		maybe_warn("can't read stdin");
  		return;
-@@ -1778,40 +1797,40 @@
+@@ -1778,40 +1799,40 @@
  			maybe_warnx("unknown compression format");
  			return;
  		}
@@ -3255,12 +3258,13 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			     (char *)header1, sizeof header1, &gsize);
  		break;
  #endif
-@@ -1836,13 +1855,13 @@
+@@ -1836,13 +1857,14 @@
  	int ret;
  
  #ifndef SMALL
 -	if (fflag == 0 && isatty(STDOUT_FILENO)) {
-+	if (fflag == 0 && isatty(fileno(thread_stdout))) {
++//	if (fflag == 0 && isatty(fileno(thread_stdout))) {
++    if (fflag == 0 && (fileno(thread_stdout) == fileno(stdout))) {
  		maybe_warnx("standard output is a terminal -- ignoring");
  		return;
  	}
@@ -3271,7 +3275,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
  #ifndef SMALL
  	if (ret < 0) {
-@@ -1864,7 +1883,7 @@
+@@ -1864,7 +1886,7 @@
  		mtime = (uint32_t)systime;
  	}
  	 		
@@ -3280,7 +3284,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifndef SMALL
          if (vflag && !tflag && usize != -1 && gsize != -1)
  		print_verbage(NULL, NULL, usize, gsize);
-@@ -1991,7 +2010,8 @@
+@@ -1991,7 +2013,8 @@
  	path_argv[1] = 0;
  	fts = fts_open(path_argv, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
  	if (fts == NULL) {
@@ -3290,7 +3294,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		return;
  	}
  
-@@ -2058,13 +2078,13 @@
+@@ -2058,13 +2081,13 @@
  print_verbage(const char *file, const char *nfile, off_t usize, off_t gsize)
  {
  	if (file)
@@ -3309,7 +3313,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  
  /* print test results */
-@@ -2074,9 +2094,9 @@
+@@ -2074,9 +2097,9 @@
  
  	if (exit_value == 0 && ok == 0)
  		exit_value = 1;
@@ -3321,7 +3325,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  #endif
  
-@@ -2098,10 +2118,10 @@
+@@ -2098,10 +2121,10 @@
  	if (first) {
  #ifndef SMALL
  		if (vflag)
@@ -3334,7 +3338,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			       "ratio uncompressed_name\n");
  	}
  	first = 0;
-@@ -2140,23 +2160,23 @@
+@@ -2140,23 +2163,23 @@
  
  #ifndef SMALL
  	if (vflag && fd == -1)
@@ -3363,7 +3367,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  
  /* display the usage of NetBSD gzip */
-@@ -2164,8 +2184,8 @@
+@@ -2164,8 +2187,8 @@
  usage(void)
  {
  
@@ -3374,7 +3378,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifdef SMALL
      "usage: %s [-" OPT_LIST "] [<file> [<file> ...]]\n",
  #else
-@@ -2202,11 +2222,11 @@
+@@ -2202,11 +2225,11 @@
  {
  
  #ifdef __APPLE__
@@ -3389,7 +3393,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	exit(0);
  }
  #endif
-@@ -2216,7 +2236,7 @@
+@@ -2216,7 +2239,7 @@
  display_version(void)
  {
  
@@ -3615,7 +3619,7 @@ diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
  int	 prn_octal(const char *);
 diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 --- file_cmds-272/ls/ls.c	2014-07-04 00:38:26.000000000 +0200
-+++ file_cmds/ls/ls.c	2018-01-21 16:17:22.000000000 +0100
++++ file_cmds/ls/ls.c	2018-01-21 21:06:36.000000000 +0100
 @@ -54,7 +54,7 @@
  #include <sys/ioctl.h>
  
@@ -3641,14 +3645,77 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  
  /*
   * Upward approximation of the maximum number of characters needed to
-@@ -97,6 +98,7 @@
+@@ -95,44 +96,45 @@
+ static void (*printfcn)(DISPLAY *);
+ static int (*sortfcn)(const FTSENT *, const FTSENT *);
  
- long blocksize;			/* block size units */
- int termwidth = 80;		/* default terminal width */
+-long blocksize;			/* block size units */
+-int termwidth = 80;		/* default terminal width */
++__thread long blocksize;			/* block size units */
++__thread int termwidth = 80;		/* default terminal width */
 +static int output;        /* If anything output. */
  
  /* flags */
-        int f_accesstime;	/* use time of last access */
+-       int f_accesstime;	/* use time of last access */
+-       int f_birthtime;		/* use time of file birth */
+-       int f_flags;		/* show flags associated with a file */
+-       int f_humanval;		/* show human-readable file sizes */
+-       int f_inode;		/* print inode */
++__thread       int f_accesstime;	/* use time of last access */
++__thread       int f_birthtime;		/* use time of file birth */
++__thread       int f_flags;		/* show flags associated with a file */
++__thread       int f_humanval;		/* show human-readable file sizes */
++__thread       int f_inode;		/* print inode */
+ static int f_kblocks;		/* print size in kilobytes */
+ static int f_listdir;		/* list actual directory, not contents */
+ static int f_listdot;		/* list files beginning with . */
+-       int f_longform;		/* long listing format */
+-       int f_nonprint;		/* show unprintables as ? */
++__thread       int f_longform;		/* long listing format */
++__thread       int f_nonprint;		/* show unprintables as ? */
+ static int f_nosort;		/* don't sort output */
+-       int f_notabs;		/* don't use tab-separated multi-col output */
+-       int f_numericonly;	/* don't convert uid/gid to name */
+-       int f_octal;		/* show unprintables as \xxx */
+-       int f_octal_escape;	/* like f_octal but use C escapes if possible */
++__thread       int f_notabs;		/* don't use tab-separated multi-col output */
++__thread       int f_numericonly;	/* don't convert uid/gid to name */
++__thread       int f_octal;		/* show unprintables as \xxx */
++__thread       int f_octal_escape;	/* like f_octal but use C escapes if possible */
+ static int f_recursive;		/* ls subdirectories also */
+ static int f_reversesort;	/* reverse whatever sort is used */
+-       int f_sectime;		/* print the real time for all files */
++__thread       int f_sectime;		/* print the real time for all files */
+ static int f_singlecol;		/* use single column output */
+-       int f_size;		/* list size in short listing */
+-       int f_slash;		/* similar to f_type, but only for dirs */
+-       int f_sortacross;	/* sort across rows, not down columns */ 
+-       int f_statustime;	/* use time of last mode change */
+-       int f_stream;		/* stream the output, separate with commas */
++__thread       int f_size;		/* list size in short listing */
++__thread       int f_slash;		/* similar to f_type, but only for dirs */
++__thread       int f_sortacross;	/* sort across rows, not down columns */
++__thread       int f_statustime;	/* use time of last mode change */
++__thread       int f_stream;		/* stream the output, separate with commas */
+ static int f_timesort;		/* sort by time vice name */
+ static int f_sizesort;		/* sort by size */
+-       int f_type;		/* add type character for non-regular files */
++__thread       int f_type;		/* add type character for non-regular files */
+ static int f_whiteout;		/* show whiteout entries */
+-       int f_acl;		/* show ACLs in long listing */
+-       int f_xattr;		/* show extended attributes in long listing */
+-       int f_group;		/* show group */
+-       int f_owner;		/* show owner */
++__thread       int f_acl;		/* show ACLs in long listing */
++__thread       int f_xattr;		/* show extended attributes in long listing */
++__thread       int f_group;		/* show group */
++__thread       int f_owner;		/* show owner */
+ #ifdef COLORLS
+-       int f_color;		/* add type in color for non-regular files */
++__thread       int f_color;		/* add type in color for non-regular files */
+ 
+ char *ansi_bgcol;		/* ANSI sequence to set background colour */
+ char *ansi_fgcol;		/* ANSI sequence to set foreground colour */
 @@ -141,10 +143,55 @@
  char *enter_bold;		/* ANSI sequence to set color to bold mode */
  #endif
@@ -3706,7 +3773,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  {
  	static char dot[] = ".", *dotav[] = {dot, NULL};
  	struct winsize win;
-@@ -157,15 +204,20 @@
+@@ -157,15 +204,19 @@
  #endif
  
  	if (argc < 1)
@@ -3719,9 +3786,8 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  
  	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 -	if (isatty(STDOUT_FILENO)) {
-+    // iOS: we *are* a terminal, but STDOUT_FILENO doesn't exist
-+    // iOS attempt: will it work better now?
-+	if (isatty(fileno(thread_stdout))) {
++    // iOS: we *are* a terminal, but file(thread_stdout) doesn't tell it
++	if (fileno(thread_stdout) == fileno(stdout)) {
  		termwidth = 80;
  		if ((p = getenv("COLUMNS")) != NULL && *p != '\0')
  			termwidth = atoi(p);
@@ -3730,7 +3796,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		    win.ws_col > 0)
  			termwidth = win.ws_col;
  		f_nonprint = 1;
-@@ -366,7 +418,7 @@
+@@ -366,7 +417,7 @@
  			break;
  		default:
  		case '?':
@@ -3739,12 +3805,13 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		}
  	}
  	argc -= optind;
-@@ -374,7 +426,7 @@
+@@ -374,7 +425,8 @@
  
  	/* Enabling of colours is conditional on the environment. */
  	if (getenv("CLICOLOR") &&
 -	    (isatty(STDOUT_FILENO) || getenv("CLICOLOR_FORCE")))
-+	    (isatty(fileno(thread_stdout)) || getenv("CLICOLOR_FORCE")))
++//	    (isatty(fileno(thread_stdout)) || getenv("CLICOLOR_FORCE")))
++        ((fileno(thread_stdout) == fileno(stdout)) || getenv("CLICOLOR_FORCE")))
  #ifdef COLORLS
  		if (tgetent(termcapbuf, getenv("TERM")) == 1) {
  			ansi_fgcol = tgetstr("AF", &bp);
@@ -3891,6 +3958,65 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  
  				np->user = &np->data[0];
  				(void)strcpy(np->user, user);
+diff -Naur file_cmds-272/ls/ls.h file_cmds/ls/ls.h
+--- file_cmds-272/ls/ls.h	2014-06-09 22:03:59.000000000 +0200
++++ file_cmds/ls/ls.h	2018-01-21 21:05:50.000000000 +0100
+@@ -39,32 +39,32 @@
+ 
+ #define NO_PRINT	1
+ 
+-extern long blocksize;		/* block size units */
++extern __thread long blocksize;		/* block size units */
+ 
+-extern int f_accesstime;	/* use time of last access */
+-extern int f_birthtime;		/* use time of file birth */
+-extern int f_flags;		/* show flags associated with a file */
+-extern int f_humanval;		/* show human-readable file sizes */
+-extern int f_inode;		/* print inode */
+-extern int f_longform;		/* long listing format */
+-extern int f_octal;		/* print unprintables in octal */
+-extern int f_octal_escape;	/* like f_octal but use C escapes if possible */
+-extern int f_nonprint;		/* show unprintables as ? */
+-extern int f_sectime;		/* print the real time for all files */
+-extern int f_size;		/* list size in short listing */
+-extern int f_slash;		/* append a '/' if the file is a directory */
+-extern int f_sortacross;	/* sort across rows, not down columns */ 
+-extern int f_statustime;	/* use time of last mode change */
+-extern int f_notabs;		/* don't use tab-separated multi-col output */
+-extern int f_type;		/* add type character for non-regular files */
+-extern int f_acl;		/* print ACLs in long format */
+-extern int f_xattr;		/* print extended attributes in long format  */
+-extern int f_group;		/* list group without owner */
+-extern int f_owner;		/* list owner without group */
++extern __thread int f_accesstime;	/* use time of last access */
++extern __thread int f_birthtime;		/* use time of file birth */
++extern __thread int f_flags;		/* show flags associated with a file */
++extern __thread int f_humanval;		/* show human-readable file sizes */
++extern __thread int f_inode;		/* print inode */
++extern __thread int f_longform;		/* long listing format */
++extern __thread int f_octal;		/* print unprintables in octal */
++extern __thread int f_octal_escape;	/* like f_octal but use C escapes if possible */
++extern __thread int f_nonprint;		/* show unprintables as ? */
++extern __thread int f_sectime;		/* print the real time for all files */
++extern __thread int f_size;		/* list size in short listing */
++extern __thread int f_slash;		/* append a '/' if the file is a directory */
++extern __thread int f_sortacross;	/* sort across rows, not down columns */
++extern __thread int f_statustime;	/* use time of last mode change */
++extern __thread int f_notabs;		/* don't use tab-separated multi-col output */
++extern __thread int f_type;		/* add type character for non-regular files */
++extern __thread int f_acl;		/* print ACLs in long format */
++extern __thread int f_xattr;		/* print extended attributes in long format  */
++extern __thread int f_group;		/* list group without owner */
++extern __thread int f_owner;		/* list owner without group */
+ #ifdef COLORLS
+-extern int f_color;		/* add type in color for non-regular files */
++extern __thread int f_color;		/* add type in color for non-regular files */
+ #endif
+-extern int f_numericonly;	/* don't convert uid/gid to name */
++extern __thread int f_numericonly;	/* don't convert uid/gid to name */
+ 
+ #ifdef __APPLE__
+ #include <sys/acl.h>
 diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 --- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
 +++ file_cmds/ls/print.c	2018-01-21 16:17:22.000000000 +0100
@@ -4697,7 +4823,7 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  	exit(EX_USAGE);
 diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
 --- file_cmds-272/rm/rm.c	2016-09-16 18:43:23.000000000 +0200
-+++ file_cmds/rm/rm.c	2018-01-21 18:11:19.000000000 +0100
++++ file_cmds/rm/rm.c	2018-01-21 20:50:20.000000000 +0100
 @@ -51,7 +51,7 @@
  #include <sys/param.h>
  #include <sys/mount.h>
@@ -4763,16 +4889,17 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	/*
  	 * Test for the special case where the utility is called as
  	 * "unlink", for which the functionality provided is greatly
-@@ -160,7 +165,7 @@
+@@ -160,7 +165,8 @@
  	checkdot(argv);
  
  	if (*argv) {
 -		stdin_ok = isatty(STDIN_FILENO);
-+		stdin_ok = isatty(fileno(thread_stdin));
++//		stdin_ok = isatty(fileno(thread_stdin));
++        stdin_ok = (fileno(thread_stdin) == fileno(stdin));
  
  		if (rflag)
  			rm_tree(argv);
-@@ -201,19 +206,24 @@
+@@ -201,19 +207,24 @@
  	if (!(fts = fts_open(argv, flags, NULL))) {
  		if (fflag && errno == ENOENT)
  			return;
@@ -4800,7 +4927,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  		case FTS_NS:
  			/*
  			 * FTS_NS: assume that if can't stat the file, it
-@@ -222,7 +232,8 @@
+@@ -222,7 +233,8 @@
  			if (!needstat)
  				break;
  			if (!fflag || p->fts_errno != ENOENT) {
@@ -4810,7 +4937,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  				    p->fts_path, strerror(p->fts_errno));
  				eval = 1;
  			}
-@@ -283,7 +294,7 @@
+@@ -283,7 +295,7 @@
  				rval = rmdir(p->fts_accpath);
  				if (rval == 0 || (fflag && errno == ENOENT)) {
  					if (rval == 0 && vflag)
@@ -4819,7 +4946,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  						    p->fts_path);
  					continue;
  				}
-@@ -293,7 +304,7 @@
+@@ -293,7 +305,7 @@
  				rval = undelete(p->fts_accpath);
  				if (rval == 0 && (fflag && errno == ENOENT)) {
  					if (vflag)
@@ -4828,7 +4955,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  						    p->fts_path);
  					continue;
  				}
-@@ -313,19 +324,23 @@
+@@ -313,19 +325,23 @@
  #endif	/* __APPLE__ */
  				if (rval == 0 || (fflag && errno == ENOENT)) {
  					if (rval == 0 && vflag)
@@ -4857,7 +4984,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  }
  
  void
-@@ -347,19 +362,22 @@
+@@ -347,19 +363,22 @@
  				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
  			} else {
  				if (!fflag || errno != ENOENT) {
@@ -4883,7 +5010,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  			eval = 1;
  			continue;
  		}
-@@ -390,11 +408,12 @@
+@@ -390,11 +409,12 @@
  			}
  		}
  		if (rval && (!fflag || errno != ENOENT)) {
@@ -4898,7 +5025,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	}
  }
  
-@@ -432,8 +451,11 @@
+@@ -432,8 +452,11 @@
  	if (fstatfs(fd, &fsb) == -1)
  		goto err;
  	bsize = MAX(fsb.f_iosize, 1024);
@@ -4912,7 +5039,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  
  #define	PASS(byte) {							\
  	memset(buf, byte, bsize);					\
-@@ -458,14 +480,15 @@
+@@ -458,14 +481,15 @@
  err:	eval = 1;
  	if (buf)
  		free(buf);
@@ -4930,7 +5057,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  
  	first = ch = getchar();
  	while (ch != '\n' && ch != EOF)
-@@ -479,7 +502,7 @@
+@@ -479,7 +503,7 @@
  {
  	if(!iflag)
  		return 1;	//if not interactive, process directory's contents
@@ -4939,7 +5066,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	return yes_or_no();
  }
  
-@@ -492,7 +515,7 @@
+@@ -492,7 +516,7 @@
  
  	/* Check -i first. */
  	if (iflag)
@@ -4948,7 +5075,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	else {
  		/*
  		 * If it's not a symbolic link and it's unwritable and we're
-@@ -506,9 +529,12 @@
+@@ -506,9 +530,12 @@
  		    (!(sp->st_flags & (UF_APPEND|UF_IMMUTABLE)) || !uid)))
  			return (1);
  		strmode(sp->st_mode, modep);
@@ -4964,7 +5091,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  		    modep + 1, modep[9] == ' ' ? "" : " ",
  		    user_from_uid(sp->st_uid, 0),
  		    group_from_gid(sp->st_gid, 0),
-@@ -554,7 +580,8 @@
+@@ -554,7 +581,8 @@
  		}
  		if (ISDOT(p)) {
  			if (!complained++)
@@ -4974,7 +5101,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  			eval = 1;
  			for (save = t; (t[0] = t[1]) != NULL; ++t)
  				continue;
-@@ -568,7 +595,7 @@
+@@ -568,7 +596,7 @@
  usage()
  {
  

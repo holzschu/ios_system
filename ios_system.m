@@ -119,8 +119,8 @@ typedef struct _functionParameters {
     char** argv_ref;
     int (*function)(int ac, char** av);
     FILE *stdin, *stdout, *stderr;
+    int fd_close;
 } functionParameters;
-
 
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() is called
@@ -131,7 +131,7 @@ static void cleanup_function(void* parameters) {
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
-    // Don't close the thread_std*, otherwise the system hangs.
+    if (p->fd_close > 0) close(p->fd_close);
     free(parameters); // This was malloc'ed in ios_system
 }
 
@@ -594,6 +594,7 @@ int ios_system(const char* inputCmd) {
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
     static bool isMainThread = true;
+    static pthread_t lastThreadId = 0; // last command on the command line (with pipes)
     
     // initialize:
     if (thread_stdin == 0) thread_stdin = stdin;
@@ -652,6 +653,7 @@ int ios_system(const char* inputCmd) {
         bool pushMainThread = isMainThread;
         isMainThread = false;
         params->stdout = ios_popen(pipeMarker+2, "r");
+        params->fd_close = fileno(params->stdout);
         isMainThread = pushMainThread;
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
@@ -661,6 +663,7 @@ int ios_system(const char* inputCmd) {
             bool pushMainThread = isMainThread;
             isMainThread = false;
             params->stdout = ios_popen(pipeMarker+1, "r");
+            params->fd_close = fileno(params->stdout);
             isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
         }
@@ -913,12 +916,18 @@ int ios_system(const char* inputCmd) {
                 [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
                     isMainThread = false;
                     pthread_create(&_tid, NULL, run_function, params);
+                    // Wait for this process to finish:
                     pthread_join(_tid, NULL);
+                    // If there are auxiliary process, also wait for them:
+                    if (lastThreadId > 0) pthread_join(lastThreadId, NULL);
+                    lastThreadId = 0;
                     isMainThread = true;
                 }];
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
                 pthread_create(&_tid, NULL, run_function, params);
+                // The last command on the command line (with multiple pipes) will be created first
+                if (lastThreadId == 0) lastThreadId = _tid;
             }
         } else {
             // TODO: this should also raise an exception, for python scripts

@@ -496,7 +496,7 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-01-21 18:11:19.000000000 +0100
++++ text_cmds/ed/main.c	2018-01-21 20:52:57.000000000 +0100
 @@ -59,13 +59,17 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -587,7 +587,18 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		}
  	argv += optind;
  	argc -= optind;
-@@ -169,7 +202,7 @@
+@@ -158,7 +191,9 @@
+ 	/* assert: reliable signals! */
+ #ifdef SIGWINCH
+ 	handle_winch(SIGWINCH);
+-	if (isatty(0)) signal(SIGWINCH, handle_winch);
++//	if (isatty(0)) signal(SIGWINCH, handle_winch);
++//  also replaced 6x !isatty(0) below
++    if (fileno(thread_stdin) == fileno(stdin)) signal(SIGWINCH, handle_winch);
+ #endif
+ 	signal(SIGHUP, signal_hup);
+ 	signal(SIGQUIT, SIG_IGN);
+@@ -169,51 +204,51 @@
  	if ((status = setjmp(env)))
  #endif
  	{
@@ -596,7 +607,12 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		errmsg = "interrupt";
  	} else {
  		init_buffers();
-@@ -181,12 +214,12 @@
+ 		sigactive = 1;			/* enable signal handlers */
+ 		if (argc>0 && *argv && is_legal_filename(*argv)) {
+-			if (read_file(*argv, 0) < 0 && !isatty(0))
++			if (read_file(*argv, 0) < 0 && !(fileno(thread_stdin) == fileno(stdin)))
+ 				quit(2);
+ 			else if (**argv != '!') {
  				if (strlen(*argv) < sizeof(old_filename)) {
  					strcpy(old_filename, *argv);
  				} else {
@@ -610,8 +626,10 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 +			fputs("?\n", thread_stdout);
  			if (**argv == '\0')
  				errmsg = "invalid filename";
- 			if (!isatty(0))
-@@ -195,25 +228,25 @@
+-			if (!isatty(0))
++			if (!(fileno(thread_stdin) == fileno(stdin)))
+ 				quit(2);
+ 		}
  	}
  	for (;;) {
  		if (status < 0 && garrulous)
@@ -631,8 +649,9 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 -				fputs("?\n", stderr);
 +				fputs("?\n", thread_stderr);
  				errmsg = "warning: file modified";
- 				if (!isatty(0)) {
+-				if (!isatty(0)) {
 -					fprintf(stderr, garrulous ?
++				if (!(fileno(thread_stdin) == fileno(stdin))) {
 +					fprintf(thread_stderr, garrulous ?
  					    "script, line %d: %s\n" :
 -					    "", lineno, errmsg);
@@ -644,7 +663,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				modified = 0;
  				status = EMOD;
  				continue;
-@@ -222,7 +255,7 @@
+@@ -222,7 +257,7 @@
  		} else if (ibuf[n - 1] != '\n') {
  			/* discard line */
  			errmsg = "unexpected end-of-file";
@@ -653,15 +672,16 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			status = ERR;
  			continue;
  		}
-@@ -238,30 +271,30 @@
+@@ -238,30 +273,30 @@
  			quit(0);
  		case EMOD:
  			modified = 0;
 -			fputs("?\n", stderr);		/* give warning */
 +			fputs("?\n", thread_stderr);		/* give warning */
  			errmsg = "warning: file modified";
- 			if (!isatty(0)) {
+-			if (!isatty(0)) {
 -				fprintf(stderr, garrulous ?
++			if (!(fileno(thread_stdin) == fileno(stdin))) {
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" :
 -				    "", lineno, errmsg);
@@ -670,8 +690,9 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			}
  			break;
  		case FATAL:
- 			if (!isatty(0))
+-			if (!isatty(0))
 -				fprintf(stderr, garrulous ?
++			if (!(fileno(thread_stdin) == fileno(stdin)))
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
@@ -683,9 +704,10 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			quit(3);
  		default:
 -			fputs("?\n", stdout);
-+			fputs("?\n", thread_stdout);
- 			if (!isatty(0)) {
+-			if (!isatty(0)) {
 -				fprintf(stderr, garrulous ?
++			fputs("?\n", thread_stdout);
++			if (!(fileno(thread_stdin) == fileno(stdin))) {
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
@@ -693,7 +715,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  			break;
-@@ -519,7 +552,7 @@
+@@ -519,7 +554,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -702,7 +724,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -552,11 +585,11 @@
+@@ -552,11 +587,11 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -716,7 +738,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'g':
  	case 'v':
-@@ -584,7 +617,7 @@
+@@ -584,7 +619,7 @@
  			return ERR;
  		}
  		GET_COMMAND_SUFFIX();
@@ -725,7 +747,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'H':
  		if (addr_cnt > 0) {
-@@ -593,7 +626,7 @@
+@@ -593,7 +628,7 @@
  		}
  		GET_COMMAND_SUFFIX();
  		if ((garrulous = 1 - garrulous) && *errmsg)
@@ -734,7 +756,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'i':
  		if (second_addr == 0) {
-@@ -693,7 +726,7 @@
+@@ -693,7 +728,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -743,7 +765,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -835,7 +868,7 @@
+@@ -835,7 +870,7 @@
  			if  (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -752,7 +774,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -877,7 +910,7 @@
+@@ -877,7 +912,7 @@
  		break;
  	case '=':
  		GET_COMMAND_SUFFIX();
@@ -761,7 +783,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '!':
  		if (addr_cnt > 0) {
-@@ -886,10 +919,10 @@
+@@ -886,10 +921,10 @@
  		} else if ((sflags = get_shell_command()) < 0)
  			return ERR;
  		GET_COMMAND_SUFFIX();
@@ -776,7 +798,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '\n':
  		if (check_addr_range(first_addr = 1, current_addr + (posixly_correct ? !isglobal : 1)) < 0
-@@ -969,7 +1002,7 @@
+@@ -969,7 +1004,7 @@
  			if ((n = get_shell_command()) < 0)
  				return NULL;
  			if (n)
@@ -785,7 +807,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			return shcmd;
  		} else if (n > PATH_MAX) {
  			errmsg = "filename too long";
-@@ -1065,7 +1098,7 @@
+@@ -1065,7 +1100,7 @@
  			if ((l = get_tty_line()) < 0)
  				return ERR;
  			else if (l == 0 || ibuf[l - 1] != '\n') {
@@ -794,7 +816,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				return  l ? EOF : 0;
  			}
  			lp = ibuf;
-@@ -1330,7 +1363,7 @@
+@@ -1330,7 +1365,7 @@
  	line_t *np;
  
  	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
@@ -911,7 +933,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-01-21 16:17:22.000000000 +0100
++++ text_cmds/grep/grep.c	2018-01-21 21:01:44.000000000 +0100
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -938,15 +960,125 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  #ifdef __APPLE__
  /* 4*/	"usage: %s [-abcDEFGHhIiJLlmnOoqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n",
  #else
-@@ -158,16 +159,19 @@
- int	 tail;		/* lines left to print */
- bool	 file_err;	/* file reading error */
+@@ -81,60 +82,60 @@
+ };
  
-+static char* progname;
+ /* Flags passed to regcomp() and regexec() */
+-int		 cflags = REG_NOSUB;
+-int		 eflags = REG_STARTEND;
++__thread int		 cflags = REG_NOSUB;
++__thread int		 eflags = REG_STARTEND;
+ 
+ /* Shortcut for matching all cases like empty regex */
+-bool		 matchall;
++__thread bool		 matchall;
+ 
+ /* Searching patterns */
+-unsigned int	 patterns, pattern_sz;
+-struct pat	*pattern;
+-regex_t		*r_pattern;
++unsigned __thread int	 patterns, pattern_sz;
++__thread struct pat	*pattern;
++__thread regex_t		*r_pattern;
+ #ifndef WITHOUT_FASTMATCH
+-fastmatch_t	*fg_pattern;
++__thread fastmatch_t	*fg_pattern;
+ #endif
+ 
+ /* Filename exclusion/inclusion patterns */
+-unsigned int	 fpatterns, fpattern_sz;
+-unsigned int	 dpatterns, dpattern_sz;
+-struct epat	*dpattern, *fpattern;
++unsigned __thread int	 fpatterns, fpattern_sz;
++unsigned __thread int	 dpatterns, dpattern_sz;
++__thread struct epat	*dpattern, *fpattern;
+ 
+ /* For regex errors  */
+ char	 re_error[RE_ERROR_BUF + 1];
+ 
+ /* Command-line flags */
+-unsigned long long Aflag;	/* -A x: print x lines trailing each match */
+-unsigned long long Bflag;	/* -B x: print x lines leading each match */
+-bool	 Hflag;		/* -H: always print file name */
+-bool	 Lflag;		/* -L: only show names of files with no matches */
+-bool	 bflag;		/* -b: show block numbers for each match */
+-bool	 cflag;		/* -c: only show a count of matching lines */
+-bool	 hflag;		/* -h: don't print filename headers */
+-bool	 iflag;		/* -i: ignore case */
+-bool	 lflag;		/* -l: only show names of files with matches */
+-bool	 mflag;		/* -m x: stop reading the files after x matches */
+-long long mcount;	/* count for -m */
+-bool	 nflag;		/* -n: show line numbers in front of matching lines */
+-bool	 oflag;		/* -o: print only matching part */
+-bool	 qflag;		/* -q: quiet mode (don't output anything) */
+-bool	 sflag;		/* -s: silent mode (ignore errors) */
+-bool	 vflag;		/* -v: only show non-matching lines */
+-bool	 wflag;		/* -w: pattern must start and end on word boundaries */
+-bool	 xflag;		/* -x: pattern must match entire line */
+-bool	 lbflag;	/* --line-buffered */
+-bool	 nullflag;	/* --null */
+-char	*label;		/* --label */
+-const char *color;	/* --color */
+-int	 grepbehave = GREP_BASIC;	/* -EFGP: type of the regex */
+-int	 binbehave = BINFILE_BIN;	/* -aIU: handling of binary files */
+-int	 filebehave = FILE_STDIO;	/* -JZ: normal, gzip or bzip2 file */
+-int	 devbehave = DEV_READ;		/* -D: handling of devices */
+-int	 dirbehave = DIR_READ;		/* -dRr: handling of directories */
+-int	 linkbehave = LINK_READ;	/* -OpS: handling of symlinks */
++__thread unsigned long long Aflag;	/* -A x: print x lines trailing each match */
++__thread unsigned long long Bflag;	/* -B x: print x lines leading each match */
++bool	 __thread Hflag;		/* -H: always print file name */
++bool	 __thread Lflag;		/* -L: only show names of files with no matches */
++bool	 __thread bflag;		/* -b: show block numbers for each match */
++bool	 __thread cflag;		/* -c: only show a count of matching lines */
++bool	 __thread hflag;		/* -h: don't print filename headers */
++bool	 __thread iflag;		/* -i: ignore case */
++bool	 __thread lflag;		/* -l: only show names of files with matches */
++bool	 __thread mflag;		/* -m x: stop reading the files after x matches */
++long long __thread mcount;	/* count for -m */
++bool	 __thread nflag;		/* -n: show line numbers in front of matching lines */
++bool	 __thread oflag;		/* -o: print only matching part */
++bool	 __thread qflag;		/* -q: quiet mode (don't output anything) */
++bool	 __thread sflag;		/* -s: silent mode (ignore errors) */
++bool	 __thread vflag;		/* -v: only show non-matching lines */
++bool	 __thread wflag;		/* -w: pattern must start and end on word boundaries */
++bool	 __thread xflag;		/* -x: pattern must match entire line */
++bool	 __thread lbflag;	/* --line-buffered */
++bool	 __thread nullflag;	/* --null */
++char	__thread *label;		/* --label */
++const char __thread *color;	/* --color */
++int	 __thread grepbehave = GREP_BASIC;	/* -EFGP: type of the regex */
++int	 __thread binbehave = BINFILE_BIN;	/* -aIU: handling of binary files */
++int	 __thread filebehave = FILE_STDIO;	/* -JZ: normal, gzip or bzip2 file */
++int	 __thread devbehave = DEV_READ;		/* -D: handling of devices */
++int	 __thread dirbehave = DIR_READ;		/* -dRr: handling of directories */
++int	 __thread linkbehave = LINK_READ;	/* -OpS: handling of symlinks */
+ 
+-bool	 dexclude, dinclude;	/* --exclude-dir and --include-dir */
+-bool	 fexclude, finclude;	/* --exclude and --include */
++bool	 __thread dexclude, dinclude;	/* --exclude-dir and --include-dir */
++bool	 __thread fexclude, finclude;	/* --exclude and --include */
+ 
+ enum {
+ 	BIN_OPT = CHAR_MAX + 1,
+@@ -153,10 +154,12 @@
+ static inline const char	*init_color(const char *);
+ 
+ /* Housekeeping */
+-bool	 first = true;	/* flag whether we are processing the first match */
+-bool	 prev;		/* flag whether or not the previous line matched */
+-int	 tail;		/* lines left to print */
+-bool	 file_err;	/* file reading error */
++__thread bool	 first = true;	/* flag whether we are processing the first match */
++__thread bool	 prev;		/* flag whether or not the previous line matched */
++__thread int	 tail;		/* lines left to print */
++__thread bool	 file_err;	/* file reading error */
 +
++static char* progname;
+ 
  /*
   * Prints usage information and returns 2.
-  */
+@@ -164,10 +167,11 @@
  static void
  usage(void)
  {
@@ -1182,16 +1314,17 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			break;
  		case COLOR_OPT:
  			color = NULL;
-@@ -643,7 +711,7 @@
+@@ -643,7 +711,8 @@
  				char *term;
  
  				term = getenv("TERM");
 -				if (isatty(STDOUT_FILENO) && term != NULL &&
-+				if (isatty(fileno(thread_stdout)) && term != NULL &&
++//				if (isatty(fileno(thread_stdout)) && term != NULL &&
++                if ((fileno(thread_stdout) == fileno(stdout)) && term != NULL &&
  				    strcasecmp(term, "dumb") != 0)
  					color = init_color("01;31");
  			} else if (strcasecmp("always", optarg) == 0 ||
-@@ -652,8 +720,11 @@
+@@ -652,8 +721,11 @@
  				color = init_color("01;31");
  			} else if (strcasecmp("never", optarg) != 0 &&
  			    strcasecmp("none", optarg) != 0 &&
@@ -1205,7 +1338,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			cflags &= ~REG_NOSUB;
  			break;
  		case LABEL_OPT:
-@@ -748,7 +819,9 @@
+@@ -748,7 +820,9 @@
  			if (c != 0) {
  				regerror(c, &r_pattern[i], re_error,
  				    RE_ERROR_BUF);
@@ -1216,7 +1349,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			}
  #ifndef WITHOUT_FASTMATCH
  		}
-@@ -756,13 +829,16 @@
+@@ -756,13 +830,16 @@
  	}
  
  	if (lbflag)
@@ -1236,9 +1369,56 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  
  	if (dirbehave == DIR_RECURSE)
  		c = grep_tree(aargv);
+diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
+--- text_cmds-99/grep/grep.h	2015-08-18 22:29:43.000000000 +0200
++++ text_cmds/grep/grep.h	2018-01-21 21:01:57.000000000 +0100
+@@ -113,27 +113,27 @@
+ };
+ 
+ /* Flags passed to regcomp() and regexec() */
+-extern int	 cflags, eflags;
++extern __thread int	 cflags, eflags;
+ 
+ /* Command line flags */
+-extern bool	 Eflag, Fflag, Gflag, Hflag, Lflag,
++extern __thread bool	 Eflag, Fflag, Gflag, Hflag, Lflag,
+ 		 bflag, cflag, hflag, iflag, lflag, mflag, nflag, oflag,
+ 		 qflag, sflag, vflag, wflag, xflag;
+-extern bool	 dexclude, dinclude, fexclude, finclude, lbflag, nullflag;
+-extern unsigned long long Aflag, Bflag;
+-extern long long mcount;
+-extern char	*label;
+-extern const char *color;
+-extern int	 binbehave, devbehave, dirbehave, filebehave, grepbehave, linkbehave;
+-
+-extern bool	 file_err, first, matchall, prev;
+-extern int	 tail;
+-extern unsigned int dpatterns, fpatterns, patterns;
+-extern struct pat *pattern;
+-extern struct epat *dpattern, *fpattern;
+-extern regex_t	*er_pattern, *r_pattern;
++extern __thread bool	 dexclude, dinclude, fexclude, finclude, lbflag, nullflag;
++extern __thread unsigned long long Aflag, Bflag;
++extern long long __thread mcount;
++extern __thread char	*label;
++extern const char __thread *color;
++extern __thread int	 binbehave, devbehave, dirbehave, filebehave, grepbehave, linkbehave;
++
++extern __thread bool	 file_err, first, matchall, prev;
++extern __thread int	 tail;
++extern unsigned __thread int dpatterns, fpatterns, patterns;
++extern __thread struct pat *pattern;
++extern __thread struct epat *dpattern, *fpattern;
++extern __thread regex_t	*er_pattern, *r_pattern;
+ #ifndef WITHOUT_FASTMATCH
+-extern fastmatch_t *fg_pattern;
++extern __thread fastmatch_t *fg_pattern;
+ #endif
+ 
+ /* For regex errors  */
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-01-20 23:05:09.000000000 +0100
++++ text_cmds/grep/util.c	2018-01-21 20:54:16.000000000 +0100
 @@ -39,7 +39,7 @@
  #endif
  
@@ -1290,19 +1470,20 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				p->fts_path);
  			break;
  		default:
-@@ -194,8 +200,9 @@
+@@ -194,8 +200,10 @@
  	if (strcmp(fn, "-") == 0) {
  #ifdef __APPLE__
  		/* 4053512, 10290183 */
 -		if (dirbehave == DIR_RECURSE && isatty(STDIN_FILENO)) {
 -			warnx("warning: recursive search of stdin");
-+		if (dirbehave == DIR_RECURSE && isatty(fileno(thread_stdin))) {
++		// if (dirbehave == DIR_RECURSE && isatty(fileno(thread_stdin))) {
++        if (dirbehave == DIR_RECURSE && (fileno(thread_stdin) == fileno(stdin))) {
 +            fprintf(thread_stderr, "grep: warning: recursive search of stdin\n");
 +            // warnx("warning: recursive search of stdin");
  		}
  #endif
  		fn = label != NULL ? label : getstr(1);
-@@ -215,7 +222,8 @@
+@@ -215,7 +223,8 @@
  	if (f == NULL) {
  		file_err = true;
  		if (!sflag)
@@ -1312,7 +1493,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		return (0);
  	}
  
-@@ -266,16 +274,16 @@
+@@ -266,16 +275,16 @@
  	if (cflag) {
  #endif
  		if (!hflag)
@@ -1334,7 +1515,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  
  	free(ln.file);
  	free(f);
-@@ -459,11 +467,11 @@
+@@ -459,11 +468,11 @@
  	if ((tail || c) && !cflag && !qflag && !lflag && !Lflag) {
  		if (c) {
  			if (!first && !prev && !tail && Aflag)
@@ -1348,7 +1529,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				printqueue();
  			}
  			linesqueued = 0;
-@@ -494,8 +502,11 @@
+@@ -494,8 +503,11 @@
  {
  	void *ptr;
  
@@ -1362,7 +1543,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ptr);
  }
  
-@@ -507,8 +518,11 @@
+@@ -507,8 +519,11 @@
  {
  	void *ptr;
  
@@ -1376,7 +1557,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ptr);
  }
  
-@@ -519,8 +533,11 @@
+@@ -519,8 +534,11 @@
  grep_realloc(void *ptr, size_t size)
  {
  
@@ -1390,7 +1571,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ptr);
  }
  
-@@ -532,8 +549,11 @@
+@@ -532,8 +550,11 @@
  {
  	char *ret;
  
@@ -1404,7 +1585,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ret);
  }
  
-@@ -548,23 +568,23 @@
+@@ -548,23 +569,23 @@
  
  	if (!hflag) {
  		if (!nullflag) {
@@ -1432,7 +1613,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		++n;
  	}
  	if (n)
-@@ -574,26 +594,26 @@
+@@ -574,26 +595,26 @@
  		for (i = 0; i < m; i++) {
  			if (!oflag)
  				fwrite(line->dat + a, matches[i].rm_so - a, 1,
