@@ -2991,7 +2991,7 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  
 diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 --- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
-+++ file_cmds/gzip/gzip.c	2018-01-21 20:48:56.000000000 +0100
++++ file_cmds/gzip/gzip.c	2018-01-22 17:30:52.000000000 +0100
 @@ -68,9 +68,14 @@
  #ifdef __APPLE__
  #include <sys/attr.h>
@@ -3169,25 +3169,29 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		close(fd);
  	return -1;
  }
-@@ -1702,7 +1722,7 @@
+@@ -1702,8 +1722,9 @@
  	ssize_t w;
  
  	in_tot = count;
 -	w = write(STDOUT_FILENO, prepend, count);
-+	w = write(fileno(thread_stdout), prepend, count);
- 	if (w == -1 || (size_t)w != count) {
+-	if (w == -1 || (size_t)w != count) {
++	// w = write(fileno(thread_stdout), prepend, count);
++    w = fwrite(prepend, 1, count, thread_stdout);
++    if (w == -1 || (size_t)w != count) {
  		maybe_warn("write to stdout");
  		return -1;
-@@ -1718,7 +1738,7 @@
+ 	}
+@@ -1718,7 +1739,8 @@
  			break;
  		}
  
 -		if (write(STDOUT_FILENO, buf, rv) != rv) {
-+		if (write(fileno(thread_stdout), buf, rv) != rv) {
++//		if (write(fileno(thread_stdout), buf, rv) != rv) {
++        if (fwrite(buf, 1, rv, thread_stdout) != rv) {
  			maybe_warn("write to stdout");
  			break;
  		}
-@@ -1743,7 +1763,8 @@
+@@ -1743,7 +1765,8 @@
  #endif
  
  #ifndef SMALL
@@ -3197,7 +3201,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		maybe_warnx("standard input is a terminal -- ignoring");
  		return;
  	}
-@@ -1753,15 +1774,15 @@
+@@ -1753,15 +1776,15 @@
  		struct stat isb;
  
  		/* XXX could read the whole file, etc. */
@@ -3216,7 +3220,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	if (bytes_read == -1) {
  		maybe_warn("can't read stdin");
  		return;
-@@ -1778,40 +1799,40 @@
+@@ -1778,40 +1801,40 @@
  			maybe_warnx("unknown compression format");
  			return;
  		}
@@ -3264,7 +3268,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			     (char *)header1, sizeof header1, &gsize);
  		break;
  #endif
-@@ -1836,13 +1857,14 @@
+@@ -1836,13 +1859,14 @@
  	int ret;
  
  #ifndef SMALL
@@ -3281,7 +3285,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
  #ifndef SMALL
  	if (ret < 0) {
-@@ -1864,7 +1886,7 @@
+@@ -1864,7 +1888,7 @@
  		mtime = (uint32_t)systime;
  	}
  	 		
@@ -3290,7 +3294,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifndef SMALL
          if (vflag && !tflag && usize != -1 && gsize != -1)
  		print_verbage(NULL, NULL, usize, gsize);
-@@ -1991,7 +2013,8 @@
+@@ -1991,7 +2015,8 @@
  	path_argv[1] = 0;
  	fts = fts_open(path_argv, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
  	if (fts == NULL) {
@@ -3300,7 +3304,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		return;
  	}
  
-@@ -2058,13 +2081,13 @@
+@@ -2058,13 +2083,13 @@
  print_verbage(const char *file, const char *nfile, off_t usize, off_t gsize)
  {
  	if (file)
@@ -3319,7 +3323,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  
  /* print test results */
-@@ -2074,9 +2097,9 @@
+@@ -2074,9 +2099,9 @@
  
  	if (exit_value == 0 && ok == 0)
  		exit_value = 1;
@@ -3331,7 +3335,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  #endif
  
-@@ -2098,10 +2121,10 @@
+@@ -2098,10 +2123,10 @@
  	if (first) {
  #ifndef SMALL
  		if (vflag)
@@ -3344,7 +3348,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			       "ratio uncompressed_name\n");
  	}
  	first = 0;
-@@ -2140,23 +2163,23 @@
+@@ -2140,23 +2165,23 @@
  
  #ifndef SMALL
  	if (vflag && fd == -1)
@@ -3373,7 +3377,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  
  /* display the usage of NetBSD gzip */
-@@ -2164,8 +2187,8 @@
+@@ -2164,8 +2189,8 @@
  usage(void)
  {
  
@@ -3384,7 +3388,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifdef SMALL
      "usage: %s [-" OPT_LIST "] [<file> [<file> ...]]\n",
  #else
-@@ -2202,11 +2225,11 @@
+@@ -2202,11 +2227,11 @@
  {
  
  #ifdef __APPLE__
@@ -3399,7 +3403,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	exit(0);
  }
  #endif
-@@ -2216,7 +2239,7 @@
+@@ -2216,7 +2241,7 @@
  display_version(void)
  {
  
@@ -4025,7 +4029,7 @@ diff -Naur file_cmds-272/ls/ls.h file_cmds/ls/ls.h
  #include <sys/acl.h>
 diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 --- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
-+++ file_cmds/ls/print.c	2018-01-22 13:26:25.000000000 +0100
++++ file_cmds/ls/print.c	2018-01-22 17:31:28.000000000 +0100
 @@ -56,7 +56,7 @@
  #include <uuid/uuid.h>
  #endif
@@ -4262,16 +4266,17 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
  
  static int
-@@ -668,7 +673,7 @@
+@@ -668,7 +673,8 @@
  {
  	char tmp = c;
  
 -	(void)write(STDOUT_FILENO, &tmp, 1);
-+	(void)write(fileno(thread_stdout), &tmp, 1);
++	//(void)write(fileno(thread_stdout), &tmp, 1);
++    fwrite(&tmp, 1, 1, thread_stdout);
  	return 0;
  }
  
-@@ -767,7 +772,7 @@
+@@ -767,7 +773,7 @@
  			if (c[j] >= '0' && c[j] <= '7') {
  				colors[i].num[j] = c[j] - '0';
  				if (!legacy_warn) {
@@ -4280,7 +4285,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  					    "warn: LSCOLORS should use "
  					    "characters a-h instead of 0-9 ("
  					    "see the manual page)\n");
-@@ -781,7 +786,7 @@
+@@ -781,7 +787,7 @@
  			} else if (tolower((unsigned char)c[j] == 'x'))
  				colors[i].num[j] = -1;
  			else {
@@ -4289,7 +4294,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  				    "error: invalid character '%c' in LSCOLORS"
  				    " env var\n", c[j]);
  				colors[i].num[j] = -1;
-@@ -796,7 +801,8 @@
+@@ -796,7 +802,8 @@
  	endcolor(sig);
  
  	(void)signal(sig, SIG_DFL);
@@ -4299,7 +4304,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
  
  #endif /* COLORLS */
-@@ -814,11 +820,11 @@
+@@ -814,11 +821,11 @@
  		(void)snprintf(name, sizeof(name),
  		    "%s/%s", p->fts_parent->fts_accpath, p->fts_name);
  	if ((lnklen = readlink(name, path, sizeof(path) - 1)) == -1) {
@@ -4313,7 +4318,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	(void)printname(path);
  }
  
-@@ -831,7 +837,7 @@
+@@ -831,7 +838,7 @@
  
      humanize_number(buf, sizeof(buf), (int64_t)bytes, "",
  		    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);

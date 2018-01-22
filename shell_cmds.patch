@@ -985,8 +985,8 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
 diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 --- shell_cmds-203/tee/tee.c	1999-04-23 04:44:50.000000000 +0200
-+++ shell_cmds/tee/tee.c	2018-01-22 16:45:43.000000000 +0100
-@@ -57,19 +57,20 @@
++++ shell_cmds/tee/tee.c	2018-01-22 17:24:28.000000000 +0100
+@@ -57,29 +57,37 @@
  #include <string.h>
  #include <locale.h>
  #include <err.h>
@@ -994,14 +994,17 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  
  typedef struct _list {
  	struct _list *next;
- 	int fd;
+-	int fd;
++    FILE* stream;
++	// int fd;
  	char *name;
  } LIST;
 -LIST *head;
 +static LIST *head;
  
- void	add __P((int, char *));
+-void	add __P((int, char *));
 -int	main __P((int, char **));
++static void	add __P((FILE*, char *));
 +int	tee_main __P((int, char **));
  
  int
@@ -1010,7 +1013,12 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  	int argc;
  	char *argv[];
  {
-@@ -79,7 +80,11 @@
+ 	LIST *p;
+-	int n, fd, rval, wval;
++    int n, rval;
++    size_t wval;
++    FILE* fd;
+ 	char *bp;
  	int append, ch, exitval;
  	char *buf;
  #define	BSIZE (8 * 1024)
@@ -1023,7 +1031,7 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  	setlocale(LC_ALL, "");
  
  	append = 0;
-@@ -99,26 +104,31 @@
+@@ -99,26 +107,30 @@
  	argv += optind;
  	argc -= optind;
  
@@ -1036,12 +1044,13 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 +    }
  
 -	add(STDOUT_FILENO, "stdout");
-+	add(fileno(thread_stdout), "stdout");
++	add(thread_stdout, "stdout");
  
  	for (exitval = 0; *argv; ++argv)
- 		if ((fd = open(*argv, append ? O_WRONLY|O_CREAT|O_APPEND :
- 		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0) {
+-		if ((fd = open(*argv, append ? O_WRONLY|O_CREAT|O_APPEND :
+-		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0) {
 -			warn("%s", *argv);
++        if ((fd = fopen(*argv, append ? "a" : "w")) < 0) {
 +            fprintf(thread_stderr, "tee: %s: %s\n", *argv, strerror(errno));
 +			// warn("%s", *argv);
  			exitval = 1;
@@ -1054,14 +1063,15 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  			n = rval;
  			bp = buf;
  			do {
- 				if ((wval = write(p->fd, bp, n)) == -1) {
+-				if ((wval = write(p->fd, bp, n)) == -1) {
 -					warn("%s", p->name);
++				if ((wval = fwrite(bp, 1, n, p->stream)) != n) {
 +                    fprintf(thread_stderr, "tee: %s: %s\n", p->name, strerror(errno));
 +					// warn("%s", p->name);
  					exitval = 1;
  					break;
  				}
-@@ -126,18 +136,22 @@
+@@ -126,30 +138,46 @@
  			} while (n -= wval);
  		}
  	if (rval < 0) {
@@ -1071,36 +1081,55 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  		exitval = 1;
  	}
  
- 	for (p = head; p; p = p->next) {
- 		if (close(p->fd) == -1) {
+-	for (p = head; p; p = p->next) {
+-		if (close(p->fd) == -1) {
 -			warn("%s", p->name);
-+            fprintf(thread_stderr, "tee: %s: %s\n", p->name, strerror(errno));
-+			// warn("%s", p->name);
- 			exitval = 1;
- 		}
+-			exitval = 1;
+-		}
++    for (p = head; p; p = p->next) {
++        if (strcmp(p->name, "stdout") != 0) {
++            if (fclose(p->stream) == -1) {
++                fprintf(thread_stderr, "tee: %s: %s\n", p->name, strerror(errno));
++                // warn("%s", p->name);
++                exitval = 1;
++            }
++        }
  	}
  
 -	exit(exitval);
 +    free(buf);
++    LIST *pnext;
++    for (p = head; p; p = pnext) {
++        pnext = p->next;
++        free(p);
++        p = NULL;
++    }
++    head = NULL;
 +    return exitval;
 +	// exit(exitval);
  }
  
  void
-@@ -147,8 +161,11 @@
+-add(fd, name)
+-	int fd;
++add(stream, name)
++	FILE* stream;
+ 	char *name;
  {
  	LIST *p;
  
 -	if ((p = malloc((size_t)sizeof(LIST))) == NULL)
 -		err(1, "malloc");
+-	p->fd = fd;
 +    if ((p = malloc((size_t)sizeof(LIST))) == NULL) {
 +        fprintf(thread_stderr, "tee: malloc: %s\n", strerror(errno));
 +        pthread_exit(NULL);
 +		// err(1, "malloc");
 +    }
- 	p->fd = fd;
++	p->stream = stream;
  	p->name = name;
  	p->next = head;
+ 	head = p;
 diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
 --- shell_cmds-203/uname/uname.c	2013-09-26 01:55:54.000000000 +0200
 +++ shell_cmds/uname/uname.c	2018-01-21 16:37:54.000000000 +0100
