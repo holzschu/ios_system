@@ -1,6 +1,6 @@
 diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
 --- shell_cmds-203/date/date.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/date.c	2018-01-21 18:11:19.000000000 +0100
++++ shell_cmds/date/date.c	2018-01-22 13:54:50.000000000 +0100
 @@ -47,7 +47,7 @@
  #include <sys/stat.h>
  
@@ -28,6 +28,15 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  
  #ifndef	TM_YEAR_BASE
  #define	TM_YEAR_BASE	1900
+@@ -74,7 +76,7 @@
+ #endif
+ 
+ static time_t tval;
+-int retval;
++__thread int retval;
+ static int unix2003_std;	/* to determine legacy vs std mode */
+ 
+ static void setthetime(const char *, const char *, int, int);
 @@ -84,7 +86,7 @@
  static const char *rfc2822_format = "%a, %d %b %Y %T %z";
  
@@ -167,6 +176,17 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  	    "usage: date [-jnRu] [-d dst] [-r seconds] [-t west] "
  	    "[-v[+|-]val[ymwdHMS]] ... ",
  	    unix2003_std ?
+diff -Naur shell_cmds-203/date/extern.h shell_cmds/date/extern.h
+--- shell_cmds-203/date/extern.h	2015-11-07 23:19:55.000000000 +0100
++++ shell_cmds/date/extern.h	2018-01-22 13:54:22.000000000 +0100
+@@ -30,6 +30,6 @@
+  * $FreeBSD$
+  */
+ 
+-extern int retval;
++extern __thread int retval;
+ 
+ int	netsettime(time_t);
 diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
 --- shell_cmds-203/date/vary.c	2015-11-07 23:19:55.000000000 +0100
 +++ shell_cmds/date/vary.c	2018-01-21 16:22:39.000000000 +0100
@@ -260,7 +280,7 @@ diff -Naur shell_cmds-203/echo/echo.c shell_cmds/echo/echo.c
  	}
 diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 --- shell_cmds-203/env/env.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/env.c	2018-01-21 18:11:19.000000000 +0100
++++ shell_cmds/env/env.c	2018-01-22 13:55:37.000000000 +0100
 @@ -42,7 +42,7 @@
  #include <sys/cdefs.h>
  __FBSDID("$FreeBSD$");
@@ -270,7 +290,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  #include <errno.h>
  #include <stdio.h>
  #include <string.h>
-@@ -50,6 +50,7 @@
+@@ -50,15 +50,16 @@
  #include <unistd.h>
  
  #include "envopts.h"
@@ -278,7 +298,9 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  
  extern char **environ;
  
-@@ -58,7 +59,7 @@
+-int	 env_verbosity;
++__thread int	 env_verbosity;
+ 
  static void usage(void);
  
  int
@@ -511,6 +533,15 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  		    vvalue);
  
  	/*
+diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
+--- shell_cmds-203/env/envopts.h	2014-08-05 00:47:11.000000000 +0200
++++ shell_cmds/env/envopts.h	2018-01-22 13:55:27.000000000 +0100
+@@ -34,4 +34,4 @@
+ void		 split_spaces(const char *str, int *origind, int *origc,
+ 		    char ***origv);
+ 
+-extern int	 env_verbosity;
++extern __thread int	 env_verbosity;
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
 +++ shell_cmds/id/id.c	2018-01-21 18:11:19.000000000 +0100
@@ -1069,6 +1100,18 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
 +	fprintf(thread_stderr, "usage: uname [-amnprsv]\n");
  	exit(EXIT_FAILURE);
  }
+diff -Naur shell_cmds-203/w/extern.h shell_cmds/w/extern.h
+--- shell_cmds-203/w/extern.h	2007-01-19 02:15:36.000000000 +0100
++++ shell_cmds/w/extern.h	2018-01-22 13:57:24.000000000 +0100
+@@ -31,7 +31,7 @@
+  */
+ 
+ 
+-extern	int use_ampm;
++extern	__thread int use_ampm;
+ 
+ struct kinfo_proc;
+ 
 diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
 --- shell_cmds-203/w/fmt.c	2007-01-19 02:15:36.000000000 +0100
 +++ shell_cmds/w/fmt.c	2018-01-21 16:22:39.000000000 +0100
@@ -1179,7 +1222,7 @@ diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
  
 diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
 --- shell_cmds-203/w/w.c	2007-10-03 11:55:12.000000000 +0200
-+++ shell_cmds/w/w.c	2018-01-21 18:11:19.000000000 +0100
++++ shell_cmds/w/w.c	2018-01-22 13:59:26.000000000 +0100
 @@ -50,15 +50,16 @@
   * This program is similar to the systat command on Tenex/Tops 10/20
   *
@@ -1224,15 +1267,49 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  #include <unistd.h>
  #if HAVE_UTMPX
  #include <utmpx.h>
-@@ -100,6 +101,7 @@
+@@ -100,35 +101,36 @@
  #include <TargetConditionals.h>
  
  #include "extern.h"
 +#include "ios_error.h"
  
- struct timeval	boottime;
+-struct timeval	boottime;
++static struct timeval	boottime;
  #if !HAVE_UTMPX
-@@ -127,8 +129,8 @@
+-struct utmp	utmp;
++static struct utmp	utmp;
+ #endif
+-struct winsize	ws;
++static struct winsize	ws;
+ #if HAVE_KVM
+-kvm_t	       *kd;
++static kvm_t	       *kd;
+ #endif
+-time_t		now;		/* the current time of day */
+-int		ttywidth;	/* width of tty */
+-int		argwidth;	/* width of tty */
+-int		header = 1;	/* true if -h flag: don't print heading */
++static time_t		now;		/* the current time of day */
++static int		ttywidth;	/* width of tty */
++static int		argwidth;	/* width of tty */
++static int		header = 1;	/* true if -h flag: don't print heading */
+ #if !HAVE_UTMPX
+-int		nflag;		/* true if -n flag: don't convert addrs */
++static int		nflag;		/* true if -n flag: don't convert addrs */
+ #endif
+ #ifndef __APPLE__
+-int		dflag;		/* true if -d flag: output debug info */
++static int		dflag;		/* true if -d flag: output debug info */
+ #endif
+-int		sortidle;	/* sort by idle time */
+-int		use_ampm;	/* use AM/PM time */
+-int             use_comma;      /* use comma as floats separator */
+-char	      **sel_users;	/* login array of particular users selected */
++static int		sortidle;	/* sort by idle time */
++__thread int		use_ampm;	/* use AM/PM time */
++static int             use_comma;      /* use comma as floats separator */
++static char	      **sel_users;	/* login array of particular users selected */
+ 
  /*
   * One of these per active utmp entry.
   */

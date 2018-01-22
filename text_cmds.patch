@@ -212,7 +212,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  			break;
 diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
 --- text_cmds-99/ed/buf.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/buf.c	2018-01-21 16:24:21.000000000 +0100
++++ text_cmds/ed/buf.c	2018-01-22 14:42:00.000000000 +0100
 @@ -33,6 +33,10 @@
  #include <sys/stat.h>
  
@@ -269,9 +269,12 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  		errmsg = "cannot write temp file";
  		return NULL;
  	}
-@@ -185,7 +189,7 @@
+@@ -183,9 +187,9 @@
+ }
  
- extern int newline_added;
+ 
+-extern int newline_added;
++extern __thread int newline_added;
  
 -char sfn[15] = "";				/* scratch file name */
 +char sfn[PATH_MAX] = "";				/* scratch file name */
@@ -325,16 +328,51 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  	REQUE(&buffer_head, &buffer_head);
 diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 --- text_cmds-99/ed/ed.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/ed.h	2018-01-09 14:40:03.000000000 +0100
-@@ -275,7 +275,7 @@
- extern long current_addr;
- extern const char *errmsg;
- extern long first_addr;
++++ text_cmds/ed/ed.h	2018-01-22 14:47:14.000000000 +0100
+@@ -258,25 +258,25 @@
+ long write_stream(FILE *, long, long);
+ 
+ /* global buffers */
+-extern char stdinbuf[];
+-extern char *ibuf;
+-extern char *ibufp;
+-extern int ibufsz;
++extern __thread char stdinbuf[];
++extern __thread char *ibuf;
++extern __thread char *ibufp;
++extern __thread int ibufsz;
+ 
+ /* global flags */
+-extern int isbinary;
+-extern int isglobal;
+-extern int modified;
+-extern int mutex;
+-extern int sigflags;
++extern __thread int isbinary;
++extern __thread int isglobal;
++extern __thread int modified;
++extern __thread int mutex;
++extern __thread int sigflags;
+ 
+ /* global vars */
+-extern long addr_last;
+-extern long current_addr;
+-extern const char *errmsg;
+-extern long first_addr;
 -extern int lineno;
-+extern int ed_lineno;
- extern long second_addr;
- extern long u_addr_last;
- extern long u_current_addr;
+-extern long second_addr;
+-extern long u_addr_last;
+-extern long u_current_addr;
+-extern int posixly_correct;
++extern __thread long addr_last;
++extern __thread long current_addr;
++extern __thread const char *errmsg;
++extern __thread long first_addr;
++extern __thread int ed_lineno;
++extern __thread long second_addr;
++extern __thread long u_addr_last;
++extern __thread long u_current_addr;
++extern __thread int posixly_correct;
 diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
 --- text_cmds-99/ed/glbl.c	2005-09-20 23:36:44.000000000 +0200
 +++ text_cmds/ed/glbl.c	2018-01-21 17:48:49.000000000 +0100
@@ -375,16 +413,20 @@ diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
  				return ERR;
 diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
 --- text_cmds-99/ed/io.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/io.c	2018-01-21 18:11:19.000000000 +0100
-@@ -29,6 +29,7 @@
++++ text_cmds/ed/io.c	2018-01-22 14:42:37.000000000 +0100
+@@ -29,9 +29,10 @@
  __FBSDID("$FreeBSD: src/bin/ed/io.c,v 1.14 2003/01/01 18:48:39 schweikh Exp $");
  
  #include "ed.h"
 +#include "ios_error.h"
  
  
- extern int scripted;
-@@ -43,17 +44,17 @@
+-extern int scripted;
++extern __thread int scripted;
+ 
+ /* read_file: read a named file/pipe into the buffer; return line count */
+ long
+@@ -43,26 +44,26 @@
  
  	fp = (*fn == '!') ? popen(fn + 1, "r") : fopen(strip_escapes(fn), "r");
  	if (fp == NULL) {
@@ -405,6 +447,17 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  	return current_addr - n;
  }
  
+ 
+-extern int des;
++extern __thread int des;
+ 
+ char *sbuf;			/* file i/o buffer */
+ int sbufsz;			/* file i/o buffer size */
+-int newline_added;		/* if set, newline appended to input file */
++__thread int newline_added;		/* if set, newline appended to input file */
+ 
+ /* read_stream: read a stream into the editor buffer; return status */
+ long
 @@ -98,9 +99,9 @@
  	if (len < 0)
  		return ERR;
@@ -481,6 +534,17 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  				if (i != oi) {
  					oi = i;
  					continue;
+@@ -296,8 +297,8 @@
+ #define ESCAPES "\a\b\f\n\r\t\v\\"
+ #define ESCCHARS "abfnrtv\\"
+ 
+-extern int rows;
+-extern int cols;
++extern __thread int rows;
++extern __thread int cols;
+ 
+ /* put_tty_line: print text to stdout */
+ int
 @@ -307,12 +308,12 @@
  	char *cp;
  
@@ -498,7 +562,7 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-01-21 20:52:57.000000000 +0100
++++ text_cmds/ed/main.c	2018-01-22 14:50:44.000000000 +0100
 @@ -59,13 +59,17 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -521,17 +585,65 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  
  
  #ifdef _POSIX_SOURCE
-@@ -100,18 +104,46 @@
- char old_filename[PATH_MAX + 1] = "";	/* default filename */
- long current_addr;		/* current address in editor buffer */
- long addr_last;			/* last address in editor buffer */
+@@ -75,43 +79,71 @@
+ #endif
+ 
+ /* static buffers */
+-char stdinbuf[1];		/* stdin buffer */
+-char *shcmd;			/* shell command buffer */
+-int shcmdsz;			/* shell command buffer size */
+-int shcmdi;			/* shell command buffer index */
+-char *ibuf;			/* ed command-line buffer */
+-int ibufsz;			/* ed command-line buffer size */
+-char *ibufp;			/* pointer to ed command-line buffer */
++__thread char stdinbuf[1];		/* stdin buffer */
++static char *shcmd;			/* shell command buffer */
++static int shcmdsz;			/* shell command buffer size */
++static int shcmdi;			/* shell command buffer index */
++__thread char *ibuf;			/* ed command-line buffer */
++__thread int ibufsz;			/* ed command-line buffer size */
++__thread char *ibufp;			/* pointer to ed command-line buffer */
+ 
+ /* global flags */
+-int des = 0;			/* if set, use crypt(3) for i/o */
+-int garrulous = 0;		/* if set, print all error messages */
+-int isbinary;			/* if set, buffer contains ASCII NULs */
+-int isglobal;			/* if set, doing a global command */
+-int modified;			/* if set, buffer modified since last write */
+-int mutex = 0;			/* if set, signals set "sigflags" */
+-int red = 0;			/* if set, restrict shell/directory access */
+-int scripted = 0;		/* if set, suppress diagnostics */
+-int sigflags = 0;		/* if set, signals received while mutex set */
+-int sigactive = 0;		/* if set, signal handlers are enabled */
+-int posixly_correct = 0;	/* if set, POSIX behavior as per */
++__thread int des = 0;			/* if set, use crypt(3) for i/o */
++static int garrulous = 0;		/* if set, print all error messages */
++__thread int isbinary;			/* if set, buffer contains ASCII NULs */
++__thread int isglobal;			/* if set, doing a global command */
++__thread int modified;			/* if set, buffer modified since last write */
++__thread int mutex = 0;			/* if set, signals set "sigflags" */
++static int red = 0;			/* if set, restrict shell/directory access */
++__thread int scripted = 0;		/* if set, suppress diagnostics */
++__thread int sigflags = 0;		/* if set, signals received while mutex set */
++static int sigactive = 0;		/* if set, signal handlers are enabled */
++__thread int posixly_correct = 0;	/* if set, POSIX behavior as per */
+ /* http://www.opengroup.org/onlinepubs/009695399/utilities/ed.html */
+ 
+-char old_filename[PATH_MAX + 1] = "";	/* default filename */
+-long current_addr;		/* current address in editor buffer */
+-long addr_last;			/* last address in editor buffer */
 -int lineno;			/* script line number */
-+int ed_lineno;			/* script line number */
- const char *prompt;		/* command-line prompt */
- const char *dps = "*";		/* default command-line prompt */
+-const char *prompt;		/* command-line prompt */
+-const char *dps = "*";		/* default command-line prompt */
++static char old_filename[PATH_MAX + 1] = "";	/* default filename */
++__thread long current_addr;		/* current address in editor buffer */
++__thread long addr_last;			/* last address in editor buffer */
++__thread int ed_lineno;			/* script line number */
++static const char *prompt;		/* command-line prompt */
++static const char *dps = "*";		/* default command-line prompt */
  
 -const char usage[] = "usage: %s [-] [-sx] [-p string] [file]\n";
-+const char ed_usage[] = "usage: %s [-] [-sx] [-p string] [file]\n";
++static const char ed_usage[] = "usage: %s [-] [-sx] [-p string] [file]\n";
  
  /* ed: line editor */
  int
@@ -717,6 +829,27 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  			break;
+@@ -270,7 +305,7 @@
+ 	/*NOTREACHED*/
+ }
+ 
+-long first_addr, second_addr, addr_cnt;
++__thread long first_addr, second_addr, addr_cnt;
+ 
+ /* extract_addr_range: get line addresses from the command buffer until an
+    illegal address is seen; return status */
+@@ -440,9 +475,9 @@
+ #define SGR 004		/* use last regex instead of last pat */
+ #define SGF 010		/* repeat last substitution */
+ 
+-int patlock = 0;	/* if set, pattern not freed by get_compiled_pattern() */
++__thread int patlock = 0;	/* if set, pattern not freed by get_compiled_pattern() */
+ 
+-long rows = 22;		/* scroll length: ws_row - 2 */
++__thread long rows = 22;		/* scroll length: ws_row - 2 */
+ 
+ /* exec_command: execute the next command in command buffer; return print
+    request, if any */
 @@ -519,7 +554,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
@@ -827,17 +960,33 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		errmsg = "out of memory";
  		return NULL;
  	}
+@@ -1425,7 +1460,7 @@
+ }
+ 
+ 
+-int cols = 72;				/* wrap column */
++__thread int cols = 72;				/* wrap column */
+ 
+ void
+ handle_winch(int signo)
 diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
 --- text_cmds-99/ed/re.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/re.c	2018-01-21 17:38:35.000000000 +0100
-@@ -30,6 +30,7 @@
++++ text_cmds/ed/re.c	2018-01-22 14:47:25.000000000 +0100
+@@ -30,11 +30,12 @@
  __FBSDID("$FreeBSD: src/bin/ed/re.c,v 1.20 2003/07/20 10:24:09 ru Exp $");
  
  #include "ed.h"
 +#include "ios_error.h"
  
  
- extern int patlock;
+-extern int patlock;
++extern __thread int patlock;
+ 
+-const char *errmsg = "";
++const __thread char *errmsg = "";
+ 
+ /* get_compiled_pattern: return pointer to compiled pattern from command
+    buffer */
 @@ -61,7 +62,7 @@
  	if (expr && !patlock)
  		regfree(expr);
@@ -869,7 +1018,7 @@ diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
  		}
 diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
 --- text_cmds-99/ed/undo.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/undo.c	2018-01-21 17:46:30.000000000 +0100
++++ text_cmds/ed/undo.c	2018-01-22 14:48:27.000000000 +0100
 @@ -29,6 +29,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/undo.c,v 1.12 2002/06/30 05:13:53 obrien Exp $");
  
@@ -896,6 +1045,17 @@ diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
  	errmsg = "out of memory";
  	clear_undo_stack();
  	free(ustack);
+@@ -77,8 +78,8 @@
+ }
+ 
+ 
+-long u_current_addr = -1;	/* if >= 0, undo enabled */
+-long u_addr_last = -1;		/* if >= 0, undo enabled */
++__thread long u_current_addr = -1;	/* if >= 0, undo enabled */
++__thread long u_addr_last = -1;		/* if >= 0, undo enabled */
+ 
+ /* pop_undo_stack: undo last change to the editor buffer */
+ int
 diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
 --- text_cmds-99/grep/file.c	2015-08-18 22:29:43.000000000 +0200
 +++ text_cmds/grep/file.c	2018-01-21 16:22:40.000000000 +0100
@@ -1378,7 +1538,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  		c = grep_tree(aargv);
 diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
 --- text_cmds-99/grep/grep.h	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.h	2018-01-22 13:31:34.000000000 +0100
++++ text_cmds/grep/grep.h	2018-01-22 14:51:54.000000000 +0100
 @@ -45,7 +45,7 @@
  #else
  #include <nl_types.h>
@@ -1415,14 +1575,14 @@ diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
 -extern regex_t	*er_pattern, *r_pattern;
 +extern __thread bool	 dexclude, dinclude, fexclude, finclude, lbflag, nullflag;
 +extern __thread unsigned long long Aflag, Bflag;
-+extern long long __thread mcount;
++extern __thread long long mcount;
 +extern __thread char	*label;
-+extern const char __thread *color;
++extern __thread const char *color;
 +extern __thread int	 binbehave, devbehave, dirbehave, filebehave, grepbehave, linkbehave;
 +
 +extern __thread bool	 file_err, first, matchall, prev;
 +extern __thread int	 tail;
-+extern unsigned __thread int dpatterns, fpatterns, patterns;
++extern __thread unsigned int dpatterns, fpatterns, patterns;
 +extern __thread struct pat *pattern;
 +extern __thread struct epat *dpattern, *fpattern;
 +extern __thread regex_t	*er_pattern, *r_pattern;
@@ -1664,7 +1824,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  }
 diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 --- text_cmds-99/sed/compile.c	2006-12-05 23:29:30.000000000 +0100
-+++ text_cmds/sed/compile.c	2018-01-21 16:22:38.000000000 +0100
++++ text_cmds/sed/compile.c	2018-01-22 14:40:48.000000000 +0100
 @@ -54,12 +54,13 @@
  
  #include "defs.h"
@@ -1683,6 +1843,15 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  
  #define LHSZ	128
  #define	LHMASK	(LHSZ - 1)
+@@ -129,7 +130,7 @@
+ };
+ 
+ /* The compiled program. */
+-struct s_command *prog;
++__thread struct s_command *prog;
+ 
+ /*
+  * Compile the program into prog.
 @@ -145,9 +146,9 @@
  		appends = NULL;
  	else if ((appends = malloc(sizeof(struct s_appends) * appendnum)) ==
@@ -2235,19 +2404,37 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	}
 diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
 --- text_cmds-99/sed/extern.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/extern.h	2018-01-09 11:05:10.000000000 +0100
-@@ -40,7 +40,7 @@
- extern size_t maxnsub;
- extern u_long linenum;
- extern int appendnum;
++++ text_cmds/sed/extern.h	2018-01-22 14:40:23.000000000 +0100
+@@ -34,16 +34,16 @@
+  * $FreeBSD: src/usr.bin/sed/extern.h,v 1.13 2004/08/09 15:29:41 dds Exp $
+  */
+ 
+-extern struct s_command *prog;
+-extern struct s_appends *appends;
+-extern regmatch_t *match;
+-extern size_t maxnsub;
+-extern u_long linenum;
+-extern int appendnum;
 -extern int aflag, eflag, nflag;
-+extern int aflag, eflag, sed_nflag;
- extern const char *fname, *outfname;
- extern FILE *infile, *outfile;
- extern int rflags;	/* regex flags to use */
+-extern const char *fname, *outfname;
+-extern FILE *infile, *outfile;
+-extern int rflags;	/* regex flags to use */
++extern __thread struct s_command *prog;
++extern __thread struct s_appends *appends;
++extern __thread regmatch_t *match;
++extern __thread size_t maxnsub;
++extern __thread u_long linenum;
++extern __thread int appendnum;
++extern __thread int aflag, eflag, sed_nflag;
++extern __thread const char *fname, *outfname;
++extern __thread FILE *infile, *outfile;
++extern __thread int rflags;	/* regex flags to use */
+ 
+ void	 cfclose(struct s_command *, struct s_command *);
+ void	 compile(void);
 diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 --- text_cmds-99/sed/main.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/main.c	2018-01-21 16:37:54.000000000 +0100
++++ text_cmds/sed/main.c	2018-01-22 14:41:20.000000000 +0100
 @@ -64,6 +64,9 @@
  
  #include "defs.h"
@@ -2258,21 +2445,41 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  
  /*
   * Linked list of units (strings and files) to be compiled
-@@ -92,12 +95,12 @@
+@@ -92,25 +95,25 @@
   * Linked list pointer to files and pointer to current
   * next pointer.
   */
 -static struct s_flist *files, **fl_nextp = &files;
 +static struct s_flist *files = NULL, **fl_nextp = &files;
  
- FILE *infile;			/* Current input file */
- FILE *outfile;			/* Current output file */
+-FILE *infile;			/* Current input file */
+-FILE *outfile;			/* Current output file */
++__thread FILE *infile;			/* Current input file */
++__thread FILE *outfile;			/* Current output file */
  
 -int aflag, eflag, nflag;
-+int aflag, eflag, sed_nflag;
- int rflags = 0;
+-int rflags = 0;
++__thread int aflag, eflag, sed_nflag;
++__thread int rflags = 0;
  static int rval;		/* Exit status */
  
+ /*
+  * Current file and line number; line numbers restart across compilation
+  * units, but span across input files.
+  */
+-const char *fname;		/* File name. */
+-const char *outfname;		/* Output file name */
++const __thread char *fname;		/* File name. */
++const __thread char *outfname;		/* Output file name */
+ static char oldfname[PATH_MAX];	/* Old file name (for in-place editing) */
+ static char tmpfname[PATH_MAX];	/* Temporary file name (for in-place editing) */
+-const char *inplace;		/* Inplace edit file extension. */
+-u_long linenum;
++const __thread char *inplace;		/* Inplace edit file extension. */
++__thread u_long linenum;
+ 
+ static void add_compunit(enum e_cut, char *);
+ static void add_file(char *);
 @@ -118,11 +121,25 @@
  static void usage(void);
  
@@ -2527,7 +2734,7 @@ diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
  }
 diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 --- text_cmds-99/sed/process.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/process.c	2018-01-21 16:37:54.000000000 +0100
++++ text_cmds/sed/process.c	2018-01-22 14:40:48.000000000 +0100
 @@ -58,6 +58,7 @@
  
  #include "defs.h"
@@ -2536,6 +2743,27 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  
  static SPACE HS, PS, SS, YS;
  #define	pd		PS.deleted
+@@ -74,16 +75,16 @@
+ static void		 regsub(SPACE *, char *, char *);
+ static int		 substitute(struct s_command *);
+ 
+-struct s_appends *appends;	/* Array of pointers to strings to append. */
++__thread struct s_appends *appends;	/* Array of pointers to strings to append. */
+ static int appendx;		/* Index into appends array. */
+-int appendnum;			/* Size of appends array. */
++__thread int appendnum;			/* Size of appends array. */
+ 
+ static int lastaddr;		/* Set by applies if last address of a range. */
+ static int sdone;		/* If any substitutes since last line input. */
+ 				/* Iov structure for 'w' commands. */
+ static regex_t *defpreg;
+-size_t maxnsub;
+-regmatch_t *match;
++__thread size_t maxnsub;
++__thread regmatch_t *match;
+ 
+ #define OUT(s) { fwrite(s, sizeof(u_char), psl, outfile); fputc('\n', outfile); }
+ 
 @@ -116,7 +117,7 @@
  					if ((appends = realloc(appends,
  					    sizeof(struct s_appends) *
