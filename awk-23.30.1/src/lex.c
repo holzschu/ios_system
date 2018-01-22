@@ -31,13 +31,13 @@ THIS SOFTWARE.
 #include "ios_error.h"
 
 
-extern YYSTYPE	yylval;
-extern int	infunc;
+extern __thread YYSTYPE	yylval;
+extern __thread int	infunc;
 
-int	lineno	= 1;
-int	bracecnt = 0;
-int	brackcnt  = 0;
-int	parencnt = 0;
+__thread int	lineno	= 1;
+__thread int	bracecnt = 0;
+__thread int	brackcnt  = 0;
+__thread int	parencnt = 0;
 
 typedef struct Keyword {
 	const char *word;
@@ -539,14 +539,14 @@ int regexpr(void)
 
 char	ebuf[300];
 char	*ep = ebuf;
-char	yysbuf[100];	/* pushback buffer */
-char	*yysptr = yysbuf;
-FILE	*yyin = 0;
+static char	yysbuf[100];	/* pushback buffer */
+static char	*yysptr = yysbuf;
+__thread FILE	*yyin = 0;
 
 int input(void)	/* get next lexical input character */
 {
 	int c;
-	extern char *lexprog;
+	extern __thread char *lexprog;
 
 	if (yysptr > yysbuf)
 		c = (uschar)*--yysptr;

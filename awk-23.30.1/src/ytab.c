@@ -274,12 +274,12 @@
 void checkdup(Node *list, Cell *item);
 int yywrap(void) { return(1); }
 
-Node	*beginloc = 0;
-Node	*endloc = 0;
-int	infunc	= 0;	/* = 1 if in arglist or body of func */
-int	inloop	= 0;	/* = 1 if in while, for, do */
-char	*curfname = 0;	/* current function name */
-Node	*arglist = 0;	/* list of args for current function */
+__thread Node	*beginloc = 0;
+__thread Node	*endloc = 0;
+__thread int	infunc	= 0;	/* = 1 if in arglist or body of func */
+__thread int	inloop	= 0;	/* = 1 if in while, for, do */
+__thread char	*curfname = 0;	/* current function name */
+__thread Node	*arglist = 0;	/* list of args for current function */
 
 
 /* Enabling traces.  */
@@ -2471,13 +2471,13 @@ int yyparse ();
 
 
 /* The look-ahead symbol.  */
-int yychar;
+static int yychar;
 
 /* The semantic value of the look-ahead symbol.  */
-YYSTYPE yylval;
+__thread YYSTYPE yylval;
 
 /* Number of syntax errors so far.  */
-int yynerrs;
+static int yynerrs;
 
 
 

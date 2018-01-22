@@ -34,24 +34,24 @@ THIS SOFTWARE.
 #include "ios_error.h"
 
 static FILE	*infile	= NULL;
-char	*file	= "";
-char	*record;
-int	recsize	= RECSIZE;
-char	*fields;
-int	fieldssize = RECSIZE;
+static char	*file	= "";
+__thread char	*record;
+__thread int	recsize	= RECSIZE;
+__thread char	*fields;
+__thread int	fieldssize = RECSIZE;
 
-Cell	**fldtab;	/* pointers to Cells */
-char	inputFS[100] = " ";
+__thread Cell	**fldtab;	/* pointers to Cells */
+__thread char	inputFS[100] = " ";
 
 #define	MAXFLD	2
-int	nfields	= MAXFLD;	/* last allocated slot for $i */
+__thread int	nfields	= MAXFLD;	/* last allocated slot for $i */
 
-int	donefld;	/* 1 = implies rec broken into fields */
-int	donerec;	/* 1 = record is valid (no flds have changed) */
+__thread int	donefld;	/* 1 = implies rec broken into fields */
+__thread int	donerec;	/* 1 = record is valid (no flds have changed) */
 
-int	lastfld	= 0;	/* last used field */
-int	argno	= 1;	/* current input argument number */
-extern	Awkfloat *ARGC;
+__thread int	lastfld	= 0;	/* last used field */
+__thread int	argno	= 1;	/* current input argument number */
+extern	__thread Awkfloat *ARGC;
 
 static Cell dollar0 = { OCELL, CFLD, NULL, "", 0.0, REC|STR|DONTFREE };
 static Cell dollar1 = { OCELL, CFLD, NULL, "", 0.0, FLD|STR|DONTFREE };
@@ -100,7 +100,7 @@ void initgetrec(void)
 	infile = thread_stdin;		/* no filenames, so use stdin */
 }
 
-int awk_firsttime = 1;
+__thread int awk_firsttime = 1;
 
 int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 {			/* note: cares whether buf == record */
@@ -227,7 +227,7 @@ char *getargv(int n)	/* get ARGV[n] */
 {
 	Cell *x;
 	char *s, temp[50];
-	extern Array *ARGVtab;
+	extern __thread Array *ARGVtab;
 
 	sprintf(temp, "%d", n);
 	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
@@ -490,7 +490,7 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 	donerec = 1;
 }
 
-int	errorflag	= 0;
+__thread int	errorflag	= 0;
 
 void yyerror(const char *s)
 {
@@ -499,7 +499,7 @@ void yyerror(const char *s)
 
 void SYNTAX(const char *fmt, ...)
 {
-	extern char *cmdname, *curfname;
+	extern __thread char *cmdname, *curfname;
 	static int been_here = 0;
 	va_list varg;
 
@@ -524,7 +524,7 @@ void fpecatch(int n)
 	FATAL("floating point exception %d", n);
 }
 
-extern int bracecnt, brackcnt, parencnt;
+extern __thread int bracecnt, brackcnt, parencnt;
 
 void bracecheck(void)
 {
@@ -554,7 +554,7 @@ void bcheck2(int n, int c1, int c2)
 
 void FATAL(const char *fmt, ...)
 {
-	extern char *cmdname;
+	extern __thread char *cmdname;
 	va_list varg;
 
 	fflush(thread_stdout);
@@ -571,7 +571,7 @@ void FATAL(const char *fmt, ...)
 
 void WARNING(const char *fmt, ...)
 {
-	extern char *cmdname;
+	extern __thread char *cmdname;
 	va_list varg;
 
 	fflush(thread_stdout);
@@ -584,7 +584,7 @@ void WARNING(const char *fmt, ...)
 
 void error()
 {
-	extern Node *curnode;
+	extern __thread Node *curnode;
 
 	fprintf(thread_stderr, "\n");
 	if (compile_time != 2 && NR && *NR > 0) {

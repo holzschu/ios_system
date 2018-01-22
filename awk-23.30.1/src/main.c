@@ -42,35 +42,35 @@ const char	*version = "version 20070501";
 #include "ios_error.h"
 
 extern	char	**environ;
-extern	int	nfields;
+extern	__thread int	nfields;
 
-int	dbg	= 0;
-char	*cmdname;	/* gets argv[0] for error messages */
-extern	FILE	*yyin;	/* lex input file */
-char	*lexprog;	/* points to program argument if it exists */
-extern	int errorflag;	/* non-zero if any syntax errors; set by yyerror */
-int	compile_time = 2;	/* for error printing: */
+__thread int	dbg	= 0;
+__thread char	*cmdname;	/* gets argv[0] for error messages */
+extern	__thread FILE	*yyin;	/* lex input file */
+__thread char	*lexprog;	/* points to program argument if it exists */
+extern	__thread int errorflag;	/* non-zero if any syntax errors; set by yyerror */
+__thread int	compile_time = 2;	/* for error printing: */
 				/* 2 = cmdline, 1 = compile, 0 = running */
 
 #define	MAX_PFILE	20	/* max number of -f's */
 
-char	*pfile[MAX_PFILE];	/* program filenames from -f's */
-int	npfile = 0;	/* number of filenames */
-int	curpfile = 0;	/* current filename */
+static char	*pfile[MAX_PFILE];	/* program filenames from -f's */
+static int	npfile = 0;	/* number of filenames */
+static int	curpfile = 0;	/* current filename */
 
-int	safe	= 0;	/* 1 => "safe" mode */
-int	Unix2003_compat;
+__thread int	safe	= 0;	/* 1 => "safe" mode */
+__thread int	Unix2003_compat;
 
 static void initializeVariables() {
     // initialize all flags:
     cmdname = NULL;
-    extern int    infunc;
+    extern __thread int    infunc;
     infunc = 0;    /* = 1 if in arglist or body of func */
-    extern int    inloop;
+    extern __thread int    inloop;
     inloop = 0;    /* = 1 if in while, for, do */
 
-    extern int    *setvec;
-    extern int    *tmpset;
+    extern __thread int    *setvec;
+    extern __thread int    *tmpset;
     if (setvec != 0) {    /* first time through any RE */
         free(setvec); setvec = 0;
         free(tmpset); tmpset = 0;
@@ -82,12 +82,12 @@ static void initializeVariables() {
     compile_time = 2;
     errorflag = 0;
     lexprog = 0;
-    extern int awk_firsttime;
+    extern __thread int awk_firsttime;
     awk_firsttime = 1;
     
-    extern int lastfld;
+    extern __thread int lastfld;
     lastfld    = 0;    /* last used field */
-    extern int argno;
+    extern __thread int argno;
     argno    = 1;    /* current input argument number */
     if (symtab != NULL) {
         free(symtab->tab);
@@ -97,11 +97,11 @@ static void initializeVariables() {
     // Variables from lib.c
     if (record) { free(record); record = NULL;}
     recsize    = RECSIZE;
-    extern char    *fields;
+    extern __thread char    *fields;
     if (fields) { free(fields); fields = NULL; }
-    extern int fieldssize;
+    extern __thread int fieldssize;
     fieldssize = RECSIZE;
-    extern Cell    **fldtab;    /* pointers to Cells */
+    extern __thread Cell    **fldtab;    /* pointers to Cells */
     if (fldtab) { free(fldtab); fldtab = NULL; }
 }
 

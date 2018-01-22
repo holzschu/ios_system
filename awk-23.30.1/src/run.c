@@ -68,9 +68,9 @@ void tempfree(Cell *p) {
 /* #endif */
 
 static jmp_buf env;
-extern	int	pairstack[];
+extern	__thread int	pairstack[];
 
-Node	*winner = NULL;	/* root of parse tree */
+__thread Node	*winner = NULL;	/* root of parse tree */
 Cell	*tmps;		/* free temporary cells for execution */
 
 static Cell	truecell	={ OBOOL, BTRUE, 0, 0, 1.0, NUM };
@@ -91,7 +91,7 @@ static Cell	retcell		={ OJUMP, JRET, 0, 0, 0.0, NUM };
 Cell	*jret	= &retcell;
 static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE };
 
-Node	*curnode = NULL;	/* the node being executed, for debugging */
+__thread Node	*curnode = NULL;	/* the node being executed, for debugging */
 
 static Awkfloat prev_srand, tmp_srand;
 
@@ -142,8 +142,8 @@ void run(Node *a)	/* execution of parse tree starts here */
     curnode = NULL;
     winner = NULL;
     // These are defined in ytab.c
-    extern Node    *beginloc;
-    extern Node    *endloc;
+    extern __thread Node    *beginloc;
+    extern __thread Node    *endloc;
     beginloc = 0;
     endloc = 0;
 }
@@ -442,7 +442,7 @@ Cell *jump(Node **a, int n)	/* break, continue, next, nextfile, return */
 Cell *awk_getline(Node **a, int n)	/* get next line from specific input */
 {		/* a[0] is variable, a[1] is operator, a[2] is filename */
 	Cell *r, *x;
-	extern Cell **fldtab;
+	extern __thread Cell **fldtab;
 	FILE *fp;
 	char *buf;
 	int bufsize = recsize;

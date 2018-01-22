@@ -58,12 +58,12 @@ THIS SOFTWARE.
 */
 
 
-int	*setvec;
-int	*tmpset;
-int	maxsetvec = 0;
+__thread int	*setvec;
+__thread int	*tmpset;
+static int	maxsetvec = 0;
 
-int	rtok;		/* next token in current re */
-int	rlxval;
+static int	rtok;		/* next token in current re */
+static int	rlxval;
 static uschar	*rlxstr;
 static uschar	*prestr;	/* current position in current re */
 static uschar	*lastre;	/* origin of last re */
@@ -78,12 +78,12 @@ static FILE * replogfile = 0;
 static	int setcnt;
 static	int poscnt;
 
-char	*patbeg;
-int	patlen;
+__thread char	*patbeg;
+__thread int	patlen;
 
 #define	NFA	20	/* cache this many dynamic fa's */
-fa	*fatab[NFA];
-int	nfatab	= 0;	/* entries in fatab */
+static fa	*fatab[NFA];
+static int	nfatab	= 0;	/* entries in fatab */
 
 fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 {

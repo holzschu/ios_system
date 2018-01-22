@@ -180,7 +180,7 @@ Node *celltonode(Cell *a, int b)
 
 Node *rectonode(void)	/* make $0 into a Node */
 {
-	extern Cell *literal0;
+	extern __thread Cell *literal0;
 	return op1(INDIRECT, celltonode(literal0, CUNK));
 }
 
@@ -202,8 +202,8 @@ Node *makearr(Node *p)
 }
 
 #define PA2NUM	50	/* max number of pat,pat patterns allowed */
-int	paircnt;		/* number of them in use */
-int	pairstack[PA2NUM];	/* state of each pat,pat */
+__thread int	paircnt;		/* number of them in use */
+__thread int	pairstack[PA2NUM];	/* state of each pat,pat */
 
 Node *pa2stat(Node *a, Node *b, Node *c)	/* pat, pat {...} */
 {
@@ -257,7 +257,7 @@ void defn(Cell *v, Node *vl, Node *st)	/* turn on FCN bit in definition, */
 
 int isarg(const char *s)		/* is s in argument list for current function? */
 {			/* return -1 if not, otherwise arg # */
-	extern Node *arglist;
+	extern __thread Node *arglist;
 	Node *p = arglist;
 	int n;
 

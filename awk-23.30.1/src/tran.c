@@ -35,38 +35,38 @@ THIS SOFTWARE.
 #define	FULLTAB	2	/* rehash when table gets this x full */
 #define	GROWTAB 4	/* grow table by this factor */
 
-Array	*symtab;	/* main symbol table */
+__thread Array	*symtab;	/* main symbol table */
 
-char	**FS;		/* initial field sep */
-char	**RS;		/* initial record sep */
-char	**OFS;		/* output field sep */
-char	**ORS;		/* output record sep */
-char	**OFMT;		/* output format for numbers */
-char	**CONVFMT;	/* format for conversions in getsval */
-Awkfloat *NF;		/* number of fields in current record */
-Awkfloat *NR;		/* number of current record */
-Awkfloat *FNR;		/* number of current record in current file */
-char	**FILENAME;	/* current filename argument */
-Awkfloat *ARGC;		/* number of arguments from command line */
-char	**SUBSEP;	/* subscript separator for a[i,j,k]; default \034 */
-Awkfloat *RSTART;	/* start of re matched with ~; origin 1 (!) */
-Awkfloat *RLENGTH;	/* length of same */
+__thread char	**FS;		/* initial field sep */
+__thread char	**RS;		/* initial record sep */
+__thread char	**OFS;		/* output field sep */
+__thread char	**ORS;		/* output record sep */
+__thread char	**OFMT;		/* output format for numbers */
+static char	**CONVFMT;	/* format for conversions in getsval */
+__thread Awkfloat *NF;		/* number of fields in current record */
+__thread Awkfloat *NR;		/* number of current record */
+__thread Awkfloat *FNR;		/* number of current record in current file */
+__thread char	**FILENAME;	/* current filename argument */
+__thread Awkfloat *ARGC;		/* number of arguments from command line */
+__thread char	**SUBSEP;	/* subscript separator for a[i,j,k]; default \034 */
+__thread Awkfloat *RSTART;	/* start of re matched with ~; origin 1 (!) */
+__thread Awkfloat *RLENGTH;	/* length of same */
 
-Cell	*fsloc;		/* FS */
-Cell	*nrloc;		/* NR */
-Cell	*nfloc;		/* NF */
-Cell	*fnrloc;	/* FNR */
-Array	*ARGVtab;	/* symbol table containing ARGV[...] */
-Array	*ENVtab;	/* symbol table containing ENVIRON[...] */
-Cell	*rstartloc;	/* RSTART */
-Cell	*rlengthloc;	/* RLENGTH */
-Cell	*symtabloc;	/* SYMTAB */
+static Cell	*fsloc;		/* FS */
+__thread Cell	*nrloc;		/* NR */
+__thread Cell	*nfloc;		/* NF */
+__thread Cell	*fnrloc;	/* FNR */
+__thread Array	*ARGVtab;	/* symbol table containing ARGV[...] */
+static Array	*ENVtab;	/* symbol table containing ENVIRON[...] */
+__thread Cell	*rstartloc;	/* RSTART */
+__thread Cell	*rlengthloc;	/* RLENGTH */
+static Cell	*symtabloc;	/* SYMTAB */
 
-Cell	*nullloc;	/* a guaranteed empty cell */
-Node	*nullnode;	/* zero&null, converted into a node for comparisons */
-Cell	*literal0;
+static Cell	*nullloc;	/* a guaranteed empty cell */
+__thread Node	*nullnode;	/* zero&null, converted into a node for comparisons */
+__thread Cell	*literal0;
 
-extern Cell **fldtab;
+extern __thread Cell **fldtab;
 
 void syminit(void)	/* initialize symbol table with builtin vars */
 {
