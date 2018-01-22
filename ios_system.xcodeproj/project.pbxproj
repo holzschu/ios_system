@@ -514,6 +514,7 @@
 		225782FA1FDBC9B40050F312 /* ldblib.c in Sources */ = {isa = PBXBuildFile; fileRef = 225782D51FDBC9B30050F312 /* ldblib.c */; settings = {COMPILER_FLAGS = "-D LUA_USE_IOS "; }; };
 		225782FB1FDBC9B40050F312 /* lundump.c in Sources */ = {isa = PBXBuildFile; fileRef = 225782D61FDBC9B30050F312 /* lundump.c */; settings = {COMPILER_FLAGS = "-D LUA_USE_IOS "; }; };
 		225782FC1FDBC9B40050F312 /* llex.c in Sources */ = {isa = PBXBuildFile; fileRef = 225782D71FDBC9B40050F312 /* llex.c */; settings = {COMPILER_FLAGS = "-D LUA_USE_IOS "; }; };
+		225F060B20163C2000466685 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		226378741FDB3EE400AE8827 /* rmdir.c in Sources */ = {isa = PBXBuildFile; fileRef = 2263780C1FDB3EE100AE8827 /* rmdir.c */; };
 		226378751FDB3EE400AE8827 /* termcap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2263780D1FDB3EE100AE8827 /* termcap.h */; };
 		226378771FDB3EE400AE8827 /* mv.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378101FDB3EE100AE8827 /* mv.c */; };
@@ -1307,6 +1308,7 @@
 		225782D51FDBC9B30050F312 /* ldblib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ldblib.c; path = "../lua_ios/lua-5.3.4/src/ldblib.c"; sourceTree = SOURCE_ROOT; };
 		225782D61FDBC9B30050F312 /* lundump.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lundump.c; path = "../lua_ios/lua-5.3.4/src/lundump.c"; sourceTree = SOURCE_ROOT; };
 		225782D71FDBC9B40050F312 /* llex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = llex.c; path = "../lua_ios/lua-5.3.4/src/llex.c"; sourceTree = SOURCE_ROOT; };
+		225F060A20163C2000466685 /* tee.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tee.c; path = shell_cmds/tee/tee.c; sourceTree = SOURCE_ROOT; };
 		2263780C1FDB3EE100AE8827 /* rmdir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rmdir.c; sourceTree = "<group>"; };
 		2263780D1FDB3EE100AE8827 /* termcap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = termcap.h; sourceTree = SOURCE_ROOT; };
 		226378101FDB3EE100AE8827 /* mv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mv.c; sourceTree = "<group>"; };
@@ -2284,6 +2286,14 @@
 			path = Python_grp;
 			sourceTree = "<group>";
 		};
+		225F060920163BFC00466685 /* tee */ = {
+			isa = PBXGroup;
+			children = (
+				225F060A20163C2000466685 /* tee.c */,
+			);
+			path = tee;
+			sourceTree = "<group>";
+		};
 		226378091FDB3EC700AE8827 /* file_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
@@ -2487,6 +2497,7 @@
 		226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
+				225F060920163BFC00466685 /* tee */,
 				22D8DEB4200791A500FAADB7 /* echo */,
 				22CF276F1FDB3FDA0087DDAD /* date */,
 				22CF276A1FDB3FDA0087DDAD /* env */,
@@ -3725,6 +3736,7 @@
 				22577E6A1FDB47A90050F312 /* archive_read_extract.c in Sources */,
 				2257823E1FDB4D390050F312 /* slist_wc.c in Sources */,
 				22C891AA1FDBCF09006CDE47 /* mactoolboxglue.c in Sources */,
+				225F060B20163C2000466685 /* tee.c in Sources */,
 				22C8919E1FDBCF09006CDE47 /* future.c in Sources */,
 				22C8918A1FDBCF09006CDE47 /* ceval.c in Sources */,
 				2257818E1FDB4D380050F312 /* http_proxy.c in Sources */,
