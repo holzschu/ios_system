@@ -79,6 +79,7 @@ To add a command:
     - replace calls to `warn`, `err`, `errx` and `warnx` by calls to `fprintf`, plus `pthread_exit` if needed.
     - replace all occurences of `stdin`, `stdout`, stderr by `thread_stdin`, `thread_stdout`, `thread_stderr` (different values for each thread so we can pipe commands).
     - replace all calls to `printf`, `write`,... with explicit calls to `fprintf(thread_stdout, ...)` (`ios_error.h` takes care of some of these).
+    - replace `STDIN_FILENO` with `fileno(stdin)`. Replace `STDOUT_FILENO` by calls to `fprintf` or `fwrite`; `fileno(stdout)` does not always exist (it can be a stream with no files associated). Same with `stderr`. 
     - make sure you initialize all variables at startup, and release all memory on exit.
     - make all global variables thread-local with `__thread`, make sure local variables are marked with `static`. 
     - make sure your code doesn't use commands that don't work in a sandbox: `fork`, `exec`, `system`, `popen`, `isExecutableFileAtPath`, `access`... (some of these fail at compile time, others fail silently at run time). 
