@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2018-01-21 16:37:54.000000000 +0100
++++ text_cmds/cat/cat.c	2018-01-21 22:27:26.000000000 +0100
 @@ -55,7 +55,7 @@
  #endif
  
@@ -48,18 +48,20 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  			break;
  		case 'v':
  			vflag = 1;
-@@ -116,8 +120,8 @@
+@@ -116,16 +120,17 @@
  		scanfiles(argv, 1);
  	else
  		scanfiles(argv, 0);
 -	if (fclose(stdout))
 -		err(1, "stdout");
+-	exit(rval);
 +	// if (fclose(stdout)) err(1, "stdout");
 +    optarg = NULL; opterr = 0; optind = 0;
- 	exit(rval);
++    return rval;
++	// exit(rval);
  	/* NOTREACHED */
  }
-@@ -125,7 +129,7 @@
+ 
  static void
  usage(void)
  {
@@ -68,7 +70,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  	exit(1);
  	/* NOTREACHED */
  }
-@@ -142,7 +146,7 @@
+@@ -142,7 +147,7 @@
  
  		if (path == NULL || strcmp(path, "-") == 0) {
  			filename = "stdin";
@@ -77,7 +79,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  		} else {
  			filename = path;
  			fd = open(path, O_RDONLY);
-@@ -152,11 +156,12 @@
+@@ -152,11 +157,12 @@
  #endif
  		}
  		if (fd < 0) {
@@ -93,7 +95,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  			else {
  				fp = fdopen(fd, "r");
  				cook_cat(fp);
-@@ -164,7 +169,7 @@
+@@ -164,7 +170,7 @@
  			}
  		} else {
  			raw_cat(fd);
@@ -102,7 +104,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  				close(fd);
  		}
  		if (path == NULL)
-@@ -179,8 +184,8 @@
+@@ -179,8 +185,8 @@
  	int ch, gobble, line, prev;
  
  	/* Reset EOF condition on stdin. */
@@ -113,7 +115,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  
  	line = gobble = 0;
  	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
-@@ -194,8 +199,8 @@
+@@ -194,8 +200,8 @@
  					gobble = 0;
  			}
  			if (nflag && (!bflag || ch != '\n')) {
@@ -124,7 +126,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  					break;
  			}
  		}
-@@ -226,12 +231,16 @@
+@@ -226,12 +232,16 @@
  			break;
  	}
  	if (ferror(fp)) {
@@ -144,7 +146,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  }
  
  static void
-@@ -241,24 +250,36 @@
+@@ -241,24 +251,36 @@
  	ssize_t nr, nw;
  	static size_t bsize;
  	static char *buf = NULL;
@@ -192,7 +194,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  }
  
  #ifndef NO_UDOM_SUPPORT
-@@ -298,11 +319,13 @@
+@@ -298,11 +320,13 @@
  		switch(flags & O_ACCMODE) {
  		case O_RDONLY:
  			if (shutdown(fd, SHUT_WR) == -1)
@@ -933,7 +935,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-01-21 21:01:44.000000000 +0100
++++ text_cmds/grep/grep.c	2018-01-22 13:31:42.000000000 +0100
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -943,7 +945,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  #include <errno.h>
  #include <fcntl.h>
  #include <getopt.h>
-@@ -53,6 +53,7 @@
+@@ -53,10 +53,11 @@
  #include "fastmatch.h"
  #endif
  #include "grep.h"
@@ -951,6 +953,11 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  
  #ifndef WITHOUT_NLS
  #include <nl_types.h>
+-nl_catd	 catalog;
++__thread nl_catd	 catalog;
+ #endif
+ 
+ /*
 @@ -67,7 +68,7 @@
  	"",
  /* 1*/	"(standard input)",
@@ -1371,7 +1378,16 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  		c = grep_tree(aargv);
 diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
 --- text_cmds-99/grep/grep.h	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.h	2018-01-21 21:01:57.000000000 +0100
++++ text_cmds/grep/grep.h	2018-01-22 13:31:34.000000000 +0100
+@@ -45,7 +45,7 @@
+ #else
+ #include <nl_types.h>
+ 
+-extern nl_catd		 catalog;
++extern __thread nl_catd		 catalog;
+ #define getstr(n)	 catgets(catalog, 1, n, errstr[n])
+ #endif
+ 
 @@ -113,27 +113,27 @@
  };
  
@@ -3046,7 +3062,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  }
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2018-01-21 18:11:19.000000000 +0100
++++ text_cmds/wc/wc.c	2018-01-21 23:21:10.000000000 +0100
 @@ -51,7 +51,7 @@
  #include <sys/stat.h>
  
@@ -3136,9 +3152,12 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  			return (1);
  		}
  	}
-@@ -189,7 +196,8 @@
+@@ -187,22 +194,23 @@
+ 	 * logic.
+ 	 */
  	if (doline) {
- 		while ((len = read(fd, buf, buf_size))) {
+-		while ((len = read(fd, buf, buf_size))) {
++        while ((len = read(fd, buf, buf_size))) {
  			if (len == -1) {
 -				warn("%s: read", file);
 +                fprintf(thread_stderr, "wc: %s: read: %s\n", file, strerror(errno));
@@ -3146,7 +3165,10 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  				(void)close(fd);
  				return (1);
  			}
-@@ -199,10 +207,10 @@
+ 			charct += len;
+ 			for (p = buf; len--; ++p)
+-				if (*p == '\n')
++                if (*p == '\n')
  					++linect;
  		}
  		tlinect += linect;

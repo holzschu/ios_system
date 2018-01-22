@@ -148,7 +148,7 @@ diff -Naur file_cmds-272/chflags/chflags.c file_cmds/chflags/chflags.c
  }
 diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
 --- file_cmds-272/chmod/chmod.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/chmod/chmod.c	2018-01-21 18:11:19.000000000 +0100
++++ file_cmds/chmod/chmod.c	2018-01-21 21:15:08.000000000 +0100
 @@ -49,7 +49,7 @@
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -167,7 +167,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  #endif /*__APPLE__*/
  
 -int fflag = 0;
-+int chmod_fflag = 0;
++__thread int chmod_fflag = 0;
  
 -int main(int, char *[]);
 -void usage(void);
@@ -487,7 +487,7 @@ diff -Naur file_cmds-272/chmod/chmod.c file_cmds/chmod/chmod.c
  	exit(1);
 diff -Naur file_cmds-272/chmod/chmod_acl.c file_cmds/chmod/chmod_acl.c
 --- file_cmds-272/chmod/chmod_acl.c	2015-08-04 22:32:26.000000000 +0200
-+++ file_cmds/chmod/chmod_acl.c	2018-01-21 16:22:38.000000000 +0100
++++ file_cmds/chmod/chmod_acl.c	2018-01-21 21:15:10.000000000 +0100
 @@ -30,7 +30,7 @@
   * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
   * SUCH DAMAGE.
@@ -853,7 +853,7 @@ diff -Naur file_cmds-272/chmod/chmod_acl.c file_cmds/chmod/chmod_acl.c
  	unsigned retval = 0;
  
 -	extern int fflag;
-+	extern int chmod_fflag;
++	extern __thread int chmod_fflag;
  
  /* XXX acl_get_file() returns a zero entry ACL if an ACL was previously
   * associated with the file, and has had its entries removed.
@@ -1503,7 +1503,7 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
  }
 diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 --- file_cmds-272/cp/cp.c	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/cp.c	2018-01-21 18:11:19.000000000 +0100
++++ file_cmds/cp/cp.c	2018-01-22 13:35:11.000000000 +0100
 @@ -62,7 +62,7 @@
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -1526,21 +1526,24 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  #endif /* __APPLE__ */
  
  #include "extern.h"
-@@ -90,12 +91,12 @@
+@@ -90,13 +91,13 @@
  
  PATH_T to = { to.p_path, emptystring, "" };
  
 -int fflag, iflag, nflag, pflag, vflag;
-+int cp_fflag, cp_iflag, cp_nflag, cp_pflag, cp_vflag;
++__thread int cp_fflag, cp_iflag, cp_nflag, cp_pflag, cp_vflag;
  #ifdef __APPLE__
- int Xflag;
+-int Xflag;
++__thread int Xflag;
  #endif /* __APPLE__ */
  static int Rflag, rflag;
 -	int cflag = 0;
-+	int cp_cflag = 0;
- volatile sig_atomic_t info;
+-volatile sig_atomic_t info;
++__thread int cp_cflag = 0;
++volatile __thread sig_atomic_t info;
  
  enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
+ 
 @@ -104,18 +105,25 @@
  static void siginfo(int __unused);
  
@@ -1899,21 +1902,24 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  
 diff -Naur file_cmds-272/cp/extern.h file_cmds/cp/extern.h
 --- file_cmds-272/cp/extern.h	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/extern.h	2018-01-07 17:01:51.000000000 +0100
-@@ -37,11 +37,11 @@
++++ file_cmds/cp/extern.h	2018-01-22 13:35:11.000000000 +0100
+@@ -37,12 +37,12 @@
  } PATH_T;
  
  extern PATH_T to;
 -extern int fflag, iflag, nflag, pflag, vflag;
-+extern int cp_fflag, cp_iflag, cp_nflag, cp_pflag, cp_vflag;
++extern __thread int cp_fflag, cp_iflag, cp_nflag, cp_pflag, cp_vflag;
  #ifdef __APPLE__
- extern int Xflag;
+-extern int Xflag;
++extern __thread int Xflag;
  #endif /* __APPLE__ */
 -extern int cflag;
-+extern int cp_cflag;
- extern volatile sig_atomic_t info;
+-extern volatile sig_atomic_t info;
++extern __thread int cp_cflag;
++extern volatile __thread sig_atomic_t info;
  
  __BEGIN_DECLS
+ int	copy_fifo(struct stat *, int);
 @@ -52,5 +52,5 @@
  int	setfile(struct stat *, int);
  int	preserve_dir_acls(struct stat *, char *, char *);
@@ -4019,7 +4025,7 @@ diff -Naur file_cmds-272/ls/ls.h file_cmds/ls/ls.h
  #include <sys/acl.h>
 diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 --- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
-+++ file_cmds/ls/print.c	2018-01-21 16:17:22.000000000 +0100
++++ file_cmds/ls/print.c	2018-01-22 13:26:25.000000000 +0100
 @@ -56,7 +56,7 @@
  #include <uuid/uuid.h>
  #endif
@@ -4185,6 +4191,15 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			    8 - dp->s_size, "", dp->s_size, (u_int64_t)sp->st_size);
  		else
  			printsize(dp->s_size, sp->st_size);
+@@ -433,7 +437,7 @@
+ printstream(DISPLAY *dp)
+ {
+ 	FTSENT *p;
+-	extern int termwidth;
++	extern __thread int termwidth;
+ 	int chcnt;
+ 
+ 	for (p = dp->list, chcnt = 0; p; p = p->fts_link) {
 @@ -446,7 +450,7 @@
  		}
  		chcnt += printaname(p, dp->s_inode, dp->s_block);
@@ -4194,6 +4209,15 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			chcnt += 2;
  		}
  	}
+@@ -457,7 +461,7 @@
+ void
+ printcol(DISPLAY *dp)
+ {
+-	extern int termwidth;
++	extern __thread int termwidth;
+ 	static FTSENT **array;
+ 	static int lastentries = -1;
+ 	FTSENT *p;
 @@ -485,7 +489,8 @@
  	if ((lastentries == -1) || (dp->entries > lastentries)) {
  		lastentries = dp->entries;
