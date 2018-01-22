@@ -79,6 +79,7 @@ extern int hostname_main(int argc, char *argv[]);
 extern int id_main(int argc, char *argv[]); // also groups, whoami
 extern int printenv_main(int argc, char *argv[]);
 extern int pwd_main(int argc, char *argv[]);
+extern int tee_main(int argc, char *argv[]);
 extern int uname_main(int argc, char *argv[]);
 extern int w_main(int argc, char *argv[]); // also uptime
 #endif
@@ -322,6 +323,7 @@ static void initializeCommandList()
                     @"echo" : [NSValue valueWithPointer: echo_main],
                     @"printenv": [NSValue valueWithPointer: printenv_main],
                     @"pwd"    : [NSValue valueWithPointer: pwd_main],
+                    @"tee"    : [NSValue valueWithPointer: tee_main],
                     @"uname"  : [NSValue valueWithPointer: uname_main],
                     @"date"   : [NSValue valueWithPointer: date_main],
                     @"env"    : [NSValue valueWithPointer: env_main],
