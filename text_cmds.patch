@@ -562,8 +562,8 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-01-22 14:50:44.000000000 +0100
-@@ -59,13 +59,17 @@
++++ text_cmds/ed/main.c	2018-01-22 21:46:00.000000000 +0100
+@@ -59,14 +59,16 @@
  #include <pwd.h>
  #include <setjmp.h>
  
@@ -578,14 +578,14 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 +// #endif /* __APPLE__ */
  
  #include "ed.h"
+-
 +// from ios_system:
 +#include "ios_error.h"
 +#include <pthread.h>
-+extern int ios_system(char* cmd);
- 
  
  #ifdef _POSIX_SOURCE
-@@ -75,43 +79,71 @@
+ sigjmp_buf env;
+@@ -75,43 +77,71 @@
  #endif
  
  /* static buffers */
@@ -683,7 +683,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  #if __GNUC__
  	/* Avoid longjmp clobbering */
  	(void) &argc;
-@@ -136,13 +168,14 @@
+@@ -136,13 +166,14 @@
  #ifdef DES
  			des = get_keyword();
  #else
@@ -701,7 +701,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		}
  	argv += optind;
  	argc -= optind;
-@@ -158,7 +191,9 @@
+@@ -158,7 +189,9 @@
  	/* assert: reliable signals! */
  #ifdef SIGWINCH
  	handle_winch(SIGWINCH);
@@ -712,7 +712,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  #endif
  	signal(SIGHUP, signal_hup);
  	signal(SIGQUIT, SIG_IGN);
-@@ -169,51 +204,51 @@
+@@ -169,51 +202,51 @@
  	if ((status = setjmp(env)))
  #endif
  	{
@@ -777,7 +777,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				modified = 0;
  				status = EMOD;
  				continue;
-@@ -222,7 +257,7 @@
+@@ -222,7 +255,7 @@
  		} else if (ibuf[n - 1] != '\n') {
  			/* discard line */
  			errmsg = "unexpected end-of-file";
@@ -786,7 +786,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			status = ERR;
  			continue;
  		}
-@@ -238,30 +273,30 @@
+@@ -238,30 +271,30 @@
  			quit(0);
  		case EMOD:
  			modified = 0;
@@ -829,7 +829,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  			break;
-@@ -270,7 +305,7 @@
+@@ -270,7 +303,7 @@
  	/*NOTREACHED*/
  }
  
@@ -838,7 +838,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  
  /* extract_addr_range: get line addresses from the command buffer until an
     illegal address is seen; return status */
-@@ -440,9 +475,9 @@
+@@ -440,9 +473,9 @@
  #define SGR 004		/* use last regex instead of last pat */
  #define SGF 010		/* repeat last substitution */
  
@@ -850,7 +850,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  
  /* exec_command: execute the next command in command buffer; return print
     request, if any */
-@@ -519,7 +554,7 @@
+@@ -519,7 +552,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -859,7 +859,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -552,11 +587,11 @@
+@@ -552,11 +585,11 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -873,7 +873,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'g':
  	case 'v':
-@@ -584,7 +619,7 @@
+@@ -584,7 +617,7 @@
  			return ERR;
  		}
  		GET_COMMAND_SUFFIX();
@@ -882,7 +882,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'H':
  		if (addr_cnt > 0) {
-@@ -593,7 +628,7 @@
+@@ -593,7 +626,7 @@
  		}
  		GET_COMMAND_SUFFIX();
  		if ((garrulous = 1 - garrulous) && *errmsg)
@@ -891,7 +891,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'i':
  		if (second_addr == 0) {
-@@ -693,7 +728,7 @@
+@@ -693,7 +726,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -900,7 +900,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -835,7 +870,7 @@
+@@ -835,7 +868,7 @@
  			if  (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -909,7 +909,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -877,7 +912,7 @@
+@@ -877,7 +910,7 @@
  		break;
  	case '=':
  		GET_COMMAND_SUFFIX();
@@ -918,7 +918,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '!':
  		if (addr_cnt > 0) {
-@@ -886,10 +921,10 @@
+@@ -886,10 +919,10 @@
  		} else if ((sflags = get_shell_command()) < 0)
  			return ERR;
  		GET_COMMAND_SUFFIX();
@@ -933,7 +933,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '\n':
  		if (check_addr_range(first_addr = 1, current_addr + (posixly_correct ? !isglobal : 1)) < 0
-@@ -969,7 +1004,7 @@
+@@ -969,7 +1002,7 @@
  			if ((n = get_shell_command()) < 0)
  				return NULL;
  			if (n)
@@ -942,7 +942,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			return shcmd;
  		} else if (n > PATH_MAX) {
  			errmsg = "filename too long";
-@@ -1065,7 +1100,7 @@
+@@ -1065,7 +1098,7 @@
  			if ((l = get_tty_line()) < 0)
  				return ERR;
  			else if (l == 0 || ibuf[l - 1] != '\n') {
@@ -951,7 +951,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				return  l ? EOF : 0;
  			}
  			lp = ibuf;
-@@ -1330,7 +1365,7 @@
+@@ -1330,7 +1363,7 @@
  	line_t *np;
  
  	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
@@ -960,7 +960,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		errmsg = "out of memory";
  		return NULL;
  	}
-@@ -1425,7 +1460,7 @@
+@@ -1425,7 +1458,7 @@
  }
  
  

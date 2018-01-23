@@ -544,7 +544,7 @@ diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 +extern __thread int	 env_verbosity;
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2018-01-21 18:11:19.000000000 +0100
++++ shell_cmds/id/id.c	2018-01-22 21:07:36.000000000 +0100
 @@ -54,7 +54,7 @@
  #include <bsm/audit.h>
  #endif
@@ -798,7 +798,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  #ifdef __APPLE__
 -	errx(1, "-M unsupported");
 +	// errx(1, "-M unsupported");
-+    fprintf(thread_stderr, "id: -M unsupported");
++    fprintf(thread_stderr, "id: -M unsupported\n");
 +    pthread_exit(NULL);
  #else /* !__APPLE__ */
  	char *string;
@@ -826,7 +826,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		return(pw);
 -	errx(1, "%s: no such user", u);
 +	// errx(1, "%s: no such user", u);
-+    fprintf(thread_stderr, "id: %s: no such user", u);
++    fprintf(thread_stderr, "id: %s: no such user\n", u);
 +    pthread_exit(NULL);
 +    return NULL; // keep compiler happy
  	/* NOTREACHED */

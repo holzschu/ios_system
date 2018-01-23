@@ -4844,7 +4844,7 @@ diff -Naur curl-105/curl/src/tool_hugehelp.c curl/curl/src/tool_hugehelp.c
        }
 diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 --- curl-105/curl/src/tool_main.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.c	2018-01-21 17:35:49.000000000 +0100
++++ curl/curl/src/tool_main.c	2018-01-22 23:00:33.000000000 +0100
 @@ -44,6 +44,7 @@
  #include "tool_vms.h"
  #include "tool_main.h"
@@ -4911,7 +4911,7 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
      result = CURLE_FAILED_INIT;
    }
  
-@@ -227,10 +228,98 @@
+@@ -227,10 +228,104 @@
  }
  
  /*
@@ -4985,11 +4985,17 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 +        }
 +    }
 +    argv2[argc2] = NULL;
++    int returnValue = -1;
++    if (!(localFileName && distantFileName)) {
++        fprintf(thread_stderr, "Usage: %s [-q] [user@]host:distantFile localFile\n", protocol);
++        fprintf(thread_stderr, "\t %s [-q] localFile [user@]host:distantFile \n", protocol);
++    } else {
 +#ifdef BLINKSHELL
-+    int returnValue = curl_static_main(argc2, argv2);
++        returnValue = curl_static_main(argc2, argv2);
 +#else
-+    int returnValue = curl_main(argc2, argv2);
++        returnValue = curl_main(argc2, argv2);
 +#endif
++    }
 +    for (int i = 0; i < argc2; i++) free(argv2[i]);
 +    free(argv2);
 +    return returnValue;
