@@ -77,10 +77,12 @@ To add a command:
 - make the following changes to the code: 
     - include `ios_error.h` (it will replace all calls to `exit` by calls to `pthread_exit`)
     - replace calls to `warn`, `err`, `errx` and `warnx` by calls to `fprintf`, plus `pthread_exit` if needed.
-    - replace all calls to `printf`, `write`, `putc`... with explicit calls to `fprintf(stdout, ...)`. 
+    - replace all occurences of `stdin`, `stdout`, stderr by `thread_stdin`, `thread_stdout`, `thread_stderr` (different values for each thread so we can pipe commands).
+    - replace all calls to `printf`, `write`,... with explicit calls to `fprintf(thread_stdout, ...)` (`ios_error.h` takes care of some of these).
+    - replace `STDIN_FILENO` with `fileno(stdin)`. Replace `STDOUT_FILENO` by calls to `fprintf` or `fwrite`; `fileno(stdout)` does not always exist (it can be a stream with no files associated). Same with `stderr`. 
     - make sure you initialize all variables at startup, and release all memory on exit.
-    - (optional) make all your global variables thread-local with `__thread`. 
-    - make sure your code doesn't use commands that don't work in a sandbox: `fork`, `exec`, `system`, `popen`, `isExecutableFileAtPath`, `access`...
+    - make all global variables thread-local with `__thread`, make sure local variables are marked with `static`. 
+    - make sure your code doesn't use commands that don't work in a sandbox: `fork`, `exec`, `system`, `popen`, `isExecutableFileAtPath`, `access`... (some of these fail at compile time, others fail silently at run time). 
     - compile, edit `ios_system.m`, and run. That's it. Test a lot. Side effects appear after several launches.
     - if your command has a large code base, work out the difference in your edits and make a patch, rather than commit the entire code. See `get_sources_for_patching.sh` for an example. 
 
