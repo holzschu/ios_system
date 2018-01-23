@@ -329,7 +329,7 @@ static int ssh_timeout_connect(int _sock, const struct sockaddr *addr, socklen_t
 
 int ssh_main(int argc, char** argv) {
     // TODO: extract options
-    char* passphrase = "Th!nkB!g";
+    char* passphrase;
     int port = 22;
     int connection_timeout = 10;
     char strport[NI_MAXSERV];

@@ -4844,7 +4844,7 @@ diff -Naur curl-105/curl/src/tool_hugehelp.c curl/curl/src/tool_hugehelp.c
        }
 diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 --- curl-105/curl/src/tool_main.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.c	2018-01-22 23:00:33.000000000 +0100
++++ curl/curl/src/tool_main.c	2018-01-23 21:11:23.000000000 +0100
 @@ -44,6 +44,7 @@
  #include "tool_vms.h"
  #include "tool_main.h"
