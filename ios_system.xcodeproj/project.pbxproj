@@ -515,6 +515,8 @@
 		225782FB1FDBC9B40050F312 /* lundump.c in Sources */ = {isa = PBXBuildFile; fileRef = 225782D61FDBC9B30050F312 /* lundump.c */; settings = {COMPILER_FLAGS = "-D LUA_USE_IOS "; }; };
 		225782FC1FDBC9B40050F312 /* llex.c in Sources */ = {isa = PBXBuildFile; fileRef = 225782D71FDBC9B40050F312 /* llex.c */; settings = {COMPILER_FLAGS = "-D LUA_USE_IOS "; }; };
 		225F060B20163C2000466685 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
+		225F06102016751900466685 /* getopt_long.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060F2016751800466685 /* getopt_long.c */; };
+		225F061220171B4300466685 /* ssh_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F061120171B4300466685 /* ssh_main.c */; settings = {COMPILER_FLAGS = "-F ../../../blink/Frameworks/"; }; };
 		226378741FDB3EE400AE8827 /* rmdir.c in Sources */ = {isa = PBXBuildFile; fileRef = 2263780C1FDB3EE100AE8827 /* rmdir.c */; };
 		226378751FDB3EE400AE8827 /* termcap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2263780D1FDB3EE100AE8827 /* termcap.h */; };
 		226378771FDB3EE400AE8827 /* mv.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378101FDB3EE100AE8827 /* mv.c */; };
@@ -568,7 +570,6 @@
 		22C8918B1FDBCF09006CDE47 /* codecs.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8913F1FDBCF08006CDE47 /* codecs.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
 		22C8918C1FDBCF09006CDE47 /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C891401FDBCF08006CDE47 /* compile.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
 		22C8918D1FDBCF09006CDE47 /* dtoa.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C891411FDBCF08006CDE47 /* dtoa.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
-		22C8918E1FDBCF09006CDE47 /* dup2.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C891421FDBCF08006CDE47 /* dup2.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
 		22C891961FDBCF09006CDE47 /* dynload_shlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8914A1FDBCF08006CDE47 /* dynload_shlib.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
 		22C891991FDBCF09006CDE47 /* errors.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8914D1FDBCF08006CDE47 /* errors.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
 		22C8919A1FDBCF09006CDE47 /* formatter_string.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C8914E1FDBCF08006CDE47 /* formatter_string.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/ "; }; };
@@ -1309,6 +1310,8 @@
 		225782D61FDBC9B30050F312 /* lundump.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lundump.c; path = "../lua_ios/lua-5.3.4/src/lundump.c"; sourceTree = SOURCE_ROOT; };
 		225782D71FDBC9B40050F312 /* llex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = llex.c; path = "../lua_ios/lua-5.3.4/src/llex.c"; sourceTree = SOURCE_ROOT; };
 		225F060A20163C2000466685 /* tee.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tee.c; path = shell_cmds/tee/tee.c; sourceTree = SOURCE_ROOT; };
+		225F060F2016751800466685 /* getopt_long.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = getopt_long.c; sourceTree = "<group>"; };
+		225F061120171B4300466685 /* ssh_main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ssh_main.c; sourceTree = "<group>"; };
 		2263780C1FDB3EE100AE8827 /* rmdir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rmdir.c; sourceTree = "<group>"; };
 		2263780D1FDB3EE100AE8827 /* termcap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = termcap.h; sourceTree = SOURCE_ROOT; };
 		226378101FDB3EE100AE8827 /* mv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mv.c; sourceTree = "<group>"; };
@@ -1619,7 +1622,9 @@
 		223496A11FD5FC71007ED1A9 = {
 			isa = PBXGroup;
 			children = (
+				225F061120171B4300466685 /* ssh_main.c */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
+				225F060F2016751800466685 /* getopt_long.c */,
 				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				226378091FDB3EC700AE8827 /* file_cmds_ios */,
 				226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */,
@@ -3660,7 +3665,6 @@
 				225782EE1FDBC9B40050F312 /* liolib.c in Sources */,
 				22C8928E1FDBD7B7006CDE47 /* acceler.c in Sources */,
 				225782F21FDBC9B40050F312 /* loslib.c in Sources */,
-				22C8918E1FDBCF09006CDE47 /* dup2.c in Sources */,
 				22577E9A1FDB47A90050F312 /* archive_write_set_compression_program.c in Sources */,
 				22577F7D1FDB47B70050F312 /* subst.c in Sources */,
 				225782EB1FDBC9B40050F312 /* loadlib.c in Sources */,
@@ -3687,6 +3691,7 @@
 				22C8921F1FDBD30A006CDE47 /* funcobject.c in Sources */,
 				225782821FDB4D390050F312 /* tool_strdup.c in Sources */,
 				225781E51FDB4D390050F312 /* splay.c in Sources */,
+				225F061220171B4300466685 /* ssh_main.c in Sources */,
 				225782641FDB4D390050F312 /* tool_homedir.c in Sources */,
 				22577E9F1FDB47A90050F312 /* archive_write_set_format_cpio.c in Sources */,
 				22C8973E1FDBF109006CDE47 /* xmlrole.c in Sources */,
@@ -3710,6 +3715,7 @@
 				2263788E1FDB3EE400AE8827 /* sum1.c in Sources */,
 				2263787A1FDB3EE400AE8827 /* chflags.c in Sources */,
 				22C891B11FDBCF09006CDE47 /* peephole.c in Sources */,
+				225F06102016751900466685 /* getopt_long.c in Sources */,
 				2257817A1FDB4D380050F312 /* hostasyn.c in Sources */,
 				22CF27C31FDB43080087DDAD /* grep.c in Sources */,
 				2248DB2E2004F82700F2944C /* proctab.c in Sources */,

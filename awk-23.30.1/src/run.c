@@ -35,7 +35,6 @@ THIS SOFTWARE.
 #include "ytab.h"
 
 #include "ios_error.h"
-extern int ios_system(char* inputCmd); // execute this command (executable file or builtin command)
 
 #define tempfree(x)	if (istemp(x)) tfree(x); else
 

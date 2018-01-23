@@ -75,7 +75,6 @@ extern int curl_main(int argc, char **argv);
 extern int date_main(int argc, char *argv[]);
 extern int echo_main(int argc, char *argv[]);
 extern int env_main(int argc, char *argv[]);     // does the same as printenv
-extern int hostname_main(int argc, char *argv[]);
 extern int id_main(int argc, char *argv[]); // also groups, whoami
 extern int printenv_main(int argc, char *argv[]);
 extern int pwd_main(int argc, char *argv[]);
@@ -108,6 +107,7 @@ extern int dllpdftexmain(int argc, char *argv[]);
 static int setenv_main(int argc, char *argv[]);
 static int unsetenv_main(int argc, char *argv[]);
 static int cd_main(int argc, char *argv[]);
+extern int ssh_main(int argc, char *argv[]);
 
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
@@ -411,6 +411,7 @@ static void initializeCommandList()
                     @"setenv"     : [NSValue valueWithPointer: setenv_main],
                     @"unsetenv"     : [NSValue valueWithPointer: unsetenv_main],
                     @"cd"     : [NSValue valueWithPointer: cd_main],
+                    @"ssh"     : [NSValue valueWithPointer: ssh_main],
                     };
 }
 
@@ -538,6 +539,90 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     }
     return NULL;
 }
+
+static __thread FILE* child_stdin;
+static __thread FILE* child_stdout;
+static __thread FILE* child_stderr;
+int ios_execv(const char *path, char* const argv[]) {
+    // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
+    int argc = 0;
+    int cmdLength = 0;
+    // concatenate all arguments into a big command.
+    // We need this because some programs call execv() with a single string: "ssh hg@bitbucket.org 'hg -R ... --stdio'"
+    // So we rely on ios_system to break them into chunks.
+    while(argv[argc] != NULL) { cmdLength += strlen(argv[argc]) + 1; argc++;}
+    char* cmd = malloc(cmdLength * sizeof(char));
+    strcpy(cmd, argv[0]);
+    argc = 1;
+    while (argv[argc] != NULL) {
+        strcat(cmd, " ");
+        strcat(cmd, argv[argc]);
+        argc++;
+    }
+    // push existing streams:
+    FILE* push_stdin = thread_stdin;
+    FILE* push_stdout = thread_stdout;
+    FILE* push_stderr = thread_stdout;
+    // place streams from dup2:
+    if (child_stdin) thread_stdin = child_stdin;
+    if (child_stdout) thread_stdout = child_stdout;
+    if (child_stderr) thread_stderr = child_stderr;
+    // start "child" with the child streams:
+    ios_system(cmd);
+    // pop streams for parent:
+    thread_stdin = push_stdin;
+    thread_stdout = push_stdout;
+    thread_stderr = push_stderr;
+    // erase child streams to avoid re-using them
+    // child process is responsible for closing them, we can't do this.
+    child_stdin = NULL;
+    child_stdin = NULL;
+    child_stdout = NULL;
+    free(cmd);
+    return 0;
+}
+
+int ios_execve(const char *path, char* const argv[], char *const envp[]) {
+    // TODO: save the environment (HOW?) and current dir
+    // TODO: replace environment with envp. envp looks a lot like current environment, though.
+    execv(path, argv);
+    // TODO: restore the environment (HOW?)
+    return 0;
+}
+
+/*
+ * Public domain dup2() lookalike
+ * by Curtis Jackson @ AT&T Technologies, Burlington, NC
+ * electronic address:  burl!rcj
+ * Edited for iOS by N. Holzschuch.
+ * The idea is that dup2(fd, [012]) is usually called between fork and exec.
+ *
+ * dup2 performs the following functions:
+ *
+ * Check to make sure that fd1 is a valid open file descriptor.
+ * Check to see if fd2 is already open; if so, close it.
+ * Duplicate fd1 onto fd2; checking to make sure fd2 is a valid fd.
+ * Return fd2 if all went well; return BADEXIT otherwise.
+ */
+
+int ios_dup2(int fd1, int fd2)
+{
+    // iOS specifics: trying to access stdin/stdout/stderr?
+    // fprintf(stderr, "Accessing dup2: fd1 = %d fd2 = %d\n", fd1, fd2); fflush(stderr);
+    if (fd2 == 0) { child_stdin = fdopen(fd1, "rb"); }
+    else if (fd2 == 1) { child_stdout = fdopen(fd1, "wb"); }
+    else if (fd2 == 2) { child_stderr = fdopen(fd1, "wb"); }
+    else if (fd1 != fd2) {
+        if (fcntl(fd1, F_GETFL) < 0)
+            return -1;
+        if (fcntl(fd2, F_GETFL) >= 0)
+            close(fd2);
+        if (fcntl(fd1, F_DUPFD, fd2) < 0)
+            return -1;
+    }
+    return fd2;
+}
+
 
 
 // For customization:
