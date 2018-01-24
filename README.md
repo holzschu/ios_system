@@ -60,9 +60,12 @@ The simplest way to integrate `ios_system` into your app is to just replace all 
 - `initializeEnvironment()` sets environment variables to sensible defaults. 
 - `ios_executable(char* inputCmd)` returns true if `inputCmd` is one of the commands defined inside `ios_system`. 
 - `int ios_setMiniRoot(NSString* mRoot)` lets you set the sandbox directory, so users are not exposed to files outside the sandbox. The argument is the path to a directory. It will not be possible to `cd` to directories above this one. Returns 1 if succesful, 0 if not. 
-- `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences)` lets you replace an existing command implementation with your own. 
+- `FILE* ios_popen(const char* inputCmd, const char* type)` opens a pipe between the current command and `inputCmd`. (drop-in replacement for `popen`). 
+- `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences)` lets you replace an existing command implementation with your own, or add new commands without editing the source. 
 
 Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `ls` to calls to `gnu_ls_main`. The last argument tells whether you want to replace only the function associated with `ls` (if `false`) or all the commands that used the function previously associated with `ls`(if true). For example, `compress` and `uncompress` are both done with the same function, `compress_main` (and the actual behaviour depends on `argv[0]`). Only you can know whether your replacement function handles both roles, or only one of them. 
+
+If the command does not exist, your command is added to the list. 
 
 ## Adding more commands:
 
@@ -77,9 +80,9 @@ To add a command:
 - make the following changes to the code: 
     - include `ios_error.h` (it will replace all calls to `exit` by calls to `pthread_exit`)
     - replace calls to `warn`, `err`, `errx` and `warnx` by calls to `fprintf`, plus `pthread_exit` if needed.
-    - replace all occurences of `stdin`, `stdout`, stderr by `thread_stdin`, `thread_stdout`, `thread_stderr` (different values for each thread so we can pipe commands).
+    - replace all occurences of `stdin`, `stdout`, `stderr` by `thread_stdin`, `thread_stdout`, `thread_stderr` (these are thread-local variables, taking a d different value for each thread so we can pipe commands).
     - replace all calls to `printf`, `write`,... with explicit calls to `fprintf(thread_stdout, ...)` (`ios_error.h` takes care of some of these).
-    - replace `STDIN_FILENO` with `fileno(stdin)`. Replace `STDOUT_FILENO` by calls to `fprintf` or `fwrite`; `fileno(stdout)` does not always exist (it can be a stream with no files associated). Same with `stderr`. 
+    - replace `STDIN_FILENO` with `fileno(stdin)`. Replace `STDOUT_FILENO` by calls to `fprintf` or `fwrite`; `fileno(thread_stdout)` does not always exist (it can be a stream with no files associated). Same with `stderr`. 
     - make sure you initialize all variables at startup, and release all memory on exit.
     - make all global variables thread-local with `__thread`, make sure local variables are marked with `static`. 
     - make sure your code doesn't use commands that don't work in a sandbox: `fork`, `exec`, `system`, `popen`, `isExecutableFileAtPath`, `access`... (some of these fail at compile time, others fail silently at run time). 
@@ -94,7 +97,7 @@ To add a command:
 - `sh`, `bash`, `zsh`: shells are hard to compile, even without the sandbox/API limitations. They also tend to take a lot of memory, which is a limited asset.
 - `telnet`: both hard to compile and limited without interaction. 
 - `git`: [WorkingCopy](https://workingcopyapp.com) does it very well, and you can transfer directories to your app, then transfer back to WorkingCopy. Also difficult to compile. 
-- `ssh`: [BlinkShell](https://itunes.apple.com/us/app/blink-shell-mosh-ssh-terminal/id1156707581?mt=8&ign-mpt=uo%3D4) does it very well. There is a fork of [BlinkShell](https://github.com/holzschu/blink) with `ios_system` commands included. Also requires user interaction. `ssh + command` is on the [todo list](https://github.com/holzschu/ios_system/issues). 
+- `ssh`: [BlinkShell](https://itunes.apple.com/us/app/blink-shell-mosh-ssh-terminal/id1156707581?mt=8&ign-mpt=uo%3D4) does it very well. There is a fork of [BlinkShell](https://github.com/holzschu/blink) with `ios_system` commands included. Also requires user interaction. You can do `ssh + command`. 
 
 
 ### Licensing:
