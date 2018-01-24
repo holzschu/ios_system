@@ -486,7 +486,7 @@ static int cd_main(int argc, char** argv) {
         }
     } else { // [cd] Help, I'm lost, bring me back home
         previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
-        
+
         if (miniRoot != nil) {
             [[NSFileManager defaultManager] changeCurrentDirectoryPath:miniRoot];
         } else {
@@ -854,6 +854,7 @@ int ios_system(const char* inputCmd) {
             if (!end) break;
             end[0] = 0x0;
             str = end + 1;
+            dontExpand[argc-1] = true; // don't expand arguments in quotes
         } else if (str[0] == '\"') { // argument begins with a double quote.
             // everything until next double quote is part of the argument
             argv[argc-1] = str + 1;
