@@ -53,6 +53,8 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 
 ## Integration with your app:
 
+### Basic commands:
+
 The simplest way to integrate `ios_system` into your app is to just replace all calls to `system()` with calls to `ios_system()`. If you need more control and information, the following functions are available: 
 
 - `NSArray* commandsAsArray()` returns an array with all the commands available, if you need them for helping users. 
@@ -61,11 +63,18 @@ The simplest way to integrate `ios_system` into your app is to just replace all 
 - `ios_executable(char* inputCmd)` returns true if `inputCmd` is one of the commands defined inside `ios_system`. 
 - `int ios_setMiniRoot(NSString* mRoot)` lets you set the sandbox directory, so users are not exposed to files outside the sandbox. The argument is the path to a directory. It will not be possible to `cd` to directories above this one. Returns 1 if succesful, 0 if not. 
 - `FILE* ios_popen(const char* inputCmd, const char* type)` opens a pipe between the current command and `inputCmd`. (drop-in replacement for `popen`). 
-- `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences)` lets you replace an existing command implementation with your own, or add new commands without editing the source. 
+
+### More advance control: 
+
+**replaceCommand**: `replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences)` lets you replace an existing command implementation with your own, or add new commands without editing the source. 
 
 Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `ls` to calls to `gnu_ls_main`. The last argument tells whether you want to replace only the function associated with `ls` (if `false`) or all the commands that used the function previously associated with `ls`(if true). For example, `compress` and `uncompress` are both done with the same function, `compress_main` (and the actual behaviour depends on `argv[0]`). Only you can know whether your replacement function handles both roles, or only one of them. 
 
-If the command does not exist, your command is added to the list. 
+If the command does not already exist, your command is simply added to the list. 
+
+**ios_execv(const char *path, char* const argv[])**: executes the command in `argv[0]` with the arguments `argv` (it doesn't use `path`). It is *not* a drop-in replacement for `execv` because it does not terminate the current process. `execv` is usually called after `fork()`, and `execv` terminates the child process. This is not possible in iOS. If `dup2` was called before `execv` to set stdin and stdout, `ios_execv` tries to do the right thing and pass these streams to the process started by `execv`. 
+
+`ios_execve` also exists, but is just a pointer to `ios_execv` (we don't do anything with the environment for now). 
 
 ## Adding more commands:
 
@@ -97,7 +106,7 @@ To add a command:
 - `sh`, `bash`, `zsh`: shells are hard to compile, even without the sandbox/API limitations. They also tend to take a lot of memory, which is a limited asset.
 - `telnet`: both hard to compile and limited without interaction. 
 - `git`: [WorkingCopy](https://workingcopyapp.com) does it very well, and you can transfer directories to your app, then transfer back to WorkingCopy. Also difficult to compile. 
-- `ssh`: [BlinkShell](https://itunes.apple.com/us/app/blink-shell-mosh-ssh-terminal/id1156707581?mt=8&ign-mpt=uo%3D4) does it very well. There is a fork of [BlinkShell](https://github.com/holzschu/blink) with `ios_system` commands included. Also requires user interaction. You can do `ssh + command`. 
+- `ssh`: [BlinkShell](https://itunes.apple.com/us/app/blink-shell-mosh-ssh-terminal/id1156707581?mt=8&ign-mpt=uo%3D4) does it very well. There is a fork of [BlinkShell](https://github.com/holzschu/blink) with `ios_system` commands included. Also requires user interaction. You can, however, do `ssh + command`. 
 
 
 ### Licensing:
