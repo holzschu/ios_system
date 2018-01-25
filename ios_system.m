@@ -185,10 +185,8 @@ void initializeEnvironment() {
         fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
     }
     setenv("APPDIR", [[NSBundle mainBundle] resourcePath].UTF8String, 1);
-    setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     setenv("TERM", "xterm", 1); // 1 = override existing value
     setenv("TMPDIR", NSTemporaryDirectory().UTF8String, 0); // tmp directory
-    directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     
     // We can't write in $HOME so we need to set the position of config files:
     setenv("SSH_HOME", docsPath.UTF8String, 0);  // SSH keys in ~/Documents/.ssh/ or [Cloud Drive]/.ssh
@@ -208,6 +206,8 @@ void initializeEnvironment() {
     // hg config file in ~/Documents/.hgrc
     setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
 #endif
+    directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
+    setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
 }
 
 static char* parseArgument(char* argument, char* command) {
@@ -802,7 +802,7 @@ int ios_system(const char* inputCmd) {
         if (outputFileMarker) {
             outputFileName = outputFileMarker + 1; // skip past '>'
             while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
-        }
+        } else outputFileName = NULL; // Only "2>", but no ">". It happens.
     }
     if (outputFileName) {
         char* endFile = strstr(outputFileName, " ");
