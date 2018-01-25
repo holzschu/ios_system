@@ -724,6 +724,9 @@ int ios_system(const char* inputCmd) {
     outputFileMarker = inputFileMarker;
     functionParameters *params = (functionParameters*) malloc(sizeof(functionParameters));
     params->stdin = params->stdout = params->stderr = 0;
+    params->argc = 0; params->argv = 0; params->argv_ref = 0;
+    params->fd_close = 0;
+    params->function = NULL;
     // scan until first "<" (input file)
     inputFileMarker = strstr(inputFileMarker, "<");
     // scan until first non-space character:
