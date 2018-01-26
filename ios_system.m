@@ -132,8 +132,12 @@ static void cleanup_function(void* parameters) {
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
-    if (isPipe) {
-        if (thread_stdout != stdout) fclose(thread_stdout);
+    if (p->isPipe) {
+        // Close stdout if it won't be closed by another thread
+        // (i.e. if it's different from the parent thread stdout)
+        // There is currently no way to pipe stderr without piping stdout.
+        // So close it only once.
+        fclose(thread_stdout);
         thread_stdout = NULL;
     }
     free(parameters); // This was malloc'ed in ios_system
@@ -531,20 +535,16 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     // fpin = fdopen(fd[0], "r");
     if (type[0] == 'w') {
         // open pipe for reading
-        thread_stdin = fdopen(fd[0], "r");
+        child_stdin = fdopen(fd[0], "r");
         // launch command:
         ios_system(command);
-        // Restore streams:
-        thread_stdin = push_stdin;
         return fdopen(fd[1], "w");
     } else if (type[0] == 'r') {
         // open pipe for writing
         // set up streams for thread
-        thread_stdout = fdopen(fd[1], "w");
+        child_stdout = fdopen(fd[1], "w");
         // launch command:
         ios_system(command);
-        // restore streams
-        thread_stdout = push_stdout;
         return fdopen(fd[0], "r");
     }
     return NULL;
@@ -566,25 +566,8 @@ int ios_execv(const char *path, char* const argv[]) {
         strcat(cmd, argv[argc]);
         argc++;
     }
-    // push existing streams:
-    FILE* push_stdin = thread_stdin;
-    FILE* push_stdout = thread_stdout;
-    FILE* push_stderr = thread_stdout;
-    // place streams from dup2:
-    if (child_stdin) thread_stdin = child_stdin;
-    if (child_stdout) thread_stdout = child_stdout;
-    if (child_stderr) thread_stderr = child_stderr;
     // start "child" with the child streams:
     ios_system(cmd);
-    // pop streams for parent:
-    thread_stdin = push_stdin;
-    thread_stdout = push_stdout;
-    thread_stderr = push_stderr;
-    // erase child streams to avoid re-using them
-    // child process is responsible for closing them, we can't do this.
-    child_stdin = NULL;
-    child_stdin = NULL;
-    child_stdout = NULL;
     free(cmd);
     return 0;
 }
@@ -592,6 +575,8 @@ int ios_execv(const char *path, char* const argv[]) {
 int ios_execve(const char *path, char* const argv[], char *const envp[]) {
     // TODO: save the environment (HOW?) and current dir
     // TODO: replace environment with envp. envp looks a lot like current environment, though.
+    ios_
+    
     execv(path, argv);
     // TODO: restore the environment (HOW?)
     return 0;
@@ -615,7 +600,7 @@ int ios_execve(const char *path, char* const argv[], char *const envp[]) {
 int ios_dup2(int fd1, int fd2)
 {
     // iOS specifics: trying to access stdin/stdout/stderr?
-    // fprintf(stderr, "Accessing dup2: fd1 = %d fd2 = %d\n", fd1, fd2); fflush(stderr);
+    fprintf(stderr, "Accessing dup2: fd1 = %d fd2 = %d\n", fd1, fd2); fflush(stderr);
     if (fd2 == 0) { child_stdin = fdopen(fd1, "rb"); }
     else if (fd2 == 1) { child_stdout = fdopen(fd1, "wb"); }
     else if (fd2 == 2) { child_stderr = fdopen(fd1, "wb"); }
@@ -728,7 +713,11 @@ int ios_system(const char* inputCmd) {
     if (!inputFileMarker) inputFileMarker = command;
     outputFileMarker = inputFileMarker;
     functionParameters *params = (functionParameters*) malloc(sizeof(functionParameters));
-    params->stdin = params->stdout = params->stderr = 0;
+    // If child_streams have been defined (in dup2 or popen), the new thread takes them.
+    params->stdin = child_stdin;
+    params->stdout = child_stdout;
+    params->stderr = child_stderr;
+    child_stdin = child_stdout = child_stderr = NULL;
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
     params->function = NULL; params->isPipe = false;
     // scan until first "<" (input file)
@@ -1003,6 +992,7 @@ int ios_system(const char* inputCmd) {
             params->argc = argc;
             params->argv = argv;
             params->function = function;
+            params->isPipe = (params->stdout != thread_stdout);
             if (isMainThread) {
                 // Send a signal to the system that we're going to change the current directory:
                 NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
