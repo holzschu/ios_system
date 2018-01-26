@@ -120,7 +120,7 @@ typedef struct _functionParameters {
     char** argv_ref;
     int (*function)(int ac, char** av);
     FILE *stdin, *stdout, *stderr;
-    int fd_close;
+    bool isPipe;
 } functionParameters;
 
 static void cleanup_function(void* parameters) {
@@ -132,7 +132,10 @@ static void cleanup_function(void* parameters) {
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
-    if (p->fd_close > 0) close(p->fd_close);
+    if (isPipe) {
+        if (thread_stdout != stdout) fclose(thread_stdout);
+        thread_stdout = NULL;
+    }
     free(parameters); // This was malloc'ed in ios_system
 }
 
@@ -508,6 +511,11 @@ int ios_executable(const char* inputCmd) {
     else return 0;
 }
 
+// Where to direct input/output of the next thread:
+static __thread FILE* child_stdin;
+static __thread FILE* child_stdout;
+static __thread FILE* child_stderr;
+
 FILE* ios_popen(const char* inputCmd, const char* type) {
     // Save existing streams:
     int fd[2] = {0};
@@ -521,7 +529,7 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     // NOTES: fd[0] is set up for reading, fd[1] is set up for writing
     // fpout = fdopen(fd[1], "w");
     // fpin = fdopen(fd[0], "r");
-    if (type[0] == 'r') {
+    if (type[0] == 'w') {
         // open pipe for reading
         thread_stdin = fdopen(fd[0], "r");
         // launch command:
@@ -529,7 +537,7 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
         // Restore streams:
         thread_stdin = push_stdin;
         return fdopen(fd[1], "w");
-    } else if (type[0] == 'w') {
+    } else if (type[0] == 'r') {
         // open pipe for writing
         // set up streams for thread
         thread_stdout = fdopen(fd[1], "w");
@@ -542,9 +550,6 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     return NULL;
 }
 
-static __thread FILE* child_stdin;
-static __thread FILE* child_stdout;
-static __thread FILE* child_stderr;
 int ios_execv(const char *path, char* const argv[]) {
     // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
     int argc = 0;
@@ -725,8 +730,7 @@ int ios_system(const char* inputCmd) {
     functionParameters *params = (functionParameters*) malloc(sizeof(functionParameters));
     params->stdin = params->stdout = params->stderr = 0;
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
-    params->fd_close = 0;
-    params->function = NULL;
+    params->function = NULL; params->isPipe = false;
     // scan until first "<" (input file)
     inputFileMarker = strstr(inputFileMarker, "<");
     // scan until first non-space character:
@@ -744,8 +748,7 @@ int ios_system(const char* inputCmd) {
     if (pipeMarker) {
         bool pushMainThread = isMainThread;
         isMainThread = false;
-        params->stdout = ios_popen(pipeMarker+2, "r");
-        params->fd_close = fileno(params->stdout);
+        params->stdout = ios_popen(pipeMarker+2, "w");
         isMainThread = pushMainThread;
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
@@ -754,8 +757,7 @@ int ios_system(const char* inputCmd) {
         if (pipeMarker) {
             bool pushMainThread = isMainThread;
             isMainThread = false;
-            params->stdout = ios_popen(pipeMarker+1, "r");
-            params->fd_close = fileno(params->stdout);
+            params->stdout = ios_popen(pipeMarker+1, "w");
             isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
         }
