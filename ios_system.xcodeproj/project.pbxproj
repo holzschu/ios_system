@@ -36,6 +36,7 @@
 		2248DB2F2004F82700F2944C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB242004F82700F2944C /* main.c */; };
 		2253BA182018AA8F0019CB39 /* fcntlmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894CE1FDBF105006CDE47 /* fcntlmodule.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
 		2253BA192018AA960019CB39 /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C894AA1FDBF105006CDE47 /* config.c */; settings = {COMPILER_FLAGS = "-DNDEBUG -fno-strict-aliasing -fno-common -dynamic -g -fwrapv -O3 -Wall -Wstrict-prototypes -I ../python_ios/Python-2.7.13/Include/ -I ../python_ios -DPy_BUILD_CORE -I ../libssh2-for-iOS/include/"; }; };
+		2253BA1E201942B20019CB39 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2253BA1D201942B10019CB39 /* libresolv.9.tbd */; };
 		22577E481FDB47A90050F312 /* err.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D451FDB47A90050F312 /* err.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H "; }; };
 		22577E491FDB47A90050F312 /* lafe_err.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577D461FDB47A90050F312 /* lafe_err.h */; };
 		22577E4A1FDB47A90050F312 /* lafe_platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 22577D471FDB47A90050F312 /* lafe_platform.h */; };
@@ -787,7 +788,6 @@
 		22D8DEBD20079E4C00FAADB7 /* cmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB920079E4C00FAADB7 /* cmap.c */; };
 		22D8DEBE20079E4C00FAADB7 /* tr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBA20079E4C00FAADB7 /* tr.c */; };
 		22D8DEBF20079E4C00FAADB7 /* str.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBB20079E4C00FAADB7 /* str.c */; };
-		22EB965A20065366009E39D0 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		22FE48C01FDC796D00899DA7 /* libluatex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBC1FD739C900675252 /* libluatex.dylib */; };
 		22FE48C11FDC796D00899DA7 /* libpdftex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBE1FD739C900675252 /* libpdftex.dylib */; };
 		22FE48C21FDC796D00899DA7 /* libtexlua52.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2219DFBD1FD739C900675252 /* libtexlua52.5.dylib */; };
@@ -830,6 +830,7 @@
 		2248DB212004F82700F2944C /* tran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tran.c; path = "awk-23.30.1/src/tran.c"; sourceTree = SOURCE_ROOT; };
 		2248DB232004F82700F2944C /* proctab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = proctab.c; path = "awk-23.30.1/src/proctab.c"; sourceTree = SOURCE_ROOT; };
 		2248DB242004F82700F2944C /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = "awk-23.30.1/src/main.c"; sourceTree = SOURCE_ROOT; };
+		2253BA1D201942B10019CB39 /* libresolv.9.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.9.tbd; path = usr/lib/libresolv.9.tbd; sourceTree = SDKROOT; };
 		22577D451FDB47A90050F312 /* err.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = err.c; sourceTree = "<group>"; };
 		22577D461FDB47A90050F312 /* lafe_err.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lafe_err.h; sourceTree = "<group>"; };
 		22577D471FDB47A90050F312 /* lafe_platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lafe_platform.h; sourceTree = "<group>"; };
@@ -1603,7 +1604,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				22EB965A20065366009E39D0 /* (null) in Frameworks */,
+				2253BA1E201942B20019CB39 /* libresolv.9.tbd in Frameworks */,
 				22FE48C01FDC796D00899DA7 /* libluatex.dylib in Frameworks */,
 				22FE48C11FDC796D00899DA7 /* libpdftex.dylib in Frameworks */,
 				22FE48C21FDC796D00899DA7 /* libtexlua52.5.dylib in Frameworks */,
@@ -1663,6 +1664,7 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
 				22319F941FDBF920004D875A /* libffi.a */,
 				22577F9B1FDB4B5C0050F312 /* libxml2.tbd */,
 				22CF27AE1FDB42C80087DDAD /* libncurses.tbd */,
