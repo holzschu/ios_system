@@ -892,7 +892,8 @@ int ios_system(const char* inputCmd) {
             // The executable file has precedence, unless the user has specified they want the original
             // version, by prefixing it with \. So "\ls" == always "our" ls. "ls" == maybe ~/Library/bin/ls
             // (if it exists).
-            argv[0] = argv[0] + 1;
+            size_t len_with_terminator = strlen(argv[0] + 1) + 1;
+            memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {
             NSString* commandName = [NSString stringWithCString:argv[0]];
             BOOL isDir = false;
