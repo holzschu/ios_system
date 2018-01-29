@@ -22,6 +22,7 @@
 
 #include <pthread.h>
 #include <sys/stat.h>
+#include <libgen.h>
 #define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH)) // is executable, looking at "x" bit. Other methods fails on iOS
 
 // Note: we could use dlsym() to make this code simpler, but it would also make it harder
@@ -523,8 +524,6 @@ static __thread FILE* child_stderr;
 FILE* ios_popen(const char* inputCmd, const char* type) {
     // Save existing streams:
     int fd[2] = {0};
-    FILE* push_stdin = thread_stdin;
-    FILE* push_stdout = thread_stdout;
     const char* command = inputCmd;
     // skip past all spaces
     while ((command[0] == ' ') && strlen(command) > 0) command++;
@@ -558,10 +557,30 @@ int ios_execv(const char *path, char* const argv[]) {
     // We need this because some programs call execv() with a single string: "ssh hg@bitbucket.org 'hg -R ... --stdio'"
     // So we rely on ios_system to break them into chunks.
     while(argv[argc] != NULL) { cmdLength += strlen(argv[argc]) + 1; argc++;}
-    char* cmd = malloc(cmdLength * sizeof(char));
+    char* cmd = malloc((cmdLength  + 2 * argc) * sizeof(char)); // space for quotes
     strcpy(cmd, argv[0]);
     argc = 1;
     while (argv[argc] != NULL) {
+        if (strstr(argv[argc], " ")) {
+            // argument contains spaces. Enclose it into quotes:
+            if (strstr(argv[argc], "\"") == NULL) {
+                // argument does not contain ". Enclose with "
+                strcat(cmd, " \"");
+                strcat(cmd, argv[argc]);
+                strcat(cmd, "\"");
+                argc++;
+                continue;
+            }
+            if (strstr(argv[argc], "'") == NULL) {
+                // Enclose with '
+                strcat(cmd, " '");
+                strcat(cmd, argv[argc]);
+                strcat(cmd, "'");
+                argc++;
+                continue;
+            }
+            fprintf(thread_stderr, "Don't know what to do with this argument, sorry: %s\n", argv[argc]);
+        }
         strcat(cmd, " ");
         strcat(cmd, argv[argc]);
         argc++;
@@ -575,9 +594,7 @@ int ios_execv(const char *path, char* const argv[]) {
 int ios_execve(const char *path, char* const argv[], char *const envp[]) {
     // TODO: save the environment (HOW?) and current dir
     // TODO: replace environment with envp. envp looks a lot like current environment, though.
-    ios_
-    
-    execv(path, argv);
+    ios_execv(path, argv);
     // TODO: restore the environment (HOW?)
     return 0;
 }
@@ -600,7 +617,7 @@ int ios_execve(const char *path, char* const argv[], char *const envp[]) {
 int ios_dup2(int fd1, int fd2)
 {
     // iOS specifics: trying to access stdin/stdout/stderr?
-    fprintf(stderr, "Accessing dup2: fd1 = %d fd2 = %d\n", fd1, fd2); fflush(stderr);
+    // fprintf(stderr, "Accessing dup2: fd1 = %d fd2 = %d\n", fd1, fd2); fflush(stderr);
     if (fd2 == 0) { child_stdin = fdopen(fd1, "rb"); }
     else if (fd2 == 1) { child_stdout = fdopen(fd1, "wb"); }
     else if (fd2 == 2) { child_stderr = fdopen(fd1, "wb"); }
@@ -866,6 +883,13 @@ int ios_system(const char* inputCmd) {
             end[0] = 0x0;
             str = end + 1;
         }
+        if ((argc == 1) && (argv[0][0] == '/') && (access(argv[0], R_OK) == -1)) {
+            // argv[0] is a file that doesn't exist. Probably one of our commands.
+            // Replace with its name:
+            char* newName = basename(argv[0]);
+            argv[0] = realloc(argv[0], strlen(newName));
+            strcpy(argv[0], newName);
+        }
         assert(argc < numSpaces + 2);
         while (str && (str[0] == ' ')) str++; // skip multiple spaces
     }
@@ -905,15 +929,6 @@ int ios_system(const char* inputCmd) {
                     // File exists, is executable, not a directory.
                     cmdIsAFile = true;
                 }
-            }
-            if ((!cmdIsAFile) && [commandName hasPrefix:@"/"]) {
-                // cmd starts with "/" --> path to a command (that doesn't exist). Remove all directories at beginning:
-                // This is a point where we are different from actual shells.
-                // There is one version of each command, and we always assume it is the one you want.
-                // /usr/sbin/ls and /usr/local/bin/ls will be the same.
-                commandName = [commandName lastPathComponent];
-                argv[0] = realloc(argv[0], strlen(commandName.UTF8String));
-                strcpy(argv[0], commandName.UTF8String);
             }
             // We go through the path, because that command may be a file in the path
             // i.e. user called /usr/local/bin/hg and it's ~/Library/bin/hg
