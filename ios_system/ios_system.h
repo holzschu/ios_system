@@ -35,4 +35,4 @@ extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays
 extern void initializeEnvironment(void);
 extern int ios_setMiniRoot(NSString*);  // restric operations to a certain hierarchy
-extern void replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences);
+extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);

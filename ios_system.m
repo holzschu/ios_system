@@ -31,35 +31,6 @@
 // more compliance with AppStore rules.
 #define SIDELOADING
 
-#ifdef SHELL_UTILITIES
-extern int date_main(int argc, char *argv[]);
-extern int echo_main(int argc, char *argv[]);
-extern int env_main(int argc, char *argv[]);     // does the same as printenv
-extern int id_main(int argc, char *argv[]); // also groups, whoami
-extern int printenv_main(int argc, char *argv[]);
-extern int pwd_main(int argc, char *argv[]);
-extern int tee_main(int argc, char *argv[]);
-extern int uname_main(int argc, char *argv[]);
-extern int w_main(int argc, char *argv[]); // also uptime
-#endif
-#ifdef TEXT_UTILITIES
-extern int cat_main(int argc, char *argv[]);
-extern int grep_main(int argc, char *argv[]);
-extern int wc_main(int argc, char *argv[]);
-extern int ed_main(int argc, char *argv[]);
-extern int tr_main(int argc, char *argv[]);
-extern int sed_main(int argc, char *argv[]);
-extern int awk_main(int argc, char *argv[]);
-#endif
-#ifdef FEAT_PYTHON
-extern int python_main(int argc, char **argv);
-#endif
-// local commands
-extern int setenv_main(int argc, char *argv[]);
-extern int unsetenv_main(int argc, char *argv[]);
-static int cd_main(int argc, char *argv[]);
-extern int ssh_main(int argc, char *argv[]);
-
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
@@ -267,6 +238,7 @@ static void initializeCommandList()
       @"rmdir" : [NSArray arrayWithObjects:@"libfiles.dylib", @"rmdir_main", @"p", @"directory", nil],
       @"chflags": [NSArray arrayWithObjects:@"libfiles.dylib", @"chflags_main", @"HLPRfhv", @"file", nil],
 #ifdef SIDELOADING
+      // Exposes the outside of the sandbox a little too much. YMMV
       @"chown" : [NSArray arrayWithObjects:@"libfiles.dylib", @"chown_main", @"HLPRfhv", @"file", nil],
       @"chgrp" : [NSArray arrayWithObjects:@"libfiles.dylib", @"chown_main", @"HLPRfhv", @"file", nil],
       @"chmod" : [NSArray arrayWithObjects:@"libfiles.dylib", @"chmod_main", @"ACEHILNPRVXafghinorstuvwx", @"file", nil],
@@ -304,13 +276,28 @@ static void initializeCommandList()
       @"env"    : [NSArray arrayWithObjects:@"libshell.dylib", @"env_main", @"-iP:S:u:v", @"no", nil],
       @"setenv"     : [NSArray arrayWithObjects:@"libshell.dylib", @"setenv_main", @"", @"no", nil],
       @"unsetenv"     : [NSArray arrayWithObjects:@"libshell.dylib", @"unsetenv_main", @"", @"no", nil],
-      @"id"     : [NSArray arrayWithObjects:@"libshell.dylib", @"id_main", @"AFPGMagnpru", @"no", nil],
-      @"groups" : [NSArray arrayWithObjects:@"libshell.dylib", @"id_main", @"", @"no", nil],
       @"whoami" : [NSArray arrayWithObjects:@"libshell.dylib", @"id_main", @"", @"no", nil],
       @"uptime" : [NSArray arrayWithObjects:@"libshell.dylib", @"w_main", @"", @"no", nil],
-      @"w"      : [NSArray arrayWithObjects:@"libshell.dylib", @"w_main", @"dhiflM:N:nsuw", @"no", nil],
-
 #ifdef SIDELOADING
+      // Exposes the outside of the sandbox a little too much. YMMV
+      @"id"     : [NSArray arrayWithObjects:@"libshell.dylib", @"id_main", @"AFPGMagnpru", @"no", nil],
+      @"groups" : [NSArray arrayWithObjects:@"libshell.dylib", @"id_main", @"", @"no", nil],
+      @"w"      : [NSArray arrayWithObjects:@"libshell.dylib", @"w_main", @"dhiflM:N:nsuw", @"no", nil],
+#endif
+      // Commands from Apple text_cmds:
+      @"cat"    : [NSArray arrayWithObjects:@"libtext.dylib", @"cat_main", @"benstuv", @"file", nil],
+      @"wc"     : [NSArray arrayWithObjects:@"libtext.dylib", @"wc_main", @"dhiflM:N:nsuw", @"file", nil],
+      @"tr"     : [NSArray arrayWithObjects:@"libtext.dylib", @"tr_main", @"Ccdsu", @"no", nil],
+      // compiled, but deactivated until we have interactive mode
+      // @"ed"     : [NSArray arrayWithObjects:@"libtext.dylib", @"w_main", @"p:sx", @"file", nil][NSValue valueWithPointer: ed_main],
+      // @"red"     : [NSArray arrayWithObjects:@"libtext.dylib", @"w_main", @"p:sx", @"file", nil][NSValue valueWithPointer: ed_main],
+      @"sed"     : [NSArray arrayWithObjects:@"libtext.dylib", @"sed_main", @"Eae:f:i:ln", @"file", nil],
+      @"awk"     : [NSArray arrayWithObjects:@"libtext.dylib", @"awk_main", @"dhiflM:N:nsuw", @"file", nil],
+      @"grep"   : [NSArray arrayWithObjects:@"libtext.dylib", @"grep_main", @"0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy", @"file", nil],
+      @"egrep"  : [NSArray arrayWithObjects:@"libtext.dylib", @"grep_main", @"0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy", @"file", nil],
+      @"fgrep"  : [NSArray arrayWithObjects:@"libtext.dylib", @"grep_main", @"0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy", @"file", nil],
+#ifdef SIDELOADING
+      // Scripts and programming languages. Might move outside of here at some point
       // lua
       @"lua"     : [NSArray arrayWithObjects:@"lua_ios.framework/lua_ios", @"lua_main", @"e:il:vE", @"file", nil],
       @"luac"    : [NSArray arrayWithObjects:@"lua_ios.framework/lua_ios", @"luac_main", @"lpsvo:", @"file", nil],
@@ -348,26 +335,6 @@ static void initializeCommandList()
       @"xmltex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"file", nil],
       // BibTeX
       @"bibtex"     : [NSArray arrayWithObjects:@"libbibtex.dylib", @"bibtex_main", @"", @"file", nil],
-#endif
-
-#ifdef TEXT_UTILITIES
-                    // Commands from Apple text_cmds:
-                    @"cat"    : [NSValue valueWithPointer: cat_main],
-                    @"wc"     : [NSValue valueWithPointer: wc_main],
-                    @"tr"     : [NSValue valueWithPointer: tr_main],
-                    // compiled, but deactivated until we have interactive mode
-                    //                    @"ed"     : [NSValue valueWithPointer: ed_main],
-                    //                    @"red"     : [NSValue valueWithPointer: ed_main],
-                    @"sed"     : [NSValue valueWithPointer: sed_main],
-                    @"awk"     : [NSValue valueWithPointer: awk_main],
-                    @"grep"   : [NSValue valueWithPointer: grep_main],
-                    @"egrep"  : [NSValue valueWithPointer: grep_main],
-                    @"fgrep"  : [NSValue valueWithPointer: grep_main],
-#endif
-#ifdef NETWORK_UTILITIES
-                    // Use with caution. Doesn't make sense except inside a terminal.
-                    // Commands from Apple network_cmds:
-                    @"ping"  : [NSValue valueWithPointer: ping_main],
 #endif
     };
 }
@@ -560,26 +527,27 @@ int ios_dup2(int fd1, int fd2)
 
 
 // For customization:
-// replaces a function pointer (e.g. ls_main) with another one, provided by the user (ls_mine_main)
+// replaces a function  (e.g. ls_main) with another one, provided by the user (ls_mine_main)
 // if the function does not exist, add it to the list
 // if "allOccurences" is true, search for all commands that share the same function, replace them too.
 // ("compress" and "uncompress" both point to compress_main. You probably want to replace both, but maybe
 // you just happen to have a very fast uncompress, different from compress).
-void replaceCommand(NSString* commandName, int (*newFunction)(int argc, char *argv[]), bool allOccurences) {
+// We work with function names, not function pointers.
+void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences) {
     if (commandList == nil) initializeCommandList();
-    
-    int (*oldFunction)(int ac, char** av) = [[commandList objectForKey: commandName] pointerValue];
+    NSArray* oldValues = [commandList objectForKey: commandName];
+    NSString* oldFunctionName = nil;
+    if (oldValues != nil) oldFunctionName = oldValues[1];
+    NSArray* replacementArray = [NSArray arrayWithObjects: @"MAIN", functionName, @"", @"file", nil];
     NSMutableDictionary *mutableDict = [commandList mutableCopy];
-    mutableDict[commandName] = [NSValue valueWithPointer: newFunction];
+    mutableDict[commandName] = replacementArray;
     
-    if (oldFunction && allOccurences) {
+    if ((oldFunctionName != nil) && allOccurences) {
         // scan through all dictionary entries
-        
         for (NSString* existingCommand in mutableDict.allKeys) {
-            int (*existingFunction)(int ac, char** av) = [[mutableDict objectForKey: existingCommand] pointerValue];
-            if (existingFunction == oldFunction) {
-                [mutableDict setValue: [NSValue valueWithPointer: newFunction] forKey: existingCommand];
-            }
+            NSArray* currentPosition = [mutableDict objectForKey: existingCommand];
+            if ([currentPosition[1] isEqualToString:oldFunctionName])
+                [mutableDict setValue: replacementArray forKey: existingCommand];
         }
     }
     commandList = [mutableDict mutableCopy];
@@ -929,6 +897,7 @@ int ios_system(const char* inputCmd) {
             if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
             else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
             else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_LOCAL); // commands defined in dynamic library
+            if (handle == NULL) fprintf(thread_stderr, "%s\n", dlerror()); 
             NSString* functionName = commandStructure[1];
             function = dlsym(handle, functionName.UTF8String);
         }

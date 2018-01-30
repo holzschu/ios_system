@@ -7,23 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		22257E811FDA7C0C00FBA97D /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22257E801FDA7C0C00FBA97D /* openssl.framework */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
-		2248DB082004A5F900F2944C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB002004A5F800F2944C /* main.c */; };
-		2248DB092004A5F900F2944C /* glbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB012004A5F800F2944C /* glbl.c */; };
-		2248DB0A2004A5F900F2944C /* io.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB022004A5F800F2944C /* io.c */; };
-		2248DB0B2004A5F900F2944C /* undo.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB032004A5F900F2944C /* undo.c */; };
-		2248DB0C2004A5F900F2944C /* sub.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB042004A5F900F2944C /* sub.c */; };
-		2248DB0D2004A5F900F2944C /* cbc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB052004A5F900F2944C /* cbc.c */; };
-		2248DB0E2004A5F900F2944C /* buf.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB062004A5F900F2944C /* buf.c */; settings = {COMPILER_FLAGS = "-x objective-c"; }; };
-		2248DB0F2004A5F900F2944C /* re.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB072004A5F900F2944C /* re.c */; };
-		2248DB152004C5DB00F2944C /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB112004C5DB00F2944C /* misc.c */; };
-		2248DB162004C5DB00F2944C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB122004C5DB00F2944C /* main.c */; };
-		2248DB172004C5DB00F2944C /* process.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB132004C5DB00F2944C /* process.c */; };
-		2248DB182004C5DB00F2944C /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB142004C5DB00F2944C /* compile.c */; };
-		2253BA1E201942B20019CB39 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2253BA1D201942B10019CB39 /* libresolv.9.tbd */; };
 		225782911FDB4D390050F312 /* curl_config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257811A1FDB4D380050F312 /* curl_config.h */; };
 		225F06102016751900466685 /* getopt_long.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060F2016751800466685 /* getopt_long.c */; };
 		226378751FDB3EE400AE8827 /* termcap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2263780D1FDB3EE100AE8827 /* termcap.h */; };
@@ -149,7 +135,6 @@
 		2285423B201FC10E00B93589 /* pathmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4C1FDB47A90050F312 /* pathmatch.c */; settings = {COMPILER_FLAGS = "-D HAVE_CONFIG_H"; }; };
 		2285423C201FC36C00B93589 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */; };
 		2285423D201FC37200B93589 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
-		2285423E201FC37E00B93589 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22577F9B1FDB4B5C0050F312 /* libxml2.tbd */; };
 		22908AAC201FC7F3002AFBA7 /* slist_wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780C71FDB4D380050F312 /* slist_wc.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		22908AAD201FC7F3002AFBA7 /* tool_binmode.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780C91FDB4D380050F312 /* tool_binmode.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		22908AAE201FC7F3002AFBA7 /* tool_bname.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780CB1FDB4D380050F312 /* tool_bname.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
@@ -317,7 +302,6 @@
 		22908B50201FC85E002AFBA7 /* spnego_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780901FDB4D380050F312 /* spnego_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		22908B51201FC85E002AFBA7 /* spnego_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780911FDB4D380050F312 /* spnego_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		22908B52201FC85E002AFBA7 /* vauth.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780921FDB4D380050F312 /* vauth.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
-		22AC09E620209C58006F7D8B /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
 		22AC09F62020A007006F7D8B /* b.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB202004F82700F2944C /* b.c */; };
 		22AC09F72020A007006F7D8B /* lex.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1E2004F82600F2944C /* lex.c */; };
 		22AC09F82020A008006F7D8B /* lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1F2004F82600F2944C /* lib.c */; };
@@ -329,18 +313,6 @@
 		22AC09FE2020A008006F7D8B /* ytab.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1A2004F82600F2944C /* ytab.c */; };
 		22AC09FF2020A024006F7D8B /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
-		22CF27AF1FDB42C80087DDAD /* libncurses.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AE1FDB42C80087DDAD /* libncurses.tbd */; };
-		22CF27C11FDB43080087DDAD /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B21FDB43070087DDAD /* file.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH -DWITHOUT_LZMA"; }; };
-		22CF27C31FDB43080087DDAD /* grep.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B41FDB43070087DDAD /* grep.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
-		22CF27C41FDB43080087DDAD /* grep.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27B51FDB43070087DDAD /* grep.h */; };
-		22CF27C51FDB43080087DDAD /* queue.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B61FDB43070087DDAD /* queue.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
-		22CF27C61FDB43080087DDAD /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B71FDB43070087DDAD /* util.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
-		22CF27C81FDB43080087DDAD /* cat.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27BA1FDB43070087DDAD /* cat.c */; };
-		22CF27CC1FDB43080087DDAD /* wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27C01FDB43080087DDAD /* wc.c */; };
-		22D8DEBC20079E4C00FAADB7 /* cset.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB820079E4C00FAADB7 /* cset.c */; };
-		22D8DEBD20079E4C00FAADB7 /* cmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB920079E4C00FAADB7 /* cmap.c */; };
-		22D8DEBE20079E4C00FAADB7 /* tr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBA20079E4C00FAADB7 /* tr.c */; };
-		22D8DEBF20079E4C00FAADB7 /* str.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBB20079E4C00FAADB7 /* str.c */; };
 		22F567C62020B7F1009850FD /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
 		22F567C82020B807009850FD /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
 		22F567C92020B80F009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
@@ -350,8 +322,6 @@
 		22F567DB2020BA84009850FD /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
 		22F567DC2020BA95009850FD /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
 		22F567DE2020BAD9009850FD /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567DD2020BAD9009850FD /* libz.tbd */; };
-		22F567DF2020BAFB009850FD /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567DD2020BAD9009850FD /* libz.tbd */; };
-		22F567E02020BB0A009850FD /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */; };
 		22F567EE2020BDA9009850FD /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		22F567EF2020BDAD009850FD /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
 		22F567F02020BDB3009850FD /* date.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27711FDB3FDA0087DDAD /* date.c */; };
@@ -367,6 +337,31 @@
 		22F567FA2020BDDD009850FD /* proc_compare.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27811FDB3FDA0087DDAD /* proc_compare.c */; };
 		22F567FB2020BDDD009850FD /* w.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27841FDB3FDA0087DDAD /* w.c */; };
 		22F567FC2020BDFB009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		22F5680A2020C2E7009850FD /* wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27C01FDB43080087DDAD /* wc.c */; };
+		22F5680B2020C2F0009850FD /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B21FDB43070087DDAD /* file.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH -DWITHOUT_LZMA "; }; };
+		22F5680C2020C2F0009850FD /* grep.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B41FDB43070087DDAD /* grep.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
+		22F5680D2020C2F0009850FD /* queue.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B61FDB43070087DDAD /* queue.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
+		22F5680E2020C2F0009850FD /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B71FDB43070087DDAD /* util.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
+		22F5680F2020C2F6009850FD /* cat.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27BA1FDB43070087DDAD /* cat.c */; };
+		22F568102020C2FB009850FD /* buf.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB062004A5F900F2944C /* buf.c */; settings = {COMPILER_FLAGS = "-x objective-c"; }; };
+		22F568112020C2FB009850FD /* cbc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB052004A5F900F2944C /* cbc.c */; };
+		22F568122020C2FB009850FD /* glbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB012004A5F800F2944C /* glbl.c */; };
+		22F568132020C2FB009850FD /* io.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB022004A5F800F2944C /* io.c */; };
+		22F568142020C2FB009850FD /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB002004A5F800F2944C /* main.c */; };
+		22F568152020C2FB009850FD /* re.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB072004A5F900F2944C /* re.c */; };
+		22F568162020C2FB009850FD /* sub.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB042004A5F900F2944C /* sub.c */; };
+		22F568172020C2FB009850FD /* undo.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB032004A5F900F2944C /* undo.c */; };
+		22F568182020C301009850FD /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB142004C5DB00F2944C /* compile.c */; };
+		22F568192020C301009850FD /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB122004C5DB00F2944C /* main.c */; };
+		22F5681A2020C301009850FD /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB112004C5DB00F2944C /* misc.c */; };
+		22F5681B2020C301009850FD /* process.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB132004C5DB00F2944C /* process.c */; };
+		22F5681C2020C305009850FD /* cmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB920079E4C00FAADB7 /* cmap.c */; };
+		22F5681D2020C305009850FD /* cset.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB820079E4C00FAADB7 /* cset.c */; };
+		22F5681E2020C305009850FD /* str.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBB20079E4C00FAADB7 /* str.c */; };
+		22F5681F2020C305009850FD /* tr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBA20079E4C00FAADB7 /* tr.c */; };
+		22F568202020C38D009850FD /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */; };
+		22F568212020C392009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		22F568232020C42F009850FD /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F568222020C42F009850FD /* libxml2.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -571,7 +566,6 @@
 		22577F701FDB47B70050F312 /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
 		22577F711FDB47B70050F312 /* write.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = write.c; sourceTree = "<group>"; };
 		22577F991FDB47CC0050F312 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = libarchive/config.h; sourceTree = "<group>"; };
-		22577F9B1FDB4B5C0050F312 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		22577F9F1FDB4D370050F312 /* amigaos.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = amigaos.c; sourceTree = "<group>"; };
 		22577FA21FDB4D370050F312 /* asyn-ares.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "asyn-ares.c"; sourceTree = "<group>"; };
 		22577FA31FDB4D370050F312 /* asyn-thread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "asyn-thread.c"; sourceTree = "<group>"; };
@@ -803,10 +797,8 @@
 		22CF27841FDB3FDA0087DDAD /* w.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = w.c; sourceTree = "<group>"; };
 		22CF27881FDB3FDA0087DDAD /* id.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = id.c; sourceTree = "<group>"; };
 		22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
-		22CF27AE1FDB42C80087DDAD /* libncurses.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libncurses.tbd; path = usr/lib/libncurses.tbd; sourceTree = SDKROOT; };
 		22CF27B21FDB43070087DDAD /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file.c; sourceTree = "<group>"; };
 		22CF27B41FDB43070087DDAD /* grep.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = grep.c; sourceTree = "<group>"; };
-		22CF27B51FDB43070087DDAD /* grep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = grep.h; sourceTree = "<group>"; };
 		22CF27B61FDB43070087DDAD /* queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = queue.c; sourceTree = "<group>"; };
 		22CF27B71FDB43070087DDAD /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
 		22CF27BA1FDB43070087DDAD /* cat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cat.c; sourceTree = "<group>"; };
@@ -821,6 +813,7 @@
 		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		22F567E52020BD22009850FD /* libshell.dylib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libshell.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		22F568012020C1E8009850FD /* libtext.dylib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libtext.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		22F568222020C42F009850FD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -828,12 +821,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				22F567E02020BB0A009850FD /* libbz2.tbd in Frameworks */,
-				22F567DF2020BAFB009850FD /* libz.tbd in Frameworks */,
-				22AC09E620209C58006F7D8B /* libssh2.framework in Frameworks */,
-				2253BA1E201942B20019CB39 /* libresolv.9.tbd in Frameworks */,
-				22CF27AF1FDB42C80087DDAD /* libncurses.tbd in Frameworks */,
-				22257E811FDA7C0C00FBA97D /* openssl.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -850,7 +837,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2285423E201FC37E00B93589 /* libxml2.tbd in Frameworks */,
+				22F568232020C42F009850FD /* libxml2.tbd in Frameworks */,
 				2285423D201FC37200B93589 /* ios_system.framework in Frameworks */,
 				2285423C201FC36C00B93589 /* libbz2.tbd in Frameworks */,
 			);
@@ -897,6 +884,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22F568212020C392009850FD /* ios_system.framework in Frameworks */,
+				22F568202020C38D009850FD /* libbz2.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -950,12 +939,11 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				22F568222020C42F009850FD /* libxml2.tbd */,
 				22F567DD2020BAD9009850FD /* libz.tbd */,
 				22F567C72020B807009850FD /* openssl.framework */,
 				22AC09E520209C57006F7D8B /* libssh2.framework */,
 				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
-				22577F9B1FDB4B5C0050F312 /* libxml2.tbd */,
-				22CF27AE1FDB42C80087DDAD /* libncurses.tbd */,
 				22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */,
 				22257E801FDA7C0C00FBA97D /* openssl.framework */,
 			);
@@ -1666,7 +1654,6 @@
 			children = (
 				22CF27B21FDB43070087DDAD /* file.c */,
 				22CF27B41FDB43070087DDAD /* grep.c */,
-				22CF27B51FDB43070087DDAD /* grep.h */,
 				22CF27B61FDB43070087DDAD /* queue.c */,
 				22CF27B71FDB43070087DDAD /* util.c */,
 			);
@@ -1728,7 +1715,6 @@
 				2263788B1FDB3EE400AE8827 /* extern.h in Headers */,
 				22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */,
 				226378B21FDB3EE400AE8827 /* zopen.h in Headers */,
-				22CF27C41FDB43080087DDAD /* grep.h in Headers */,
 				226378811FDB3EE400AE8827 /* ncurses_dll.h in Headers */,
 				226378A81FDB3EE400AE8827 /* chmod_acl.h in Headers */,
 			);
@@ -1956,30 +1942,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2248DB0B2004A5F900F2944C /* undo.c in Sources */,
-				22CF27CC1FDB43080087DDAD /* wc.c in Sources */,
-				2248DB0E2004A5F900F2944C /* buf.c in Sources */,
-				22CF27C61FDB43080087DDAD /* util.c in Sources */,
-				22CF27C81FDB43080087DDAD /* cat.c in Sources */,
-				2248DB0F2004A5F900F2944C /* re.c in Sources */,
-				2248DB0C2004A5F900F2944C /* sub.c in Sources */,
-				2248DB182004C5DB00F2944C /* compile.c in Sources */,
-				2248DB082004A5F900F2944C /* main.c in Sources */,
-				2248DB172004C5DB00F2944C /* process.c in Sources */,
-				2248DB152004C5DB00F2944C /* misc.c in Sources */,
-				22D8DEBC20079E4C00FAADB7 /* cset.c in Sources */,
-				22CF27C51FDB43080087DDAD /* queue.c in Sources */,
-				22D8DEBD20079E4C00FAADB7 /* cmap.c in Sources */,
-				2248DB0D2004A5F900F2944C /* cbc.c in Sources */,
-				2248DB092004A5F900F2944C /* glbl.c in Sources */,
-				2248DB0A2004A5F900F2944C /* io.c in Sources */,
-				22CF27C11FDB43080087DDAD /* file.c in Sources */,
-				22D8DEBF20079E4C00FAADB7 /* str.c in Sources */,
 				22319FA01FDC2332004D875A /* getopt.c in Sources */,
 				225F06102016751900466685 /* getopt_long.c in Sources */,
-				22CF27C31FDB43080087DDAD /* grep.c in Sources */,
-				2248DB162004C5DB00F2944C /* main.c in Sources */,
-				22D8DEBE20079E4C00FAADB7 /* tr.c in Sources */,
 				223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2332,6 +2296,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22F568182020C301009850FD /* compile.c in Sources */,
+				22F5680F2020C2F6009850FD /* cat.c in Sources */,
+				22F568122020C2FB009850FD /* glbl.c in Sources */,
+				22F5681E2020C305009850FD /* str.c in Sources */,
+				22F568162020C2FB009850FD /* sub.c in Sources */,
+				22F568102020C2FB009850FD /* buf.c in Sources */,
+				22F5681B2020C301009850FD /* process.c in Sources */,
+				22F5680E2020C2F0009850FD /* util.c in Sources */,
+				22F568172020C2FB009850FD /* undo.c in Sources */,
+				22F5680C2020C2F0009850FD /* grep.c in Sources */,
+				22F568132020C2FB009850FD /* io.c in Sources */,
+				22F5681D2020C305009850FD /* cset.c in Sources */,
+				22F5681A2020C301009850FD /* misc.c in Sources */,
+				22F5680D2020C2F0009850FD /* queue.c in Sources */,
+				22F5680A2020C2E7009850FD /* wc.c in Sources */,
+				22F5681C2020C305009850FD /* cmap.c in Sources */,
+				22F568152020C2FB009850FD /* re.c in Sources */,
+				22F5681F2020C305009850FD /* tr.c in Sources */,
+				22F568192020C301009850FD /* main.c in Sources */,
+				22F568142020C2FB009850FD /* main.c in Sources */,
+				22F568112020C2FB009850FD /* cbc.c in Sources */,
+				22F5680B2020C2F0009850FD /* file.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
