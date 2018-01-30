@@ -23,21 +23,10 @@
 		2248DB162004C5DB00F2944C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB122004C5DB00F2944C /* main.c */; };
 		2248DB172004C5DB00F2944C /* process.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB132004C5DB00F2944C /* process.c */; };
 		2248DB182004C5DB00F2944C /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB142004C5DB00F2944C /* compile.c */; };
-		2248DB252004F82700F2944C /* ytab.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1A2004F82600F2944C /* ytab.c */; };
-		2248DB262004F82700F2944C /* run.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1B2004F82600F2944C /* run.c */; };
-		2248DB282004F82700F2944C /* parse.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1D2004F82600F2944C /* parse.c */; };
-		2248DB292004F82700F2944C /* lex.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1E2004F82600F2944C /* lex.c */; };
-		2248DB2A2004F82700F2944C /* lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1F2004F82600F2944C /* lib.c */; };
-		2248DB2B2004F82700F2944C /* b.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB202004F82700F2944C /* b.c */; };
-		2248DB2C2004F82700F2944C /* tran.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB212004F82700F2944C /* tran.c */; };
-		2248DB2E2004F82700F2944C /* proctab.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB232004F82700F2944C /* proctab.c */; };
-		2248DB2F2004F82700F2944C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB242004F82700F2944C /* main.c */; };
 		2253BA1E201942B20019CB39 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2253BA1D201942B10019CB39 /* libresolv.9.tbd */; };
-		22577F9C1FDB4B5C0050F312 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22577F9B1FDB4B5C0050F312 /* libxml2.tbd */; };
 		225782911FDB4D390050F312 /* curl_config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257811A1FDB4D380050F312 /* curl_config.h */; };
 		225F060B20163C2000466685 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		225F06102016751900466685 /* getopt_long.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060F2016751800466685 /* getopt_long.c */; };
-		225F061220171B4300466685 /* ssh_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F061120171B4300466685 /* ssh_main.c */; settings = {COMPILER_FLAGS = "-F ../../../blink/Frameworks/"; }; };
 		226378751FDB3EE400AE8827 /* termcap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2263780D1FDB3EE100AE8827 /* termcap.h */; };
 		226378781FDB3EE400AE8827 /* pathnames.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378111FDB3EE100AE8827 /* pathnames.h */; };
 		2263787D1FDB3EE400AE8827 /* extern.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378181FDB3EE200AE8827 /* extern.h */; };
@@ -79,7 +68,6 @@
 		228541D3201F990700B93589 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378501FDB3EE300AE8827 /* compress.c */; };
 		228541D4201F990700B93589 /* zopen.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378581FDB3EE300AE8827 /* zopen.c */; };
 		228541D6201F998F00B93589 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */; };
-		228541DE201FBF4D00B93589 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 		228541EC201FC0AD00B93589 /* bsdtar.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577F4B1FDB47B70050F312 /* bsdtar.c */; settings = {COMPILER_FLAGS = "-D HAVE_CONFIG_H"; }; };
 		228541ED201FC0B100B93589 /* bsdtar_windows.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577F4E1FDB47B70050F312 /* bsdtar_windows.c */; settings = {COMPILER_FLAGS = "-D HAVE_CONFIG_H"; }; };
 		228541EE201FC0B500B93589 /* cmdline.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577F511FDB47B70050F312 /* cmdline.c */; settings = {COMPILER_FLAGS = "-D HAVE_CONFIG_H"; }; };
@@ -331,9 +319,17 @@
 		22908B51201FC85E002AFBA7 /* spnego_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780911FDB4D380050F312 /* spnego_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		22908B52201FC85E002AFBA7 /* vauth.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780921FDB4D380050F312 /* vauth.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ../../../blink/Frameworks/libssh2.framework/Headers/ "; }; };
 		22AC09E620209C58006F7D8B /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
-		22C629ED201FCDAD000DCCDA /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		22AC09F62020A007006F7D8B /* b.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB202004F82700F2944C /* b.c */; };
+		22AC09F72020A007006F7D8B /* lex.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1E2004F82600F2944C /* lex.c */; };
+		22AC09F82020A008006F7D8B /* lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1F2004F82600F2944C /* lib.c */; };
+		22AC09F92020A008006F7D8B /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB242004F82700F2944C /* main.c */; };
+		22AC09FA2020A008006F7D8B /* parse.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1D2004F82600F2944C /* parse.c */; };
+		22AC09FB2020A008006F7D8B /* proctab.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB232004F82700F2944C /* proctab.c */; };
+		22AC09FC2020A008006F7D8B /* run.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1B2004F82600F2944C /* run.c */; };
+		22AC09FD2020A008006F7D8B /* tran.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB212004F82700F2944C /* tran.c */; };
+		22AC09FE2020A008006F7D8B /* ytab.c in Sources */ = {isa = PBXBuildFile; fileRef = 2248DB1A2004F82600F2944C /* ytab.c */; };
+		22AC09FF2020A024006F7D8B /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
-		22CF278D1FDB3FDB0087DDAD /* ios_error.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27661FDB3FDA0087DDAD /* ios_error.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22CF278F1FDB3FDB0087DDAD /* printenv.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27691FDB3FDA0087DDAD /* printenv.c */; };
 		22CF27911FDB3FDB0087DDAD /* env.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF276C1FDB3FDA0087DDAD /* env.c */; };
 		22CF27921FDB3FDB0087DDAD /* envopts.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF276D1FDB3FDA0087DDAD /* envopts.c */; };
@@ -350,7 +346,6 @@
 		22CF27A21FDB3FDB0087DDAD /* proc_compare.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27811FDB3FDA0087DDAD /* proc_compare.c */; };
 		22CF27A51FDB3FDB0087DDAD /* w.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27841FDB3FDA0087DDAD /* w.c */; };
 		22CF27A81FDB3FDB0087DDAD /* id.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27881FDB3FDA0087DDAD /* id.c */; };
-		22CF27AD1FDB42AF0087DDAD /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */; };
 		22CF27AF1FDB42C80087DDAD /* libncurses.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AE1FDB42C80087DDAD /* libncurses.tbd */; };
 		22CF27C11FDB43080087DDAD /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B21FDB43070087DDAD /* file.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH -DWITHOUT_LZMA"; }; };
 		22CF27C31FDB43080087DDAD /* grep.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27B41FDB43070087DDAD /* grep.c */; settings = {COMPILER_FLAGS = "-DWITHOUT_FASTMATCH"; }; };
@@ -364,6 +359,17 @@
 		22D8DEBD20079E4C00FAADB7 /* cmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB920079E4C00FAADB7 /* cmap.c */; };
 		22D8DEBE20079E4C00FAADB7 /* tr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBA20079E4C00FAADB7 /* tr.c */; };
 		22D8DEBF20079E4C00FAADB7 /* str.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEBB20079E4C00FAADB7 /* str.c */; };
+		22F567C62020B7F1009850FD /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
+		22F567C82020B807009850FD /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
+		22F567C92020B80F009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		22F567CA2020B83A009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		22F567D92020BA2D009850FD /* ssh_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F061120171B4300466685 /* ssh_main.c */; settings = {COMPILER_FLAGS = "-I ../../../libssh2-for-iOS/include/"; }; };
+		22F567DA2020BA75009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		22F567DB2020BA84009850FD /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
+		22F567DC2020BA95009850FD /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
+		22F567DE2020BAD9009850FD /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567DD2020BAD9009850FD /* libz.tbd */; };
+		22F567DF2020BAFB009850FD /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567DD2020BAD9009850FD /* libz.tbd */; };
+		22F567E02020BB0A009850FD /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -386,6 +392,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		22908AA1201FC7B4002AFBA7 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22AC09EB20209FEB006F7D8B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22F567CD2020B9EB009850FD /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "include/$(PRODUCT_NAME)";
@@ -748,8 +772,9 @@
 		228541E3201FC05000B93589 /* libtar.dylib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libtar.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		22908AA3201FC7B4002AFBA7 /* libcurl.dylib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libcurl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		22AC09E520209C57006F7D8B /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = "../../../libssh2-for-iOS/libssh2.framework"; sourceTree = "<group>"; };
+		22AC09ED20209FEB006F7D8B /* libawk.dylib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libawk.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		22CF27601FDB3FDA0087DDAD /* libutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libutil.h; path = libutil/libutil.h; sourceTree = SOURCE_ROOT; };
-		22CF27661FDB3FDA0087DDAD /* ios_error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ios_error.h; path = ios_system/ios_error.h; sourceTree = SOURCE_ROOT; };
+		22CF27661FDB3FDA0087DDAD /* ios_error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_error.h; sourceTree = SOURCE_ROOT; };
 		22CF27691FDB3FDA0087DDAD /* printenv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = printenv.c; sourceTree = "<group>"; };
 		22CF276C1FDB3FDA0087DDAD /* env.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = env.c; sourceTree = "<group>"; };
 		22CF276D1FDB3FDA0087DDAD /* envopts.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = envopts.c; sourceTree = "<group>"; };
@@ -780,6 +805,9 @@
 		22D8DEB920079E4C00FAADB7 /* cmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmap.c; path = text_cmds/tr/cmap.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBA20079E4C00FAADB7 /* tr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tr.c; path = text_cmds/tr/tr.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBB20079E4C00FAADB7 /* str.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = str.c; path = text_cmds/tr/str.c; sourceTree = SOURCE_ROOT; };
+		22F567C72020B807009850FD /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = "../../../libssh2-for-iOS/openssl.framework"; sourceTree = "<group>"; };
+		22F567CF2020B9EB009850FD /* libssh_cmd.dylib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libssh_cmd.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -787,11 +815,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22F567E02020BB0A009850FD /* libbz2.tbd in Frameworks */,
+				22F567DF2020BAFB009850FD /* libz.tbd in Frameworks */,
 				22AC09E620209C58006F7D8B /* libssh2.framework in Frameworks */,
 				2253BA1E201942B20019CB39 /* libresolv.9.tbd in Frameworks */,
-				22CF27AD1FDB42AF0087DDAD /* libbz2.tbd in Frameworks */,
 				22CF27AF1FDB42C80087DDAD /* libncurses.tbd in Frameworks */,
-				22577F9C1FDB4B5C0050F312 /* libxml2.tbd in Frameworks */,
 				22257E811FDA7C0C00FBA97D /* openssl.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -800,7 +828,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				228541DE201FBF4D00B93589 /* ios_system.framework in Frameworks */,
+				22F567CA2020B83A009850FD /* ios_system.framework in Frameworks */,
 				228541D6201F998F00B93589 /* libbz2.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -819,7 +847,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				22C629ED201FCDAD000DCCDA /* ios_system.framework in Frameworks */,
+				22F567C92020B80F009850FD /* ios_system.framework in Frameworks */,
+				22F567C82020B807009850FD /* openssl.framework in Frameworks */,
+				22F567C62020B7F1009850FD /* libssh2.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22AC09EA20209FEB006F7D8B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22AC09FF2020A024006F7D8B /* ios_system.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22F567CC2020B9EB009850FD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22F567DE2020BAD9009850FD /* libz.tbd in Frameworks */,
+				22F567DC2020BA95009850FD /* openssl.framework in Frameworks */,
+				22F567DB2020BA84009850FD /* libssh2.framework in Frameworks */,
+				22F567DA2020BA75009850FD /* ios_system.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -829,6 +878,7 @@
 		223496A11FD5FC71007ED1A9 = {
 			isa = PBXGroup;
 			children = (
+				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				225F061120171B4300466685 /* ssh_main.c */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
 				225F060F2016751800466685 /* getopt_long.c */,
@@ -852,6 +902,8 @@
 				228541AB201F986300B93589 /* libfiles.dylib */,
 				228541E3201FC05000B93589 /* libtar.dylib */,
 				22908AA3201FC7B4002AFBA7 /* libcurl.dylib */,
+				22AC09ED20209FEB006F7D8B /* libawk.dylib */,
+				22F567CF2020B9EB009850FD /* libssh_cmd.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -859,7 +911,6 @@
 		223496AD1FD5FC71007ED1A9 /* ios_system */ = {
 			isa = PBXGroup;
 			children = (
-				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				223496AE1FD5FC71007ED1A9 /* ios_system.h */,
 				223496AF1FD5FC71007ED1A9 /* Info.plist */,
 			);
@@ -869,6 +920,8 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				22F567DD2020BAD9009850FD /* libz.tbd */,
+				22F567C72020B807009850FD /* openssl.framework */,
 				22AC09E520209C57006F7D8B /* libssh2.framework */,
 				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
 				22577F9B1FDB4B5C0050F312 /* libxml2.tbd */,
@@ -1640,7 +1693,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				2263787D1FDB3EE400AE8827 /* extern.h in Headers */,
-				22CF278D1FDB3FDB0087DDAD /* ios_error.h in Headers */,
 				226378781FDB3EE400AE8827 /* pathnames.h in Headers */,
 				223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */,
 				226378751FDB3EE400AE8827 /* termcap.h in Headers */,
@@ -1732,6 +1784,40 @@
 			productReference = 22908AA3201FC7B4002AFBA7 /* libcurl.dylib */;
 			productType = "com.apple.product-type.library.static";
 		};
+		22AC09EC20209FEB006F7D8B /* awk */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22AC09F320209FEB006F7D8B /* Build configuration list for PBXNativeTarget "awk" */;
+			buildPhases = (
+				22AC09E920209FEB006F7D8B /* Sources */,
+				22AC09EA20209FEB006F7D8B /* Frameworks */,
+				22AC09EB20209FEB006F7D8B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = awk;
+			productName = awk;
+			productReference = 22AC09ED20209FEB006F7D8B /* libawk.dylib */;
+			productType = "com.apple.product-type.library.static";
+		};
+		22F567CE2020B9EB009850FD /* ssh_cmd */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22F567D52020B9EB009850FD /* Build configuration list for PBXNativeTarget "ssh_cmd" */;
+			buildPhases = (
+				22F567CB2020B9EB009850FD /* Sources */,
+				22F567CC2020B9EB009850FD /* Frameworks */,
+				22F567CD2020B9EB009850FD /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ssh_cmd;
+			productName = ssh_cmd;
+			productReference = 22F567CF2020B9EB009850FD /* libssh_cmd.dylib */;
+			productType = "com.apple.product-type.library.static";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -1757,6 +1843,14 @@
 						CreatedOnToolsVersion = 9.3;
 						ProvisioningStyle = Automatic;
 					};
+					22AC09EC20209FEB006F7D8B = {
+						CreatedOnToolsVersion = 9.3;
+						ProvisioningStyle = Automatic;
+					};
+					22F567CE2020B9EB009850FD = {
+						CreatedOnToolsVersion = 9.3;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 223496A51FD5FC71007ED1A9 /* Build configuration list for PBXProject "ios_system" */;
@@ -1775,6 +1869,8 @@
 				228541AA201F986300B93589 /* files */,
 				228541E2201FC05000B93589 /* tar */,
 				22908AA2201FC7B4002AFBA7 /* curl */,
+				22AC09EC20209FEB006F7D8B /* awk */,
+				22F567CE2020B9EB009850FD /* ssh_cmd */,
 			);
 		};
 /* End PBXProject section */
@@ -1798,18 +1894,13 @@
 				22D8DEB6200791BB00FAADB7 /* echo.c in Sources */,
 				2248DB0B2004A5F900F2944C /* undo.c in Sources */,
 				22CF27CC1FDB43080087DDAD /* wc.c in Sources */,
-				2248DB282004F82700F2944C /* parse.c in Sources */,
 				2248DB0E2004A5F900F2944C /* buf.c in Sources */,
-				2248DB2A2004F82700F2944C /* lib.c in Sources */,
-				2248DB2B2004F82700F2944C /* b.c in Sources */,
 				22CF27C61FDB43080087DDAD /* util.c in Sources */,
 				22CF27C81FDB43080087DDAD /* cat.c in Sources */,
 				2248DB0F2004A5F900F2944C /* re.c in Sources */,
 				22CF27951FDB3FDB0087DDAD /* date.c in Sources */,
-				2248DB252004F82700F2944C /* ytab.c in Sources */,
 				22CF27A11FDB3FDB0087DDAD /* pr_time.c in Sources */,
 				2248DB0C2004A5F900F2944C /* sub.c in Sources */,
-				2248DB2F2004F82700F2944C /* main.c in Sources */,
 				2248DB182004C5DB00F2944C /* compile.c in Sources */,
 				2248DB082004A5F900F2944C /* main.c in Sources */,
 				2248DB172004C5DB00F2944C /* process.c in Sources */,
@@ -1824,20 +1915,15 @@
 				22CF279C1FDB3FDB0087DDAD /* pwd.c in Sources */,
 				22CF27A01FDB3FDB0087DDAD /* fmt.c in Sources */,
 				2248DB0A2004A5F900F2944C /* io.c in Sources */,
-				2248DB262004F82700F2944C /* run.c in Sources */,
 				22CF279E1FDB3FDB0087DDAD /* uname.c in Sources */,
 				22CF27A81FDB3FDB0087DDAD /* id.c in Sources */,
-				2248DB292004F82700F2944C /* lex.c in Sources */,
 				22CF27921FDB3FDB0087DDAD /* envopts.c in Sources */,
 				22CF27C11FDB43080087DDAD /* file.c in Sources */,
-				225F061220171B4300466685 /* ssh_main.c in Sources */,
 				22D8DEBF20079E4C00FAADB7 /* str.c in Sources */,
 				22319FA01FDC2332004D875A /* getopt.c in Sources */,
 				22CF278F1FDB3FDB0087DDAD /* printenv.c in Sources */,
-				2248DB2C2004F82700F2944C /* tran.c in Sources */,
 				225F06102016751900466685 /* getopt_long.c in Sources */,
 				22CF27C31FDB43080087DDAD /* grep.c in Sources */,
-				2248DB2E2004F82700F2944C /* proctab.c in Sources */,
 				2248DB162004C5DB00F2944C /* main.c in Sources */,
 				22D8DEBE20079E4C00FAADB7 /* tr.c in Sources */,
 				225F060B20163C2000466685 /* tee.c in Sources */,
@@ -2145,6 +2231,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		22AC09E920209FEB006F7D8B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22AC09FB2020A008006F7D8B /* proctab.c in Sources */,
+				22AC09F92020A008006F7D8B /* main.c in Sources */,
+				22AC09F72020A007006F7D8B /* lex.c in Sources */,
+				22AC09FC2020A008006F7D8B /* run.c in Sources */,
+				22AC09F82020A008006F7D8B /* lib.c in Sources */,
+				22AC09FE2020A008006F7D8B /* ytab.c in Sources */,
+				22AC09FD2020A008006F7D8B /* tran.c in Sources */,
+				22AC09FA2020A008006F7D8B /* parse.c in Sources */,
+				22AC09F62020A007006F7D8B /* b.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22F567CB2020B9EB009850FD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22F567D92020BA2D009850FD /* ssh_main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -2335,6 +2445,7 @@
 				EXECUTABLE_EXTENSION = dylib;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
 				MACH_O_TYPE = mh_dylib;
+				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2353,6 +2464,7 @@
 				EXECUTABLE_EXTENSION = dylib;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
 				MACH_O_TYPE = mh_dylib;
+				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2440,6 +2552,94 @@
 			};
 			name = Release;
 		};
+		22AC09F420209FEB006F7D8B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = VG8Z23C8YL;
+				EXECUTABLE_EXTENSION = dylib;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
+				MACH_O_TYPE = mh_dylib;
+				OTHER_CFLAGS = (
+					"-I",
+					ios_system/,
+				);
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		22AC09F520209FEB006F7D8B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = VG8Z23C8YL;
+				EXECUTABLE_EXTENSION = dylib;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
+				MACH_O_TYPE = mh_dylib;
+				OTHER_CFLAGS = (
+					"-I",
+					ios_system/,
+				);
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		22F567D62020B9EB009850FD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = VG8Z23C8YL;
+				EXECUTABLE_EXTENSION = dylib;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
+				MACH_O_TYPE = mh_dylib;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-F",
+					"../../../libssh2-for-iOS/",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		22F567D72020B9EB009850FD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = VG8Z23C8YL;
+				EXECUTABLE_EXTENSION = dylib;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
+				MACH_O_TYPE = mh_dylib;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-F",
+					"../../../libssh2-for-iOS/",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2484,6 +2684,24 @@
 			buildConfigurations = (
 				22908AAA201FC7B4002AFBA7 /* Debug */,
 				22908AAB201FC7B4002AFBA7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		22AC09F320209FEB006F7D8B /* Build configuration list for PBXNativeTarget "awk" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22AC09F420209FEB006F7D8B /* Debug */,
+				22AC09F520209FEB006F7D8B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		22F567D52020B9EB009850FD /* Build configuration list for PBXNativeTarget "ssh_cmd" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22F567D62020B9EB009850FD /* Debug */,
+				22F567D72020B9EB009850FD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
