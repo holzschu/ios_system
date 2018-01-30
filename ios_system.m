@@ -223,6 +223,7 @@ static void initializeCommandList()
     // 2nd component: name of command
     // 3rd component: chain sent to getopt (for arguments in autocomplete)
     // 4th component: takes a file/directory as argument
+    if (commandList != nil) return;
     commandList = \
     @{
       // libfiles.dylib
@@ -398,6 +399,22 @@ static int cd_main(int argc, char** argv) {
     return 0;
 }
 
+
+NSString* getoptString(NSString* commandName) {
+    if (commandList == nil) initializeCommandList();
+    NSArray* commandStructure = [commandList objectForKey: commandName];
+    if (commandStructure != nil) return commandStructure[2];
+    else return @"";
+}
+
+NSString* operatesOn(NSString* commandName) {
+    if (commandList == nil) initializeCommandList();
+    NSArray* commandStructure = [commandList objectForKey: commandName];
+    if (commandStructure != nil) return commandStructure[3];
+    else return @"";
+}
+
+
 int ios_executable(const char* inputCmd) {
     // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
     int (*function)(int ac, char** av) = NULL;
@@ -538,16 +555,15 @@ void replaceCommand(NSString* commandName, NSString* functionName, bool allOccur
     NSArray* oldValues = [commandList objectForKey: commandName];
     NSString* oldFunctionName = nil;
     if (oldValues != nil) oldFunctionName = oldValues[1];
-    NSArray* replacementArray = [NSArray arrayWithObjects: @"MAIN", functionName, @"", @"file", nil];
     NSMutableDictionary *mutableDict = [commandList mutableCopy];
-    mutableDict[commandName] = replacementArray;
+    mutableDict[commandName] = [NSArray arrayWithObjects: @"MAIN", functionName, @"", @"file", nil];
     
     if ((oldFunctionName != nil) && allOccurences) {
         // scan through all dictionary entries
         for (NSString* existingCommand in mutableDict.allKeys) {
             NSArray* currentPosition = [mutableDict objectForKey: existingCommand];
             if ([currentPosition[1] isEqualToString:oldFunctionName])
-                [mutableDict setValue: replacementArray forKey: existingCommand];
+                [mutableDict setValue: [NSArray arrayWithObjects: @"MAIN", functionName, @"", @"file", nil] forKey: existingCommand];
         }
     }
     commandList = [mutableDict mutableCopy];
