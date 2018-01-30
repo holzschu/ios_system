@@ -122,7 +122,7 @@ void initializeEnvironment() {
     setenv("CURL_HOME", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
     setenv("SSL_CERT_FILE", [docsPath stringByAppendingPathComponent:@"cacert.pem"].UTF8String, 0); // SLL cacert.pem in ~/Documents/cacert.pem or [Cloud Drive]/cacert.pem
     // iOS already defines "HOME" as the home dir of the application
-#ifdef FEAT_PYTHON
+#ifdef SIDELOADING
     NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
     if (![fullCommandPath containsString:@"Library/bin"]) {
         NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
