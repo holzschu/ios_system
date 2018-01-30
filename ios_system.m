@@ -23,9 +23,13 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include <libgen.h> // for basename()
-#include <dlfcn.h>
+#include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
 // is executable, looking at "x" bit. Other methods fails on iOS:
 #define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH))
+// Sideloading: when you compile yourself, as opposed to uploading on the app store
+// If defined, all functions are enabled. If undefined, you get a smaller set, but
+// more compliance with AppStore rules.
+#define SIDELOADING
 
 #ifdef SHELL_UTILITIES
 extern int date_main(int argc, char *argv[]);
@@ -47,17 +51,8 @@ extern int tr_main(int argc, char *argv[]);
 extern int sed_main(int argc, char *argv[]);
 extern int awk_main(int argc, char *argv[]);
 #endif
-#ifdef FEAT_LUA
-extern int lua_main(int argc, char *argv[]);
-extern int luac_main(int argc, char *argv[]);
-#endif
 #ifdef FEAT_PYTHON
 extern int python_main(int argc, char **argv);
-#endif
-#ifdef TEX_COMMANDS
-extern int bibtex_main(int argc, char *argv[]);
-extern int dllluatexmain(int argc, char *argv[]);
-extern int dllpdftexmain(int argc, char *argv[]);
 #endif
 // local commands
 extern int setenv_main(int argc, char *argv[]);
@@ -268,14 +263,16 @@ static void initializeCommandList()
       @"ln"    : [NSArray arrayWithObjects:@"libfiles.dylib", @"ln_main", @"Ffhinsv", @"files", nil],
       @"link"  : [NSArray arrayWithObjects:@"libfiles.dylib", @"ln_main", @"", @"files", nil],
       @"mv"    : [NSArray arrayWithObjects:@"libfiles.dylib", @"mv_main", @"finv", @"files", nil],
-      @"mkdir" : [NSArray arrayWithObjects:@"libfiles.dylib", @"mkdir_main", @"m:pv", @"files", nil],
-      @"rmdir" : [NSArray arrayWithObjects:@"libfiles.dylib", @"rmdir_main", @"p", @"files", nil],
+      @"mkdir" : [NSArray arrayWithObjects:@"libfiles.dylib", @"mkdir_main", @"m:pv", @"directory", nil],
+      @"rmdir" : [NSArray arrayWithObjects:@"libfiles.dylib", @"rmdir_main", @"p", @"directory", nil],
+      @"chflags": [NSArray arrayWithObjects:@"libfiles.dylib", @"chflags_main", @"HLPRfhv", @"files", nil],
+#ifdef SIDELOADING
       @"chown" : [NSArray arrayWithObjects:@"libfiles.dylib", @"chown_main", @"HLPRfhv", @"files", nil],
       @"chgrp" : [NSArray arrayWithObjects:@"libfiles.dylib", @"chown_main", @"HLPRfhv", @"files", nil],
-      @"chflags": [NSArray arrayWithObjects:@"libfiles.dylib", @"chflags_main", @"HLPRfhv", @"files", nil],
       @"chmod" : [NSArray arrayWithObjects:@"libfiles.dylib", @"chmod_main", @"ACEHILNPRVXafghinorstuvwx", @"files", nil],
-      @"du"    : [NSArray arrayWithObjects:@"libfiles.dylib", @"du_main", @"HI:LPasd:cghkmrx", @"no", nil],
       @"df"    : [NSArray arrayWithObjects:@"libfiles.dylib", @"df_main", @"abgHhiklmnPtT:", @"files", nil],
+#endif
+      @"du"    : [NSArray arrayWithObjects:@"libfiles.dylib", @"du_main", @"HI:LPasd:cghkmrx", @"no", nil],
       @"chksum" : [NSArray arrayWithObjects:@"libfiles.dylib", @"chksum_main", @"o:", @"files", nil],
       @"sum"    : [NSArray arrayWithObjects:@"libfiles.dylib", @"chksum_main", @"", @"files", nil],
       @"stat"   : [NSArray arrayWithObjects:@"libfiles.dylib", @"stat_main", @"f:FlLnqrst:x", @"files", nil],
@@ -287,22 +284,54 @@ static void initializeCommandList()
       // libtar.dylib
       @"tar"    : [NSArray arrayWithObjects:@"libtar.dylib", @"tar_main", @"Bb:C:cf:HhI:JjkLlmnOoPpqrSs:T:tUuvW:wX:xyZz", @"files", nil],
       // libcurl.dylib
-      @"curl"    : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"2346aAbBcCdDeEfgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwxXYyz#", @"files", nil],
-      @"scp"     : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"q", @"files", nil],
-      @"sftp"    : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"q", @"files", nil],
-      // lua
-      @"lua"     : [NSArray arrayWithObjects:@"lua_ios.framework/lua_ios", @"lua_main", @"q", @"files", nil],
-      @"luac"    : [NSArray arrayWithObjects:@"lua_ios.framework/lua_ios", @"luac_main", @"q", @"files", nil],
-
-#ifdef CURL_COMMANDS
       // From curl. curl with ssh requires keys, and thus keys generation / management.
       // We assume you moved over the keys, known_host files from elsewhere
       // http, https, ftp... should be OK.
-      @"curl"   : [NSValue valueWithPointer: curl_main],
+      @"curl"    : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"2346aAbBcCdDeEfgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwxXYyz#", @"files", nil],
       // scp / sftp require conversion to curl, rewriting arguments
-      @"scp"    : [NSValue valueWithPointer: curl_main],
-      @"sftp"   : [NSValue valueWithPointer: curl_main],
+      @"scp"     : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"q", @"files", nil],
+      @"sftp"    : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"q", @"files", nil],
+#ifdef SIDELOADING
+      // lua
+      @"lua"     : [NSArray arrayWithObjects:@"lua_ios.framework/lua_ios", @"lua_main", @"e:il:vE", @"files", nil],
+      @"luac"    : [NSArray arrayWithObjects:@"lua_ios.framework/lua_ios", @"luac_main", @"lpsvo:", @"files", nil],
+      // from python:
+      @"python"  : [NSArray arrayWithObjects:@"Python_ios.framework/Python_ios", @"python_main", @"3bBc:dEhiJm:OQ:RsStuUvVW:xX?", @"files", nil],
+      // TeX
+      // LuaTeX:
+      @"luatex"     : [NSArray arrayWithObjects:@"libluatex.dylib", @"dllluatexmain", @"", @"files", nil],
+      @"lualatex"     : [NSArray arrayWithObjects:@"libluatex.dylib", @"dllluatexmain", @"", @"files", nil],
+      @"texlua"     : [NSArray arrayWithObjects:@"libluatex.dylib", @"dllluatexmain", @"", @"files", nil],
+      @"texluac"     : [NSArray arrayWithObjects:@"libluatex.dylib", @"dllluatexmain", @"", @"files", nil],
+      @"dviluatex"     : [NSArray arrayWithObjects:@"libluatex.dylib", @"dllluatexmain", @"", @"files", nil],
+      @"dvilualatex"     : [NSArray arrayWithObjects:@"libluatex.dylib", @"dllluatexmain", @"", @"files", nil],
+      // pdfTeX
+      @"amstex"     :  [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"cslatex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"csplain"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"eplain"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"etex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"jadetex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"latex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"mex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"mllatex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"mltex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdfcslatex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdfcsplain"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdfetex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdfjadetex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdflatex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdftex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdfmex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"pdfxmltex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"texsis"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"utf8mex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      @"xmltex"     : [NSArray arrayWithObjects:@"libpdftex.dylib", @"dllpdftexmain", @"", @"files", nil],
+      // BibTeX
+      @"bibtex"     : [NSArray arrayWithObjects:@"libbibtex.dylib", @"bibtex_main", @"", @"files", nil],
 #endif
+      // local commands. Either self (here) or main (main program)
+      @"cd"     : [NSArray arrayWithObjects:@"SELF", @"cd_main", @"", @"directory", nil],
 
 #ifdef SHELL_UTILITIES
                     // Commands from Apple shell_cmds:
@@ -313,7 +342,8 @@ static void initializeCommandList()
                     @"uname"  : [NSValue valueWithPointer: uname_main],
                     @"date"   : [NSValue valueWithPointer: date_main],
                     @"env"    : [NSValue valueWithPointer: env_main],
-                    // + setenv, unsetenv
+      @"setenv"     : [NSValue valueWithPointer: setenv_main],
+      @"unsetenv"     : [NSValue valueWithPointer: unsetenv_main],
                     @"id"     : [NSValue valueWithPointer: id_main],
                     @"groups" : [NSValue valueWithPointer: id_main],
                     @"whoami" : [NSValue valueWithPointer: id_main],
@@ -340,54 +370,8 @@ static void initializeCommandList()
                     @"ping"  : [NSValue valueWithPointer: ping_main],
 #endif
 #ifdef FEAT_PYTHON
-                    // from python:
-                    @"python"  : [NSValue valueWithPointer: python_main],
-#endif
-#ifdef FEAT_LUA
-                    // from lua:
-                    @"lua"     : [NSValue valueWithPointer: lua_main],
-                    @"luac"    : [NSValue valueWithPointer: luac_main],
 #endif
 #ifdef TEX_COMMANDS
-                    // from TeX:
-                    // LuaTeX:
-                    @"luatex"     : [NSValue valueWithPointer: dllluatexmain],
-                    @"lualatex"     : [NSValue valueWithPointer: dllluatexmain],
-                    @"texlua"     : [NSValue valueWithPointer: dllluatexmain],
-                    @"texluac"     : [NSValue valueWithPointer: dllluatexmain],
-                    @"dviluatex"     : [NSValue valueWithPointer: dllluatexmain],
-                    @"dvilualatex"     : [NSValue valueWithPointer: dllluatexmain],
-                    // pdfTeX
-                    @"amstex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"cslatex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"csplain"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"eplain"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"etex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"jadetex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"latex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"mex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"mllatex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"mltex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdfcslatex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdfcsplain"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdfetex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdfjadetex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdflatex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdftex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdfmex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"pdfxmltex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"texsis"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"utf8mex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    @"xmltex"     : [NSValue valueWithPointer: dllpdftexmain],
-                    // XeTeX:
-                    // @"xetex"     : [NSValue valueWithPointer: dllxetexmain],
-                    // @"xelatex"     : [NSValue valueWithPointer: dllxetexmain],
-                    // BibTeX
-                    @"bibtex"     : [NSValue valueWithPointer: bibtex_main],
-      // local commands
-      @"setenv"     : [NSValue valueWithPointer: setenv_main],
-      @"unsetenv"     : [NSValue valueWithPointer: unsetenv_main],
-      @"cd"     : [NSValue valueWithPointer: cd_main],
       @"ssh"     : [NSValue valueWithPointer: ssh_main],
 #endif
                     };
@@ -947,7 +931,9 @@ int ios_system(const char* inputCmd) {
         void* handle = NULL;
         if (commandStructure != nil) {
             NSString* libraryName = commandStructure[0];
-            handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_LOCAL);
+            if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
+            else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
+            else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_LOCAL); // commands defined in dynamic library
             NSString* functionName = commandStructure[1];
             function = dlsym(handle, functionName.UTF8String);
         }
