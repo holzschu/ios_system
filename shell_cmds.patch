@@ -1,6 +1,6 @@
 diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
 --- shell_cmds-203/date/date.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/date.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/date/date.c	2018-01-23 22:11:32.000000000 +0100
 @@ -47,7 +47,7 @@
  #include <sys/stat.h>
  
@@ -178,7 +178,7 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  	    unix2003_std ?
 diff -Naur shell_cmds-203/date/extern.h shell_cmds/date/extern.h
 --- shell_cmds-203/date/extern.h	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/extern.h	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/date/extern.h	2018-01-23 22:11:32.000000000 +0100
 @@ -30,6 +30,6 @@
   * $FreeBSD$
   */
@@ -189,7 +189,7 @@ diff -Naur shell_cmds-203/date/extern.h shell_cmds/date/extern.h
  int	netsettime(time_t);
 diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
 --- shell_cmds-203/date/vary.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/vary.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/date/vary.c	2018-01-23 22:11:32.000000000 +0100
 @@ -27,11 +27,14 @@
  #include <sys/cdefs.h>
  __FBSDID("$FreeBSD$");
@@ -222,7 +222,7 @@ diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
    return result;
 diff -Naur shell_cmds-203/echo/echo.c shell_cmds/echo/echo.c
 --- shell_cmds-203/echo/echo.c	2006-12-21 02:07:57.000000000 +0100
-+++ shell_cmds/echo/echo.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/echo/echo.c	2018-01-23 22:11:32.000000000 +0100
 @@ -50,6 +50,10 @@
  #include <stdlib.h>
  #include <string.h>
@@ -280,7 +280,7 @@ diff -Naur shell_cmds-203/echo/echo.c shell_cmds/echo/echo.c
  	}
 diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 --- shell_cmds-203/env/env.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/env.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/env/env.c	2018-01-23 22:11:32.000000000 +0100
 @@ -42,7 +42,7 @@
  #include <sys/cdefs.h>
  __FBSDID("$FreeBSD$");
@@ -398,7 +398,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  	exit(1);
 diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
 --- shell_cmds-203/env/envopts.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/envopts.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/env/envopts.c	2018-01-23 22:11:32.000000000 +0100
 @@ -33,7 +33,7 @@
  
  #include <sys/stat.h>
@@ -535,7 +535,7 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  	/*
 diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 --- shell_cmds-203/env/envopts.h	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/envopts.h	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/env/envopts.h	2018-01-23 22:11:32.000000000 +0100
 @@ -34,4 +34,4 @@
  void		 split_spaces(const char *str, int *origind, int *origc,
  		    char ***origv);
@@ -544,7 +544,7 @@ diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 +extern __thread int	 env_verbosity;
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/id/id.c	2018-01-23 22:11:32.000000000 +0100
 @@ -54,7 +54,7 @@
  #include <bsm/audit.h>
  #endif
@@ -867,7 +867,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		    "       id -A\n",
 diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
 --- shell_cmds-203/printenv/printenv.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/printenv/printenv.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/printenv/printenv.c	2018-01-23 22:11:32.000000000 +0100
 @@ -48,8 +48,9 @@
  #include <stdio.h>
  #include <string.h>
@@ -924,7 +924,7 @@ diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
  }
 diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
 --- shell_cmds-203/pwd/pwd.c	2006-09-12 00:14:13.000000000 +0200
-+++ shell_cmds/pwd/pwd.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/pwd/pwd.c	2018-01-23 22:11:32.000000000 +0100
 @@ -45,21 +45,24 @@
  #include <sys/stat.h>
  #include <sys/types.h>
@@ -985,7 +985,7 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
 diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 --- shell_cmds-203/tee/tee.c	1999-04-23 04:44:50.000000000 +0200
-+++ shell_cmds/tee/tee.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/tee/tee.c	2018-01-23 22:11:32.000000000 +0100
 @@ -57,29 +57,37 @@
  #include <string.h>
  #include <locale.h>
@@ -1132,7 +1132,7 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  	head = p;
 diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
 --- shell_cmds-203/uname/uname.c	2013-09-26 01:55:54.000000000 +0200
-+++ shell_cmds/uname/uname.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/uname/uname.c	2018-01-23 22:11:32.000000000 +0100
 @@ -42,21 +42,23 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -1249,7 +1249,7 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
  }
 diff -Naur shell_cmds-203/w/extern.h shell_cmds/w/extern.h
 --- shell_cmds-203/w/extern.h	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/extern.h	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/w/extern.h	2018-01-23 22:11:32.000000000 +0100
 @@ -31,7 +31,7 @@
   */
  
@@ -1261,7 +1261,7 @@ diff -Naur shell_cmds-203/w/extern.h shell_cmds/w/extern.h
  
 diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
 --- shell_cmds-203/w/fmt.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/fmt.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/w/fmt.c	2018-01-23 22:11:32.000000000 +0100
 @@ -39,13 +39,13 @@
  #include <sys/time.h>
  #include <sys/resource.h>
@@ -1301,7 +1301,7 @@ diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
  	if (*argv == 0) {
 diff -Naur shell_cmds-203/w/pr_time.c shell_cmds/w/pr_time.c
 --- shell_cmds-203/w/pr_time.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/pr_time.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/w/pr_time.c	2018-01-23 22:11:32.000000000 +0100
 @@ -44,6 +44,7 @@
  #include <string.h>
  
@@ -1349,7 +1349,7 @@ diff -Naur shell_cmds-203/w/pr_time.c shell_cmds/w/pr_time.c
  }
 diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
 --- shell_cmds-203/w/proc_compare.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/proc_compare.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/w/proc_compare.c	2018-01-23 22:11:32.000000000 +0100
 @@ -38,13 +38,15 @@
  __FBSDID("$FreeBSD: src/usr.bin/w/proc_compare.c,v 1.9 2004/04/14 09:34:17 bde Exp $");
  #endif
@@ -1369,7 +1369,7 @@ diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
  
 diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
 --- shell_cmds-203/w/w.c	2007-10-03 11:55:12.000000000 +0200
-+++ shell_cmds/w/w.c	2018-01-23 21:57:46.000000000 +0100
++++ shell_cmds/w/w.c	2018-01-23 22:11:32.000000000 +0100
 @@ -50,15 +50,16 @@
   * This program is similar to the systat command on Tenex/Tops 10/20
   *
