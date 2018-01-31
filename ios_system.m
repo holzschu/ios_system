@@ -116,6 +116,7 @@ void initializeEnvironment() {
     if (![fullCommandPath containsString:@"Documents/bin"]) {
         NSString *binPath = [docsPath stringByAppendingPathComponent:@"bin"];
         fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+        setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     }
     setenv("APPDIR", [[NSBundle mainBundle] resourcePath].UTF8String, 1);
     setenv("TERM", "xterm", 1); // 1 = override existing value
