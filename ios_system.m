@@ -42,6 +42,7 @@ typedef struct _functionParameters {
     char** argv_ref;
     int (*function)(int ac, char** av);
     FILE *stdin, *stdout, *stderr;
+    void* dlHandle;
     bool isPipe;
 } functionParameters;
 
@@ -62,6 +63,9 @@ static void cleanup_function(void* parameters) {
         fclose(thread_stdout);
         thread_stdout = NULL;
     }
+    if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
+        && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
+        dlclose(p->dlHandle);
     free(parameters); // This was malloc'ed in ios_system
 }
 
@@ -360,7 +364,7 @@ int ios_setMiniRoot(NSString* mRoot) {
     return 0;
 }
 
-static int cd_main(int argc, char** argv) {
+int cd_main(int argc, char** argv) {
     NSString* currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
     if (argc > 1) {
         NSString* newDir = @(argv[1]);
@@ -417,12 +421,11 @@ NSString* operatesOn(NSString* commandName) {
 
 int ios_executable(const char* inputCmd) {
     // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
-    int (*function)(int ac, char** av) = NULL;
     if (commandList == nil) initializeCommandList();
-    NSString* commandName = [NSString stringWithCString:inputCmd encoding:NSASCIIStringEncoding];
-    function = [[commandList objectForKey: commandName] pointerValue];
-    if (function) return 1;
-    else return 0;
+    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:inputCmd]];
+    // we could dlopen() here, but that would defeat the purpose
+    if (valuesFromDict == nil) return 0;
+    else return 1;
 }
 
 // Where to direct input/output of the next thread:
@@ -803,6 +806,7 @@ int ios_system(const char* inputCmd) {
         while (str && (str[0] == ' ')) str++; // skip multiple spaces
     }
     argv[argc] = NULL;
+    long returnValue = 0;
     if (argc != 0) {
         // So far, all arguments are pointers into originalCommand.
         // We need to change them (environment variables expansion, ~ expansion, etc)
@@ -912,10 +916,11 @@ int ios_system(const char* inputCmd) {
             NSString* libraryName = commandStructure[0];
             if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
             else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
-            else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_LOCAL); // commands defined in dynamic library
-            if (handle == NULL) fprintf(thread_stderr, "%s\n", dlerror()); 
+            else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_GLOBAL); // commands defined in dynamic library
+            if (handle == NULL) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
             NSString* functionName = commandStructure[1];
             function = dlsym(handle, functionName.UTF8String);
+            if (function == NULL) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
         }
         if (function) {
             // We run the function in a thread because there are several
@@ -926,6 +931,7 @@ int ios_system(const char* inputCmd) {
             params->argc = argc;
             params->argv = argv;
             params->function = function;
+            params->dlHandle = handle;
             params->isPipe = (params->stdout != thread_stdout);
             if (isMainThread) {
                 // Send a signal to the system that we're going to change the current directory:
@@ -949,19 +955,20 @@ int ios_system(const char* inputCmd) {
                 if (lastThreadId == 0) lastThreadId = _tid;
             }
         } else {
-            // cd is too connected to other variables to be moved into a separate library:
-            if (strcmp(argv[0], "cd") == 0) cd_main(argc, argv);
-            else fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            if ((handle != NULL) && (handle != RTLD_SELF)
+                && (handle != RTLD_MAIN_ONLY)
+                && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
+                dlclose(handle);
+            fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            returnValue = 127;
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
-        if (handle) dlclose(handle); handle = NULL;
     } else { // argc != 0
         free(argv); // argv is otherwise freed in cleanup_function
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
     // Did we write anything?
-    long numCharWritten = 0;
-    if (errorFileName) numCharWritten = ftell(thread_stderr);
-    else if (sharedErrorOutput && outputFileName) numCharWritten = ftell(thread_stdout);
-    return (numCharWritten); // 0 = success, not 0 = failure
+    if (errorFileName) returnValue = ftell(thread_stderr);
+    else if (sharedErrorOutput && outputFileName) returnValue = ftell(thread_stdout);
+    return (returnValue); // 0 = success, not 0 = failure
 }
