@@ -10,11 +10,11 @@ extern int ios_system(char* cmd);
 ```
 link with the `ios_system.framework`, and your calls to `system()` will be handled by this framework.
 
-The commands available are defined in `ios_system.m`. They are configurable through a series of `#define`. 
+The commands available are defined in `ios_system.m`. They are dynamically loaded at run-time, and released after execution. They are configurable by changing the dynamic libraries embedded into the app. 
 
 There are, first, shell commands (`ls`, `cp`, `rm`...), archive commands (`curl`, `scp`, `sftp`, `tar`, `gzip`, `compress`...) plus a few interpreted languages (`python`, `lua`, `TeX`). Scripts written in one of the interpreted languages are also executed, if they are in the `$PATH`. 
 
-For each set of commands, we need to provide the associated framework. Frameworks for small commands are in this project. Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). Some commands (`curl`, `python`) require `OpenSSH` and `libssl2`, which you will have to download and compile separately.
+For each set of commands, we need to provide the corresponding dynamic library. Libraries for small commands are in this project. Library or Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). Some commands (`curl`, `python`) require `OpenSSH` and `libssl2`, which you will have to download and compile separately.
 
 This `ios_system` framework has been successfully ported into two shells, [Blink](https://github.com/holzschu/blink) and [Terminal](https://github.com/louisdh/terminal) and into an editor, [iVim](https://github.com/holzschu/iVim). Each time, it provides a Unix look-and-feel (well, mostly feel). 
 
@@ -44,12 +44,10 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 ## Installation:
 
 - Run the script `./get_sources.sh`. This will download the latest sources form [Apple OpenSource](https://opensource.apple.com) and patch them for compatibility with iOS. 
-- (optional) Run the script `./get_python_lua.sh`.  It will download the sources for  [python](https://github.com/holzschu/python_ios) and [lua](https://github.com/holzschu/lua_ios). 
-- If you do *not* need Python, delete the `python_grp` folder, comment out the `#define FEAT_PYTHON` line in `ios_system.m` (if you are linking with iVim, also remove it from the `CFLAGS` of iVim).
-- If you *do* need Python: open `../python_ios/libffi-3.2.1/libffi.xcodeproj/`, hit Build. It will create `libffi.a`. Click on Products, control-click on `libffi.a`, go to "Show in Finder". Copy it to the `../python_ios/` directory. 
-- Same with Lua: if you do not need it, comment the  `#define FEAT_LUA` line in `ios_system.m`.
-- If you need Tex, follow the instructions at https://github.com/holzschu/lib-tex, and link with the dynamic libraries created. Otherwise, comment out `#define TEX_COMMANDS`.
-- Open the Xcode project `ios_system.xcodeproj` and hit build. This will create the `ios_system` framework, ready to be included in your own projects. Alternatively, drag `ios_system.xcodeproj` into you project, add `ios_system.framework` to your linked binaries and compile. 
+- Open the Xcode project `ios_system.xcodeproj` and hit build. This will create the `ios_system` framework, ready to be included in your own projects. 
+- Compile the other targets as well: files, tar, curl, awk, shell, text, ssh_cmd. This will create the corresponding dynamic libraries.
+- If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) or [TeX](https://github.com/holzschu/lib-tex), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile. 
+- Link your application with  `ios_system.framework` framework, plus the dynamic libraries corresponding to the commands you need (`libtar.dylib` if you need `tar`, `libfiles.dylib` for cp, rm, mv...).
 
 ## Integration with your app:
 
