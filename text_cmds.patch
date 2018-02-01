@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/cat/cat.c	2018-01-23 22:11:33.000000000 +0100
 @@ -55,7 +55,7 @@
  #endif
  
@@ -212,7 +212,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  			break;
 diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
 --- text_cmds-99/ed/buf.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/buf.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/buf.c	2018-01-23 22:11:33.000000000 +0100
 @@ -33,6 +33,10 @@
  #include <sys/stat.h>
  
@@ -328,7 +328,7 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  	REQUE(&buffer_head, &buffer_head);
 diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 --- text_cmds-99/ed/ed.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/ed.h	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/ed.h	2018-01-23 22:11:33.000000000 +0100
 @@ -258,25 +258,25 @@
  long write_stream(FILE *, long, long);
  
@@ -375,7 +375,7 @@ diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 +extern __thread int posixly_correct;
 diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
 --- text_cmds-99/ed/glbl.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/glbl.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/glbl.c	2018-01-23 22:11:33.000000000 +0100
 @@ -34,6 +34,7 @@
  #include <sys/wait.h>
  
@@ -413,7 +413,7 @@ diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
  				return ERR;
 diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
 --- text_cmds-99/ed/io.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/io.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/io.c	2018-01-23 22:11:33.000000000 +0100
 @@ -29,9 +29,10 @@
  __FBSDID("$FreeBSD: src/bin/ed/io.c,v 1.14 2003/01/01 18:48:39 schweikh Exp $");
  
@@ -562,7 +562,7 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/main.c	2018-01-23 22:11:33.000000000 +0100
 @@ -59,14 +59,16 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -971,7 +971,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  handle_winch(int signo)
 diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
 --- text_cmds-99/ed/re.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/re.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/re.c	2018-01-23 22:11:33.000000000 +0100
 @@ -30,11 +30,12 @@
  __FBSDID("$FreeBSD: src/bin/ed/re.c,v 1.20 2003/07/20 10:24:09 ru Exp $");
  
@@ -998,7 +998,7 @@ diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
  	}
 diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
 --- text_cmds-99/ed/sub.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/sub.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/sub.c	2018-01-23 22:11:33.000000000 +0100
 @@ -30,6 +30,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/sub.c,v 1.15 2002/06/30 05:13:53 obrien Exp $");
  
@@ -1018,7 +1018,7 @@ diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
  		}
 diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
 --- text_cmds-99/ed/undo.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/undo.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/ed/undo.c	2018-01-23 22:11:33.000000000 +0100
 @@ -29,6 +29,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/undo.c,v 1.12 2002/06/30 05:13:53 obrien Exp $");
  
@@ -1058,7 +1058,7 @@ diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
  int
 diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
 --- text_cmds-99/grep/file.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/file.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/grep/file.c	2018-01-23 22:11:33.000000000 +0100
 @@ -38,7 +38,7 @@
  #include <sys/stat.h>
  #include <sys/types.h>
@@ -1095,7 +1095,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/grep/grep.c	2018-01-23 22:11:33.000000000 +0100
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -1538,7 +1538,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  		c = grep_tree(aargv);
 diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
 --- text_cmds-99/grep/grep.h	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.h	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/grep/grep.h	2018-01-23 22:11:33.000000000 +0100
 @@ -45,7 +45,7 @@
  #else
  #include <nl_types.h>
@@ -1594,7 +1594,7 @@ diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
  /* For regex errors  */
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/grep/util.c	2018-01-23 22:11:33.000000000 +0100
 @@ -39,7 +39,7 @@
  #endif
  
@@ -1824,7 +1824,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  }
 diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 --- text_cmds-99/sed/compile.c	2006-12-05 23:29:30.000000000 +0100
-+++ text_cmds/sed/compile.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/sed/compile.c	2018-01-23 22:11:33.000000000 +0100
 @@ -54,12 +54,13 @@
  
  #include "defs.h"
@@ -2404,7 +2404,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	}
 diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
 --- text_cmds-99/sed/extern.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/extern.h	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/sed/extern.h	2018-01-23 22:11:33.000000000 +0100
 @@ -34,16 +34,16 @@
   * $FreeBSD: src/usr.bin/sed/extern.h,v 1.13 2004/08/09 15:29:41 dds Exp $
   */
@@ -2434,7 +2434,7 @@ diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
  void	 compile(void);
 diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 --- text_cmds-99/sed/main.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/main.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/sed/main.c	2018-01-23 22:11:33.000000000 +0100
 @@ -64,6 +64,9 @@
  
  #include "defs.h"
@@ -2712,7 +2712,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  	fl_nextp = &fp->next;
 diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
 --- text_cmds-99/sed/misc.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/misc.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/sed/misc.c	2018-01-23 22:11:33.000000000 +0100
 @@ -49,6 +49,9 @@
  
  #include "defs.h"
@@ -2734,7 +2734,7 @@ diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
  }
 diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 --- text_cmds-99/sed/process.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/process.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/sed/process.c	2018-01-23 22:11:33.000000000 +0100
 @@ -58,6 +58,7 @@
  
  #include "defs.h"
@@ -2952,7 +2952,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		case '{':
 diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 --- text_cmds-99/tr/str.c	2005-08-18 23:20:18.000000000 +0200
-+++ text_cmds/tr/str.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/tr/str.c	2018-01-23 22:11:33.000000000 +0100
 @@ -53,6 +53,10 @@
  #include <wctype.h>
  
@@ -3057,7 +3057,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
  
 diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 --- text_cmds-99/tr/tr.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/tr/tr.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/tr/tr.c	2018-01-23 22:11:33.000000000 +0100
 @@ -61,6 +61,9 @@
  #include "cmap.h"
  #include "cset.h"
@@ -3290,7 +3290,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  }
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2018-01-23 21:57:47.000000000 +0100
++++ text_cmds/wc/wc.c	2018-01-23 22:11:33.000000000 +0100
 @@ -51,7 +51,7 @@
  #include <sys/stat.h>
  
