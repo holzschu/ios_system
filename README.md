@@ -77,9 +77,8 @@ If the command does not already exist, your command is simply added to the list.
 ## Adding more commands:
 
 `ios_system` is OpenSource; you can extend it in any way you want. Keep in mind the intrinsic limitations: 
-- The binary of all commands reside in memory, all the time. The memory on any portable device is limited. The iPhone 6, for example, has 1GB of RAM. 
-- Inside terminals we have limited interaction. Apps that require user input are unlikely to get it, or with no visual feedback. That could be solved, but it is hard.
 - Sandbox and API limitations still apply. Commands that require root privilege (like `traceroute`) are impossible.
+- Inside terminals we have limited interaction. Apps that require user input are unlikely to get it, or with no visual feedback. That could be solved, but it is hard.
 
 To add a command:
 - create an issue: https://github.com/holzschu/ios_system/issues That will let others know you're working on it, and possibly join forces with you (that's the beauty of OpenSource). 
@@ -87,13 +86,14 @@ To add a command:
 - make the following changes to the code: 
     - include `ios_error.h` (it will replace all calls to `exit` by calls to `pthread_exit`)
     - replace calls to `warn`, `err`, `errx` and `warnx` by calls to `fprintf`, plus `pthread_exit` if needed.
-    - replace all occurences of `stdin`, `stdout`, `stderr` by `thread_stdin`, `thread_stdout`, `thread_stderr` (these are thread-local variables, taking a d different value for each thread so we can pipe commands).
+    - replace all occurences of `stdin`, `stdout`, `stderr` by `thread_stdin`, `thread_stdout`, `thread_stderr` (these are thread-local variables, taking a different value for each thread so we can pipe commands).
     - replace all calls to `printf`, `write`,... with explicit calls to `fprintf(thread_stdout, ...)` (`ios_error.h` takes care of some of these).
     - replace `STDIN_FILENO` with `fileno(stdin)`. Replace `STDOUT_FILENO` by calls to `fprintf` or `fwrite`; `fileno(thread_stdout)` does not always exist (it can be a stream with no files associated). Same with `stderr`. 
+    - replace calls to `isatty()` by tests `(stdout == thread_stdout)`. Normally, this is true if we're in the iOS equivalent of a tty. 
     - make sure you initialize all variables at startup, and release all memory on exit.
     - make all global variables thread-local with `__thread`, make sure local variables are marked with `static`. 
     - make sure your code doesn't use commands that don't work in a sandbox: `fork`, `exec`, `system`, `popen`, `isExecutableFileAtPath`, `access`... (some of these fail at compile time, others fail silently at run time). 
-    - compile, edit `ios_system.m`, and run. That's it. Test a lot. Side effects appear after several launches.
+    - compile, edit `ios_system.m` to add your commands, and run. That's it. Test a lot. Side effects appear after several launches.
     - if your command has a large code base, work out the difference in your edits and make a patch, rather than commit the entire code. See `get_sources_for_patching.sh` for an example. 
 
 **Frequently asked commands:** here is a list of commands that are often requested, and my experience with them:
