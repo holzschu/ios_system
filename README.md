@@ -43,22 +43,29 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 
 ## Installation:
 
+**The easy way:** run the script `./get_binaries.sh`. This will download the compiled versions of all existing frameworks (`ios_system.framework`, plus all the dynamic libraries). 
+
+**The hard way:**
+
 - Run the script `./get_sources.sh`. This will download the latest sources form [Apple OpenSource](https://opensource.apple.com) and patch them for compatibility with iOS. 
 - Open the Xcode project `ios_system.xcodeproj` and hit build. This will create the `ios_system` framework, ready to be included in your own projects. 
 - Compile the other targets as well: files, tar, curl, awk, shell, text, ssh_cmd. This will create the corresponding dynamic libraries.
 - If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) or [TeX](https://github.com/holzschu/lib-tex), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile. 
-- Link your application with  `ios_system.framework` framework, plus the dynamic libraries corresponding to the commands you need (`libtar.dylib` if you need `tar`, `libfiles.dylib` for cp, rm, mv...).
 
 ## Integration with your app:
+
+Link your application with the `ios_system.framework` framework, and embed (but don't link) the dynamic libraries corresponding to the commands you need (`libtar.dylib` if you need `tar`, `libfiles.dylib` for cp, rm, mv...).
 
 ### Basic commands:
 
 The simplest way to integrate `ios_system` into your app is to just replace all calls to `system()` with calls to `ios_system()`. If you need more control and information, the following functions are available: 
 
-- `NSArray* commandsAsArray()` returns an array with all the commands available, if you need them for helping users. 
-- `NSString* commandsAsString()` same, but with a `NSString*`. 
 - `initializeEnvironment()` sets environment variables to sensible defaults. 
 - `ios_executable(char* inputCmd)` returns true if `inputCmd` is one of the commands defined inside `ios_system`. 
+- `NSArray* commandsAsArray()` returns an array with all the commands available, if you need them for helping users. 
+- `NSString* commandsAsString()` same, but with a `NSString*`. 
+- `NSString* getoptString(NSString* command)` returns a string containing all accepted flags for a given command ("dfiPRrvW" for "rm", for example). Letters are followed by ":" if the flag cannot be combined with others. 
+- `NSString* operatesOn(NSString* command)` tells you what this command expects as arguments, so you can auto-complete accordingly. Return values are "file", "directory" or "no". For example, "cd" returns "directory". 
 - `int ios_setMiniRoot(NSString* mRoot)` lets you set the sandbox directory, so users are not exposed to files outside the sandbox. The argument is the path to a directory. It will not be possible to `cd` to directories above this one. Returns 1 if succesful, 0 if not. 
 - `FILE* ios_popen(const char* inputCmd, const char* type)` opens a pipe between the current command and `inputCmd`. (drop-in replacement for `popen`). 
 
