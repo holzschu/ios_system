@@ -895,10 +895,10 @@
 		223496A11FD5FC71007ED1A9 = {
 			isa = PBXGroup;
 			children = (
-				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				225F061120171B4300466685 /* ssh_main.c */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
 				225F060F2016751800466685 /* getopt_long.c */,
+				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				226378091FDB3EC700AE8827 /* file_cmds_ios */,
 				226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */,
 				22CF27B01FDB42F50087DDAD /* text_cmds_grp */,
@@ -939,11 +939,11 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
 				22F568222020C42F009850FD /* libxml2.tbd */,
 				22F567DD2020BAD9009850FD /* libz.tbd */,
 				22F567C72020B807009850FD /* openssl.framework */,
 				22AC09E520209C57006F7D8B /* libssh2.framework */,
-				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
 				22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */,
 				22257E801FDA7C0C00FBA97D /* openssl.framework */,
 			);
