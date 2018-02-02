@@ -111,7 +111,7 @@ To add a command:
 - `sh`, `bash`, `zsh`: shells are hard to compile, even without the sandbox/API limitations. They also tend to take a lot of memory, which is a limited asset.
 - `telnet`: both hard to compile and limited without interaction. 
 - `git`: [WorkingCopy](https://workingcopyapp.com) does it very well, and you can transfer directories to your app, then transfer back to WorkingCopy. Also difficult to compile. 
-- `ssh`: [BlinkShell](https://itunes.apple.com/us/app/blink-shell-mosh-ssh-terminal/id1156707581?mt=8&ign-mpt=uo%3D4) does it very well. There is a fork of [BlinkShell](https://github.com/holzschu/blink) with `ios_system` commands included. Also requires user interaction. You can, however, do `ssh + command`. 
+- `ssh`: [BlinkShell](https://itunes.apple.com/us/app/blink-shell-mosh-ssh-terminal/id1156707581?mt=8&ign-mpt=uo%3D4) does it very well. There is a fork of [BlinkShell](https://github.com/holzschu/blink) with `ios_system` commands included. Also, ssh requires user interaction. You can, however, do `ssh + command`. 
 
 
 ### Licensing:
