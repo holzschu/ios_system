@@ -2469,7 +2469,12 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				OTHER_CFLAGS = "";
+				OTHER_CFLAGS = (
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
+				);
 				OTHER_LDFLAGS = (
 					"-F",
 					Frameworks/,
@@ -2501,7 +2506,12 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				OTHER_CFLAGS = "";
+				OTHER_CFLAGS = (
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
+				);
 				OTHER_LDFLAGS = (
 					"-F",
 					Frameworks/,
@@ -2525,7 +2535,12 @@
 				EXECUTABLE_EXTENSION = dylib;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MACH_O_TYPE = mh_dylib;
-				OTHER_CFLAGS = "";
+				OTHER_CFLAGS = (
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2544,7 +2559,12 @@
 				EXECUTABLE_EXTENSION = dylib;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MACH_O_TYPE = mh_dylib;
-				OTHER_CFLAGS = "";
+				OTHER_CFLAGS = (
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2646,6 +2666,10 @@
 				OTHER_CFLAGS = (
 					"-I",
 					ios_system/,
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2668,6 +2692,10 @@
 				OTHER_CFLAGS = (
 					"-I",
 					ios_system/,
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
