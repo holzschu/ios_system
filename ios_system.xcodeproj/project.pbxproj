@@ -2380,7 +2380,12 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "-Wno-ambiguous-macro";
+				OTHER_CFLAGS = (
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
+				);
 				SDKROOT = iphoneos;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -2432,7 +2437,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_CFLAGS = "-Wno-ambiguous-macro";
+				OTHER_CFLAGS = (
+					"-Wshorten-64-to-32",
+					"-Wno-ambiguous-macro",
+					"-Wunused-const-variable",
+					"-Wincompatible-pointer-types-discards-qualifiers",
+				);
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
