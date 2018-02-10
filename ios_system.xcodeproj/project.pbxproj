@@ -319,7 +319,7 @@
 		22F567C82020B807009850FD /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
 		22F567C92020B80F009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 		22F567CA2020B83A009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
-		22F567D92020BA2D009850FD /* ssh_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F061120171B4300466685 /* ssh_main.c */; settings = {COMPILER_FLAGS = "-I ../../../libssh2-for-iOS/include/"; }; };
+		22F567D92020BA2D009850FD /* ssh_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F061120171B4300466685 /* ssh_main.c */; settings = {COMPILER_FLAGS = "-I Frameworks/libssh2.framework/Headers/"; }; };
 		22F567DA2020BA75009850FD /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 		22F567DB2020BA84009850FD /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
 		22F567DC2020BA95009850FD /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
