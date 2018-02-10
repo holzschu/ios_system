@@ -399,7 +399,7 @@ int cd_main(int argc, char** argv) {
         } else {
             fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
         }
-    } else { // [cd] Help, I'm lost, bring me back home
+    } else { // [cd] Help, I'm lost, bring me back home
         previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
 
         if (miniRoot != nil) {
