@@ -6,20 +6,5 @@ before_install:
 - ./get_frameworks.sh
 
 script:
-- xcodebuild -project ios_system.xcodeproj -target ios_system -sdk iphoneos -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target files -sdk iphoneos -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target shell -sdk iphoneos -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target text -sdk iphoneos -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target curl -sdk iphoneos -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target tar -sdk iphoneos -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target awk -sdk iphoneos -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target ssh_cmd -sdk iphoneos -configuration Debug
-    
-- xcodebuild -project ios_system.xcodeproj -target ios_system -sdk iphonesimulator -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target files -sdk iphonesimulator -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target shell -sdk iphonesimulator -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target text -sdk iphonesimulator -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target curl -sdk iphonesimulator -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target tar -sdk iphonesimulator -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target awk -sdk iphonesimulator -configuration Debug
-- xcodebuild -project ios_system.xcodeproj -target ssh_cmd -sdk iphonesimulator -configuration Debug
+- xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Debug -quiet
+- xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphonesimulator -configuration Debug -quiet
