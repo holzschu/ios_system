@@ -770,7 +770,7 @@ diff -Naur libarchive-54/libarchive/tar/tree.c libarchive/libarchive/tar/tree.c
  	}
 diff -Naur libarchive-54/libarchive/tar/util.c libarchive/libarchive/tar/util.c
 --- libarchive-54/libarchive/tar/util.c	2016-11-15 22:44:15.000000000 +0100
-+++ libarchive/libarchive/tar/util.c	2018-01-23 22:11:36.000000000 +0100
++++ libarchive/libarchive/tar/util.c	2018-02-07 23:05:14.000000000 +0100
 @@ -60,7 +60,8 @@
  #endif
  

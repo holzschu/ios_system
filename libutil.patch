@@ -1,0 +1,12 @@
+diff -Naur libutil-51/humanize_number.c libutil/humanize_number.c
+--- libutil-51/humanize_number.c	2016-03-04 06:57:33.000000000 +0100
++++ libutil/humanize_number.c	2018-01-29 15:39:36.000000000 +0100
+@@ -41,7 +41,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <locale.h>
+-#include <libutil.h>
++#include "libutil.h"
+ 
+ static const int maxscale = 7;
+ 

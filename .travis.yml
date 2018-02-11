@@ -1,0 +1,10 @@
+osx_image: xcode9.2
+language: objective-c
+
+before_install: 
+- ./get_sources.sh
+- ./get_frameworks.sh
+
+script:
+- xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Debug -quiet
+- xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphonesimulator -configuration Debug -quiet

@@ -20,6 +20,16 @@ echo "Creating file_cmds.patch"
 diff -Naur $file file_cmds > file_cmds.patch
 rm -rf $file
 
+
+echo "Getting libutil"
+curl https://opensource.apple.com/tarballs/libutil/$libutil.tar.gz -O
+tar xfz $libutil.tar.gz
+rm $libutil.tar.gz
+echo "Creating libutil.patch"
+diff -Naur $libutil libutil > libutil.patch
+rm -rf $libutil
+
+
 # get source for shell_cmds:
 echo "Getting shell_cmds"
 curl https://opensource.apple.com/tarballs/shell_cmds/$shell.tar.gz -O
