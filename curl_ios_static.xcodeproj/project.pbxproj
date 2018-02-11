@@ -714,8 +714,8 @@
 		2219E2681FD7E58600675252 /* tool_writeout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tool_writeout.h; sourceTree = "<group>"; };
 		2219E2691FD7E58600675252 /* tool_xattr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tool_xattr.c; sourceTree = "<group>"; };
 		2219E26A1FD7E58600675252 /* tool_xattr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tool_xattr.h; sourceTree = "<group>"; };
-		2219E2D41FD7EE9700675252 /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = "../../libssh2-for-iOS/openssl.framework"; sourceTree = "<group>"; };
-		2219E2D61FD7EEB800675252 /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = "../../libssh2-for-iOS/libssh2.framework"; sourceTree = "<group>"; };
+		2219E2D41FD7EE9700675252 /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = ../blink/Frameworks/openssl.framework; sourceTree = "<group>"; };
+		2219E2D61FD7EEB800675252 /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = ../blink/Frameworks/libssh2.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
