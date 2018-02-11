@@ -1,16 +1,16 @@
 #!/bin/bash
 
-LIBSSH2_VER="1.8.0"
-IOS_SYSTEM_VER="1.0"
+IOS_SYSTEM_VER="1.1"
 
 HHROOT="https://github.com/holzschu"
 
 (cd "${BASH_SOURCE%/*}/Frameworks"
-# libssh2 + openssl:
-echo "Downloading libssh2-$LIBSSH2_VER.framework.tar.gz"
-curl -OL $HHROOT/libssh2-for-iOS/releases/download/v1.0/release.tar.gz
-( tar -zxf release.tar.gz && rm release.tar.gz ) || { echo "Libssh2 framework failed to download"; exit 1; }
+# ios_system
+echo "Downloading ios_system.framework.zip"
+curl -OL $HHROOT/ios_system/releases/download/v$IOS_SYSTEM_VER/smallRelease.tar.gz
+( tar -xzf smallRelease.tar.gz --strip 1 && rm smallRelease.tar.gz ) || { echo "ios_system failed to download"; exit 1; }
 )
+
 
 
 
