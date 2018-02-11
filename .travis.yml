@@ -4,7 +4,6 @@ language: objective-c
 before_install: 
 - ./get_sources.sh
 - ./get_frameworks.sh
-- ls Frameworks/
 - ls Frameworks/libssh2.framework
 
 script:
