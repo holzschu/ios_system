@@ -57,6 +57,7 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 **The hard way:**
 
 - Run the script `./get_sources.sh`. This will download the latest sources form [Apple OpenSource](https://opensource.apple.com) and patch them for compatibility with iOS. 
+- Run the script `./get_frameworks.sh` to download `openSSL.framework` and `libSSH2.framework` (you can also compile them yourself)
 - Open the Xcode project `ios_system.xcodeproj` and hit build. This will create the `ios_system` framework, ready to be included in your own projects. 
 - Compile the other targets as well: files, tar, curl, awk, shell, text, ssh_cmd. This will create the corresponding dynamic libraries.
 - If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) or [TeX](https://github.com/holzschu/lib-tex), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile. 
