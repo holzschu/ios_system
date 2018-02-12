@@ -8,7 +8,7 @@ HHROOT="https://github.com/holzschu"
 (cd "${BASH_SOURCE%/*}/Frameworks"
 # ios_system
 echo "Downloading fat frameworks:"
-curl -OL $HHROOT/libssh2-for-iOS/releases/download/vLIBSSH2_VER/release.tar.gz
+curl -OL $HHROOT/libssh2-for-iOS/releases/download/v$LIBSSH2_VER/release.tar.gz
 ( tar -xzf release.tar.gz && rm release.tar.gz ) || { echo "libssh2 failed to download"; exit 1; }
 ) 
 # If you have issues with "fat" frameworks, use the "thin" ones here:
