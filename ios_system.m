@@ -127,6 +127,7 @@ void initializeEnvironment() {
     
     // We can't write in $HOME so we need to set the position of config files:
     setenv("SSH_HOME", docsPath.UTF8String, 0);  // SSH keys in ~/Documents/.ssh/ or [Cloud Drive]/.ssh
+    setenv("DIG_HOME", docsPath.UTF8String, 0);  // .digrc is in ~/Documents/.digrc or [Cloud Drive]/.digrc
     setenv("CURL_HOME", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
     setenv("SSL_CERT_FILE", [docsPath stringByAppendingPathComponent:@"cacert.pem"].UTF8String, 0); // SLL cacert.pem in ~/Documents/cacert.pem or [Cloud Drive]/cacert.pem
     // iOS already defines "HOME" as the home dir of the application
@@ -309,6 +310,10 @@ static void initializeCommandList()
       @"ping"     : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"ping_main", @"AaB:b:Cc:DdfG:g:h:I:i:k:K:Ll:M:m:noP:p:QqRrS:s:T:t:vW:z:", @"no", nil],
       @"nc"       : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"netcat_main", @"46AacDCb:dEhi:jFG:H:I:J:K:L:klMnN:Oop:rSs:T:tUuvw:X:x:z", @"no", nil],
       @"nslookup" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"nslookup_main", @"", @"no", nil],
+      @"dig" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"dig_main", @"", @"no", nil],
+      @"host" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"host_main", @"46ac:dilnm:rst:vVwCDN:R:TW:", @"no", nil],
+      @"telnet" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"telnet_main", @"468EKLNS:X:acde:fFk:l:n:rs:uxy", @"no", nil],
+      @"rlogin" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"rlogin_main", @"468EKLNS:X:acde:fFk:l:n:rs:uxy", @"no", nil],
 #ifdef SIDELOADING
       // Scripts and programming languages. Might move outside of here at some point
       // lua

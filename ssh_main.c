@@ -547,6 +547,8 @@ int ssh_main(int argc, char** argv) {
                     rc = -3;
                     break;
                 }
+                // Tell to the pty the size of our window, so it can adapt:
+                /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
                 /* Open a SHELL on that pty */
                 while ((rc = libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
                     ssh_waitsocket(_sock, _session);
