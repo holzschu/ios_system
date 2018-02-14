@@ -354,11 +354,10 @@ int ssh_main(int argc, char** argv) {
     // argv[1] = user@host
     user = argv[1];
     host = strchr(user, '@') + 1;
-    if (host == NULL) {
-        ssh_usage();
-    }
-    *(host - 1) = 0x00; // null-terminate host
-    if (strlen(user) == 0) user = "mobile"; // consistent behaviour
+    if (host == 1) {
+        host = argv[1];
+        user = "mobile"; // consistent behaviour
+    } else  *(host - 1) = 0x00; // null-terminate host
     // Concatenate all remaining options to form the command string:
     int bufferLength = 0;
     int removeQuotes = 0;
@@ -550,7 +549,7 @@ int ssh_main(int argc, char** argv) {
                 // Tell to the pty the size of our window, so it can adapt:
                 /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
                 /* Open a SHELL on that pty */
-                while ((rc =  libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
+                while ((rc = libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
                     ssh_waitsocket(_sock, _session);
                 }
                 if (rc) {
