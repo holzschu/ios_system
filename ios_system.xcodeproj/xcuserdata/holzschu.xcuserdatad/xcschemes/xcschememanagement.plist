@@ -7,12 +7,12 @@
 		<key>awk.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>5</integer>
+			<integer>3</integer>
 		</dict>
 		<key>curl.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>3</integer>
+			<integer>4</integer>
 		</dict>
 		<key>files.dylib.xcscheme</key>
 		<dict>
@@ -37,7 +37,7 @@
 		<key>ssh_cmd.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>4</integer>
+			<integer>5</integer>
 		</dict>
 		<key>tar.xcscheme</key>
 		<dict>
