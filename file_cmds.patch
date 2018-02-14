@@ -1503,7 +1503,7 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
  }
 diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 --- file_cmds-272/cp/cp.c	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/cp.c	2018-01-23 22:11:29.000000000 +0100
++++ file_cmds/cp/cp.c	2018-02-10 17:23:59.000000000 +0100
 @@ -62,7 +62,7 @@
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -2993,7 +2993,7 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  
 diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 --- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
-+++ file_cmds/gzip/gzip.c	2018-01-23 22:11:29.000000000 +0100
++++ file_cmds/gzip/gzip.c	2018-02-11 22:45:49.000000000 +0100
 @@ -68,9 +68,14 @@
  #ifdef __APPLE__
  #include <sys/attr.h>
@@ -3005,11 +3005,20 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #endif /* __APPLE__ */
 +#include <stdbool.h> // for booleans
 +#include "ios_error.h"
-+// iOS: Until someone install the header file (the library exists)
++// iOS: the library exists, but the header files don't work with it
 +#define NO_XZ_SUPPORT
  
  /* what type of file are we dealing with */
  enum filetype {
+@@ -108,7 +113,7 @@
+ #endif
+ 
+ #ifndef NO_XZ_SUPPORT
+-#include <lzma.h>
++#include "lzma.h"
+ #define XZ_SUFFIX	".xz"
+ #define XZ_MAGIC	"\3757zXZ"
+ #endif
 @@ -166,7 +171,7 @@
  #define SUFFIX_MAXLEN	30
  
@@ -3414,6 +3423,18 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	exit(0);
  }
  
+diff -Naur file_cmds-272/gzip/unxz.c file_cmds/gzip/unxz.c
+--- file_cmds-272/gzip/unxz.c	2013-10-12 01:17:21.000000000 +0200
++++ file_cmds/gzip/unxz.c	2018-02-11 22:40:46.000000000 +0100
+@@ -35,7 +35,7 @@
+ #include <errno.h>
+ #include <stdio.h>
+ #include <unistd.h>
+-#include <lzma.h>
++#include "lzma.h"
+ 
+ static off_t
+ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
 --- file_cmds-272/ln/ln.c	2013-10-31 01:07:31.000000000 +0100
 +++ file_cmds/ln/ln.c	2018-01-23 22:11:29.000000000 +0100

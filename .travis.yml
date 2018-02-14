@@ -3,7 +3,7 @@ language: objective-c
 
 before_install: 
 - ./get_sources.sh
-- ./get_frameworks.sh
+- ./get_frameworks_fat.sh
 
 script:
 - xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Debug -quiet
