@@ -12,7 +12,7 @@
 		<key>curl.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>2</integer>
+			<integer>3</integer>
 		</dict>
 		<key>files.dylib.xcscheme</key>
 		<dict>
@@ -22,7 +22,7 @@
 		<key>files.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<key>ios_system.xcscheme</key>
 		<dict>
@@ -32,27 +32,42 @@
 		<key>shell.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>5</integer>
+			<integer>6</integer>
 		</dict>
 		<key>ssh_cmd.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>6</integer>
+			<integer>5</integer>
 		</dict>
 		<key>tar.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>1</integer>
+			<integer>2</integer>
 		</dict>
 		<key>text.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>6</integer>
+			<integer>7</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>223496AA1FD5FC71007ED1A9</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>228541AA201F986300B93589</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>228541E2201FC05000B93589</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>22AC09EC20209FEB006F7D8B</key>
 		<dict>
 			<key>primary</key>
 			<true/>
