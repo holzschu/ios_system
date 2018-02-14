@@ -37,7 +37,7 @@
 		<key>ssh_cmd.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>3</integer>
+			<integer>6</integer>
 		</dict>
 		<key>tar.xcscheme</key>
 		<dict>
