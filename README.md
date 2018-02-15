@@ -54,15 +54,18 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 
 ## Installation:
 
-**The easy way:** run the script `./get_binaries.sh`. This will download the compiled versions of all existing frameworks (`ios_system.framework`, plus all the dynamic libraries). 
+**The easy way:** run the script `./get_binaries.sh`. This will download the compiled versions of all existing frameworks (`ios_system.framework`, plus all the dynamic libraries, including `network_ios`). 
 
 **The hard way:**
 
 - Run the script `./get_sources.sh`. This will download the latest sources form [Apple OpenSource](https://opensource.apple.com) and patch them for compatibility with iOS. 
-- Run the script `./get_frameworks.sh` to download `openSSL.framework` and `libSSH2.framework` (you can also compile them yourself)
+- We need libSSH2 and OpenSSL. Either: 
+    - **[Fast]** Run the script `./get_frameworks.sh` to download precompiled versions of `openSSL.framework` and `libSSH2.framework`.
+    - **[Slow]** Run the script `./get_frameworks_as_source.sh` to download the source for  `openSSL.framework` and `libSSH2.framework`, compile them, and move them to `Frameworks`. 
 - Open the Xcode project `ios_system.xcodeproj` and hit build. This will create the `ios_system` framework, ready to be included in your own projects. 
 - Compile the other targets as well: files, tar, curl, awk, shell, text, ssh_cmd. This will create the corresponding dynamic libraries.
-- If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) or [TeX](https://github.com/holzschu/lib-tex), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile. 
+- Alternatively, type `xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Debug -quiet` to build all targets.
+- If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios), [TeX](https://github.com/holzschu/lib-tex) or [network_ios](https://github.com/holzschu/network_ios), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile.
 
 ## Integration with your app:
 
