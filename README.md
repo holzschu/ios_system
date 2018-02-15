@@ -27,7 +27,7 @@ For each set of commands, we need to provide the corresponding dynamic library. 
 
 Network-based commands (nslookup, dig, host, ping, telnet) are also available as a separate dynamic library, [network_ios](https://github.com/holzschu/network_ios). Place the compiled library with the other libraries and add it to the embedded libraries of your application.
 
-This `ios_system` framework has been successfully ported into two shells, [Blink](https://github.com/holzschu/blink) and [Terminal](https://github.com/louisdh/terminal) and into an editor, [iVim](https://github.com/holzschu/iVim). Each time, it provides a Unix look-and-feel (well, mostly feel). 
+This `ios_system` framework has been successfully ported into two shells, [Blink](https://github.com/holzschu/blink) and [OpenTerm](https://github.com/louisdh/terminal) and into an editor, [iVim](https://github.com/holzschu/iVim). Each time, it provides a Unix look-and-feel (well, mostly feel). 
 
 **Issues:** In iOS, you cannot write in the `~` directory, only in `~/Documents/`, `~/Library/` and `~/tmp`. Most Unix programs assume the configuration files are in `$HOME`. 
 So either you redefine `$HOME` to `~/Documents/` or you set configuration variables (using `setenv`) to some other place. This is done in the `initializeEnvironment()` function. 
@@ -116,14 +116,13 @@ To add a command:
     - if your command has a large code base, work out the difference in your edits and make a patch, rather than commit the entire code. See `get_sources_for_patching.sh` for an example. 
 
 **Frequently asked commands:** here is a list of commands that are often requested, and my experience with them:
-- `ping`: easy, but remember there is no interaction, so limit the number of tests (9 is a good value).
+- `ping`, `nslookup`, `telnet`: now provided in the [network_ios](https://github.com/holzschu/network_ios) package.
 - `traceroute` and most network analysis tools: require root privilege, so impossible inside a sandbox.
 - `unzip`: use `tar -xz`. 
-- `nano`, `ed`: require user interaction, so currently impossible. [iVim](https://github.com/holzschu/iVim) can launch shell commands with `:!`. It's easier to make an editor start commands than to make a terminal run an editor.
+- `nano`, `ed`: require user interaction, so currently impossible.
+- `vim`: like `ed`, but even more difficult (needs to access the entire screen, need to add lines to the keyboard for Escape, Tab... iVim is on the App Store, and can be accessed from inside OpenTerm using the `share` command. My fork of [iVim](https://github.com/holzschu/iVim) can launch shell commands with `:!`. It's easier to make an editor start commands than to make a terminal run an editor.
 - `sh`, `bash`, `zsh`: shells are hard to compile, even without the sandbox/API limitations. They also tend to take a lot of memory, which is a limited asset.
-- `telnet`: both hard to compile and limited without interaction. 
 - `git`: [WorkingCopy](https://workingcopyapp.com) does it very well, and you can transfer directories to your app, then transfer back to WorkingCopy. Also difficult to compile. 
-- `ssh`: [BlinkShell](https://itunes.apple.com/us/app/blink-shell-mosh-ssh-terminal/id1156707581?mt=8&ign-mpt=uo%3D4) does it very well. There is a fork of [BlinkShell](https://github.com/holzschu/blink) with `ios_system` commands included. Also, ssh requires user interaction. You can, however, do `ssh + command`. 
 
 
 ### Licensing:
