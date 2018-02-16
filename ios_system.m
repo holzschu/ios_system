@@ -273,7 +273,10 @@ static void initializeCommandList()
       // scp / sftp require conversion to curl, rewriting arguments
       @"scp"     : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"q", @"file", nil],
       @"sftp"    : [NSArray arrayWithObjects:@"libcurl.dylib", @"curl_main", @"q", @"file", nil],
-      @"ssh"     : [NSArray arrayWithObjects:@"libssh_cmd.dylib", @"ssh_main", @"q", @"file", nil],
+      @"ssh"     : [NSArray arrayWithObjects:@"libssh_cmd.dylib", @"ssh_main", @"q", @"", nil],
+      @"ssh-keygen"     : [NSArray arrayWithObjects:@"libssh_cmd.dylib", @"sshkeygen_main", @"ABHLQXceghiklopquvxy"
+                           "C:D:E:F:G:I:J:K:M:N:O:P:R:S:T:V:W:Z:"
+                           "a:b:f:g:j:m:n:r:s:t:z:", @"file", nil],
       // local commands. Either self (here) or main (main program)
       @"cd"      : [NSArray arrayWithObjects:@"SELF", @"cd_main", @"", @"directory", nil],
       // Commands from Apple shell_cmds:

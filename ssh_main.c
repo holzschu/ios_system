@@ -542,7 +542,7 @@ int ssh_main(int argc, char** argv) {
                     ssh_waitsocket(_sock, _session);
                 }
                 if (rc) {
-                    fprintf(stderr, "Failed requesting pty\n");
+                    fprintf(thread_stderr, "Failed requesting pty\n");
                     rc = -3;
                     break;
                 }
@@ -553,7 +553,7 @@ int ssh_main(int argc, char** argv) {
                     ssh_waitsocket(_sock, _session);
                 }
                 if (rc) {
-                    fprintf(stderr, "Unable to request shell on allocated pty\n");
+                    fprintf(thread_stderr, "Unable to request shell on allocated pty\n");
                     rc = -3;
                     break;
                 }
