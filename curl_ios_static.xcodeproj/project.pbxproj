@@ -318,7 +318,6 @@
 		2219E2A41FD7E58600675252 /* tool_hugehelp.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E2411FD7E58600675252 /* tool_hugehelp.h */; };
 		2219E2A51FD7E58600675252 /* tool_libinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E2421FD7E58600675252 /* tool_libinfo.c */; };
 		2219E2A61FD7E58600675252 /* tool_libinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E2431FD7E58600675252 /* tool_libinfo.h */; };
-		2219E2A71FD7E58600675252 /* tool_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E2441FD7E58600675252 /* tool_main.c */; };
 		2219E2A81FD7E58600675252 /* tool_main.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E2451FD7E58600675252 /* tool_main.h */; };
 		2219E2A91FD7E58600675252 /* tool_metalink.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E2461FD7E58600675252 /* tool_metalink.c */; };
 		2219E2AA1FD7E58600675252 /* tool_metalink.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E2471FD7E58600675252 /* tool_metalink.h */; };
@@ -1460,7 +1459,6 @@
 				2219E1A61FD73D4600675252 /* sendf.c in Sources */,
 				2219E1851FD73D4600675252 /* mprintf.c in Sources */,
 				2219E1D91FD73D4600675252 /* digest_sspi.c in Sources */,
-				2219E2A71FD7E58600675252 /* tool_main.c in Sources */,
 				2219E1861FD73D4600675252 /* multi.c in Sources */,
 				2219E14F1FD73D4500675252 /* hostasyn.c in Sources */,
 				2219E1051FD73D4500675252 /* connect.c in Sources */,
