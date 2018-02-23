@@ -305,7 +305,7 @@ static void initializeCommandList()
       // @"ed"     : [NSArray arrayWithObjects:@"libtext.dylib", @"w_main", @"p:sx", @"file", nil][NSValue valueWithPointer: ed_main],
       // @"red"     : [NSArray arrayWithObjects:@"libtext.dylib", @"w_main", @"p:sx", @"file", nil][NSValue valueWithPointer: ed_main],
       @"sed"     : [NSArray arrayWithObjects:@"libtext.dylib", @"sed_main", @"Eae:f:i:ln", @"file", nil],
-      @"awk"     : [NSArray arrayWithObjects:@"libtext.dylib", @"awk_main", @"dhiflM:N:nsuw", @"file", nil],
+      @"awk"     : [NSArray arrayWithObjects:@"libawk.dylib", @"awk_main", @"dhiflM:N:nsuw", @"file", nil],
       @"grep"   : [NSArray arrayWithObjects:@"libtext.dylib", @"grep_main", @"0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy", @"file", nil],
       @"egrep"  : [NSArray arrayWithObjects:@"libtext.dylib", @"grep_main", @"0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy", @"file", nil],
       @"fgrep"  : [NSArray arrayWithObjects:@"libtext.dylib", @"grep_main", @"0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy", @"file", nil],
