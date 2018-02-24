@@ -35,7 +35,19 @@ extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
+// TODO: can we merge this with isMainThread?
 pthread_t current_command_root_thread;
+// return value for the function. errno is thread-local, so we need a thread-global variable:
+int global_errno;
+
+// replace system-provided exit() by our own:
+void exit(int n) {
+    global_errno = n; pthread_exit(NULL);
+}
+
+void _exit(int n) {
+    global_errno = n; pthread_exit(NULL);
+}
 
 typedef struct _functionParameters {
     int argc;
@@ -73,11 +85,11 @@ static void cleanup_function(void* parameters) {
 static void* run_function(void* parameters) {
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
-    
     optind = 1;
     opterr = 1;
     optreset = 1;
     __db_getopt_reset = 1;
+    global_errno = 0; // return value for the function. errno is thread-local
     functionParameters *p = (functionParameters *) parameters;
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
@@ -514,17 +526,17 @@ int ios_execv(const char *path, char* const argv[]) {
         argc++;
     }
     // start "child" with the child streams:
-    ios_system(cmd);
+    int returnValue = ios_system(cmd);
     free(cmd);
-    return 0;
+    return returnValue;
 }
 
 int ios_execve(const char *path, char* const argv[], char *const envp[]) {
     // TODO: save the environment (HOW?) and current dir
     // TODO: replace environment with envp. envp looks a lot like current environment, though.
-    ios_execv(path, argv);
+    int returnValue = ios_execv(path, argv);
     // TODO: restore the environment (HOW?)
-    return 0;
+    return returnValue;
 }
 
 /*
@@ -831,7 +843,6 @@ int ios_system(const char* inputCmd) {
         while (str && (str[0] == ' ')) str++; // skip multiple spaces
     }
     argv[argc] = NULL;
-    long returnValue = 0;
     if (argc != 0) {
         // So far, all arguments are pointers into originalCommand.
         // We need to change them (environment variables expansion, ~ expansion, etc)
@@ -991,15 +1002,12 @@ int ios_system(const char* inputCmd) {
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
             fprintf(thread_stderr, "%s: command not found\n", argv[0]);
-            returnValue = 127;
+            global_errno = 127;
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
     } else { // argc != 0
         free(argv); // argv is otherwise freed in cleanup_function
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
-    // Did we write anything?
-    if (errorFileName) returnValue = ftell(thread_stderr);
-    else if (sharedErrorOutput && outputFileName) returnValue = ftell(thread_stdout);
-    return (returnValue); // 0 = success, not 0 = failure
+    return global_errno;
 }

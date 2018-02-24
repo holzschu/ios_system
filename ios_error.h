@@ -21,8 +21,6 @@
 #define printf compileError
 #endif
 
-#define exit(a) pthread_exit(NULL)
-#define _exit(a) pthread_exit(NULL)
 #define putchar(a) fputc(a, thread_stdout)
 #define getchar() fgetc(thread_stdin)
 #define getwchar() fgetwc(thread_stdin)
@@ -34,6 +32,7 @@
 extern __thread FILE* thread_stdin;
 extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
+extern int global_errno;
 
 #define popen ios_popen
 #define pclose fclose

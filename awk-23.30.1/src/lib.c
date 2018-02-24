@@ -565,8 +565,7 @@ void FATAL(const char *fmt, ...)
 	error();
 	// if (dbg > 1)		/* core dump if serious debugging on */
 	//	abort();
-	// exit(2);
-    pthread_exit(NULL);
+	exit(2);
 }
 
 void WARNING(const char *fmt, ...)

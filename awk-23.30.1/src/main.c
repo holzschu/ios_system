@@ -118,7 +118,7 @@ int awk_main(int argc, char *argv[])
 		fprintf(thread_stderr, 
 		  "usage: %s [-F fs] [-v var=value] [-f progfile | 'prog'] [file ...]\n", 
 		  cmdname);
-        pthread_exit(NULL); // exit(1);
+        exit(1);
 	}
 	Unix2003_compat = COMPAT_MODE("bin/awk", "unix2003");
 	signal(SIGFPE, fpecatch);
@@ -127,7 +127,7 @@ int awk_main(int argc, char *argv[])
 	while (argc > 1 && argv[1][0] == '-' && argv[1][1] != '\0') {
 		if (strcmp(argv[1],"-version") == 0 || strcmp(argv[1],"--version") == 0) {
 			fprintf(thread_stdout, "awk %s\n", version);
-			pthread_exit(NULL); // exit(0);
+			exit(0);
 			break;
 		}
 		if (strncmp(argv[1], "--", 2) == 0) {	/* explicit end of args */
@@ -188,7 +188,7 @@ int awk_main(int argc, char *argv[])
 	if (npfile == 0) {	/* no -f; first argument is program */
 		if (argc <= 1) {
 			if (dbg)
-                pthread_exit(NULL); // exit(0);
+                exit(0);
 			FATAL("no program given");
 		}
 		   dprintf( (thread_stdout, "program = |%s|\n", argv[1]) );
