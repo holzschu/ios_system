@@ -34,6 +34,8 @@ extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
 extern int global_errno;
 
+#define exit ios_exit
+#define _exit ios_exit
 #define popen ios_popen
 #define pclose fclose
 #define system ios_system
@@ -43,6 +45,7 @@ extern int global_errno;
 
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
+extern void ios_exit(int errorCode) __dead2; // set error code and exits from the thread.
 extern int ios_execv(const char *path, char* const argv[]);
 extern int ios_execve(const char *path, char* const argv[], const char** envlist);
 extern int ios_dup2(int fd1, int fd2);

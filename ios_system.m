@@ -41,11 +41,7 @@ pthread_t current_command_root_thread;
 int global_errno;
 
 // replace system-provided exit() by our own:
-void exit(int n) {
-    global_errno = n; pthread_exit(NULL);
-}
-
-void _exit(int n) {
+void ios_exit(int n) {
     global_errno = n; pthread_exit(NULL);
 }
 
