@@ -370,9 +370,6 @@ static void initializeCommandList()
       @"bibtex"     : [NSArray arrayWithObjects:@"libbibtex.dylib", @"bibtex_main", @"", @"file", nil],
 #endif
     };
-    NSString* filePath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
-    filePath = [filePath stringByAppendingPathComponent:@"commandList.plist"];
-    [commandList writeToFile:filePath atomically:YES];
 }
 
 int ios_setMiniRoot(NSString* mRoot) {
