@@ -241,6 +241,7 @@ static void initializeCommandList()
     // 3rd component: chain sent to getopt (for arguments in autocomplete)
     // 4th component: takes a file/directory as argument
     if (commandList != nil) return;
+    // commandList = [NSDictionary dictionaryWithContentsOfFile:@"commandList.plist"];
     commandList = \
     @{
       // libfiles.dylib
@@ -325,6 +326,9 @@ static void initializeCommandList()
       @"host" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"host_main", @"46ac:dilnm:rst:vVwCDN:R:TW:", @"no", nil],
       @"telnet" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"telnet_main", @"468EKLNS:X:acde:fFk:l:n:rs:uxy", @"no", nil],
       @"rlogin" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"rlogin_main", @"468EKLNS:X:acde:fFk:l:n:rs:uxy", @"no", nil],
+      // ctags
+      @"ctags" : [NSArray arrayWithObjects:@"libctags.dylib", @"ctags_main", @"aBeFGnNoRvVx:b:d:D:f:h:I:L:", @"file", nil],
+      @"readtags" : [NSArray arrayWithObjects:@"libctags.dylib", @"readtags_main", @"aBeFGnNoRvVx:b:d:D:f:h:I:L:", @"file", nil],
 #ifdef SIDELOADING
       // Scripts and programming languages. Might move outside of here at some point
       // lua
@@ -366,6 +370,9 @@ static void initializeCommandList()
       @"bibtex"     : [NSArray arrayWithObjects:@"libbibtex.dylib", @"bibtex_main", @"", @"file", nil],
 #endif
     };
+    NSString* filePath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+    filePath = [filePath stringByAppendingPathComponent:@"commandList.plist"];
+    [commandList writeToFile:filePath atomically:YES];
 }
 
 int ios_setMiniRoot(NSString* mRoot) {
