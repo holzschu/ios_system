@@ -20,6 +20,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include "ios_error.h"
+#include <termios.h>
 
 static int ssh_waitsocket(int socket_fd, LIBSSH2_SESSION *session) {
     struct timeval timeout;
@@ -330,6 +331,7 @@ static int ssh_timeout_connect(int _sock, const struct sockaddr *addr, socklen_t
 
 static void ssh_usage() {
     fprintf(thread_stderr, "usage: ssh [-q] user@host [command]\n");
+    global_errno = 1;
     pthread_exit(NULL);
 }
 
@@ -537,15 +539,16 @@ int ssh_main(int argc, char** argv) {
                     break;
                 }
             } else {
-                /* Request a terminal with 'vt100' terminal emulation */
+                /* Request a terminal with 'xterm-256color' terminal emulation */
                 while ((rc = libssh2_channel_request_pty(_channel, "xterm-256color")) == LIBSSH2_ERROR_EAGAIN) {
+                // while ((rc = libssh2_channel_request_pty_ex(_channel, "xterm-256color", strlen("xterm-256color"), termModes, sizeof(termModes), 80, 24, 0, 0)) == LIBSSH2_ERROR_EAGAIN) {
                     ssh_waitsocket(_sock, _session);
                 }
                 if (rc) {
                     fprintf(thread_stderr, "Failed requesting pty\n");
                     rc = -3;
                     break;
-                }
+                } else fprintf(thread_stderr, "Managed to get ECHO off, in theory\n");
                 // Tell to the pty the size of our window, so it can adapt:
                 /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
                 /* Open a SHELL on that pty */
