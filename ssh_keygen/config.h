@@ -895,7 +895,8 @@
 #define HAVE_PUTUTXLINE 1
 
 /* Define to 1 if you have the `readpassphrase' function. */
-#define HAVE_READPASSPHRASE 1
+// iOS: we have it, but it's useless
+// #define HAVE_READPASSPHRASE 1
 
 /* Define to 1 if you have the <readpassphrase.h> header file. */
 #define HAVE_READPASSPHRASE_H 1

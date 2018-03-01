@@ -623,8 +623,8 @@ tilde_expand_filename(const char *filename, uid_t uid)
     }
 
 	/* Make sure directory has a trailing '/' */
-	len = strlen(pw->pw_dir);
-	if (len == 0 || pw->pw_dir[len - 1] != '/')
+	len = strlen(getenv("SSH_HOME"));
+	if (len == 0 || getenv("SSH_HOME")[len - 1] != '/')
 		sep = "/";
 	else
 		sep = "";
@@ -633,7 +633,7 @@ tilde_expand_filename(const char *filename, uid_t uid)
 	if (path != NULL)
 		filename = path + 1;
 
-    if (xasprintf(&ret, "%s%s%s", pw->pw_dir, sep, filename) >= PATH_MAX) {
+    if (xasprintf(&ret, "%s%s%s", getenv("SSH_HOME"), sep, filename) >= PATH_MAX) {
         fprintf(thread_stderr, "tilde_expand_filename: Path too long");
         pthread_exit(NULL);
     }
@@ -824,7 +824,7 @@ sanitise_stdfd(void)
 		    strerror(errno));
 		exit(1);
 	}
-	while (++dupfd <= STDERR_FILENO) {
+	while (++dupfd <= fileno(thread_stderr)) {
 		/* Only populate closed fds. */
 		if (fcntl(dupfd, F_GETFL) == -1 && errno == EBADF) {
 			if (dup2(nullfd, dupfd) == -1) {
@@ -833,7 +833,7 @@ sanitise_stdfd(void)
 			}
 		}
 	}
-	if (nullfd > STDERR_FILENO)
+	if (nullfd > fileno(thread_stderr))
 		close(nullfd);
 }
 

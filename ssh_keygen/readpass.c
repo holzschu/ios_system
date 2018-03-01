@@ -77,7 +77,7 @@ ssh_askpass(char *askpass, const char *msg)
 	if (pid == 0) {
 		permanently_drop_suid(getuid());
 		close(p[0]);
-        if (dup2(p[1], STDOUT_FILENO) < 0) {
+        if (dup2(p[1], fileno(thread_stdout)) < 0) {
             fprintf(thread_stderr, "ssh_askpass: dup2: %s", strerror(errno));
             pthread_exit(NULL);
         }
@@ -132,7 +132,7 @@ read_passphrase(const char *prompt, int flags)
 	if (flags & RP_USE_ASKPASS)
 		use_askpass = 1;
 	else if (flags & RP_ALLOW_STDIN) {
-		if (!isatty(STDIN_FILENO)) {
+		if (!(fileno(stdin) == fileno(thread_stdin))) {
 			debug("read_passphrase: stdin is not a tty");
 			use_askpass = 1;
 		}

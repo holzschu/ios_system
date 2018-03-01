@@ -19,11 +19,11 @@ extern int ios_system(char* cmd);
 ```
 link with the `ios_system.framework`, and your calls to `system()` will be handled by this framework.
 
-The commands available are defined in `ios_system.m`. They are dynamically loaded at run-time, and released after execution. They are configurable by changing the dynamic libraries embedded into the app. 
+**Commands available:** shell commands (`ls`, `cp`, `rm`...), archive commands (`curl`, `scp`, `sftp`, `tar`, `gzip`, `compress`...) plus a few interpreted languages (`python`, `lua`, `TeX`). Scripts written in one of the interpreted languages are also executed, if they are in the `$PATH`. 
 
-There are, first, shell commands (`ls`, `cp`, `rm`...), archive commands (`curl`, `scp`, `sftp`, `tar`, `gzip`, `compress`...) plus a few interpreted languages (`python`, `lua`, `TeX`). Scripts written in one of the interpreted languages are also executed, if they are in the `$PATH`. 
+The commands available are defined in two dictionaries, `Resources/commandDictionary.plist` and `Resources/extraCommandsDictionary.plist`. At startup time, `ios_system` loads these dictionaries and enables the commands defined inside. You will need to add these two dictionaries to the "Copy Bundle Resources" step in your Xcode project.
 
-For each set of commands, we need to provide the corresponding dynamic library. Libraries for small commands are in this project. Library or Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). Some commands (`curl`, `python`) require `OpenSSH` and `libssl2`, which you will have to download and compile separately.
+Each command is defined inside a dynamic library. The dynamic library is loaded when the command is called, and released after the command exits. Dynamic libraries for small commands are in this project. Library or Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). Some commands (`curl`, `python`) require `OpenSSH` and `libssl2`, which you will have to download and compile separately (see https://github.com/holzschu/libssh2-for-iOS, for example).
 
 Network-based commands (nslookup, dig, host, ping, telnet) are also available as a separate dynamic library, [network_ios](https://github.com/holzschu/network_ios). Place the compiled library with the other libraries and add it to the embedded libraries of your application.
 
@@ -69,7 +69,9 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 
 ## Integration with your app:
 
-Link your application with the `ios_system.framework` framework, and embed (but don't link) the dynamic libraries corresponding to the commands you need (`libtar.dylib` if you need `tar`, `libfiles.dylib` for cp, rm, mv...).
+- Link your application with the `ios_system.framework` framework.
+- Embed (but don't link) the dynamic libraries corresponding to the commands you need (`libtar.dylib` if you need `tar`, `libfiles.dylib` for cp, rm, mv...). 
+- Add the two dictionaries, `Resources/commandDictionary.plist` and `Resources/extraCommandsDictionary.plist` to the  "Copy Bundle Resources" step in your Xcode project.
 
 ### Basic commands:
 
@@ -92,6 +94,19 @@ Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `
 
 If the command does not already exist, your command is simply added to the list. 
 
+**addCommandList:** `NSError* addCommandList(NSString* fileLocation)` loads several commands at once, and adds them to the list of existing commands. `fileLocation` points to a plist file, with the same syntax as  `Resources/extraCommandsDictionary.plist`: the key is the command name, and is followed by an Array of 4 Strings: name of the dynamic library, name of the function to call, list of options (in `getopt()` format) and what the command expects as argument (file, directory, nothing). The last two can be used for autocomplete. The name of the dynamic library can be `MAIN` if your command is defined in your main program (equivalent to the `RTLD_MAIN_ONLY` option for `dlsym()`), or `SELF` if it is defined inside `ios_system.framework` (equivalent to `RTLD_SELF`). 
+
+Example: 
+```xml
+<key>rlogin</key>
+  <array>
+    <string>libnetwork_ios.dylib</string>
+    <string>rlogin_main</string>
+    <string>468EKLNS:X:acde:fFk:l:n:rs:uxy</string>
+    <string>no</string>
+  </array>
+```
+
 **ios_execv(const char *path, char* const argv[])**: executes the command in `argv[0]` with the arguments `argv` (it doesn't use `path`). It is *not* a drop-in replacement for `execv` because it does not terminate the current process. `execv` is usually called after `fork()`, and `execv` terminates the child process. This is not possible in iOS. If `dup2` was called before `execv` to set stdin and stdout, `ios_execv` tries to do the right thing and pass these streams to the process started by `execv`. 
 
 `ios_execve` also exists, but is just a pointer to `ios_execv` (we don't do anything with the environment for now). 
@@ -103,7 +118,7 @@ If the command does not already exist, your command is simply added to the list.
 - Inside terminals we have limited interaction. Apps that require user input are unlikely to get it, or with no visual feedback. That could be solved, but it is hard.
 
 To add a command:
-- create an issue: https://github.com/holzschu/ios_system/issues That will let others know you're working on it, and possibly join forces with you (that's the beauty of OpenSource). 
+- (Optional) create an issue: https://github.com/holzschu/ios_system/issues That will let others know you're working on it, and possibly join forces with you (that's the beauty of OpenSource). 
 - find the source code for the command, preferrably with BSD license. [Apple OpenSource](https://opensource.apple.com) is a good place to start. Compile it first for OSX, to see if it works, and go through configuration. 
 - make the following changes to the code: 
     - include `ios_error.h` (it will replace all calls to `exit` by calls to `pthread_exit`)
@@ -115,7 +130,10 @@ To add a command:
     - make sure you initialize all variables at startup, and release all memory on exit.
     - make all global variables thread-local with `__thread`, make sure local variables are marked with `static`. 
     - make sure your code doesn't use commands that don't work in a sandbox: `fork`, `exec`, `system`, `popen`, `isExecutableFileAtPath`, `access`... (some of these fail at compile time, others fail silently at run time). 
-    - compile, edit `ios_system.m` to add your commands, and run. That's it. Test a lot. Side effects appear after several launches.
+    - compile the digital library, add it to the embedded frameworks of your app. 
+    - Edit the `Resources/extraCommandsDictionary.plist` to add your command, and run. 
+    - That's it. 
+    - Test a lot. Side effects appear can after several launches.
     - if your command has a large code base, work out the difference in your edits and make a patch, rather than commit the entire code. See `get_sources_for_patching.sh` for an example. 
 
 **Frequently asked commands:** here is a list of commands that are often requested, and my experience with them:

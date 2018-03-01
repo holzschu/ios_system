@@ -272,12 +272,13 @@ ask_filename(struct passwd *pw, const char *prompt)
 		}
 	}
 	snprintf(identity_file, sizeof(identity_file),
-	    "%s/%s", pw->pw_dir, name);
+	    "%s/%s", getenv("SSH_HOME"), name);
 	fprintf(thread_stdout, "%s (%s): ", prompt, identity_file);
 	fflush(thread_stdout);
-	if (fgets(buf, sizeof(buf), thread_stdin) == NULL)
+    if (fgets(buf, sizeof(buf), thread_stdin) == NULL) {
 		exit(1);
-	buf[strcspn(buf, "\n")] = '\0';
+    }
+    buf[strcspn(buf, "\n")] = '\0';
 	if (strcmp(buf, "") != 0)
 		strlcpy(identity_file, buf, sizeof(identity_file));
 	have_identity = 1;
@@ -2666,7 +2667,7 @@ sshkeygen_main(int argc, char **argv)
 
 	/* Create ~/.ssh directory if it doesn't already exist. */
 	snprintf(dotsshdir, sizeof dotsshdir, "%s/%s",
-	    pw->pw_dir, _PATH_SSH_USER_DIR);
+	    getenv("SSH_HOME"), _PATH_SSH_USER_DIR);
 	if (strstr(identity_file, dotsshdir) != NULL) {
 		if (stat(dotsshdir, &st) < 0) {
 			if (errno != ENOENT) {
