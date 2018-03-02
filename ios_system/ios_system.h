@@ -19,6 +19,8 @@ FOUNDATION_EXPORT const unsigned char ios_systemVersionString[];
 extern __thread FILE* thread_stdin;
 extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
+// set to false to get code that hides the filesystem complexity (no debug messages, smaller set of commands)
+extern bool sideLoading;
 
 int ios_executable(const char* inputCmd); // does this command exist? (executable file or builtin command)
 int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
@@ -30,5 +32,6 @@ extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArra
 extern NSString* getoptString(NSString* command);
 extern NSString* operatesOn(NSString* command);
 extern void initializeEnvironment(void);
-extern int ios_setMiniRoot(NSString*);  // restric operations to a certain hierarchy
+extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hierarchy
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
+extern NSError* addCommandList(NSString* fileLocation);

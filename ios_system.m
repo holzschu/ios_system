@@ -27,9 +27,10 @@
 // is executable, looking at "x" bit. Other methods fails on iOS:
 #define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH))
 // Sideloading: when you compile yourself, as opposed to uploading on the app store
-// If defined, all functions are enabled. If undefined, you get a smaller set, but
+// If true, all functions are enabled. If false, you get a smaller set, but
 // more compliance with AppStore rules.
-#define SIDELOADING
+// Must be *false* in the main branch releases.
+bool sideLoading = true;
 
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
@@ -139,19 +140,19 @@ void initializeEnvironment() {
     setenv("CURL_HOME", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
     setenv("SSL_CERT_FILE", [docsPath stringByAppendingPathComponent:@"cacert.pem"].UTF8String, 0); // SLL cacert.pem in ~/Documents/cacert.pem or [Cloud Drive]/cacert.pem
     // iOS already defines "HOME" as the home dir of the application
-#ifdef SIDELOADING
-    NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
-    if (![fullCommandPath containsString:@"Library/bin"]) {
-        NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
-        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+    if (sideLoading) {
+        NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
+        if (![fullCommandPath containsString:@"Library/bin"]) {
+            NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
+            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+        }
+        // if we use Python, we define a few more environment variables:
+        setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python scripts in ~/Library/lib/python3.6/
+        setenv("PYZMQ_BACKEND", "cffi", 0);
+        setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
+        // hg config file in ~/Documents/.hgrc
+        setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
     }
-    // if we use Python, we define a few more environment variables:
-    setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python scripts in ~/Library/lib/python3.6/
-    setenv("PYZMQ_BACKEND", "cffi", 0);
-    setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
-    // hg config file in ~/Documents/.hgrc
-    setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
-#endif
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
 }
@@ -266,20 +267,20 @@ static void initializeCommandList()
     if (!commandList) { NSLog(@"%@", [error localizedDescription]); return; }
     // replaces the following command, marked as deprecated in the doc:
     // commandList = [NSDictionary dictionaryWithContentsOfFile:commandDictionary];
-#ifdef SIDELOADING
-    // more commands, for sideloaders (commands that won't pass AppStore rules, or with licensing issues):
-    NSString* extraCommandsDictionary = [applicationDirectory stringByAppendingPathComponent:@"extraCommandsDictionary.plist"];
-    locationURL = [NSURL fileURLWithPath:extraCommandsDictionary isDirectory:NO];
-    if ([locationURL checkResourceIsReachableAndReturnError:&error] == NO) { NSLog(@"%@", [error localizedDescription]); return; }
-    NSData* extraLoadedFromFile = [NSData dataWithContentsOfFile:extraCommandsDictionary  options:0 error:&error];
-    if (!extraLoadedFromFile) { NSLog(@"%@", [error localizedDescription]); return; }
-    NSDictionary* extraCommandList = [NSPropertyListSerialization propertyListWithData:extraLoadedFromFile options:NSPropertyListImmutable format:NULL error:&error];
-    if (!extraCommandList) { NSLog(@"%@", [error localizedDescription]); return; }
-    // merge the two dictionaries:
-    NSMutableDictionary *mutableDict = [commandList mutableCopy];
-    [mutableDict addEntriesFromDictionary:extraCommandList];
-    commandList = [mutableDict mutableCopy];
-#endif
+    if (sideLoading) {
+        // more commands, for sideloaders (commands that won't pass AppStore rules, or with licensing issues):
+        NSString* extraCommandsDictionary = [applicationDirectory stringByAppendingPathComponent:@"extraCommandsDictionary.plist"];
+        locationURL = [NSURL fileURLWithPath:extraCommandsDictionary isDirectory:NO];
+        if ([locationURL checkResourceIsReachableAndReturnError:&error] == NO) { NSLog(@"%@", [error localizedDescription]); return; }
+        NSData* extraLoadedFromFile = [NSData dataWithContentsOfFile:extraCommandsDictionary  options:0 error:&error];
+        if (!extraLoadedFromFile) { NSLog(@"%@", [error localizedDescription]); return; }
+        NSDictionary* extraCommandList = [NSPropertyListSerialization propertyListWithData:extraLoadedFromFile options:NSPropertyListImmutable format:NULL error:&error];
+        if (!extraCommandList) { NSLog(@"%@", [error localizedDescription]); return; }
+        // merge the two dictionaries:
+        NSMutableDictionary *mutableDict = [commandList mutableCopy];
+        [mutableDict addEntriesFromDictionary:extraCommandList];
+        commandList = [mutableDict mutableCopy];
+    }
 }
 
 int ios_setMiniRoot(NSString* mRoot) {
@@ -899,14 +900,10 @@ int ios_system(const char* inputCmd) {
             if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
             else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
             else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_GLOBAL); // commands defined in dynamic library
-#ifdef SIDELOADING
-            if (handle == NULL) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
-#endif
+            if (sideLoading && (handle == NULL)) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
             NSString* functionName = commandStructure[1];
             function = dlsym(handle, functionName.UTF8String);
-#ifdef SIDELOADING
-            if (function == NULL) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
-#endif
+            if (sideLoading && (function == NULL)) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
         }
         if (function) {
             // We run the function in a thread because there are several
