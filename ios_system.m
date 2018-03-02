@@ -258,19 +258,23 @@ static void initializeCommandList()
     NSError *error;
     NSString* applicationDirectory = [[NSBundle mainBundle] resourcePath];
     NSString* commandDictionary = [applicationDirectory stringByAppendingPathComponent:@"commandDictionary.plist"];
+    NSURL *locationURL = [NSURL fileURLWithPath:commandDictionary isDirectory:NO];
+    if ([locationURL checkResourceIsReachableAndReturnError:&error] == NO) { NSLog(@"%@", [error localizedDescription]); return; }
     NSData* loadedFromFile = [NSData dataWithContentsOfFile:commandDictionary  options:0 error:&error];
-    if (!loadedFromFile) NSLog(@"%@", [error localizedDescription]);
+    if (!loadedFromFile) { NSLog(@"%@", [error localizedDescription]); return; }
     commandList = [NSPropertyListSerialization propertyListWithData:loadedFromFile options:NSPropertyListImmutable format:NULL error:&error];
-    if (!commandList) NSLog(@"%@", [error localizedDescription]);
+    if (!commandList) { NSLog(@"%@", [error localizedDescription]); return; }
     // replaces the following command, marked as deprecated in the doc:
     // commandList = [NSDictionary dictionaryWithContentsOfFile:commandDictionary];
 #ifdef SIDELOADING
     // more commands, for sideloaders (commands that won't pass AppStore rules, or with licensing issues):
     NSString* extraCommandsDictionary = [applicationDirectory stringByAppendingPathComponent:@"extraCommandsDictionary.plist"];
+    locationURL = [NSURL fileURLWithPath:extraCommandsDictionary isDirectory:NO];
+    if ([locationURL checkResourceIsReachableAndReturnError:&error] == NO) { NSLog(@"%@", [error localizedDescription]); return; }
     NSData* extraLoadedFromFile = [NSData dataWithContentsOfFile:extraCommandsDictionary  options:0 error:&error];
-    if (!extraLoadedFromFile) NSLog(@"%@", [error localizedDescription]);
+    if (!extraLoadedFromFile) { NSLog(@"%@", [error localizedDescription]); return; }
     NSDictionary* extraCommandList = [NSPropertyListSerialization propertyListWithData:extraLoadedFromFile options:NSPropertyListImmutable format:NULL error:&error];
-    if (!extraCommandList) NSLog(@"%@", [error localizedDescription]);
+    if (!extraCommandList) { NSLog(@"%@", [error localizedDescription]); return; }
     // merge the two dictionaries:
     NSMutableDictionary *mutableDict = [commandList mutableCopy];
     [mutableDict addEntriesFromDictionary:extraCommandList];
@@ -534,8 +538,11 @@ void replaceCommand(NSString* commandName, NSString* functionName, bool allOccur
 // </array>
 NSError* addCommandList(NSString* fileLocation) {
     if (commandList == nil) initializeCommandList();
-
     NSError* error;
+    
+    NSURL *locationURL = [NSURL fileURLWithPath:fileLocation isDirectory:NO];
+    if ([locationURL checkResourceIsReachableAndReturnError:&error] == NO) return error;
+
     NSData* dataLoadedFromFile = [NSData dataWithContentsOfFile:fileLocation  options:0 error:&error];
     if (!dataLoadedFromFile) return error;
     NSDictionary* newCommandList = [NSPropertyListSerialization propertyListWithData:dataLoadedFromFile options:NSPropertyListImmutable format:NULL error:&error];
