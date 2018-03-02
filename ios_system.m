@@ -361,7 +361,7 @@ NSString* operatesOn(NSString* commandName) {
 int ios_executable(const char* inputCmd) {
     // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
     if (commandList == nil) initializeCommandList();
-    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:inputCmd]];
+    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:inputCmd encoding:NSUTF8StringEncoding]];
     // we could dlopen() here, but that would defeat the purpose
     if (valuesFromDict == nil) return 0;
     else return 1;
@@ -815,7 +815,7 @@ int ios_system(const char* inputCmd) {
             size_t len_with_terminator = strlen(argv[0] + 1) + 1;
             memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {
-            NSString* commandName = [NSString stringWithCString:argv[0]];
+            NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
             BOOL isDir = false;
             BOOL cmdIsAFile = false;
             if ([commandName hasPrefix:@"~"]) commandName = [commandName stringByExpandingTildeInPath];

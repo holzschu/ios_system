@@ -19,13 +19,13 @@ FOUNDATION_EXPORT const unsigned char ios_systemVersionString[];
 extern __thread FILE* thread_stdin;
 extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
-// set to false to get code that hides the filesystem complexity (no debug messages, smaller set of commands)
+// set to true to have more commands available, more debugging information.
 extern bool sideLoading;
 
-int ios_executable(const char* inputCmd); // does this command exist? (executable file or builtin command)
-int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
+extern int ios_executable(const char* inputCmd); // does this command exist? (executable file or builtin command)
+extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
-int ios_kill(); // kill the current running command
+extern int ios_kill(void); // kill the current running command
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays
