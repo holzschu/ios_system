@@ -22,7 +22,9 @@ extern __thread FILE* thread_stderr;
 
 int ios_executable(const char* inputCmd); // does this command exist? (executable file or builtin command)
 int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
+int ios_system_with_callback(const char* inputCmd, void (*callback)(const void *, pthread_t), void *context);
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
+int ios_kill_with_thread_id(pthread_t command_root_thread);
 int ios_kill(); // kill the current running command
 
 extern NSString* commandsAsString(void);
