@@ -27,9 +27,9 @@
 // is executable, looking at "x" bit. Other methods fails on iOS:
 #define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH))
 // Sideloading: when you compile yourself, as opposed to uploading on the app store
-// If true, all functions are enabled. If false, you get a smaller set, but
-// more compliance with AppStore rules.
-// Must be *false* in the main branch releases.
+// If true, all functions are enabled + debug messages if dylib not found.
+// If false, you get a smaller set, but more compliance with AppStore rules.
+// *Must* be false in the main branch releases.
 bool sideLoading = true;
 
 extern __thread int    __db_getopt_reset;
@@ -53,7 +53,8 @@ typedef struct _functionParameters {
     int (*function)(int ac, char** av);
     FILE *stdin, *stdout, *stderr;
     void* dlHandle;
-    bool isPipe;
+    bool isPipeOut;
+    bool isPipeErr;
 } functionParameters;
 
 static void cleanup_function(void* parameters) {
@@ -65,13 +66,15 @@ static void cleanup_function(void* parameters) {
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
-    if (p->isPipe) {
+    if (p->isPipeOut) {
         // Close stdout if it won't be closed by another thread
         // (i.e. if it's different from the parent thread stdout)
-        // There is currently no way to pipe stderr without piping stdout.
-        // So close it only once.
         fclose(thread_stdout);
         thread_stdout = NULL;
+    }
+    if (p->isPipeErr) {
+        fclose(thread_stderr);
+        thread_stderr = NULL;
     }
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
@@ -368,9 +371,9 @@ int ios_executable(const char* inputCmd) {
 }
 
 // Where to direct input/output of the next thread:
-static __thread FILE* child_stdin;
-static __thread FILE* child_stdout;
-static __thread FILE* child_stderr;
+static __thread FILE* child_stdin = NULL;
+static __thread FILE* child_stdout = NULL;
+static __thread FILE* child_stderr = NULL;
 
 FILE* ios_popen(const char* inputCmd, const char* type) {
     // Save existing streams:
@@ -632,7 +635,7 @@ int ios_system(const char* inputCmd) {
     params->stderr = child_stderr;
     child_stdin = child_stdout = child_stderr = NULL;
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
-    params->function = NULL; params->isPipe = false;
+    params->function = NULL; params->isPipeOut = false; params->isPipeErr = false;
     // scan until first "<" (input file)
     inputFileMarker = strstr(inputFileMarker, "<");
     // scan until first non-space character:
@@ -666,26 +669,22 @@ int ios_system(const char* inputCmd) {
     }
     // We have removed the pipe part. Still need to parse the rest of the command
     // Must scan in strstr by reverse order of inclusion. So "2>&1" before "2>" before ">"
-    if (params->stdout == 0) {
-        errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
-        // output file name will be after "&>"
-        if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
-    }
-    if (!errorFileMarker && (params->stderr == 0)) {
+    errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
+    // output file name will be after "&>"
+    if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
+    if (!errorFileMarker) {
         // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
         // ...except with a pipe.
         // Currently, we don't check for that.
         errorFileMarker = strstr (outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
         if (errorFileMarker) {
             if (params->stdout) params->stderr = params->stdout;
-            else {
-                outputFileMarker = strstr(outputFileMarker, ">");
-                if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
-            }
+            outputFileMarker = strstr(outputFileMarker, ">");
+            if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
         }
     }
     if (errorFileMarker) { sharedErrorOutput = true; }
-    else if (params->stderr == 0) {
+    else {
         // specific name for error file?
         errorFileMarker = strstr(outputFileMarker,"2>");
         if (errorFileMarker) {
@@ -695,7 +694,7 @@ int ios_system(const char* inputCmd) {
         }
     }
     // scan until first ">"
-    if (!sharedErrorOutput && (params->stdout == 0)) {
+    if (!sharedErrorOutput) {
         outputFileMarker = strstr(outputFileMarker, ">");
         if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
     }
@@ -736,13 +735,24 @@ int ios_system(const char* inputCmd) {
     if (inputFileName && (inputFileName[0] == '\'')) { inputFileName = inputFileName + 1; inputFileName[strlen(inputFileName) - 1] = 0x0; }
     if (errorFileName && (errorFileName[0] == '\'')) { errorFileName = errorFileName + 1; errorFileName[strlen(errorFileName) - 1] = 0x0; }
     //
-    if (inputFileName) params->stdin = fopen(inputFileName, "r");
-    if (params->stdin == NULL) params->stdin = thread_stdin; // open did not work
-    if (outputFileName) params->stdout = fopen(outputFileName, "w");
-    if (params->stdout == NULL) params->stdout = thread_stdout; // open did not work
+    FILE* newStream;
+    if (inputFileName) {
+        newStream = fopen(inputFileName, "r");
+        if (newStream) params->stdin = newStream;
+    }
+    if (params->stdin == NULL) params->stdin = thread_stdin;
+    if (outputFileName) {
+        newStream = fopen(outputFileName, "w");
+        if (newStream) params->stdout = newStream; // open did not work
+    }
+    if (params->stdout == NULL) params->stdout = thread_stdout;
     if (sharedErrorOutput) params->stderr = params->stdout;
-    else if (errorFileName) params->stderr = fopen(errorFileName, "w");
-    if (params->stderr == NULL) params->stderr = thread_stderr; // open did not work
+    else if (errorFileName) {
+        newStream = NULL;
+        newStream = fopen(errorFileName, "w");
+        if (newStream) params->stderr = newStream; // open did not work
+    }
+    if (params->stderr == NULL) params->stderr = thread_stderr;
     int argc = 0;
     size_t numSpaces = 0;
     // the number of arguments is *at most* the number of spaces plus one
@@ -915,7 +925,8 @@ int ios_system(const char* inputCmd) {
             params->argv = argv;
             params->function = function;
             params->dlHandle = handle;
-            params->isPipe = (params->stdout != thread_stdout);
+            params->isPipeOut = (params->stdout != thread_stdout);
+            params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
             if (isMainThread) {
                 // Send a signal to the system that we're going to change the current directory:
                 NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];

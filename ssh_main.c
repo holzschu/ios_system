@@ -212,7 +212,7 @@ static int ssh_client_loop(LIBSSH2_SESSION *_session, LIBSSH2_CHANNEL *_channel,
             break;
         }
         
-        rc = poll(pfds, numfds, 15000);
+        rc = poll(pfds, numfds, 5000);
         if (-1 == rc) {
             break;
         }
@@ -548,7 +548,7 @@ int ssh_main(int argc, char** argv) {
                     fprintf(thread_stderr, "Failed requesting pty\n");
                     rc = -3;
                     break;
-                } else fprintf(thread_stderr, "Managed to get ECHO off, in theory\n");
+                }
                 // Tell to the pty the size of our window, so it can adapt:
                 /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
                 /* Open a SHELL on that pty */
