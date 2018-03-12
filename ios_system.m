@@ -471,10 +471,25 @@ int ios_execve(const char *path, char* const argv[], char *const envp[]) {
 int ios_dup2(int fd1, int fd2)
 {
     // iOS specifics: trying to access stdin/stdout/stderr?
-    // fprintf(stderr, "Accessing dup2: fd1 = %d fd2 = %d\n", fd1, fd2); fflush(stderr);
+    if (fd1 < 3) {
+        // specific cases like dup2(STDOUT_FILENO, STDERR_FILENO)
+        FILE* stream1 = NULL;
+        switch (fd1) {
+            case 0: stream1 = child_stdin; break;
+            case 1: stream1 = child_stdout; break;
+            case 2: stream1 = child_stderr; break;
+        }
+        switch (fd2) {
+            case 0: child_stdin = stream1; return fd2;
+            case 1: child_stdout = stream1; return fd2;
+            case 2: child_stderr = stream1; return fd2;
+        }
+    }
     if (fd2 == 0) { child_stdin = fdopen(fd1, "rb"); }
     else if (fd2 == 1) { child_stdout = fdopen(fd1, "wb"); }
-    else if (fd2 == 2) { child_stderr = fdopen(fd1, "wb"); }
+    else if (fd2 == 2) {
+        if (fileno(child_stdout) == fd1) child_stderr = child_stdout;
+        else child_stderr = fdopen(fd1, "wb"); }
     else if (fd1 != fd2) {
         if (fcntl(fd1, F_GETFL) < 0)
             return -1;
@@ -573,6 +588,70 @@ NSString* commandsAsString() {
 NSArray* commandsAsArray() {
     if (commandList == nil) initializeCommandList();
     return commandList.allKeys;
+}
+
+// for output file names, arguments: returns a pointer to
+// immediately after the end of the argument, or NULL.
+// Method:
+//   - if argument begins with ", go to next unescaped "
+//   - if argument begins with ', go to next unescaped '
+//   - otherwise, move to next unescaped space
+//
+// Must be combined with another function to remove backslash.
+
+// Aux function:
+static void* nextUnescapedCharacter(const char* str, const char c) {
+    char* nextOccurence = strchr(str, c);
+    while (nextOccurence != NULL) {
+        if ((nextOccurence > str + 1) && (*(nextOccurence - 1) == '\\')) {
+            // There is a backlash before the character.
+            int numBackslash = 0;
+            char* countBack = nextOccurence - 1;
+            while ((countBack > str) && (*countBack == '\\')) { numBackslash++; countBack--; }
+            if (numBackslash % 2 == 0) return nextOccurence; // even number of backslash
+        } else return nextOccurence;
+        nextOccurence = strchr(nextOccurence + 1, c);
+    }
+    return nextOccurence;
+}
+
+static char* getLastCharacterOfArgument(const char* argument) {
+    if (strlen(argument) == 0) return NULL; // be safe
+    if (argument[0] == '"') {
+        char* endquote = nextUnescapedCharacter(argument + 1, '"');
+        if (endquote != NULL) return endquote + 1;
+        else return NULL;
+    } else if (argument[0] == '\'') {
+        char* endquote = nextUnescapedCharacter(argument + 1, '\'');
+        if (endquote != NULL) return endquote + 1;
+        else return NULL;
+    }
+    else return nextUnescapedCharacter(argument + 1, ' ');
+}
+
+// remove quotes at the beginning of argument if there's a balancing one at the end
+static char* unquoteArgument(char* argument) {
+    if (argument[0] == '"') {
+        if (argument[strlen(argument) - 1] == '"') {
+            argument[strlen(argument) - 1] = 0x0;
+            return argument + 1;
+        }
+    }
+    if (argument[0] == '\'') {
+        if (argument[strlen(argument) - 1] == '\'') {
+            argument[strlen(argument) - 1] = 0x0;
+            return argument + 1;
+        }
+    }
+    // no quotes at the beginning: replace all escaped characters:
+    // '\x' -> x
+    char* nextOccurence = strchr(argument, '\\');
+    while ((nextOccurence != NULL) && (strlen(nextOccurence) > 0)) {
+        memmove(nextOccurence, nextOccurence + 1, strlen(nextOccurence + 1) + 1);
+        // strcpy(nextOccurence, nextOccurence + 1);
+        nextOccurence = strchr(nextOccurence + 1, '\\');
+    }
+    return argument;
 }
 
 int ios_system(const char* inputCmd) {
@@ -711,19 +790,19 @@ int ios_system(const char* inputCmd) {
         } else outputFileName = NULL; // Only "2>", but no ">". It happens.
     }
     if (outputFileName) {
-        char* endFile = strstr(outputFileName, " ");
+        char* endFile = getLastCharacterOfArgument(outputFileName);
         if (endFile) endFile[0] = 0x00; // end output file name at first space
-        assert(endFile < maxPointer);
+        assert(endFile <= maxPointer);
     }
     if (inputFileName) {
-        char* endFile = strstr(inputFileName, " ");
+        char* endFile = getLastCharacterOfArgument(inputFileName);
         if (endFile) endFile[0] = 0x00; // end input file name at first space
-        assert(endFile < maxPointer);
+        assert(endFile <= maxPointer);
     }
     if (errorFileName) {
-        char* endFile = strstr(errorFileName, " ");
+        char* endFile = getLastCharacterOfArgument(errorFileName);
         if (endFile) endFile[0] = 0x00; // end error file name at first space
-        assert(endFile < maxPointer);
+        assert(endFile <= maxPointer);
     }
     // insert chain termination elements at the beginning of each filename.
     // Must be done after the parsing
@@ -731,9 +810,9 @@ int ios_system(const char* inputCmd) {
     if (outputFileMarker && (params->stdout == NULL)) outputFileMarker[0] = 0x0;
     if (errorFileMarker) errorFileMarker[0] = 0x0;
     // strip filenames of quotes, if any:
-    if (outputFileName && (outputFileName[0] == '\'')) { outputFileName = outputFileName + 1; outputFileName[strlen(outputFileName) - 1] = 0x0; }
-    if (inputFileName && (inputFileName[0] == '\'')) { inputFileName = inputFileName + 1; inputFileName[strlen(inputFileName) - 1] = 0x0; }
-    if (errorFileName && (errorFileName[0] == '\'')) { errorFileName = errorFileName + 1; errorFileName[strlen(errorFileName) - 1] = 0x0; }
+    if (outputFileName) outputFileName = unquoteArgument(outputFileName);
+    if (inputFileName) inputFileName = unquoteArgument(inputFileName);
+    if (errorFileName) errorFileName = unquoteArgument(errorFileName);
     //
     FILE* newStream;
     if (inputFileName) {
@@ -766,29 +845,14 @@ int ios_system(const char* inputCmd) {
         argv[argc] = str;
         dontExpand[argc] = false;
         argc += 1;
-        if (str[0] == '\'') { // argument begins with a quote.
-            // everything until next quote is part of the argument
-            argv[argc-1] = str + 1;
-            char* end = strstr(argv[argc-1], "'");
-            if (!end) break;
-            end[0] = 0x0;
-            str = end + 1;
+        char* end = getLastCharacterOfArgument(str);
+        if (end) end[0] = 0x0;
+        if ((str[0] == '\'') || (str[0] == '"')) {
             dontExpand[argc-1] = true; // don't expand arguments in quotes
-        } else if (str[0] == '\"') { // argument begins with a double quote.
-            // everything until next double quote is part of the argument
-            argv[argc-1] = str + 1;
-            char* end = strstr(argv[argc-1], "\"");
-            if (!end) break;
-            end[0] = 0x0;
-            str = end + 1;
-            dontExpand[argc-1] = true; // don't expand arguments in quotes
-        } else {
-            // skip to next space:
-            char* end = strstr(str, " ");
-            if (!end) break;
-            end[0] = 0x0;
-            str = end + 1;
         }
+        argv[argc-1] = unquoteArgument(argv[argc-1]);
+        if (!end) break;
+        str = end + 1;
         if ((argc == 1) && (argv[0][0] == '/') && (access(argv[0], R_OK) == -1)) {
             // argv[0] is a file that doesn't exist. Probably one of our commands.
             // Replace with its name:
@@ -810,7 +874,7 @@ int ios_system(const char* inputCmd) {
         free(argv);
         argv = argv_copy;
         // We have the arguments. Parse them for environment variables, ~, etc.
-        for (int i = 1; i < argc; i++) if (!dontExpand[i]) argv[i] = parseArgument(argv[i], argv[0]);
+        for (int i = 1; i < argc; i++) if (!dontExpand[i]) {  argv[i] = parseArgument(argv[i], argv[0]); }
         free(dontExpand);
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
