@@ -212,7 +212,7 @@ static int ssh_client_loop(LIBSSH2_SESSION *_session, LIBSSH2_CHANNEL *_channel,
             break;
         }
         
-        rc = poll(pfds, numfds, 5000);
+        rc = poll(pfds, numfds, 15000);
         if (-1 == rc) {
             break;
         }
@@ -256,9 +256,9 @@ static int ssh_client_loop(LIBSSH2_SESSION *_session, LIBSSH2_CHANNEL *_channel,
         ssh_waitsocket(_sock, _session);
 
     // close files if it's not a pipe. Could move to ios_system.
-    if (fileno(thread_stdin) != fileno(stdin)) { fclose(thread_stdin);}
-    if (fileno(thread_stdout) != fileno(stdout)) { fclose(thread_stdout);}
-    if (fileno(thread_stderr) != fileno(stderr)) { fclose(thread_stderr);}
+    // if (fileno(thread_stdin) != fileno(stdin)) { fclose(thread_stdin);}
+    // if (fileno(thread_stdout) != fileno(stdout)) { fclose(thread_stdout);}
+    // if (fileno(thread_stderr) != fileno(stderr)) { fclose(thread_stderr);}
 
     if (rc < 0) {
         return -1;
