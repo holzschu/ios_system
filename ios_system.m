@@ -52,7 +52,8 @@ typedef struct _functionParameters {
     int (*function)(int ac, char** av);
     FILE *stdin, *stdout, *stderr;
     void* dlHandle;
-    bool isPipe;
+    bool isPipeOut;
+    bool isPipeErr;
 } functionParameters;
 
 static void cleanup_function(void* parameters) {
@@ -64,13 +65,15 @@ static void cleanup_function(void* parameters) {
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
-    if (p->isPipe) {
+    if (p->isPipeOut) {
         // Close stdout if it won't be closed by another thread
         // (i.e. if it's different from the parent thread stdout)
-        // There is currently no way to pipe stderr without piping stdout.
-        // So close it only once.
         fclose(thread_stdout);
         thread_stdout = NULL;
+    }
+    if (p->isPipeErr) {
+        fclose(thread_stderr);
+        thread_stderr = NULL;
     }
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
@@ -450,16 +453,16 @@ NSString* operatesOn(NSString* commandName) {
 int ios_executable(const char* inputCmd) {
     // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
     if (commandList == nil) initializeCommandList();
-    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:inputCmd]];
+    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:inputCmd encoding:NSUTF8StringEncoding]];
     // we could dlopen() here, but that would defeat the purpose
     if (valuesFromDict == nil) return 0;
     else return 1;
 }
 
 // Where to direct input/output of the next thread:
-static __thread FILE* child_stdin;
-static __thread FILE* child_stdout;
-static __thread FILE* child_stderr;
+static __thread FILE* child_stdin = NULL;
+static __thread FILE* child_stdout = NULL;
+static __thread FILE* child_stderr = NULL;
 
 FILE* ios_popen(const char* inputCmd, const char* type) {
     // Save existing streams:
@@ -557,10 +560,25 @@ int ios_execve(const char *path, char* const argv[], char *const envp[]) {
 int ios_dup2(int fd1, int fd2)
 {
     // iOS specifics: trying to access stdin/stdout/stderr?
-    // fprintf(stderr, "Accessing dup2: fd1 = %d fd2 = %d\n", fd1, fd2); fflush(stderr);
+    if (fd1 < 3) {
+        // specific cases like dup2(STDOUT_FILENO, STDERR_FILENO)
+        FILE* stream1 = NULL;
+        switch (fd1) {
+            case 0: stream1 = child_stdin; break;
+            case 1: stream1 = child_stdout; break;
+            case 2: stream1 = child_stderr; break;
+        }
+        switch (fd2) {
+            case 0: child_stdin = stream1; return fd2;
+            case 1: child_stdout = stream1; return fd2;
+            case 2: child_stderr = stream1; return fd2;
+        }
+    }
     if (fd2 == 0) { child_stdin = fdopen(fd1, "rb"); }
     else if (fd2 == 1) { child_stdout = fdopen(fd1, "wb"); }
-    else if (fd2 == 2) { child_stderr = fdopen(fd1, "wb"); }
+    else if (fd2 == 2) {
+        if (fileno(child_stdout) == fd1) child_stderr = child_stdout;
+        else child_stderr = fdopen(fd1, "wb"); }
     else if (fd1 != fd2) {
         if (fcntl(fd1, F_GETFL) < 0)
             return -1;
@@ -625,6 +643,70 @@ NSArray* commandsAsArray() {
     return commandList.allKeys;
 }
 
+// for output file names, arguments: returns a pointer to
+// immediately after the end of the argument, or NULL.
+// Method:
+//   - if argument begins with ", go to next unescaped "
+//   - if argument begins with ', go to next unescaped '
+//   - otherwise, move to next unescaped space
+//
+// Must be combined with another function to remove backslash.
+
+// Aux function:
+static void* nextUnescapedCharacter(const char* str, const char c) {
+    char* nextOccurence = strchr(str, c);
+    while (nextOccurence != NULL) {
+        if ((nextOccurence > str + 1) && (*(nextOccurence - 1) == '\\')) {
+            // There is a backlash before the character.
+            int numBackslash = 0;
+            char* countBack = nextOccurence - 1;
+            while ((countBack > str) && (*countBack == '\\')) { numBackslash++; countBack--; }
+            if (numBackslash % 2 == 0) return nextOccurence; // even number of backslash
+        } else return nextOccurence;
+        nextOccurence = strchr(nextOccurence + 1, c);
+    }
+    return nextOccurence;
+}
+
+static char* getLastCharacterOfArgument(const char* argument) {
+    if (strlen(argument) == 0) return NULL; // be safe
+    if (argument[0] == '"') {
+        char* endquote = nextUnescapedCharacter(argument + 1, '"');
+        if (endquote != NULL) return endquote + 1;
+        else return NULL;
+    } else if (argument[0] == '\'') {
+        char* endquote = nextUnescapedCharacter(argument + 1, '\'');
+        if (endquote != NULL) return endquote + 1;
+        else return NULL;
+    }
+    else return nextUnescapedCharacter(argument + 1, ' ');
+}
+
+// remove quotes at the beginning of argument if there's a balancing one at the end
+static char* unquoteArgument(char* argument) {
+    if (argument[0] == '"') {
+        if (argument[strlen(argument) - 1] == '"') {
+            argument[strlen(argument) - 1] = 0x0;
+            return argument + 1;
+        }
+    }
+    if (argument[0] == '\'') {
+        if (argument[strlen(argument) - 1] == '\'') {
+            argument[strlen(argument) - 1] = 0x0;
+            return argument + 1;
+        }
+    }
+    // no quotes at the beginning: replace all escaped characters:
+    // '\x' -> x
+    char* nextOccurence = strchr(argument, '\\');
+    while ((nextOccurence != NULL) && (strlen(nextOccurence) > 0)) {
+        memmove(nextOccurence, nextOccurence + 1, strlen(nextOccurence + 1) + 1);
+        // strcpy(nextOccurence, nextOccurence + 1);
+        nextOccurence = strchr(nextOccurence + 1, '\\');
+    }
+    return argument;
+}
+
 int ios_system(const char* inputCmd) {
     char* command;
     // The names of the files for stdin, stdout, stderr
@@ -685,7 +767,7 @@ int ios_system(const char* inputCmd) {
     params->stderr = child_stderr;
     child_stdin = child_stdout = child_stderr = NULL;
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
-    params->function = NULL; params->isPipe = false;
+    params->function = NULL; params->isPipeOut = false; params->isPipeErr = false;
     // scan until first "<" (input file)
     inputFileMarker = strstr(inputFileMarker, "<");
     // scan until first non-space character:
@@ -719,26 +801,22 @@ int ios_system(const char* inputCmd) {
     }
     // We have removed the pipe part. Still need to parse the rest of the command
     // Must scan in strstr by reverse order of inclusion. So "2>&1" before "2>" before ">"
-    if (params->stdout == 0) {
-        errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
-        // output file name will be after "&>"
-        if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
-    }
-    if (!errorFileMarker && (params->stderr == 0)) {
+    errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
+    // output file name will be after "&>"
+    if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
+    if (!errorFileMarker) {
         // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
         // ...except with a pipe.
         // Currently, we don't check for that.
         errorFileMarker = strstr (outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
         if (errorFileMarker) {
             if (params->stdout) params->stderr = params->stdout;
-            else {
-                outputFileMarker = strstr(outputFileMarker, ">");
-                if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
-            }
+            outputFileMarker = strstr(outputFileMarker, ">");
+            if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
         }
     }
     if (errorFileMarker) { sharedErrorOutput = true; }
-    else if (params->stderr == 0) {
+    else {
         // specific name for error file?
         errorFileMarker = strstr(outputFileMarker,"2>");
         if (errorFileMarker) {
@@ -748,7 +826,7 @@ int ios_system(const char* inputCmd) {
         }
     }
     // scan until first ">"
-    if (!sharedErrorOutput && (params->stdout == 0)) {
+    if (!sharedErrorOutput) {
         outputFileMarker = strstr(outputFileMarker, ">");
         if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
     }
@@ -765,19 +843,19 @@ int ios_system(const char* inputCmd) {
         } else outputFileName = NULL; // Only "2>", but no ">". It happens.
     }
     if (outputFileName) {
-        char* endFile = strstr(outputFileName, " ");
+        char* endFile = getLastCharacterOfArgument(outputFileName);
         if (endFile) endFile[0] = 0x00; // end output file name at first space
-        assert(endFile < maxPointer);
+        assert(endFile <= maxPointer);
     }
     if (inputFileName) {
-        char* endFile = strstr(inputFileName, " ");
+        char* endFile = getLastCharacterOfArgument(inputFileName);
         if (endFile) endFile[0] = 0x00; // end input file name at first space
-        assert(endFile < maxPointer);
+        assert(endFile <= maxPointer);
     }
     if (errorFileName) {
-        char* endFile = strstr(errorFileName, " ");
+        char* endFile = getLastCharacterOfArgument(errorFileName);
         if (endFile) endFile[0] = 0x00; // end error file name at first space
-        assert(endFile < maxPointer);
+        assert(endFile <= maxPointer);
     }
     // insert chain termination elements at the beginning of each filename.
     // Must be done after the parsing
@@ -785,17 +863,28 @@ int ios_system(const char* inputCmd) {
     if (outputFileMarker && (params->stdout == NULL)) outputFileMarker[0] = 0x0;
     if (errorFileMarker) errorFileMarker[0] = 0x0;
     // strip filenames of quotes, if any:
-    if (outputFileName && (outputFileName[0] == '\'')) { outputFileName = outputFileName + 1; outputFileName[strlen(outputFileName) - 1] = 0x0; }
-    if (inputFileName && (inputFileName[0] == '\'')) { inputFileName = inputFileName + 1; inputFileName[strlen(inputFileName) - 1] = 0x0; }
-    if (errorFileName && (errorFileName[0] == '\'')) { errorFileName = errorFileName + 1; errorFileName[strlen(errorFileName) - 1] = 0x0; }
+    if (outputFileName) outputFileName = unquoteArgument(outputFileName);
+    if (inputFileName) inputFileName = unquoteArgument(inputFileName);
+    if (errorFileName) errorFileName = unquoteArgument(errorFileName);
     //
-    if (inputFileName) params->stdin = fopen(inputFileName, "r");
-    if (params->stdin == NULL) params->stdin = thread_stdin; // open did not work
-    if (outputFileName) params->stdout = fopen(outputFileName, "w");
-    if (params->stdout == NULL) params->stdout = thread_stdout; // open did not work
+    FILE* newStream;
+    if (inputFileName) {
+        newStream = fopen(inputFileName, "r");
+        if (newStream) params->stdin = newStream;
+    }
+    if (params->stdin == NULL) params->stdin = thread_stdin;
+    if (outputFileName) {
+        newStream = fopen(outputFileName, "w");
+        if (newStream) params->stdout = newStream; // open did not work
+    }
+    if (params->stdout == NULL) params->stdout = thread_stdout;
     if (sharedErrorOutput) params->stderr = params->stdout;
-    else if (errorFileName) params->stderr = fopen(errorFileName, "w");
-    if (params->stderr == NULL) params->stderr = thread_stderr; // open did not work
+    else if (errorFileName) {
+        newStream = NULL;
+        newStream = fopen(errorFileName, "w");
+        if (newStream) params->stderr = newStream; // open did not work
+    }
+    if (params->stderr == NULL) params->stderr = thread_stderr;
     int argc = 0;
     size_t numSpaces = 0;
     // the number of arguments is *at most* the number of spaces plus one
@@ -809,29 +898,15 @@ int ios_system(const char* inputCmd) {
         argv[argc] = str;
         dontExpand[argc] = false;
         argc += 1;
-        if (str[0] == '\'') { // argument begins with a quote.
-            // everything until next quote is part of the argument
-            argv[argc-1] = str + 1;
-            char* end = strstr(argv[argc-1], "'");
-            if (!end) break;
-            end[0] = 0x0;
-            str = end + 1;
+        char* end = getLastCharacterOfArgument(str);
+        bool mustBreak = (end == NULL) || (strlen(end) == 0);
+        if (!mustBreak) end[0] = 0x0;
+        if ((str[0] == '\'') || (str[0] == '"')) {
             dontExpand[argc-1] = true; // don't expand arguments in quotes
-        } else if (str[0] == '\"') { // argument begins with a double quote.
-            // everything until next double quote is part of the argument
-            argv[argc-1] = str + 1;
-            char* end = strstr(argv[argc-1], "\"");
-            if (!end) break;
-            end[0] = 0x0;
-            str = end + 1;
-            dontExpand[argc-1] = true; // don't expand arguments in quotes
-        } else {
-            // skip to next space:
-            char* end = strstr(str, " ");
-            if (!end) break;
-            end[0] = 0x0;
-            str = end + 1;
         }
+        argv[argc-1] = unquoteArgument(argv[argc-1]);
+        if (mustBreak) break;
+        str = end + 1;
         if ((argc == 1) && (argv[0][0] == '/') && (access(argv[0], R_OK) == -1)) {
             // argv[0] is a file that doesn't exist. Probably one of our commands.
             // Replace with its name:
@@ -853,7 +928,7 @@ int ios_system(const char* inputCmd) {
         free(argv);
         argv = argv_copy;
         // We have the arguments. Parse them for environment variables, ~, etc.
-        for (int i = 1; i < argc; i++) if (!dontExpand[i]) argv[i] = parseArgument(argv[i], argv[0]);
+        for (int i = 1; i < argc; i++) if (!dontExpand[i]) {  argv[i] = parseArgument(argv[i], argv[0]); }
         free(dontExpand);
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
@@ -868,7 +943,7 @@ int ios_system(const char* inputCmd) {
             size_t len_with_terminator = strlen(argv[0] + 1) + 1;
             memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {
-            NSString* commandName = [NSString stringWithCString:argv[0]];
+            NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
             BOOL isDir = false;
             BOOL cmdIsAFile = false;
             if ([commandName hasPrefix:@"~"]) commandName = [commandName stringByExpandingTildeInPath];
@@ -972,7 +1047,8 @@ int ios_system(const char* inputCmd) {
             params->argv = argv;
             params->function = function;
             params->dlHandle = handle;
-            params->isPipe = (params->stdout != thread_stdout);
+            params->isPipeOut = (params->stdout != thread_stdout);
+            params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
             if (isMainThread) {
                 // Send a signal to the system that we're going to change the current directory:
                 NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
