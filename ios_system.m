@@ -36,7 +36,7 @@ __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
 // TODO: can we merge this with isMainThread?
-__thread pthread_t current_command_root_thread;
+pthread_t current_command_root_thread;
 // return value for the function. errno is thread-local, so we need a thread-global variable:
 int global_errno;
 
@@ -590,16 +590,6 @@ int ios_dup2(int fd1, int fd2)
     return fd2;
 }
 
-int ios_kill_with_thread_id(pthread_t command_root_thread)
-{
-  if (command_root_thread > 0) {
-    // Send pthread_kill with the given signal to the current main thread, if there is one.
-    return pthread_cancel(command_root_thread);
-  }
-  // No process running
-  return ESRCH;
-}
-
 int ios_kill()
 {
     if (current_command_root_thread > 0) {
@@ -718,10 +708,6 @@ static char* unquoteArgument(char* argument) {
 }
 
 int ios_system(const char* inputCmd) {
-  return ios_system_with_callback(inputCmd, nil, nil);
-}
-
-int ios_system_with_callback(const char* inputCmd, void (*callback)(const void *, pthread_t), void *context) {
     char* command;
     // The names of the files for stdin, stdout, stderr
     char* inputFileName = 0;
@@ -734,8 +720,8 @@ int ios_system_with_callback(const char* inputCmd, void (*callback)(const void *
     char* errorFileMarker = 0;
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
-    __thread static bool isMainThread = true;
-    __thread static pthread_t lastThreadId = 0; // last command on the command line (with pipes)
+    static bool isMainThread = true;
+    static pthread_t lastThreadId = 0; // last command on the command line (with pipes)
     
     // initialize:
     if (thread_stdin == 0) thread_stdin = stdin;
@@ -1072,9 +1058,6 @@ int ios_system_with_callback(const char* inputCmd, void (*callback)(const void *
                     isMainThread = false;
                     pthread_create(&_tid, NULL, run_function, params);
                     current_command_root_thread = _tid;
-                    if (callback) {
-                      callback(context, current_command_root_thread);
-                    }
                     // Wait for this process to finish:
                     pthread_join(_tid, NULL);
                     // If there are auxiliary process, also wait for them:
