@@ -846,12 +846,13 @@ int ios_system(const char* inputCmd) {
         dontExpand[argc] = false;
         argc += 1;
         char* end = getLastCharacterOfArgument(str);
-        if (end) end[0] = 0x0;
+        bool mustBreak = (end == NULL) || (strlen(end) == 0);
+        if (!mustBreak) end[0] = 0x0;
         if ((str[0] == '\'') || (str[0] == '"')) {
             dontExpand[argc-1] = true; // don't expand arguments in quotes
         }
         argv[argc-1] = unquoteArgument(argv[argc-1]);
-        if (!end) break;
+        if (mustBreak) break;
         str = end + 1;
         if ((argc == 1) && (argv[0][0] == '/') && (access(argv[0], R_OK) == -1)) {
             // argv[0] is a file that doesn't exist. Probably one of our commands.
