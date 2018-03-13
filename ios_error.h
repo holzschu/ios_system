@@ -18,7 +18,7 @@
 #define warn compileError
 #define warnx compileError
 #ifndef printf
-#define printf compileError
+#define printf(...) fprintf (stdout, ##__VA_ARGS__)
 #endif
 
 #define putchar(a) fputc(a, thread_stdout)
