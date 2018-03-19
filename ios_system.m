@@ -329,10 +329,10 @@ static void initializeCommandList()
       @"host" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"host_main", @"46ac:dilnm:rst:vVwCDN:R:TW:", @"no", nil],
       @"telnet" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"telnet_main", @"468EKLNS:X:acde:fFk:l:n:rs:uxy", @"no", nil],
       @"rlogin" : [NSArray arrayWithObjects:@"libnetwork_ios.dylib", @"rlogin_main", @"468EKLNS:X:acde:fFk:l:n:rs:uxy", @"no", nil],
+#ifdef SIDELOADING
       // ctags
       @"ctags" : [NSArray arrayWithObjects:@"libctags.dylib", @"ctags_main", @"aBeFGnNoRvVx:b:d:D:f:h:I:L:", @"file", nil],
       @"readtags" : [NSArray arrayWithObjects:@"libctags.dylib", @"readtags_main", @"aBeFGnNoRvVx:b:d:D:f:h:I:L:", @"file", nil],
-#ifdef SIDELOADING
       // Scripts and programming languages. Might move outside of here at some point
       // lua
       @"lua"     : [NSArray arrayWithObjects:@"lua_ios.framework/lua_ios", @"lua_main", @"e:il:vE", @"file", nil],
