@@ -2379,7 +2379,8 @@ sshkeygen_main(int argc, char **argv)
 
 	/* we need this for the home * directory.  */
 	pw = getpwuid(getuid());
-    // set local directory:
+    // set local directory: (pw_dir is set to /var/mobile, which is bad)
+    // if the user did not set up SSH_HOME, then it won't work
     if (getenv("SSH_HOME")) pw->pw_dir = getenv("SSH_HOME");
 	if (!pw)
 		fprintf(thread_stderr, "No user exists for uid %lu", (u_long)getuid());
