@@ -24,177 +24,73 @@
  */
 
 #include "includes.h"
-
-#include <sys/types.h>
-#include <sys/wait.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#ifdef HAVE_PATHS_H
-# include <paths.h>
-#endif
-#include <signal.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "xmalloc.h"
-#include "misc.h"
+/* #include "misc.h"
 #include "pathnames.h"
 #include "log.h"
 #include "ssh.h"
-#include "uidswap.h"
+#include "uidswap.h" */
 #include "ios_error.h"
+#import <UIKit/UIKit.h>
 
-static char *
-ssh_askpass(char *askpass, const char *msg)
-{
-	pid_t pid, ret;
-	size_t len;
-	char *pass;
-	int p[2], status;
-	char buf[1024];
-	void (*osigchld)(int);
+static char* ret;
+static bool done = false;
 
-	if (fflush(thread_stdout) != 0)
-		error("ssh_askpass: fflush: %s", strerror(errno));
-    if (askpass == NULL) {
-        fprintf(thread_stderr, "internal error: askpass undefined");
-        pthread_exit(NULL);
-    }
-	if (pipe(p) < 0) {
-		error("ssh_askpass: pipe: %s", strerror(errno));
-		return NULL;
-	}
-	// osigchld = signal(SIGCHLD, SIG_DFL);
-	if ((pid = fork()) < 0) {
-		error("ssh_askpass: fork: %s", strerror(errno));
-		// signal(SIGCHLD, osigchld);
-		return NULL;
-	}
-	if (pid == 0) {
-		permanently_drop_suid(getuid());
-		close(p[0]);
-        if (dup2(p[1], STDOUT_FILENO) < 0) {
-            fprintf(thread_stderr, "ssh_askpass: dup2: %s", strerror(errno));
-            pthread_exit(NULL);
-        }
-        execlp(askpass, askpass, msg, (char *)NULL);
-        // if we return from execlp, something went wrong:
-        fprintf(thread_stderr, "ssh_askpass: exec(%s): %s", askpass, strerror(errno));
-        pthread_exit(NULL);
-    }
-	close(p[1]);
-
-	len = 0;
-	do {
-		ssize_t r = read(p[0], buf + len, sizeof(buf) - 1 - len);
-
-		if (r == -1 && errno == EINTR)
-			continue;
-		if (r <= 0)
-			break;
-		len += r;
-	} while (sizeof(buf) - 1 - len > 0);
-	buf[len] = '\0';
-
-	close(p[0]);
-	while ((ret = waitpid(pid, &status, 0)) < 0)
-		if (errno != EINTR)
-			break;
-	// signal(SIGCHLD, osigchld);
-	if (ret == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-		explicit_bzero(buf, sizeof(buf));
-		return NULL;
-	}
-
-	buf[strcspn(buf, "\r\n")] = '\0';
-	pass = xstrdup(buf);
-	explicit_bzero(buf, sizeof(buf));
-	return pass;
+static void setPassword(const char* password) {
+    ret = xstrdup(password);
+    done = true;
 }
 
 /*
- * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
- * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
- * RP_ALLOW_STDIN is set, the passphrase will be read from stdin if no
- * tty is available
+ * Reads a passphrase using an iOS alert with secureTextEntry
+ * Only way to prevent password to be in the terminal.
  */
 char *
 read_passphrase(const char *prompt, int flags)
 {
-	char *askpass = NULL, *ret, buf[1024];
-	int rppflags, use_askpass = 0, ttyfd;
-
-	rppflags = (flags & RP_ECHO) ? RPP_ECHO_ON : RPP_ECHO_OFF;
-	if (flags & RP_USE_ASKPASS)
-		use_askpass = 1;
-	else if (flags & RP_ALLOW_STDIN) {
-		if (!isatty(STDIN_FILENO)) {
-			debug("read_passphrase: stdin is not a tty");
-			use_askpass = 1;
-		}
-	} else {
-		rppflags |= RPP_REQUIRE_TTY;
-		ttyfd = open(_PATH_TTY, O_RDWR);
-		if (ttyfd >= 0)
-			close(ttyfd);
-		else {
-			debug("read_passphrase: can't open %s: %s", _PATH_TTY,
-			    strerror(errno));
-			use_askpass = 1;
-		}
-	}
-
-	if ((flags & RP_USE_ASKPASS) && getenv("DISPLAY") == NULL)
-		return (flags & RP_ALLOW_EOF) ? NULL : xstrdup("");
-
-	if (use_askpass && getenv("DISPLAY")) {
-		if (getenv(SSH_ASKPASS_ENV))
-			askpass = getenv(SSH_ASKPASS_ENV);
-		else
-			askpass = _PATH_SSH_ASKPASS_DEFAULT;
-		if ((ret = ssh_askpass(askpass, prompt)) == NULL)
-			if (!(flags & RP_ALLOW_EOF))
-				return xstrdup("");
-		return ret;
-	}
-
-	if (readpassphrase(prompt, buf, sizeof buf, rppflags) == NULL) {
-		if (flags & RP_ALLOW_EOF)
-			return NULL;
-		return xstrdup("");
-	}
-
-	ret = xstrdup(buf);
-	explicit_bzero(buf, sizeof(buf));
-	return ret;
+    // Need to get the root controller without having access to "self".
+    UIViewController *topViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    while (topViewController.presentedViewController) topViewController = topViewController.presentedViewController;
+    // alerts have to go to the main queue:
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        UIAlertController* alertController = [UIAlertController alertControllerWithTitle:[NSString stringWithUTF8String:prompt]
+            message:nil
+            preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+         textField.placeholder = @"passphrase";
+         textField.textColor = [UIColor blueColor];
+         textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+         textField.borderStyle = UITextBorderStyleRoundedRect;
+         textField.secureTextEntry = YES;
+         }];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                                    NSArray * textfields = alertController.textFields;
+                                    UITextField * passwordfiled = textfields[0];
+                                    setPassword([passwordfiled.text UTF8String]);
+                                    // TODO: explicit_bzero of passwordfiled -- impossible?
+                                    }]];
+        [topViewController presentViewController:alertController animated:YES completion:nil];
+    });
+    while (!done) {};
+    done = false;
+    return ret;
 }
 
-int
-ask_permission(const char *fmt, ...)
-{
-	va_list args;
-	char *p, prompt[1024];
-	int allowed = 0;
 
-	va_start(args, fmt);
-	vsnprintf(prompt, sizeof(prompt), fmt, args);
-	va_end(args);
-
-	p = read_passphrase(prompt, RP_USE_ASKPASS|RP_ALLOW_EOF);
-	if (p != NULL) {
-		/*
-		 * Accept empty responses and responses consisting
-		 * of the word "yes" as affirmative.
-		 */
-		if (*p == '\0' || *p == '\n' ||
-		    strcasecmp(p, "yes") == 0)
-			allowed = 1;
-		free(p);
-	}
-
-	return (allowed);
+void systemAlert(char* prompt) {
+    // Need to get the root controller without having access to "self".
+    UIViewController *topViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    while (topViewController.presentedViewController) topViewController = topViewController.presentedViewController;
+    // alerts have to go to the main queue:
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        UIAlertController* alertController = [UIAlertController alertControllerWithTitle:[NSString stringWithUTF8String:prompt]
+            message:nil
+            preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                                    done = true;
+                                    }]];
+        [topViewController presentViewController:alertController animated:YES completion:nil];
+    });
+    while (!done) {};
+    done = false;
 }

@@ -46,6 +46,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <errno.h>
+
 #if defined(HAVE_STRNVIS) && defined(HAVE_VIS_H) && !defined(BROKEN_STRNVIS)
 # include <vis.h>
 #endif
@@ -278,8 +279,10 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 	log_handler_ctx = NULL;
 
 	log_on_stderr = on_stderr;
-	if (on_stderr)
+    if (on_stderr) {
+        log_stderr_fd = fileno(thread_stderr);
 		return;
+    }
 
 	switch (facility) {
 	case SYSLOG_FACILITY_DAEMON:
@@ -353,7 +356,7 @@ log_change_level(LogLevel new_log_level)
 int
 log_is_on_stderr(void)
 {
-	return log_on_stderr && log_stderr_fd == STDERR_FILENO;
+	return log_on_stderr && log_stderr_fd == fileno(thread_stderr);
 }
 
 /* redirect what would usually get written to thread_stderr to specified file */
@@ -397,6 +400,8 @@ do_log(LogLevel level, const char *fmt, va_list args)
 #endif
 	char msgbuf[MSGBUFSIZ];
 	char fmtbuf[MSGBUFSIZ];
+    explicit_bzero(fmtbuf, MSGBUFSIZ);
+    explicit_bzero(msgbuf, MSGBUFSIZ);
 	char *txt = NULL;
 	int pri = LOG_INFO;
 	int saved_errno = errno;

@@ -476,6 +476,7 @@ int ssh_main(int argc, char** argv) {
     if (auth_type & 4) {
         // Most common case.
         // Path = getenv(SSH_HOME) or ~/Documents
+        // TODO: make 2 pass, ask for passphrase before 2nd pass
         char path[PATH_MAX];
         if (getenv("SSH_HOME")) strcpy(path, getenv("SSH_HOME"));
         else sprintf(path, "%s/Documents", getenv("HOME"));

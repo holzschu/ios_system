@@ -140,6 +140,7 @@ void mktemp_proto(char *, size_t);
 #define RP_USE_ASKPASS		0x0008
 
 char	*read_passphrase(const char *, int);
+void systemAlert(const char*); 
 int	 ask_permission(const char *, ...) __attribute__((format(printf, 1, 2)));
 int	 read_keyfile_line(FILE *, const char *, char *, size_t, u_long *);
 
