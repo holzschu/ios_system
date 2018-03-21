@@ -50,6 +50,7 @@ read_passphrase(const char *prompt, int flags)
 {
     // Need to get the root controller without having access to "self".
     UIViewController *topViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    if (!topViewController) return xstrdup("");
     while (topViewController.presentedViewController) topViewController = topViewController.presentedViewController;
     // alerts have to go to the main queue:
     dispatch_async(dispatch_get_main_queue(), ^(void) {
