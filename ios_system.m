@@ -189,14 +189,13 @@ static char* parseArgument(char* argument, char* command) {
     // 2) Tilde conversion: replace "~" with $HOME
     // If there are multiple users on iOS, this code will need to be changed.
     if([argumentString hasPrefix:@"~"]) {
-        // So it begins with "~".
-        if (miniRoot == nil) argumentString = [argumentString stringByExpandingTildeInPath]; // replaces "~", "~/"
-        if ((miniRoot != nil) || ([argumentString hasPrefix:@"~:"])) { // not done by stringByExpandingTildeInPath
+        // So it begins with "~". We can't use stringByExpandingTildeInPath because apps redefine HOME
+        NSString* replacement_string;
+        if (miniRoot == nil)
+            replacement_string = [NSString stringWithCString:(getenv("HOME")) encoding:NSUTF8StringEncoding];
+        else replacement_string = miniRoot;
+        if (([argumentString hasPrefix:@"~/"]) || ([argumentString hasPrefix:@"~:"]) || ([argumentString length] == 1)) {
             NSString* test_string = @"~";
-            NSString* replacement_string;
-            if (miniRoot == nil)
-                replacement_string = [NSString stringWithCString:(getenv("HOME")) encoding:NSUTF8StringEncoding];
-            else replacement_string = miniRoot;
             argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange(0, 1)];
         }
     }
@@ -946,7 +945,11 @@ int ios_system(const char* inputCmd) {
             NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
             BOOL isDir = false;
             BOOL cmdIsAFile = false;
-            if ([commandName hasPrefix:@"~"]) commandName = [commandName stringByExpandingTildeInPath];
+            if ([commandName hasPrefix:@"~/"]) {
+                NSString* replacement_string = [NSString stringWithCString:(getenv("HOME")) encoding:NSUTF8StringEncoding];
+                NSString* test_string = @"~";
+                commandName = [commandName stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange(0, 1)];
+            }
             if ([[NSFileManager defaultManager] fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
                 // File exists, is a file.
                 struct stat sb;
