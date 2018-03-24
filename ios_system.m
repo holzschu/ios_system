@@ -296,17 +296,19 @@ static void initializeCommandList()
 
 int ios_setMiniRoot(NSString* mRoot) {
     BOOL isDir;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:mRoot isDirectory:&isDir]) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+
+    if ([fileManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
         if (isDir) {
             // fileManager has different ways of expressing the same directory.
             // We need to actually change to the directory to get its "real name".
-            NSString* currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
-            if ([[NSFileManager defaultManager] changeCurrentDirectoryPath:mRoot]) {
+            NSString* currentDir = [fileManager currentDirectoryPath];
+            if ([fileManager changeCurrentDirectoryPath:mRoot]) {
                 // also don't set the miniRoot if we can't go in there
                 // get the real name for miniRoot:
-                miniRoot = [[NSFileManager defaultManager] currentDirectoryPath];
+                miniRoot = [fileManager currentDirectoryPath];
                 // Back to where we we before:
-                [[NSFileManager defaultManager] changeCurrentDirectoryPath:currentDir];
+                [fileManager changeCurrentDirectoryPath:currentDir];
                 return 1; // mission accomplished
             }
         }
@@ -319,6 +321,8 @@ int cd_main(int argc, char** argv) {
     id sessionKey = [NSNumber numberWithInt:((int)stdout)];
     sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession == NULL) return 1;
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+
     if (argc > 1) {
         NSString* newDir = @(argv[1]);
         if (strcmp(argv[1], "-") == 0) {
@@ -326,15 +330,15 @@ int cd_main(int argc, char** argv) {
             newDir = currentSession.previousDirectory;
         }
         BOOL isDir;
-        if ([[NSFileManager defaultManager] fileExistsAtPath:newDir isDirectory:&isDir]) {
+        if ([fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
             if (isDir) {
-                if ([[NSFileManager defaultManager] changeCurrentDirectoryPath:newDir]) {
+                if ([fileManager changeCurrentDirectoryPath:newDir]) {
                     // We managed to change the directory.
                     // Was that allowed?
-                    NSString* resultDir = [[NSFileManager defaultManager] currentDirectoryPath];
+                    NSString* resultDir = [fileManager currentDirectoryPath];
                     if ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot])) {
                         fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
-                        [[NSFileManager defaultManager] changeCurrentDirectoryPath:miniRoot];
+                        [fileManager changeCurrentDirectoryPath:miniRoot];
                         currentSession.currentDir = miniRoot;
                     }
                     currentSession.previousDirectory = currentSession.currentDir;
@@ -345,15 +349,15 @@ int cd_main(int argc, char** argv) {
             fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
         }
     } else { // [cd] Help, I'm lost, bring me back home
-        currentSession.previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
+        currentSession.previousDirectory = [fileManager currentDirectoryPath];
 
         if (miniRoot != nil) {
-            [[NSFileManager defaultManager] changeCurrentDirectoryPath:miniRoot];
+            [fileManager changeCurrentDirectoryPath:miniRoot];
         } else {
-            [[NSFileManager defaultManager] changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
+            [fileManager changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
         }
     }
-    currentSession.currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
+    currentSession.currentDir = [fileManager currentDirectoryPath];
     return 0;
 }
 
@@ -690,6 +694,8 @@ int ios_system(const char* inputCmd) {
     char* errorFileMarker = 0;
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+
     
     if (sessionList == nil) sessionList = [NSMutableDictionary new];
     id sessionKey = [NSNumber numberWithInt:((int)stdout)];
@@ -700,13 +706,13 @@ int ios_system(const char* inputCmd) {
         currentSession.isMainThread = TRUE;
         currentSession.current_command_root_thread = 0;
         currentSession.lastThreadId = 0;
-        currentSession.currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
-        currentSession.previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
+        currentSession.currentDir = [fileManager currentDirectoryPath];
+        currentSession.previousDirectory = [fileManager currentDirectoryPath];
         currentSession.global_errno = 0;
         [sessionList setObject: currentSession forKey: sessionKey];
     } else {
-        if (![currentSession.currentDir isEqualToString:[[NSFileManager defaultManager] currentDirectoryPath]])
-            [[NSFileManager defaultManager] changeCurrentDirectoryPath:currentSession.currentDir];
+        if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]])
+            [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
     }
     // initialize:
     if (thread_stdin == 0) thread_stdin = stdin;
@@ -937,7 +943,7 @@ int ios_system(const char* inputCmd) {
                 NSString* test_string = @"~";
                 commandName = [commandName stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange(0, 1)];
             }
-            if ([[NSFileManager defaultManager] fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
+            if ([fileManager fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
                 // File exists, is a file.
                 struct stat sb;
                 if ((stat(commandName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode)) {
@@ -954,15 +960,15 @@ int ios_system(const char* inputCmd) {
             }
             for (NSString* path in directoriesInPath) {
                 // If we don't have access to the path component, there's no point in continuing:
-                if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) continue;
+                if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
                 if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
                 NSString* locationName;
                 if (!cmdIsAFile) {
                     locationName = [path stringByAppendingPathComponent:commandName];
-                    if (![[NSFileManager defaultManager] fileExistsAtPath:locationName isDirectory:&isDir]) continue;
+                    if (![fileManager fileExistsAtPath:locationName isDirectory:&isDir]) continue;
                     if (isDir) continue;
                     // isExecutableFileAtPath replies "NO" even if file has x-bit set.
-                    // if (![[NSFileManager defaultManager]  isExecutableFileAtPath:cmdname]) continue;
+                    // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
                     struct stat sb;
                     if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
                     // File exists, is executable, not a directory.
@@ -1040,7 +1046,7 @@ int ios_system(const char* inputCmd) {
                 // Send a signal to the system that we're going to change the current directory:
                 // TODO: only do this if the command actually accesses files: either outputFile exists,
                 // or errorFile exists, or the command uses files.
-                NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
+                NSString* currentPath = [fileManager currentDirectoryPath];
                 NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
                 NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
                 [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
