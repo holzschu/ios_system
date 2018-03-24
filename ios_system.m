@@ -701,7 +701,6 @@ int ios_system(const char* inputCmd) {
     id sessionKey = [NSNumber numberWithInt:((int)stdout)];
     sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession == NULL) {
-        fprintf(stdout, "A new session! stdout = %x\n", stdout);
         currentSession = [[sessionParameters alloc] init];
         currentSession.isMainThread = TRUE;
         currentSession.current_command_root_thread = 0;
@@ -718,7 +717,6 @@ int ios_system(const char* inputCmd) {
     if (thread_stdin == 0) thread_stdin = stdin;
     if (thread_stdout == 0) thread_stdout = stdout;
     if (thread_stderr == 0) thread_stderr = stderr;
-    fprintf(thread_stderr, "Entered ios_system, stdout = %x thread_stdout = %x \n", stdout, thread_stdout);
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -1041,7 +1039,6 @@ int ios_system(const char* inputCmd) {
             params->dlHandle = handle;
             params->isPipeOut = (params->stdout != thread_stdout);
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
-            fprintf(thread_stderr, "About to start something, iMT = %d lastTID = %d\n", currentSession.isMainThread, currentSession.lastThreadId); fflush(thread_stderr);
             if (currentSession.isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
@@ -1057,7 +1054,6 @@ int ios_system(const char* inputCmd) {
                         currentSession.isMainThread = false;
                         pthread_create(&_tid, NULL, run_function, params);
                         currentSession.current_command_root_thread = _tid;
-                        fprintf(thread_stderr, "Started a main thread ID = %d\n", currentSession.current_command_root_thread); fflush(thread_stderr);
                         // Wait for this process to finish:
                         pthread_join(_tid, NULL);
                         // If there are auxiliary process, also wait for them:
@@ -1070,7 +1066,6 @@ int ios_system(const char* inputCmd) {
                     currentSession.isMainThread = false;
                     pthread_create(&_tid, NULL, run_function, params);
                     currentSession.current_command_root_thread = _tid;
-                    fprintf(thread_stderr, "Started a main thread, not coordinated ID = %d\n", currentSession.current_command_root_thread); fflush(thread_stderr);
                     // Wait for this process to finish:
                     pthread_join(_tid, NULL);
                     // If there are auxiliary process, also wait for them:
@@ -1084,7 +1079,6 @@ int ios_system(const char* inputCmd) {
                 pthread_create(&_tid, NULL, run_function, params);
                 // The last command on the command line (with multiple pipes) will be created first
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid;
-                fprintf(thread_stderr, "Started a secondary thread ID = %d\n", _tid); fflush(thread_stderr);
             }
         } else {
             if ((handle != NULL) && (handle != RTLD_SELF)
