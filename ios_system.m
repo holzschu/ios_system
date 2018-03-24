@@ -1043,17 +1043,34 @@ int ios_system(const char* inputCmd) {
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
             fprintf(thread_stderr, "About to start something, iMT = %d lastTID = %d\n", currentSession.isMainThread, currentSession.lastThreadId); fflush(thread_stderr);
             if (currentSession.isMainThread) {
-                // Send a signal to the system that we're going to change the current directory:
-                // TODO: only do this if the command actually accesses files: either outputFile exists,
-                // or errorFile exists, or the command uses files.
-                NSString* currentPath = [fileManager currentDirectoryPath];
-                NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
-                NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
-                [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
+                bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
+                                               [commandStructure[3] isEqualToString:@"directory"] ||
+                                               params->isPipeOut || params->isPipeErr);
+                if (commandOperatesOnFiles) {
+                    // Send a signal to the system that we're going to change the current directory:
+                    // TODO: only do this if the command actually accesses files: either outputFile exists,
+                    // or errorFile exists, or the command uses files.
+                    NSString* currentPath = [fileManager currentDirectoryPath];
+                    NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
+                    NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
+                    [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
+                        currentSession.isMainThread = false;
+                        pthread_create(&_tid, NULL, run_function, params);
+                        currentSession.current_command_root_thread = _tid;
+                        fprintf(thread_stderr, "Started a main thread ID = %d\n", currentSession.current_command_root_thread); fflush(thread_stderr);
+                        // Wait for this process to finish:
+                        pthread_join(_tid, NULL);
+                        // If there are auxiliary process, also wait for them:
+                        if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
+                        currentSession.lastThreadId = 0;
+                        currentSession.current_command_root_thread = 0;
+                        currentSession.isMainThread = true;
+                    }];
+                } else {
                     currentSession.isMainThread = false;
                     pthread_create(&_tid, NULL, run_function, params);
                     currentSession.current_command_root_thread = _tid;
-                    fprintf(thread_stderr, "Started a main thread ID = %d\n", currentSession.current_command_root_thread); fflush(thread_stderr);
+                    fprintf(thread_stderr, "Started a main thread, not coordinated ID = %d\n", currentSession.current_command_root_thread); fflush(thread_stderr);
                     // Wait for this process to finish:
                     pthread_join(_tid, NULL);
                     // If there are auxiliary process, also wait for them:
@@ -1061,7 +1078,7 @@ int ios_system(const char* inputCmd) {
                     currentSession.lastThreadId = 0;
                     currentSession.current_command_root_thread = 0;
                     currentSession.isMainThread = true;
-                }];
+                }
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
                 pthread_create(&_tid, NULL, run_function, params);
