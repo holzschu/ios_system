@@ -1,0 +1,20 @@
+//
+//  tabParameters.h
+//  ios_system
+//
+//  Created by Nicolas Holzschuch on 23/03/2018.
+//  Copyright © 2018 Nicolas Holzschuch. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface tabParameters : NSObject
+
+@property bool isMainThread;   // are we on the first command?
+@property NSString *currentDir;
+@property NSString *previousDirectory;
+@property pthread_t current_command_root_thread; // thread ID of first command
+@property pthread_t lastThreadId; // thread ID of last command
+@property int global_errno;
+
+@end

@@ -331,8 +331,7 @@ static int ssh_timeout_connect(int _sock, const struct sockaddr *addr, socklen_t
 
 static void ssh_usage() {
     fprintf(thread_stderr, "usage: ssh [-q] user@host [command]\n");
-    global_errno = 1;
-    pthread_exit(NULL);
+    ios_exit(1);
 }
 
 int ssh_main(int argc, char** argv) {
