@@ -37,9 +37,9 @@ __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
 
-#import "tabParameters.h"
+#import "sessionParameters.h"
 
-NSMutableDictionary* tabList;
+NSMutableDictionary* sessionList;
 
 // bool isMainThread = true;   // are we on the first command?
 // we need thread IDs for 1st and last commands in cases lik: 1st | middle | other | last
@@ -51,10 +51,10 @@ NSMutableDictionary* tabList;
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
-    if (tabList == nil) return;
-    id tabKey = [NSNumber numberWithInt:((int)stdout)];
-    tabParameters* currentTab = [tabList objectForKey: tabKey];
-    if (currentTab != NULL) currentTab.global_errno = n;
+    if (sessionList == nil) return;
+    id sessionKey = [NSNumber numberWithInt:((int)stdout)];
+    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
+    if (currentSession != NULL) currentSession.global_errno = n;
     pthread_exit(NULL);
 }
 
@@ -315,15 +315,15 @@ int ios_setMiniRoot(NSString* mRoot) {
 }
 
 int cd_main(int argc, char** argv) {
-    if (tabList == nil) return 1;
-    id tabKey = [NSNumber numberWithInt:((int)stdout)];
-    tabParameters* currentTab = [tabList objectForKey: tabKey];
-    if (currentTab == NULL) return 1;
+    if (sessionList == nil) return 1;
+    id sessionKey = [NSNumber numberWithInt:((int)stdout)];
+    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
+    if (currentSession == NULL) return 1;
     if (argc > 1) {
         NSString* newDir = @(argv[1]);
         if (strcmp(argv[1], "-") == 0) {
             // "cd -" option to pop back to previous directory
-            newDir = currentTab.previousDirectory;
+            newDir = currentSession.previousDirectory;
         }
         BOOL isDir;
         if ([[NSFileManager defaultManager] fileExistsAtPath:newDir isDirectory:&isDir]) {
@@ -335,9 +335,9 @@ int cd_main(int argc, char** argv) {
                     if ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot])) {
                         fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
                         [[NSFileManager defaultManager] changeCurrentDirectoryPath:miniRoot];
-                        currentTab.currentDir = miniRoot;
+                        currentSession.currentDir = miniRoot;
                     }
-                    currentTab.previousDirectory = currentTab.currentDir;
+                    currentSession.previousDirectory = currentSession.currentDir;
                 } else fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
             }
             else  fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
@@ -345,7 +345,7 @@ int cd_main(int argc, char** argv) {
             fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
         }
     } else { // [cd] Help, I'm lost, bring me back home
-        currentTab.previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
+        currentSession.previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
 
         if (miniRoot != nil) {
             [[NSFileManager defaultManager] changeCurrentDirectoryPath:miniRoot];
@@ -353,7 +353,7 @@ int cd_main(int argc, char** argv) {
             [[NSFileManager defaultManager] changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
         }
     }
-    currentTab.currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
+    currentSession.currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
     return 0;
 }
 
@@ -515,23 +515,23 @@ int ios_dup2(int fd1, int fd2)
 
 int ios_kill(FILE* stream)
 {
-    if (tabList == nil) return ESRCH;
-    id tabKey = [NSNumber numberWithInt:((int)stream)];
-    tabParameters* currentTab = [tabList objectForKey: tabKey];
-    if (currentTab == NULL) return ESRCH;
-    if (currentTab.current_command_root_thread > 0) {
+    if (sessionList == nil) return ESRCH;
+    id sessionKey = [NSNumber numberWithInt:((int)stream)];
+    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
+    if (currentSession == NULL) return ESRCH;
+    if (currentSession.current_command_root_thread > 0) {
         // Send pthread_kill with the given signal to the current main thread, if there is one.
-        return pthread_cancel(currentTab.current_command_root_thread);
+        return pthread_cancel(currentSession.current_command_root_thread);
     }
     // No process running
     return ESRCH;
 }
 
-void ios_closeTab(FILE* stream) {
-    // delete information associated with current tab:
-    if (tabList == nil) return;
-    id tabKey = [NSNumber numberWithInt:((int)stream)];
-    [tabList removeObjectForKey: tabKey];
+void ios_closeSession(FILE* stream) {
+    // delete information associated with current session:
+    if (sessionList == nil) return;
+    id sessionKey = [NSNumber numberWithInt:((int)stream)];
+    [sessionList removeObjectForKey: sessionKey];
 }
 
 
@@ -691,30 +691,28 @@ int ios_system(const char* inputCmd) {
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
     
-    if (tabList == nil) tabList = [NSMutableDictionary new];
-    // TODO: check that stdout != NULL
-    // TODO: release parameters when tab is closed
-    id tabKey = [NSNumber numberWithInt:((int)stdout)];
-    tabParameters* currentTab = [tabList objectForKey: tabKey];
-    if (currentTab == NULL) {
-        fprintf(stdout, "A new tab! stdout = %d\n", stdout);
-        currentTab = [[tabParameters alloc] init];
-        currentTab.isMainThread = TRUE;
-        currentTab.current_command_root_thread = 0;
-        currentTab.lastThreadId = 0;
-        currentTab.currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
-        currentTab.previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
-        currentTab.global_errno = 0;
-        [tabList setObject: currentTab forKey: tabKey];
+    if (sessionList == nil) sessionList = [NSMutableDictionary new];
+    id sessionKey = [NSNumber numberWithInt:((int)stdout)];
+    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
+    if (currentSession == NULL) {
+        fprintf(stdout, "A new session! stdout = %x\n", stdout);
+        currentSession = [[sessionParameters alloc] init];
+        currentSession.isMainThread = TRUE;
+        currentSession.current_command_root_thread = 0;
+        currentSession.lastThreadId = 0;
+        currentSession.currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
+        currentSession.previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
+        currentSession.global_errno = 0;
+        [sessionList setObject: currentSession forKey: sessionKey];
     } else {
-        if (![currentTab.currentDir isEqualToString:[[NSFileManager defaultManager] currentDirectoryPath]])
-            [[NSFileManager defaultManager] changeCurrentDirectoryPath:currentTab.currentDir];
+        if (![currentSession.currentDir isEqualToString:[[NSFileManager defaultManager] currentDirectoryPath]])
+            [[NSFileManager defaultManager] changeCurrentDirectoryPath:currentSession.currentDir];
     }
     // initialize:
     if (thread_stdin == 0) thread_stdin = stdin;
     if (thread_stdout == 0) thread_stdout = stdout;
     if (thread_stderr == 0) thread_stderr = stderr;
-    fprintf(thread_stderr, "Entered ios_system, stdout = %d thread_stdout = %d \n", stdout, thread_stdout);
+    fprintf(thread_stderr, "Entered ios_system, stdout = %x thread_stdout = %x \n", stdout, thread_stdout);
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -771,19 +769,19 @@ int ios_system(const char* inputCmd) {
     char* pipeMarker = strstr (outputFileMarker,"&|");
     if (!pipeMarker) pipeMarker = strstr (outputFileMarker,"|&"); // both seem to work
     if (pipeMarker) {
-        bool pushMainThread = currentTab.isMainThread;
-        currentTab.isMainThread = false;
+        bool pushMainThread = currentSession.isMainThread;
+        currentSession.isMainThread = false;
         params->stdout = params->stderr = ios_popen(pipeMarker+2, "w");
-        currentTab.isMainThread = pushMainThread;
+        currentSession.isMainThread = pushMainThread;
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
     } else {
         pipeMarker = strstr (outputFileMarker,"|");
         if (pipeMarker) {
-            bool pushMainThread = currentTab.isMainThread;
-            currentTab.isMainThread = false;
+            bool pushMainThread = currentSession.isMainThread;
+            currentSession.isMainThread = false;
             params->stdout = ios_popen(pipeMarker+1, "w");
-            currentTab.isMainThread = pushMainThread;
+            currentSession.isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
         }
     }
@@ -1037,8 +1035,8 @@ int ios_system(const char* inputCmd) {
             params->dlHandle = handle;
             params->isPipeOut = (params->stdout != thread_stdout);
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
-            fprintf(thread_stderr, "About to start something, iMT = %d lastTID = %d\n", currentTab.isMainThread, currentTab.lastThreadId); fflush(thread_stderr);
-            if (currentTab.isMainThread) {
+            fprintf(thread_stderr, "About to start something, iMT = %d lastTID = %d\n", currentSession.isMainThread, currentSession.lastThreadId); fflush(thread_stderr);
+            if (currentSession.isMainThread) {
                 // Send a signal to the system that we're going to change the current directory:
                 // TODO: only do this if the command actually accesses files: either outputFile exists,
                 // or errorFile exists, or the command uses files.
@@ -1046,23 +1044,23 @@ int ios_system(const char* inputCmd) {
                 NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
                 NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
                 [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
-                    currentTab.isMainThread = false;
+                    currentSession.isMainThread = false;
                     pthread_create(&_tid, NULL, run_function, params);
-                    currentTab.current_command_root_thread = _tid;
-                    fprintf(thread_stderr, "Started a main thread ID = %d\n", currentTab.current_command_root_thread); fflush(thread_stderr);
+                    currentSession.current_command_root_thread = _tid;
+                    fprintf(thread_stderr, "Started a main thread ID = %d\n", currentSession.current_command_root_thread); fflush(thread_stderr);
                     // Wait for this process to finish:
                     pthread_join(_tid, NULL);
                     // If there are auxiliary process, also wait for them:
-                    if (currentTab.lastThreadId > 0) pthread_join(currentTab.lastThreadId, NULL);
-                    currentTab.lastThreadId = 0;
-                    currentTab.current_command_root_thread = 0;
-                    currentTab.isMainThread = true;
+                    if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
+                    currentSession.lastThreadId = 0;
+                    currentSession.current_command_root_thread = 0;
+                    currentSession.isMainThread = true;
                 }];
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
                 pthread_create(&_tid, NULL, run_function, params);
                 // The last command on the command line (with multiple pipes) will be created first
-                if (currentTab.lastThreadId == 0) currentTab.lastThreadId = _tid;
+                if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid;
                 fprintf(thread_stderr, "Started a secondary thread ID = %d\n", _tid); fflush(thread_stderr);
             }
         } else {
@@ -1071,12 +1069,12 @@ int ios_system(const char* inputCmd) {
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
             fprintf(thread_stderr, "%s: command not found\n", argv[0]);
-            currentTab.global_errno = 127;
+            currentSession.global_errno = 127;
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
     } else { // argc != 0
         free(argv); // argv is otherwise freed in cleanup_function
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
-    return currentTab.global_errno;
+    return currentSession.global_errno;
 }

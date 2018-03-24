@@ -1,5 +1,5 @@
 //
-//  tabParameters.h
+//  sessionParameters.h
 //  ios_system
 //
 //  Created by Nicolas Holzschuch on 23/03/2018.
@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface tabParameters : NSObject
+@interface sessionParameters : NSObject
 
 @property bool isMainThread;   // are we on the first command?
 @property NSString *currentDir;

@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		222446342065642E0018D400 /* tabParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = 222446322065642E0018D400 /* tabParameters.h */; };
-		222446352065642E0018D400 /* tabParameters.m in Sources */ = {isa = PBXBuildFile; fileRef = 222446332065642E0018D400 /* tabParameters.m */; };
+		222446342065642E0018D400 /* sessionParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = 222446322065642E0018D400 /* sessionParameters.h */; };
+		222446352065642E0018D400 /* sessionParameters.m in Sources */ = {isa = PBXBuildFile; fileRef = 222446332065642E0018D400 /* sessionParameters.m */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
@@ -490,8 +490,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		222446322065642E0018D400 /* tabParameters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tabParameters.h; sourceTree = "<group>"; };
-		222446332065642E0018D400 /* tabParameters.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = tabParameters.m; sourceTree = "<group>"; };
+		222446322065642E0018D400 /* sessionParameters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sessionParameters.h; sourceTree = "<group>"; };
+		222446332065642E0018D400 /* sessionParameters.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = sessionParameters.m; sourceTree = "<group>"; };
 		22319F9E1FDC2332004D875A /* getopt.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = getopt.c; sourceTree = "<group>"; };
 		223496AB1FD5FC71007ED1A9 /* ios_system.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ios_system.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		223496AE1FD5FC71007ED1A9 /* ios_system.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_system.h; sourceTree = "<group>"; };
@@ -1050,8 +1050,8 @@
 			children = (
 				223496AE1FD5FC71007ED1A9 /* ios_system.h */,
 				223496AF1FD5FC71007ED1A9 /* Info.plist */,
-				222446322065642E0018D400 /* tabParameters.h */,
-				222446332065642E0018D400 /* tabParameters.m */,
+				222446322065642E0018D400 /* sessionParameters.h */,
+				222446332065642E0018D400 /* sessionParameters.m */,
 			);
 			path = ios_system;
 			sourceTree = "<group>";
@@ -1898,7 +1898,7 @@
 				22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */,
 				226378B21FDB3EE400AE8827 /* zopen.h in Headers */,
 				226378811FDB3EE400AE8827 /* ncurses_dll.h in Headers */,
-				222446342065642E0018D400 /* tabParameters.h in Headers */,
+				222446342065642E0018D400 /* sessionParameters.h in Headers */,
 				226378A81FDB3EE400AE8827 /* chmod_acl.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2126,7 +2126,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22319FA01FDC2332004D875A /* getopt.c in Sources */,
-				222446352065642E0018D400 /* tabParameters.m in Sources */,
+				222446352065642E0018D400 /* sessionParameters.m in Sources */,
 				225F06102016751900466685 /* getopt_long.c in Sources */,
 				223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */,
 			);

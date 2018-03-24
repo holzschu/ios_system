@@ -1,13 +1,13 @@
 //
-//  tabParameters.m
+//  sessionParameters.m
 //  ios_system
 //
 //  Created by Nicolas Holzschuch on 23/03/2018.
 //  Copyright © 2018 Nicolas Holzschuch. All rights reserved.
 //
 
-#import "tabParameters.h"
+#import "sessionParameters.h"
 
-@implementation tabParameters
+@implementation sessionParameters
 
 @end
