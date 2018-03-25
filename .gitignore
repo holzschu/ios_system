@@ -17,7 +17,6 @@
 
 # Downloaded files:
 /Frameworks/
-/curl/
 /file_cmds/
 /libarchive/
 /libinfo/
@@ -63,3 +62,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Xcode
+xcuserdata/
