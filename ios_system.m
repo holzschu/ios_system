@@ -40,20 +40,10 @@ __thread FILE* thread_stderr;
 #import "sessionParameters.h"
 
 NSMutableDictionary* sessionList;
-
-// bool isMainThread = true;   // are we on the first command?
-// we need thread IDs for 1st and last commands in cases lik: 1st | middle | other | last
-// pthread_t current_command_root_thread = 0; // thread ID of first command
-// pthread_t lastThreadId = 0; // thread ID of last command
-// return value for the function. errno is thread-local, so we need a thread-global variable:
-// int global_errno;
-// NSString* previousDirectory;
+sessionParameters* currentSession;
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
-    if (sessionList == nil) return;
-    id sessionKey = [NSNumber numberWithInt:((int)stdout)];
-    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession != NULL) currentSession.global_errno = n;
     pthread_exit(NULL);
 }
@@ -317,9 +307,6 @@ int ios_setMiniRoot(NSString* mRoot) {
 }
 
 int cd_main(int argc, char** argv) {
-    if (sessionList == nil) return 1;
-    id sessionKey = [NSNumber numberWithInt:((int)stdout)];
-    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession == NULL) return 1;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
 
@@ -517,11 +504,8 @@ int ios_dup2(int fd1, int fd2)
     return fd2;
 }
 
-int ios_kill(FILE* stream)
+int ios_kill()
 {
-    if (sessionList == nil) return ESRCH;
-    id sessionKey = [NSNumber numberWithInt:((int)stream)];
-    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession == NULL) return ESRCH;
     if (currentSession.current_command_root_thread > 0) {
         // Send pthread_kill with the given signal to the current main thread, if there is one.
@@ -531,24 +515,27 @@ int ios_kill(FILE* stream)
     return ESRCH;
 }
 
-void ios_closeSession(FILE* stream) {
+void ios_switchSession(void* sessionId) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    if (sessionList == nil) sessionList = [NSMutableDictionary new];
+    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    currentSession = [sessionList objectForKey: sessionKey];
+    if (currentSession == NULL) {
+        currentSession = [[sessionParameters alloc] init];
+        [sessionList setObject: currentSession forKey: sessionKey];
+    } else {
+        if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]])
+            [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+    }
+}
+
+void ios_closeSession(void* sessionId) {
     // delete information associated with current session:
     if (sessionList == nil) return;
-    id sessionKey = [NSNumber numberWithInt:((int)stream)];
+    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
     [sessionList removeObjectForKey: sessionKey];
+    currentSession = NULL;
 }
-
-NSString* ios_currentDirectory(FILE* stream) {
-    if (sessionList == nil) {
-        NSFileManager *fileManager = [[NSFileManager alloc] init];
-        return [fileManager currentDirectoryPath];
-    }
-    id sessionKey = [NSNumber numberWithInt:((int)stream)];
-    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
-    return currentSession.currentDir;
-}
-
-
 
 // For customization:
 // replaces a function  (e.g. ls_main) with another one, provided by the user (ls_mine_main)
@@ -707,23 +694,10 @@ int ios_system(const char* inputCmd) {
     bool  sharedErrorOutput = false;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
 
-    
-    if (sessionList == nil) sessionList = [NSMutableDictionary new];
-    id sessionKey = [NSNumber numberWithInt:((int)stdout)];
-    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession == NULL) {
         currentSession = [[sessionParameters alloc] init];
-        currentSession.isMainThread = TRUE;
-        currentSession.current_command_root_thread = 0;
-        currentSession.lastThreadId = 0;
-        currentSession.currentDir = [fileManager currentDirectoryPath];
-        currentSession.previousDirectory = [fileManager currentDirectoryPath];
-        currentSession.global_errno = 0;
-        [sessionList setObject: currentSession forKey: sessionKey];
-    } else {
-        if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]])
-            [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
     }
+    
     // initialize:
     if (thread_stdin == 0) thread_stdin = stdin;
     if (thread_stdout == 0) thread_stdout = stdout;

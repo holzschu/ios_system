@@ -17,4 +17,7 @@
 @property pthread_t lastThreadId; // thread ID of last command
 @property int global_errno;
 
+
+- (instancetype)init;
+
 @end
