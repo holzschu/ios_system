@@ -538,6 +538,17 @@ void ios_closeSession(FILE* stream) {
     [sessionList removeObjectForKey: sessionKey];
 }
 
+NSString* ios_currentDirectory(FILE* stream) {
+    if (sessionList == nil) {
+        NSFileManager *fileManager = [[NSFileManager alloc] init];
+        return [fileManager currentDirectoryPath];
+    }
+    id sessionKey = [NSNumber numberWithInt:((int)stream)];
+    sessionParameters* currentSession = [sessionList objectForKey: sessionKey];
+    return currentSession.currentDir;
+}
+
+
 
 // For customization:
 // replaces a function  (e.g. ls_main) with another one, provided by the user (ls_mine_main)

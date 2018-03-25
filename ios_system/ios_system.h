@@ -34,5 +34,6 @@ extern NSString* operatesOn(NSString* command);
 extern void initializeEnvironment(void);
 extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hierarchy
 extern void ios_closeSession(FILE* stream);
+extern NSString* ios_currentDirectory(FILE* stream);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
 extern NSError* addCommandList(NSString* fileLocation);
