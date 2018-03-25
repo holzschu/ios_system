@@ -882,7 +882,7 @@
 		22F6A16820683D5200E618F9 /* ssh_cmd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ssh_cmd.h; sourceTree = "<group>"; };
 		22F6A16920683D5200E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		22F6A1AF20683F4100E618F9 /* curl.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = curl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		22F6A1B220683F4100E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		22F6A1B220683F4100E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../curl_ios/Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
