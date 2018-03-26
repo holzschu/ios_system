@@ -1028,11 +1028,12 @@ int ios_system(const char* inputCmd) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
                                                params->isPipeOut || params->isPipeErr);
+                NSString* currentPath = [fileManager currentDirectoryPath];
+                commandOperatesOnFiles &= (currentPath != nil); 
                 if (commandOperatesOnFiles) {
                     // Send a signal to the system that we're going to change the current directory:
                     // TODO: only do this if the command actually accesses files: either outputFile exists,
                     // or errorFile exists, or the command uses files.
-                    NSString* currentPath = [fileManager currentDirectoryPath];
                     NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
                     NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
                     [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
