@@ -23,9 +23,9 @@ link with the `ios_system.framework`, and your calls to `system()` will be handl
 
 The commands available are defined in two dictionaries, `Resources/commandDictionary.plist` and `Resources/extraCommandsDictionary.plist`. At startup time, `ios_system` loads these dictionaries and enables the commands defined inside. You will need to add these two dictionaries to the "Copy Bundle Resources" step in your Xcode project.
 
-Each command is defined inside a dynamic library. The dynamic library is loaded when the command is called, and released after the command exits. Dynamic libraries for small commands are in this project. Library or Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). Some commands (`curl`, `python`) require `OpenSSH` and `libssl2`, which you will have to download and compile separately (see https://github.com/holzschu/libssh2-for-iOS, for example).
+Each command is defined inside a framework. The framework is loaded when the command is called, and released after the command exits. Frameworks for small commands are in this project. Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). Some commands (`curl`, `python`) require `OpenSSH` and `libssl2`, which you will have to download and compile separately (see https://github.com/holzschu/libssh2-for-iOS, for example).
 
-Network-based commands (nslookup, dig, host, ping, telnet) are also available as a separate dynamic library, [network_ios](https://github.com/holzschu/network_ios). Place the compiled library with the other libraries and add it to the embedded libraries of your application.
+Network-based commands (nslookup, dig, host, ping, telnet) are also available as a separate framework, [network_ios](https://github.com/holzschu/network_ios). Place the compiled library with the other libraries and add it to the embedded libraries of your application.
 
 This `ios_system` framework has been successfully ported into two shells, [Blink](https://github.com/holzschu/blink) and [OpenTerm](https://github.com/louisdh/terminal) and into an editor, [iVim](https://github.com/holzschu/iVim). Each time, it provides a Unix look-and-feel (well, mostly feel). 
 
@@ -54,7 +54,7 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 
 ## Installation:
 
-**The easy way:** run the script `./get_binaries.sh`. This will download the compiled versions of all existing frameworks (`ios_system.framework`, plus all the dynamic libraries, including `network_ios`). 
+**The easy way:** run the script `./get_binaries.sh`. This will download the compiled versions of all existing frameworks (`ios_system.framework`, plus all the frameworks libraries, including `network_ios`). 
 
 **The hard way:**
 
@@ -63,14 +63,14 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
     - **[Fast]** Run the script `./get_frameworks.sh` to download precompiled versions of `openSSL.framework` and `libSSH2.framework`.
     - **[Slow]** Run the script `./get_frameworks_as_source.sh` to download the source for  `openSSL.framework` and `libSSH2.framework`, compile them, and move them to `Frameworks`. 
 - Open the Xcode project `ios_system.xcodeproj` and hit build. This will create the `ios_system` framework, ready to be included in your own projects. 
-- Compile the other targets as well: files, tar, curl, awk, shell, text, ssh_cmd. This will create the corresponding dynamic libraries.
+- Compile the other targets as well: files, tar, curl, awk, shell, text, ssh_cmd. This will create the corresponding frameworks.
 - Alternatively, type `xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Debug -quiet` to build all targets.
 - If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios), [TeX](https://github.com/holzschu/lib-tex) or [network_ios](https://github.com/holzschu/network_ios), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile.
 
 ## Integration with your app:
 
 - Link your application with the `ios_system.framework` framework.
-- Embed (but don't link) the dynamic libraries corresponding to the commands you need (`libtar.dylib` if you need `tar`, `libfiles.dylib` for cp, rm, mv...). 
+- Embed (but don't link) the frameworks corresponding to the commands you need (`libtar.dylib` if you need `tar`, `libfiles.dylib` for cp, rm, mv...). 
 - Add the two dictionaries, `Resources/commandDictionary.plist` and `Resources/extraCommandsDictionary.plist` to the  "Copy Bundle Resources" step in your Xcode project.
 
 ### Basic commands:
@@ -94,13 +94,13 @@ Sample use: `replaceCommand(@"ls", gnu_ls_main, true);`: Replaces all calls to `
 
 If the command does not already exist, your command is simply added to the list. 
 
-**addCommandList:** `NSError* addCommandList(NSString* fileLocation)` loads several commands at once, and adds them to the list of existing commands. `fileLocation` points to a plist file, with the same syntax as  `Resources/extraCommandsDictionary.plist`: the key is the command name, and is followed by an Array of 4 Strings: name of the dynamic library, name of the function to call, list of options (in `getopt()` format) and what the command expects as argument (file, directory, nothing). The last two can be used for autocomplete. The name of the dynamic library can be `MAIN` if your command is defined in your main program (equivalent to the `RTLD_MAIN_ONLY` option for `dlsym()`), or `SELF` if it is defined inside `ios_system.framework` (equivalent to `RTLD_SELF`). 
+**addCommandList:** `NSError* addCommandList(NSString* fileLocation)` loads several commands at once, and adds them to the list of existing commands. `fileLocation` points to a plist file, with the same syntax as  `Resources/extraCommandsDictionary.plist`: the key is the command name, and is followed by an Array of 4 Strings: name of the framework, name of the function to call, list of options (in `getopt()` format) and what the command expects as argument (file, directory, nothing). The last two can be used for autocomplete. The name of the framework can be `MAIN` if your command is defined in your main program (equivalent to the `RTLD_MAIN_ONLY` option for `dlsym()`), or `SELF` if it is defined inside `ios_system.framework` (equivalent to `RTLD_SELF`). 
 
 Example: 
 ```xml
 <key>rlogin</key>
   <array>
-    <string>libnetwork_ios.dylib</string>
+    <string>network_ios.framework/network_ios</string>
     <string>rlogin_main</string>
     <string>468EKLNS:X:acde:fFk:l:n:rs:uxy</string>
     <string>no</string>

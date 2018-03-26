@@ -88,14 +88,14 @@
 	</array>
 	<key>groups</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>id_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>id</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>id_main</string>
 		<string>AFPGMagnpru</string>
 		<string>no</string>
@@ -256,7 +256,7 @@
 	</array>
 	<key>w</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>w_main</string>
 		<string>dhiflM:N:nsuw</string>
 		<string>no</string>

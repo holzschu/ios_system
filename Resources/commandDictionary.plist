@@ -4,14 +4,14 @@
 <dict>
 	<key>awk</key>
 	<array>
-		<string>libawk.dylib</string>
+		<string>awk.framework/awk</string>
 		<string>awk_main</string>
 		<string>dhiflM:N:nsuw</string>
 		<string>file</string>
 	</array>
 	<key>cat</key>
 	<array>
-		<string>libtext.dylib</string>
+		<string>text.framework/text</string>
 		<string>cat_main</string>
 		<string>benstuv</string>
 		<string>file</string>
@@ -60,21 +60,21 @@
 	</array>
 	<key>curl</key>
 	<array>
-		<string>libcurl.dylib</string>
+		<string>curl_ios.framework/curl_ios</string>
 		<string>curl_main</string>
 		<string>2346aAbBcCdDeEfgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwxXYyz#</string>
 		<string>file</string>
 	</array>
 	<key>date</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>date_main</string>
 		<string>d:f:jnRr:t:uv:</string>
 		<string>no</string>
 	</array>
 	<key>dig</key>
 	<array>
-		<string>libnetwork_ios.dylib</string>
+		<string>network_ios.framework/network_ios</string>
 		<string>dig_main</string>
 		<string></string>
 		<string>no</string>
@@ -88,35 +88,35 @@
 	</array>
 	<key>echo</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>echo_main</string>
 		<string>n</string>
 		<string>no</string>
 	</array>
 	<key>egrep</key>
 	<array>
-		<string>libtext.dylib</string>
+		<string>text.framework/text</string>
 		<string>grep_main</string>
 		<string>0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy</string>
 		<string>file</string>
 	</array>
 	<key>env</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>env_main</string>
 		<string>-iP:S:u:v</string>
 		<string>no</string>
 	</array>
 	<key>fgrep</key>
 	<array>
-		<string>libtext.dylib</string>
+		<string>text.framework/text</string>
 		<string>grep_main</string>
 		<string>0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy</string>
 		<string>file</string>
 	</array>
 	<key>grep</key>
 	<array>
-		<string>libtext.dylib</string>
+		<string>text.framework/text</string>
 		<string>grep_main</string>
 		<string>0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy</string>
 		<string>file</string>
@@ -137,7 +137,7 @@
 	</array>
 	<key>host</key>
 	<array>
-		<string>libnetwork_ios.dylib</string>
+		<string>network_ios.framework/network_ios</string>
 		<string>host_main</string>
 		<string>46ac:dilnm:rst:vVwCDN:R:TW:</string>
 		<string>no</string>
@@ -179,35 +179,35 @@
 	</array>
 	<key>nc</key>
 	<array>
-		<string>libnetwork_ios.dylib</string>
+		<string>network_ios.framework/network_ios</string>
 		<string>netcat_main</string>
 		<string>46AacDCb:dEhi:jFG:H:I:J:K:L:klMnN:Oop:rSs:T:tUuvw:X:x:z</string>
 		<string>no</string>
 	</array>
 	<key>nslookup</key>
 	<array>
-		<string>libnetwork_ios.dylib</string>
+		<string>network_ios.framework/network_ios</string>
 		<string>nslookup_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>ping</key>
 	<array>
-		<string>libnetwork_ios.dylib</string>
+		<string>network_ios.framework/network_ios</string>
 		<string>ping_main</string>
 		<string>AaB:b:Cc:DdfG:g:h:I:i:k:K:Ll:M:m:noP:p:QqRrS:s:T:t:vW:z:</string>
 		<string>no</string>
 	</array>
 	<key>printenv</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>printenv_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>pwd</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>pwd_main</string>
 		<string>LP</string>
 		<string>no</string>
@@ -228,7 +228,7 @@
 	</array>
 	<key>rlogin</key>
 	<array>
-		<string>libnetwork_ios.dylib</string>
+		<string>network_ios.framework/network_ios</string>
 		<string>rlogin_main</string>
 		<string>468EKLNS:X:acde:fFk:l:n:rs:uxy</string>
 		<string>no</string>
@@ -249,42 +249,42 @@
 	</array>
 	<key>scp</key>
 	<array>
-		<string>libcurl.dylib</string>
+		<string>curl_ios.framework/curl_ios</string>
 		<string>curl_main</string>
 		<string>q</string>
 		<string>file</string>
 	</array>
 	<key>sed</key>
 	<array>
-		<string>libtext.dylib</string>
+		<string>text.framework/text</string>
 		<string>sed_main</string>
 		<string>Eae:f:i:ln</string>
 		<string>file</string>
 	</array>
 	<key>setenv</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>setenv_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>sftp</key>
 	<array>
-		<string>libcurl.dylib</string>
+		<string>curl_ios.framework/curl_ios</string>
 		<string>curl_main</string>
 		<string>q</string>
 		<string>file</string>
 	</array>
 	<key>ssh</key>
 	<array>
-		<string>libssh_cmd.dylib</string>
+		<string>ssh_cmd.framework/ssh_cmd</string>
 		<string>ssh_main</string>
 		<string>q</string>
 		<string></string>
 	</array>
 	<key>ssh-keygen</key>
 	<array>
-		<string>libssh_cmd.dylib</string>
+		<string>ssh_cmd.framework/ssh_cmd</string>
 		<string>sshkeygen_main</string>
 		<string>ABHLQXceghiklopquvxyC:D:E:F:G:I:J:K:M:N:O:P:R:S:T:V:W:Z:a:b:f:g:j:m:n:r:s:t:z:</string>
 		<string>file</string>
@@ -312,14 +312,14 @@
 	</array>
 	<key>tee</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>tee_main</string>
 		<string>ai</string>
 		<string>file</string>
 	</array>
 	<key>telnet</key>
 	<array>
-		<string>libnetwork_ios.dylib</string>
+		<string>network_ios.framework/network_ios</string>
 		<string>telnet_main</string>
 		<string>468EKLNS:X:acde:fFk:l:n:rs:uxy</string>
 		<string>no</string>
@@ -333,14 +333,14 @@
 	</array>
 	<key>tr</key>
 	<array>
-		<string>libtext.dylib</string>
+		<string>text.framework/text</string>
 		<string>tr_main</string>
 		<string>Ccdsu</string>
 		<string>no</string>
 	</array>
 	<key>uname</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>uname_main</string>
 		<string>amnprsv</string>
 		<string>no</string>
@@ -361,28 +361,28 @@
 	</array>
 	<key>unsetenv</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>unsetenv_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>uptime</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>w_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>wc</key>
 	<array>
-		<string>libtext.dylib</string>
+		<string>text.framework/text</string>
 		<string>wc_main</string>
 		<string>dhiflM:N:nsuw</string>
 		<string>file</string>
 	</array>
 	<key>whoami</key>
 	<array>
-		<string>libshell.dylib</string>
+		<string>shell.framework/shell</string>
 		<string>id_main</string>
 		<string></string>
 		<string>no</string>
