@@ -144,6 +144,7 @@
 		22AFD0782067F88200881B2A /* matching.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4A1FDB47A90050F312 /* matching.c */; };
 		22AFD0792067F88500881B2A /* pathmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4C1FDB47A90050F312 /* pathmatch.c */; };
 		22B753052068DF8400F2B025 /* shell.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B753042068DF8400F2B025 /* shell.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		22B7530B2069801700F2B025 /* curl_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B7530A2069801700F2B025 /* curl_ios.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
 		22F6A1142068393900E618F9 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		22F6A1152068393E00E618F9 /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
@@ -841,6 +842,7 @@
 		22878DE72036393600286AF1 /* getrrsetbyname.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = getrrsetbyname.c; path = "ssh_keygen/openbsd-compat/getrrsetbyname.c"; sourceTree = "<group>"; };
 		22AC09E520209C57006F7D8B /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = Frameworks/libssh2.framework; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
+		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
 		22CF27601FDB3FDA0087DDAD /* libutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libutil.h; path = libutil/libutil.h; sourceTree = SOURCE_ROOT; };
 		22CF27661FDB3FDA0087DDAD /* ios_error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_error.h; sourceTree = SOURCE_ROOT; };
 		22CF27691FDB3FDA0087DDAD /* printenv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = printenv.c; sourceTree = "<group>"; };
@@ -968,11 +970,12 @@
 		223496A11FD5FC71007ED1A9 = {
 			isa = PBXGroup;
 			children = (
-				22B753042068DF8400F2B025 /* shell.h */,
 				22878D4B2036212E00286AF1 /* ssh */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
 				225F060F2016751800466685 /* getopt_long.c */,
 				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
+				22B7530A2069801700F2B025 /* curl_ios.h */,
+				22B753042068DF8400F2B025 /* shell.h */,
 				226378091FDB3EC700AE8827 /* file_cmds_ios */,
 				226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */,
 				22CF27B01FDB42F50087DDAD /* text_cmds_grp */,
@@ -1981,6 +1984,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22B7530B2069801700F2B025 /* curl_ios.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
