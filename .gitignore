@@ -17,6 +17,7 @@
 
 # Downloaded files:
 /Frameworks/
+/curl/
 /file_cmds/
 /libarchive/
 /libinfo/

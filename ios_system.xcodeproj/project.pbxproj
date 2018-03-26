@@ -881,7 +881,7 @@
 		22F6A16620683D5200E618F9 /* ssh_cmd.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ssh_cmd.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		22F6A16820683D5200E618F9 /* ssh_cmd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ssh_cmd.h; sourceTree = "<group>"; };
 		22F6A16920683D5200E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		22F6A1AF20683F4100E618F9 /* curl.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = curl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		22F6A1AF20683F4100E618F9 /* curl_ios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = curl_ios.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		22F6A1B220683F4100E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../curl_ios/Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1001,7 +1001,7 @@
 				22F6A128206839EF00E618F9 /* text.framework */,
 				22F6A14F20683BBD00E618F9 /* awk.framework */,
 				22F6A16620683D5200E618F9 /* ssh_cmd.framework */,
-				22F6A1AF20683F4100E618F9 /* curl.framework */,
+				22F6A1AF20683F4100E618F9 /* curl_ios.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -2111,9 +2111,9 @@
 			productReference = 22F6A16620683D5200E618F9 /* ssh_cmd.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		22F6A1AE20683F4100E618F9 /* curl */ = {
+		22F6A1AE20683F4100E618F9 /* curl_ios */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 22F6A1B420683F4100E618F9 /* Build configuration list for PBXNativeTarget "curl" */;
+			buildConfigurationList = 22F6A1B420683F4100E618F9 /* Build configuration list for PBXNativeTarget "curl_ios" */;
 			buildPhases = (
 				22F6A1AA20683F4100E618F9 /* Sources */,
 				22F6A1AB20683F4100E618F9 /* Frameworks */,
@@ -2124,9 +2124,9 @@
 			);
 			dependencies = (
 			);
-			name = curl;
+			name = curl_ios;
 			productName = curl;
-			productReference = 22F6A1AF20683F4100E618F9 /* curl.framework */;
+			productReference = 22F6A1AF20683F4100E618F9 /* curl_ios.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -2191,7 +2191,7 @@
 				22F6A127206839EF00E618F9 /* text */,
 				22F6A14E20683BBD00E618F9 /* awk */,
 				22F6A16520683D5200E618F9 /* ssh_cmd */,
-				22F6A1AE20683F4100E618F9 /* curl */,
+				22F6A1AE20683F4100E618F9 /* curl_ios */,
 			);
 		};
 /* End PBXProject section */
@@ -3236,7 +3236,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Frameworks",
 				);
-				INFOPLIST_FILE = curl/Info.plist;
+				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -3269,7 +3269,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Frameworks",
 				);
-				INFOPLIST_FILE = curl/Info.plist;
+				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -3360,7 +3360,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		22F6A1B420683F4100E618F9 /* Build configuration list for PBXNativeTarget "curl" */ = {
+		22F6A1B420683F4100E618F9 /* Build configuration list for PBXNativeTarget "curl_ios" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				22F6A1B520683F4100E618F9 /* Debug */,
