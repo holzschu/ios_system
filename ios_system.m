@@ -35,14 +35,16 @@ extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
-// TODO: can we merge this with isMainThread?
-pthread_t current_command_root_thread;
-// return value for the function. errno is thread-local, so we need a thread-global variable:
-int global_errno;
+
+#import "sessionParameters.h"
+
+NSMutableDictionary* sessionList;
+sessionParameters* currentSession;
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
-    global_errno = n; pthread_exit(NULL);
+    if (currentSession != NULL) currentSession.global_errno = n;
+    pthread_exit(NULL);
 }
 
 typedef struct _functionParameters {
@@ -88,7 +90,6 @@ static void* run_function(void* parameters) {
     opterr = 1;
     optreset = 1;
     __db_getopt_reset = 1;
-    global_errno = 0; // return value for the function. errno is thread-local
     functionParameters *p = (functionParameters *) parameters;
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
@@ -107,7 +108,6 @@ static NSDictionary *commandList = nil;
 // do recompute directoriesInPath only if $PATH has changed
 static NSString* fullCommandPath = @"";
 static NSArray *directoriesInPath;
-static NSString* previousDirectory;
 
 void initializeEnvironment() {
     // setup a few useful environment variables
@@ -115,7 +115,6 @@ void initializeEnvironment() {
     NSString *docsPath;
     if (miniRoot == nil) docsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
     else docsPath = miniRoot;
-    previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
     
     // Where the executables are stored: $PATH + ~/Library/bin + ~/Documents/bin
     // Add content of old PATH to this. PATH *is* defined in iOS, surprising as it may be.
@@ -376,17 +375,19 @@ static void initializeCommandList()
 
 int ios_setMiniRoot(NSString* mRoot) {
     BOOL isDir;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:mRoot isDirectory:&isDir]) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+
+    if ([fileManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
         if (isDir) {
             // fileManager has different ways of expressing the same directory.
             // We need to actually change to the directory to get its "real name".
-            NSString* currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
-            if ([[NSFileManager defaultManager] changeCurrentDirectoryPath:mRoot]) {
+            NSString* currentDir = [fileManager currentDirectoryPath];
+            if ([fileManager changeCurrentDirectoryPath:mRoot]) {
                 // also don't set the miniRoot if we can't go in there
                 // get the real name for miniRoot:
-                miniRoot = [[NSFileManager defaultManager] currentDirectoryPath];
+                miniRoot = [fileManager currentDirectoryPath];
                 // Back to where we we before:
-                [[NSFileManager defaultManager] changeCurrentDirectoryPath:currentDir];
+                [fileManager changeCurrentDirectoryPath:currentDir];
                 return 1; // mission accomplished
             }
         }
@@ -395,26 +396,28 @@ int ios_setMiniRoot(NSString* mRoot) {
 }
 
 int cd_main(int argc, char** argv) {
-    NSString* currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
+    if (currentSession == NULL) return 1;
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+
     if (argc > 1) {
         NSString* newDir = @(argv[1]);
         if (strcmp(argv[1], "-") == 0) {
             // "cd -" option to pop back to previous directory
-            newDir = previousDirectory;
+            newDir = currentSession.previousDirectory;
         }
         BOOL isDir;
-        if ([[NSFileManager defaultManager] fileExistsAtPath:newDir isDirectory:&isDir]) {
+        if ([fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
             if (isDir) {
-                if ([[NSFileManager defaultManager] changeCurrentDirectoryPath:newDir]) {
+                if ([fileManager changeCurrentDirectoryPath:newDir]) {
                     // We managed to change the directory.
                     // Was that allowed?
-                    NSString* resultDir = [[NSFileManager defaultManager] currentDirectoryPath];
+                    NSString* resultDir = [fileManager currentDirectoryPath];
                     if ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot])) {
                         fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
-                        [[NSFileManager defaultManager] changeCurrentDirectoryPath:miniRoot];
-                        currentDir = miniRoot;
+                        [fileManager changeCurrentDirectoryPath:miniRoot];
+                        currentSession.currentDir = miniRoot;
                     }
-                    previousDirectory = currentDir;
+                    currentSession.previousDirectory = currentSession.currentDir;
                 } else fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
             }
             else  fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
@@ -422,14 +425,15 @@ int cd_main(int argc, char** argv) {
             fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
         }
     } else { // [cd] Help, I'm lost, bring me back home
-        previousDirectory = [[NSFileManager defaultManager] currentDirectoryPath];
+        currentSession.previousDirectory = [fileManager currentDirectoryPath];
 
         if (miniRoot != nil) {
-            [[NSFileManager defaultManager] changeCurrentDirectoryPath:miniRoot];
+            [fileManager changeCurrentDirectoryPath:miniRoot];
         } else {
-            [[NSFileManager defaultManager] changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
+            [fileManager changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
         }
     }
+    currentSession.currentDir = [fileManager currentDirectoryPath];
     return 0;
 }
 
@@ -591,14 +595,36 @@ int ios_dup2(int fd1, int fd2)
 
 int ios_kill()
 {
-    if (current_command_root_thread > 0) {
+    if (currentSession == NULL) return ESRCH;
+    if (currentSession.current_command_root_thread > 0) {
         // Send pthread_kill with the given signal to the current main thread, if there is one.
-        return pthread_cancel(current_command_root_thread);
+        return pthread_cancel(currentSession.current_command_root_thread);
     }
     // No process running
     return ESRCH;
 }
 
+void ios_switchSession(void* sessionId) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    if (sessionList == nil) sessionList = [NSMutableDictionary new];
+    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    currentSession = [sessionList objectForKey: sessionKey];
+    if (currentSession == NULL) {
+        currentSession = [[sessionParameters alloc] init];
+        [sessionList setObject: currentSession forKey: sessionKey];
+    } else {
+        if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]])
+            [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+    }
+}
+
+void ios_closeSession(void* sessionId) {
+    // delete information associated with current session:
+    if (sessionList == nil) return;
+    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    [sessionList removeObjectForKey: sessionKey];
+    currentSession = NULL;
+}
 
 // For customization:
 // replaces a function  (e.g. ls_main) with another one, provided by the user (ls_mine_main)
@@ -719,14 +745,17 @@ int ios_system(const char* inputCmd) {
     char* errorFileMarker = 0;
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
-    static bool isMainThread = true;
-    static pthread_t lastThreadId = 0; // last command on the command line (with pipes)
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+
+    if (currentSession == NULL) {
+        currentSession = [[sessionParameters alloc] init];
+    }
     
     // initialize:
     if (thread_stdin == 0) thread_stdin = stdin;
     if (thread_stdout == 0) thread_stdout = stdout;
     if (thread_stderr == 0) thread_stderr = stderr;
-    
+
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
     char* originalCommand = cmd;
@@ -782,19 +811,19 @@ int ios_system(const char* inputCmd) {
     char* pipeMarker = strstr (outputFileMarker,"&|");
     if (!pipeMarker) pipeMarker = strstr (outputFileMarker,"|&"); // both seem to work
     if (pipeMarker) {
-        bool pushMainThread = isMainThread;
-        isMainThread = false;
-        params->stdout = ios_popen(pipeMarker+2, "w");
-        isMainThread = pushMainThread;
+        bool pushMainThread = currentSession.isMainThread;
+        currentSession.isMainThread = false;
+        params->stdout = params->stderr = ios_popen(pipeMarker+2, "w");
+        currentSession.isMainThread = pushMainThread;
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
     } else {
         pipeMarker = strstr (outputFileMarker,"|");
         if (pipeMarker) {
-            bool pushMainThread = isMainThread;
-            isMainThread = false;
+            bool pushMainThread = currentSession.isMainThread;
+            currentSession.isMainThread = false;
             params->stdout = ios_popen(pipeMarker+1, "w");
-            isMainThread = pushMainThread;
+            currentSession.isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
         }
     }
@@ -950,7 +979,7 @@ int ios_system(const char* inputCmd) {
                 NSString* test_string = @"~";
                 commandName = [commandName stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange(0, 1)];
             }
-            if ([[NSFileManager defaultManager] fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
+            if ([fileManager fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
                 // File exists, is a file.
                 struct stat sb;
                 if ((stat(commandName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode)) {
@@ -967,15 +996,15 @@ int ios_system(const char* inputCmd) {
             }
             for (NSString* path in directoriesInPath) {
                 // If we don't have access to the path component, there's no point in continuing:
-                if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) continue;
+                if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
                 if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
                 NSString* locationName;
                 if (!cmdIsAFile) {
                     locationName = [path stringByAppendingPathComponent:commandName];
-                    if (![[NSFileManager defaultManager] fileExistsAtPath:locationName isDirectory:&isDir]) continue;
+                    if (![fileManager fileExistsAtPath:locationName isDirectory:&isDir]) continue;
                     if (isDir) continue;
                     // isExecutableFileAtPath replies "NO" even if file has x-bit set.
-                    // if (![[NSFileManager defaultManager]  isExecutableFileAtPath:cmdname]) continue;
+                    // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
                     struct stat sb;
                     if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
                     // File exists, is executable, not a directory.
@@ -1052,28 +1081,47 @@ int ios_system(const char* inputCmd) {
             params->dlHandle = handle;
             params->isPipeOut = (params->stdout != thread_stdout);
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
-            if (isMainThread) {
-                // Send a signal to the system that we're going to change the current directory:
-                NSString* currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
-                NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
-                NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
-                [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
-                    isMainThread = false;
+            if (currentSession.isMainThread) {
+                bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
+                                               [commandStructure[3] isEqualToString:@"directory"] ||
+                                               params->isPipeOut || params->isPipeErr);
+                NSString* currentPath = [fileManager currentDirectoryPath];
+                commandOperatesOnFiles &= (currentPath != nil); 
+                if (commandOperatesOnFiles) {
+                    // Send a signal to the system that we're going to change the current directory:
+                    // TODO: only do this if the command actually accesses files: either outputFile exists,
+                    // or errorFile exists, or the command uses files.
+                    NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
+                    NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
+                    [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
+                        currentSession.isMainThread = false;
+                        pthread_create(&_tid, NULL, run_function, params);
+                        currentSession.current_command_root_thread = _tid;
+                        // Wait for this process to finish:
+                        pthread_join(_tid, NULL);
+                        // If there are auxiliary process, also wait for them:
+                        if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
+                        currentSession.lastThreadId = 0;
+                        currentSession.current_command_root_thread = 0;
+                        currentSession.isMainThread = true;
+                    }];
+                } else {
+                    currentSession.isMainThread = false;
                     pthread_create(&_tid, NULL, run_function, params);
-                    current_command_root_thread = _tid;
+                    currentSession.current_command_root_thread = _tid;
                     // Wait for this process to finish:
                     pthread_join(_tid, NULL);
                     // If there are auxiliary process, also wait for them:
-                    if (lastThreadId > 0) pthread_join(lastThreadId, NULL);
-                    lastThreadId = 0;
-                    current_command_root_thread = 0;
-                    isMainThread = true;
-                }];
+                    if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
+                    currentSession.lastThreadId = 0;
+                    currentSession.current_command_root_thread = 0;
+                    currentSession.isMainThread = true;
+                }
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
                 pthread_create(&_tid, NULL, run_function, params);
                 // The last command on the command line (with multiple pipes) will be created first
-                if (lastThreadId == 0) lastThreadId = _tid;
+                if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid;
             }
         } else {
             if ((handle != NULL) && (handle != RTLD_SELF)
@@ -1081,12 +1129,12 @@ int ios_system(const char* inputCmd) {
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
             fprintf(thread_stderr, "%s: command not found\n", argv[0]);
-            global_errno = 127;
+            currentSession.global_errno = 127;
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
     } else { // argc != 0
         free(argv); // argv is otherwise freed in cleanup_function
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
-    return global_errno;
+    return currentSession.global_errno;
 }

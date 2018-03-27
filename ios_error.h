@@ -32,7 +32,6 @@
 extern __thread FILE* thread_stdin;
 extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
-extern int global_errno;
 
 #define exit ios_exit
 #define _exit ios_exit
@@ -46,7 +45,7 @@ extern int global_errno;
 extern int ios_executable(char* cmd); // is this command part of the "shell" commands?
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
-extern int ios_kill(void); // kill the current running command
+extern int ios_kill(); // kill the current running command
 
 extern void ios_exit(int errorCode) __dead2; // set error code and exits from the thread.
 extern int ios_execv(const char *path, char* const argv[]);
