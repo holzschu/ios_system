@@ -19,6 +19,8 @@ FOUNDATION_EXPORT const unsigned char ios_systemVersionString[];
 extern __thread FILE* thread_stdin;
 extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
+// set to true to have more commands available, more debugging information.
+extern bool sideLoading;
 
 extern int ios_executable(const char* inputCmd); // does this command exist? (executable file or builtin command)
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
@@ -34,3 +36,4 @@ extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hie
 extern void ios_switchSession(void* sessionid);
 extern void ios_closeSession(void* sessionid);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
+extern NSError* addCommandList(NSString* fileLocation);

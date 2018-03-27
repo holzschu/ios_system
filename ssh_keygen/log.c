@@ -56,7 +56,7 @@
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
-static int log_stderr_fd = STDERR_FILENO;
+static int log_stderr_fd; 
 static int log_facility = LOG_AUTH;
 static char *argv0;
 static log_handler_fn *log_handler;
@@ -256,6 +256,7 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 #endif
 
+    log_stderr_fd = fileno(thread_stderr);
 	argv0 = av0;
 
 	switch (level) {
