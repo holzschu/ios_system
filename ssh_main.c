@@ -530,17 +530,6 @@ int ssh_main(int argc, char** argv) {
                     rc = -1;
                     break;
                 }
-            } else {
-                /* Request a terminal with 'xterm-256color' terminal emulation */
-                while ((rc = libssh2_channel_request_pty(_channel, "xterm-256color")) == LIBSSH2_ERROR_EAGAIN) {
-                // while ((rc = libssh2_channel_request_pty_ex(_channel, "xterm-256color", strlen("xterm-256color"), termModes, sizeof(termModes), 80, 24, 0, 0)) == LIBSSH2_ERROR_EAGAIN) {
-                    ssh_waitsocket(_sock, _session);
-                }
-                if (rc) {
-                    fprintf(thread_stderr, "Failed requesting pty\n");
-                    rc = -3;
-                    break;
-                }
                 if (commandLine) {
                     // simple version:
                     while ((rc = libssh2_channel_exec(_channel, commandLine)) == LIBSSH2_ERROR_EAGAIN) {
@@ -553,7 +542,7 @@ int ssh_main(int argc, char** argv) {
                         break;
                     }
                 } else {
-                    /* Request a terminal with 'vt100' terminal emulation */
+					/* Request a terminal with 'xterm-256color' terminal emulation */
                     while ((rc = libssh2_channel_request_pty(_channel, "xterm-256color")) == LIBSSH2_ERROR_EAGAIN) {
                         ssh_waitsocket(_sock, _session);
                     }
