@@ -257,9 +257,9 @@ static int ssh_client_loop(LIBSSH2_SESSION *_session, LIBSSH2_CHANNEL *_channel,
         ssh_waitsocket(_sock, _session);
 
     // close files if it's not a pipe. Could move to ios_system.
-    if (fileno(thread_stdin) != fileno(stdin)) { fclose(thread_stdin);}
-    if (fileno(thread_stdout) != fileno(stdout)) { fclose(thread_stdout);}
-    if (fileno(thread_stderr) != fileno(stderr)) { fclose(thread_stderr);}
+    // if (fileno(thread_stdin) != fileno(stdin)) { fclose(thread_stdin);}
+    // if (fileno(thread_stdout) != fileno(stdout)) { fclose(thread_stdout);}
+    // if (fileno(thread_stderr) != fileno(stderr)) { fclose(thread_stderr);}
 
     if (rc < 0) {
         return -1;
@@ -332,7 +332,7 @@ static int ssh_timeout_connect(int _sock, const struct sockaddr *addr, socklen_t
 
 static void ssh_usage() {
     fprintf(thread_stderr, "usage: ssh [-q] user@host [command]\n");
-    pthread_exit(NULL);
+    ios_exit(1);
 }
 
 int ssh_main(int argc, char** argv) {
@@ -526,7 +526,18 @@ int ssh_main(int argc, char** argv) {
                 }
                 if (_channel == NULL) {
                     libssh2_session_last_error(_session, &errmsg, NULL, 0);
-                    fprintf(thread_stderr, "ssh: error creating channel: %s\n", errmsg);
+                    fprintf(thread_stderr, "ssh: error exec: %s\n", errmsg);
+                    rc = -1;
+                    break;
+                }
+            } else {
+                /* Request a terminal with 'xterm-256color' terminal emulation */
+                while ((rc = libssh2_channel_request_pty(_channel, "xterm-256color")) == LIBSSH2_ERROR_EAGAIN) {
+                // while ((rc = libssh2_channel_request_pty_ex(_channel, "xterm-256color", strlen("xterm-256color"), termModes, sizeof(termModes), 80, 24, 0, 0)) == LIBSSH2_ERROR_EAGAIN) {
+                    ssh_waitsocket(_sock, _session);
+                }
+                if (rc) {
+                    fprintf(thread_stderr, "Failed requesting pty\n");
                     rc = -3;
                     break;
                 }
