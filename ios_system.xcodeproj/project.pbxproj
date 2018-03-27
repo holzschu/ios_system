@@ -23,7 +23,6 @@
 		226378951FDB3EE400AE8827 /* ls.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378351FDB3EE200AE8827 /* ls.h */; };
 		226378A81FDB3EE400AE8827 /* chmod_acl.h in Headers */ = {isa = PBXBuildFile; fileRef = 2263784D1FDB3EE300AE8827 /* chmod_acl.h */; };
 		226378B21FDB3EE400AE8827 /* zopen.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378591FDB3EE300AE8827 /* zopen.h */; };
-		228E399820615B3E0055B5EF /* vis.c in Sources */ = {isa = PBXBuildFile; fileRef = 228E399620615B0C0055B5EF /* vis.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		228264EC2067F0A9002F9671 /* files.h in Headers */ = {isa = PBXBuildFile; fileRef = 228264EA2067F0A9002F9671 /* files.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		228264F02067F143002F9671 /* humanize_number.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378411FDB3EE300AE8827 /* humanize_number.c */; };
 		228264F12067F14B002F9671 /* chflags.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378141FDB3EE200AE8827 /* chflags.c */; };
@@ -233,7 +232,7 @@
 		22F6A18C20683E1200E618F9 /* ssh-dss.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D992036303B00286AF1 /* ssh-dss.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		22F6A18D20683E1200E618F9 /* bsd-misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D962036300500286AF1 /* bsd-misc.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		22F6A18E20683E1200E618F9 /* chacha.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D9320362FAC00286AF1 /* chacha.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
-		22F6A18F20683E1200E618F9 /* readpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D9020362F3200286AF1 /* readpass.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
+		22F6A18F20683E1200E618F9 /* readpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D9020362F3200286AF1 /* readpass.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/ -x objective-c"; }; };
 		22F6A19020683E1200E618F9 /* moduli.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D8D20362E9600286AF1 /* moduli.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		22F6A19120683E1200E618F9 /* match.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D8A20362E3400286AF1 /* match.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		22F6A19220683E1200E618F9 /* cipher-chachapoly.c in Sources */ = {isa = PBXBuildFile; fileRef = 22878D8720362DD700286AF1 /* cipher-chachapoly.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
