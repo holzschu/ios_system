@@ -1,3 +1,31 @@
+diff -Naur curl-105/Info.plist curl/Info.plist
+--- curl-105/Info.plist	1970-01-01 01:00:00.000000000 +0100
++++ curl/Info.plist	2018-03-25 22:34:09.000000000 +0200
+@@ -0,0 +1,24 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++	<key>CFBundleDevelopmentRegion</key>
++	<string>$(DEVELOPMENT_LANGUAGE)</string>
++	<key>CFBundleExecutable</key>
++	<string>$(EXECUTABLE_NAME)</string>
++	<key>CFBundleIdentifier</key>
++	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
++	<key>CFBundleInfoDictionaryVersion</key>
++	<string>6.0</string>
++	<key>CFBundleName</key>
++	<string>$(PRODUCT_NAME)</string>
++	<key>CFBundlePackageType</key>
++	<string>FMWK</string>
++	<key>CFBundleShortVersionString</key>
++	<string>1.0</string>
++	<key>CFBundleVersion</key>
++	<string>$(CURRENT_PROJECT_VERSION)</string>
++	<key>NSPrincipalClass</key>
++	<string></string>
++</dict>
++</plist>
 diff -Naur curl-105/config_iphone/curl_config.h curl/config_iphone/curl_config.h
 --- curl-105/config_iphone/curl_config.h	2017-05-24 02:47:37.000000000 +0200
 +++ curl/config_iphone/curl_config.h	2018-02-11 20:54:21.000000000 +0100
@@ -5273,3 +5301,26 @@ diff -Naur curl-105/curl/src/tool_writeout.c curl/curl/src/tool_writeout.c
            }
            ptr = end + 1; /* pass the end */
            *end = keepit;
+diff -Naur curl-105/curl.h curl/curl.h
+--- curl-105/curl.h	1970-01-01 01:00:00.000000000 +0100
++++ curl/curl.h	2018-03-25 22:34:09.000000000 +0200
+@@ -0,0 +1,19 @@
++//
++//  curl.h
++//  curl
++//
++//  Created by Nicolas Holzschuch on 25/03/2018.
++//  Copyright © 2018 Nicolas Holzschuch. All rights reserved.
++//
++
++#import <UIKit/UIKit.h>
++
++//! Project version number for curl.
++FOUNDATION_EXPORT double curlVersionNumber;
++
++//! Project version string for curl.
++FOUNDATION_EXPORT const unsigned char curlVersionString[];
++
++// In this header, you should import all the public headers of your framework using statements like #import <curl/PublicHeader.h>
++
++
