@@ -20,7 +20,8 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include "ios_error.h"
-#include <termios.h>
+extern char* read_passphrase(const char *prompt, int flags);
+
 
 static int ssh_waitsocket(int socket_fd, LIBSSH2_SESSION *session) {
     struct timeval timeout;
@@ -336,7 +337,7 @@ static void ssh_usage() {
 
 int ssh_main(int argc, char** argv) {
     // TODO: extract options
-    char* passphrase;
+    char* passphrase = NULL;
     int port = 22;
     int connection_timeout = 10;
     char strport[NI_MAXSERV];
@@ -475,63 +476,55 @@ int ssh_main(int argc, char** argv) {
         auth_type |= 4;
     }
     if (auth_type & 4) {
+        // Public key authorization
         // Most common case.
         // Path = getenv(SSH_HOME) or ~/Documents
+        // TODO: make 2 pass, ask for passphrase before 2nd pass
         char path[PATH_MAX];
         if (getenv("SSH_HOME")) strcpy(path, getenv("SSH_HOME"));
         else sprintf(path, "%s/Documents", getenv("HOME"));
         char keypath[PATH_MAX];
         sprintf(keypath, "%s/.ssh/", path);
         // Loop over all keys in .ssh directory
-        DIR* dirp = opendir(keypath);
-        if (!dirp) dirp = opendir(path);
-        if (!dirp) {
-            fprintf(thread_stderr, "Can't open directory %s\n", keypath);
-            free(commandLine);
-            return 0;
-            
-        }
-        struct dirent *dp;
-        char* suffix = ".pub";
-        long suffix_len = strlen(suffix);
-        rc = -2; // so an empty directory will generate an error.
-        while ((dp = readdir(dirp)) != NULL) {
-            // does this file end in ".pub"?
-            char* publickeyName = dp->d_name;
-            if (strncmp( publickeyName + strlen(publickeyName) - suffix_len, suffix, suffix_len ) != 0) continue;
-            // is there a file with same name, without .pub?
-            char* privatekeyName = strdup(publickeyName);
-            privatekeyName[strlen(publickeyName) - suffix_len] = 0x0;
-            char publickeypath[PATH_MAX];
-            char privatekeypath[PATH_MAX];
-            sprintf(publickeypath, "%s%s", keypath, publickeyName);
-            sprintf(privatekeypath, "%s%s", keypath, privatekeyName);
-            if (access( privatekeypath, F_OK ) == -1) continue;
-            while ((rc = libssh2_userauth_publickey_fromfile_ex(_session,
-                                                                user,
-                                                                strlen(user),
-                                                                publickeypath,
-                                                                privatekeypath, passphrase))  == LIBSSH2_ERROR_EAGAIN);
-            if (rc != 0) { if (verboseFlag) fprintf(thread_stderr, "Authentication failure with passphrase.\n"); continue; } // try another key
-            // We are connected
-            rc = 0;
-            char *errmsg;
-            while ((_channel = libssh2_channel_open_session(_session)) == NULL &&
-                   libssh2_session_last_error(_session, NULL, NULL, 0) == LIBSSH2_ERROR_EAGAIN) {
-                ssh_waitsocket(_sock, _session);
+        for (int i = 0; i < 4; i++) {
+            // 1 attempt with empty passphrase, 3 with passphrase
+            DIR* dirp = opendir(keypath);
+            if (!dirp) dirp = opendir(path);
+            if (!dirp) {
+                fprintf(thread_stderr, "Can't open directory %s\n", keypath);
+                free(commandLine);
+                return 0;
             }
-            if (_channel == NULL) {
-                libssh2_session_last_error(_session, &errmsg, NULL, 0);
-                fprintf(thread_stderr, "ssh: error creating channel: %s\n", errmsg);
-                rc = -1;
-                break;
-            }
-            if (commandLine) {
-                // simple version:
-                while ((rc = libssh2_channel_exec(_channel, commandLine)) == LIBSSH2_ERROR_EAGAIN) {
+            struct dirent *dp;
+            char* suffix = ".pub";
+            long suffix_len = strlen(suffix);
+            rc = -2; // so an empty directory will generate an error.
+            while ((dp = readdir(dirp)) != NULL) {
+                // does this file end in ".pub"?
+                char* publickeyName = dp->d_name;
+                if (strncmp( publickeyName + strlen(publickeyName) - suffix_len, suffix, suffix_len ) != 0) continue;
+                // is there a file with same name, without .pub?
+                char* privatekeyName = strdup(publickeyName);
+                privatekeyName[strlen(publickeyName) - suffix_len] = 0x0;
+                char publickeypath[PATH_MAX];
+                char privatekeypath[PATH_MAX];
+                sprintf(publickeypath, "%s%s", keypath, publickeyName);
+                sprintf(privatekeypath, "%s%s", keypath, privatekeyName);
+                if (access( privatekeypath, F_OK ) == -1) continue;
+                while ((rc = libssh2_userauth_publickey_fromfile_ex(_session,
+                                                                    user,
+                                                                    strlen(user),
+                                                                    publickeypath,
+                                                                    privatekeypath, passphrase))  == LIBSSH2_ERROR_EAGAIN);
+                if (rc != 0) { if (verboseFlag) fprintf(thread_stderr, "Authentication failure with passphrase.\n"); continue; } // try another key
+                // We are connected
+                rc = 0;
+                char *errmsg;
+                while ((_channel = libssh2_channel_open_session(_session)) == NULL &&
+                       libssh2_session_last_error(_session, NULL, NULL, 0) == LIBSSH2_ERROR_EAGAIN) {
                     ssh_waitsocket(_sock, _session);
                 }
-                if (rc != 0) {
+                if (_channel == NULL) {
                     libssh2_session_last_error(_session, &errmsg, NULL, 0);
                     fprintf(thread_stderr, "ssh: error exec: %s\n", errmsg);
                     rc = -1;
@@ -548,39 +541,81 @@ int ssh_main(int argc, char** argv) {
                     rc = -3;
                     break;
                 }
-                // Tell to the pty the size of our window, so it can adapt:
-                /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
-                /* Open a SHELL on that pty */
-                while ((rc = libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
-                    ssh_waitsocket(_sock, _session);
+                if (commandLine) {
+                    // simple version:
+                    while ((rc = libssh2_channel_exec(_channel, commandLine)) == LIBSSH2_ERROR_EAGAIN) {
+                        ssh_waitsocket(_sock, _session);
+                    }
+                    if (rc != 0) {
+                        libssh2_session_last_error(_session, &errmsg, NULL, 0);
+                        fprintf(thread_stderr, "ssh: error exec: %s\n", errmsg);
+                        rc = -3;
+                        break;
+                    }
+                } else {
+                    /* Request a terminal with 'vt100' terminal emulation */
+                    while ((rc = libssh2_channel_request_pty(_channel, "xterm-256color")) == LIBSSH2_ERROR_EAGAIN) {
+                        ssh_waitsocket(_sock, _session);
+                    }
+                    if (rc) {
+                        fprintf(thread_stderr, "Failed requesting pty\n");
+                        rc = -3;
+                        break;
+                    }
+                    // Tell to the pty the size of our window, so it can adapt:
+                    /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
+                     /* Open a SHELL on that pty */
+                    while ((rc = libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
+                        ssh_waitsocket(_sock, _session);
+                    }
+                    if (rc) {
+                        fprintf(thread_stderr, "Unable to request shell on allocated pty\n");
+                        rc = -3;
+                        break;
+                    }
                 }
-                if (rc) {
-                    fprintf(thread_stderr, "Unable to request shell on allocated pty\n");
-                    rc = -3;
-                    break;
-                }
+                rc = ssh_client_loop(_session, _channel, _sock); // data transmission
+                break;
             }
-            rc = ssh_client_loop(_session, _channel, _sock); // data transmission
-            break;
+            // cleanup:
+            (void)closedir(dirp);
+            if (rc >= 0) {
+                // We managed to connect, clean up and leave.
+                libssh2_channel_free(_channel);
+                libssh2_session_free(_session);
+                _channel = NULL;
+                free(commandLine);
+                return rc;
+            }
+            if (rc == -2) {
+                // No keys in the directory
+                fprintf(thread_stderr, "No keys found in directory %s\n", keypath);
+                libssh2_session_free(_session);
+                _channel = NULL;
+                free(commandLine);
+                return -1;
+            }
+            // -3 is: "we connected, but failed to execute". Not a passphrase problem.
+            if (rc != -3) {
+                if (i==0) fprintf(thread_stderr, "Authentication with public key failed. Trying with key + passphrase.\n");
+                else fprintf(thread_stderr, "Authentication with public key failed. Please enter another passphrase.\n");
+                fflush(thread_stderr);
+                if (passphrase) free(passphrase);
+                passphrase = read_passphrase("Please enter passphrase (empty to stop)", 1);
+            }
+            if (!passphrase || (strlen(passphrase) == 0)) {
+                libssh2_session_free(_session);
+                _channel = NULL;
+                free(commandLine);
+                return -1;
+            }
         }
-        // cleanup:
-        (void)closedir(dirp);
-        if (rc >= 0) {
-            libssh2_channel_free(_channel);
-            libssh2_session_free(_session);
-            _channel = NULL;
-            free(commandLine);
-            return rc;
-        }
-        if (rc == -1)  fprintf(thread_stderr, "Authentication with public key failed\n");
-        else if (rc == -2) fprintf(thread_stderr, "No keys found\n");
     }
     // public key auth failed
-    fprintf(thread_stderr, "Password authentication not supported\n");
+    if (auth_type & 1) fprintf(thread_stderr, "Password authentication not supported\n");
     // libssh2_channel_free(_channel);
     libssh2_session_free(_session);
     _channel = NULL;
     free(commandLine);
-    
     return -1;
 }

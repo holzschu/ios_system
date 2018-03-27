@@ -23,6 +23,7 @@
 		226378951FDB3EE400AE8827 /* ls.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378351FDB3EE200AE8827 /* ls.h */; };
 		226378A81FDB3EE400AE8827 /* chmod_acl.h in Headers */ = {isa = PBXBuildFile; fileRef = 2263784D1FDB3EE300AE8827 /* chmod_acl.h */; };
 		226378B21FDB3EE400AE8827 /* zopen.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378591FDB3EE300AE8827 /* zopen.h */; };
+		228E399820615B3E0055B5EF /* vis.c in Sources */ = {isa = PBXBuildFile; fileRef = 228E399620615B0C0055B5EF /* vis.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		228264EC2067F0A9002F9671 /* files.h in Headers */ = {isa = PBXBuildFile; fileRef = 228264EA2067F0A9002F9671 /* files.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		228264F02067F143002F9671 /* humanize_number.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378411FDB3EE300AE8827 /* humanize_number.c */; };
 		228264F12067F14B002F9671 /* chflags.c in Sources */ = {isa = PBXBuildFile; fileRef = 226378141FDB3EE200AE8827 /* chflags.c */; };
@@ -840,6 +841,7 @@
 		22878DE12036380200286AF1 /* blocks.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = blocks.c; path = ssh_keygen/blocks.c; sourceTree = "<group>"; };
 		22878DE42036382E00286AF1 /* ssherr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ssherr.c; path = ssh_keygen/ssherr.c; sourceTree = "<group>"; };
 		22878DE72036393600286AF1 /* getrrsetbyname.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = getrrsetbyname.c; path = "ssh_keygen/openbsd-compat/getrrsetbyname.c"; sourceTree = "<group>"; };
+		228E399620615B0C0055B5EF /* vis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vis.c; path = "ssh_keygen/openbsd-compat/vis.c"; sourceTree = "<group>"; };
 		22AC09E520209C57006F7D8B /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = Frameworks/libssh2.framework; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
 		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
@@ -1676,6 +1678,7 @@
 			isa = PBXGroup;
 			children = (
 				224ABBB7203712AE006DE53D /* readpassphrase.c */,
+				228E399620615B0C0055B5EF /* vis.c */,
 				22878DE72036393600286AF1 /* getrrsetbyname.c */,
 				22878DE42036382E00286AF1 /* ssherr.c */,
 				22878DE12036380200286AF1 /* blocks.c */,

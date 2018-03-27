@@ -190,6 +190,49 @@ int prime_test(FILE *, FILE *, u_int32_t, u_int32_t, char *, unsigned long,
     unsigned long);
 #endif
 
+
+void sshkeygen_cleanup() {
+    // reset all flags, cleanup memory:
+    // init all flags:
+    // No need to free strings, since they are not allocated but set to = optargs
+    change_passphrase = 0;
+    change_comment = 0;
+    quiet = 0;
+    log_level = SYSLOG_LEVEL_INFO;
+    hash_hosts = 0;
+    find_host = 0;
+    delete_host = 0;
+    show_cert = 0;
+    print_fingerprint = 0;
+    print_bubblebabble = 0;
+    fingerprint_hash = SSH_FP_HASH_DEFAULT;
+    have_identity = 0;
+    identity_passphrase = NULL;
+    identity_new_passphrase = NULL;
+    identity_comment = NULL;
+    ca_key_path = NULL;
+    cert_serial = 0;
+    cert_key_type = SSH2_CERT_TYPE_USER;
+    cert_key_id = NULL;
+    cert_principals = NULL;
+    cert_valid_from = 0;
+    cert_valid_to = ~0ULL;
+    certflags_flags = CERTOPT_DEFAULT;
+    certflags_command = NULL;
+    certflags_src_addr = NULL;
+    convert_to = 0;
+    convert_from = 0;
+    print_public = 0;
+    print_generic = 0;
+    key_type_name = NULL;
+    pkcs11provider = NULL;
+    use_new_format = 0;
+    new_format_cipher = NULL;
+    rounds = 0;
+    // end init all flags
+}
+
+
 static void
 type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 {
@@ -199,6 +242,7 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 
     if (type == KEY_UNSPEC) {
         fprintf(thread_stderr, "unknown key type %s", key_type_name);
+        sshkeygen_cleanup();
         pthread_exit(NULL);
     }
 	if (*bitsp == 0) {
@@ -220,17 +264,21 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 	    OPENSSL_DSA_MAX_MODULUS_BITS : OPENSSL_RSA_MAX_MODULUS_BITS;
     if (*bitsp > maxbits) {
 		fprintf(thread_stderr, "key bits exceeds maximum %d", maxbits);
+        sshkeygen_cleanup();
         pthread_exit(NULL);
     }
     if (type == KEY_DSA && *bitsp != 1024) {
         fprintf(thread_stderr, "DSA keys must be 1024 bits");
+        sshkeygen_cleanup();
         pthread_exit(NULL);
     } else if (type != KEY_ECDSA && type != KEY_ED25519 && *bitsp < 1024) {
 		fprintf(thread_stderr, "Key must at least be 1024 bits");
+        sshkeygen_cleanup();
         pthread_exit(NULL);
     } else if (type == KEY_ECDSA && sshkey_ecdsa_bits_to_nid(*bitsp) == -1) {
 		fprintf(thread_stderr, "Invalid ECDSA key length - valid lengths are "
 		    "256, 384 or 521 bits");
+        sshkeygen_cleanup();
         pthread_exit(NULL);
     }
 #endif
@@ -276,9 +324,10 @@ ask_filename(struct passwd *pw, const char *prompt)
 	fprintf(thread_stdout, "%s (%s): ", prompt, identity_file);
 	fflush(thread_stdout);
     if (fgets(buf, sizeof(buf), thread_stdin) == NULL) {
-		exit(1);
+        sshkeygen_cleanup();
+        exit(1);
     }
-    buf[strcspn(buf, "\n")] = '\0';
+	buf[strcspn(buf, "\n")] = '\0';
 	if (strcmp(buf, "") != 0)
 		strlcpy(identity_file, buf, sizeof(identity_file));
 	have_identity = 1;
@@ -337,6 +386,7 @@ do_convert_to_ssh2(struct passwd *pw, struct sshkey *k)
 	fprintf(thread_stdout, "%s\n", SSH_COM_PUBLIC_END);
 	sshkey_free(k);
 	free(blob);
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -362,6 +412,7 @@ do_convert_to_pkcs8(struct sshkey *k)
 	default:
 		fprintf(thread_stderr, "%s: unsupported key type %s", __func__, sshkey_type(k));
 	}
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -384,6 +435,7 @@ do_convert_to_pem(struct sshkey *k)
 	default:
 		fprintf(thread_stderr, "%s: unsupported key type %s", __func__, sshkey_type(k));
 	}
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -413,6 +465,7 @@ do_convert_to(struct passwd *pw)
 	default:
 		fprintf(thread_stderr, "%s: unknown key format %d", __func__, convert_format);
 	}
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -753,6 +806,7 @@ do_convert_from(struct passwd *pw)
 	if (!ok)
 		fprintf(thread_stderr, "key write failed");
 	sshkey_free(k);
+    sshkeygen_cleanup();
 	exit(0);
 }
 #endif
@@ -773,6 +827,7 @@ do_print_public(struct passwd *pw)
 		error("key_write failed: %s", ssh_err(r));
 	sshkey_free(prv);
 	fprintf(thread_stdout, "\n");
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -814,6 +869,7 @@ do_download(struct passwd *pw)
 	}
 	free(keys);
 	pkcs11_terminate();
+    sshkeygen_cleanup();
 	exit(0);
 #else
 	fprintf(thread_stderr, "no pkcs11 support");
@@ -929,6 +985,7 @@ do_fingerprint(struct passwd *pw)
 		    strstr(cp, "PRIVATE KEY") != NULL) {
 			fclose(f);
 			fingerprint_private(path);
+            sshkeygen_cleanup();
 			exit(0);
 		}
 
@@ -976,6 +1033,7 @@ do_fingerprint(struct passwd *pw)
 
 	if (invalid)
 		fprintf(thread_stderr, "%s is not a public key file.", path);
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -1260,6 +1318,7 @@ do_known_hosts(struct passwd *pw, const char *name)
 			    "file because of errors");
 			unlink(tmp);
 		}
+        sshkeygen_cleanup();
 		exit(1);
 	} else if (delete_host && !ctx.found_key) {
 		logit("Host %s not found in %s", name, identity_file);
@@ -1278,6 +1337,7 @@ do_known_hosts(struct passwd *pw, const char *name)
 			    strerror(errno));
 			unlink(tmp);
 			unlink(old);
+            sshkeygen_cleanup();
 			exit(1);
 		}
 
@@ -1347,9 +1407,10 @@ do_change_passphrase(struct passwd *pw)
 		if (strcmp(passphrase1, passphrase2) != 0) {
 			explicit_bzero(passphrase1, strlen(passphrase1));
 			explicit_bzero(passphrase2, strlen(passphrase2));
-			free(passphrase1);
-			free(passphrase2);
+            free(passphrase1);
+            free(passphrase2);
 			fprintf(thread_stdout, "Pass phrases do not match.  Try again.\n");
+            sshkeygen_cleanup();
 			exit(1);
 		}
 		/* Destroy the other copy. */
@@ -1366,6 +1427,7 @@ do_change_passphrase(struct passwd *pw)
 		free(passphrase1);
 		sshkey_free(private);
 		free(comment);
+        sshkeygen_cleanup();
 		exit(1);
 	}
 	/* Destroy the passphrase and the copy of the key in memory. */
@@ -1375,6 +1437,7 @@ do_change_passphrase(struct passwd *pw)
 	free(comment);
 
 	fprintf(thread_stdout, "Your identification has been saved with the new passphrase.\n");
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -1452,6 +1515,7 @@ do_change_comment(struct passwd *pw)
 		    "the new format (-o).");
 		explicit_bzero(passphrase, strlen(passphrase));
 		sshkey_free(private);
+        sshkeygen_cleanup();
 		exit(1);
 	}
 	if (comment)
@@ -1467,6 +1531,7 @@ do_change_comment(struct passwd *pw)
 		if (!fgets(new_comment, sizeof(new_comment), thread_stdin)) {
 			explicit_bzero(passphrase, strlen(passphrase));
 			sshkey_free(private);
+            sshkeygen_cleanup();
 			exit(1);
 		}
 		new_comment[strcspn(new_comment, "\n")] = '\0';
@@ -1481,6 +1546,7 @@ do_change_comment(struct passwd *pw)
 		free(passphrase);
 		sshkey_free(private);
 		free(comment);
+        sshkeygen_cleanup();
 		exit(1);
 	}
 	explicit_bzero(passphrase, strlen(passphrase));
@@ -1505,6 +1571,7 @@ do_change_comment(struct passwd *pw)
 	free(comment);
 
 	fprintf(thread_stdout, "The comment in your key file has been changed.\n");
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -1699,6 +1766,7 @@ do_ca_sign(struct passwd *pw, int argc, char **argv)
 #ifdef ENABLE_PKCS11
 	pkcs11_terminate();
 #endif
+    sshkeygen_cleanup();
 	exit(0);
 }
 
@@ -1984,6 +2052,7 @@ do_show_cert(struct passwd *pw)
 	}
 	sshkey_free(key);
 	fclose(f);
+    sshkeygen_cleanup();
 	exit(ok ? 0 : 1);
 }
 
@@ -2216,6 +2285,7 @@ do_check_krl(struct passwd *pw, int argc, char **argv)
 		free(comment);
 	}
 	ssh_krl_free(krl);
+    sshkeygen_cleanup();
 	exit(ret);
 }
 
@@ -2259,12 +2329,14 @@ usage(void)
 	    "       ssh-keygen -k -f krl_file [-u] [-s ca_public] [-z version_number]\n"
 	    "                  file ...\n"
 	    "       ssh-keygen -Q -f krl_file file ...\n");
+    sshkeygen_cleanup();
 	exit(1);
 }
 
 /*
  * Main program for key management.
  */
+
 int
 sshkeygen_main(int argc, char **argv)
 {
@@ -2277,6 +2349,7 @@ sshkeygen_main(int argc, char **argv)
 	int gen_all_hostkeys = 0, gen_krl = 0, update_krl = 0, check_krl = 0;
 	FILE *f;
 	const char *errstr;
+    
 #ifdef WITH_OPENSSL
 	/* Moduli generation/screening */
 	char out_file[PATH_MAX], *checkpoint = NULL;
@@ -2306,6 +2379,9 @@ sshkeygen_main(int argc, char **argv)
 
 	/* we need this for the home * directory.  */
 	pw = getpwuid(getuid());
+    // set local directory: (pw_dir is set to /var/mobile, which is bad)
+    // if the user did not set up SSH_HOME, then it won't work
+    if (getenv("SSH_HOME")) pw->pw_dir = getenv("SSH_HOME");
 	if (!pw)
 		fprintf(thread_stderr, "No user exists for uid %lu", (u_long)getuid());
 	if (gethostname(hostname, sizeof(hostname)) < 0)
@@ -2584,6 +2660,7 @@ sshkeygen_main(int argc, char **argv)
 			    identity_file, rr_hostname);
 			if (n == 0)
 				fprintf(thread_stderr, "%s: %s", identity_file, strerror(errno));
+            sshkeygen_cleanup();
 			exit(0);
 		} else {
 
@@ -2597,6 +2674,7 @@ sshkeygen_main(int argc, char **argv)
 			    _PATH_HOST_ED25519_KEY_FILE, rr_hostname);
 			if (n == 0)
 				fprintf(thread_stderr, "no keys found.");
+            sshkeygen_cleanup();
 			exit(0);
 		}
 	}
@@ -2686,10 +2764,14 @@ sshkeygen_main(int argc, char **argv)
 		fprintf(thread_stdout, "%s already exists.\n", identity_file);
 		fprintf(thread_stdout, "Overwrite (y/n)? ");
 		fflush(thread_stdout);
-		if (fgets(yesno, sizeof(yesno), thread_stdin) == NULL)
+        if (fgets(yesno, sizeof(yesno), thread_stdin) == NULL) {
+            sshkeygen_cleanup();
 			exit(1);
-		if (yesno[0] != 'y' && yesno[0] != 'Y')
+        }
+        if (yesno[0] != 'y' && yesno[0] != 'Y') {
+            sshkeygen_cleanup();
 			exit(1);
+        }
 	}
 	/* Ask for a passphrase (twice). */
 	if (identity_passphrase)
@@ -2711,13 +2793,14 @@ passphrase_again:
 			explicit_bzero(passphrase1, strlen(passphrase1));
 			explicit_bzero(passphrase2, strlen(passphrase2));
 			free(passphrase1);
-			free(passphrase2);
-			fprintf(thread_stdout, "Passphrases do not match.  Try again.\n");
+            free(passphrase2);
+            systemAlert("Passphrases do not match.  Try again.");
+			// fprintf(thread_stdout, "Passphrases do not match.  Try again.\n");
 			goto passphrase_again;
 		}
 		/* Clear the other copy of the passphrase. */
 		explicit_bzero(passphrase2, strlen(passphrase2));
-		free(passphrase2);
+		free(passphrase2); passphrase2 = NULL;
 	}
 
 	if (identity_comment) {
@@ -2733,7 +2816,8 @@ passphrase_again:
 		error("Saving key \"%s\" failed: %s",
 		    identity_file, ssh_err(r));
 		explicit_bzero(passphrase1, strlen(passphrase1));
-		free(passphrase1);
+        free(passphrase1);
+        sshkeygen_cleanup();
 		exit(1);
 	}
 	/* Clear the passphrase. */
@@ -2775,5 +2859,6 @@ passphrase_again:
 	}
 
 	sshkey_free(public);
+    sshkeygen_cleanup();
 	exit(0);
 }

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-IOS_SYSTEM_VER="1.1"
 LIBSSH2_VER="1.0"
 
 HHROOT="https://github.com/holzschu"
