@@ -299,6 +299,10 @@ int ios_setMiniRoot(NSString* mRoot) {
                 miniRoot = [fileManager currentDirectoryPath];
                 // Back to where we we before:
                 [fileManager changeCurrentDirectoryPath:currentDir];
+                if (currentSession != nil) {
+                    currentSession.currentDir = miniRoot;
+                    currentSession.previousDirectory = miniRoot;
+                }
                 return 1; // mission accomplished
             }
         }
