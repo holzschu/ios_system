@@ -526,6 +526,9 @@ void ios_switchSession(void* sessionId) {
     } else {
         if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]])
             [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+        currentSession.stdin = stdin;
+        currentSession.stdout = stdout;
+        currentSession.stderr = stderr;
     }
 }
 
@@ -535,6 +538,18 @@ void ios_closeSession(void* sessionId) {
     id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
     [sessionList removeObjectForKey: sessionKey];
     currentSession = NULL;
+}
+
+int ios_isatty(int fd) {
+    if (currentSession == NULL) return 0;
+    // 2 possibilities: 0, 1, 2 (classical) or fileno(thread_stdout)
+    if ((fd == STDIN_FILENO) || (fd == fileno(currentSession.stdin)) || (fd == fileno(thread_stdin)))
+        return (fileno(thread_stdin) == fileno(currentSession.stdin));
+    if ((fd == STDOUT_FILENO) || (fd == fileno(currentSession.stdout)) || (fd == fileno(thread_stdout)))
+        return (fileno(thread_stdout) == fileno(currentSession.stdout));
+    if ((fd == STDERR_FILENO) || (fd == fileno(currentSession.stderr)) || (fd == fileno(thread_stderr)))
+        return (fileno(thread_stderr) == fileno(currentSession.stderr));
+    return 0;
 }
 
 // For customization:
@@ -699,9 +714,9 @@ int ios_system(const char* inputCmd) {
     }
     
     // initialize:
-    if (thread_stdin == 0) thread_stdin = stdin;
-    if (thread_stdout == 0) thread_stdout = stdout;
-    if (thread_stderr == 0) thread_stderr = stderr;
+    if (thread_stdin == 0) thread_stdin = currentSession.stdin;
+    if (thread_stdout == 0) thread_stdout = currentSession.stdout;
+    if (thread_stderr == 0) thread_stderr = currentSession.stderr;
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);

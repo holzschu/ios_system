@@ -15,6 +15,9 @@
 @property NSString *previousDirectory;
 @property pthread_t current_command_root_thread; // thread ID of first command
 @property pthread_t lastThreadId; // thread ID of last command
+@property FILE* stdin;
+@property FILE* stdout;
+@property FILE* stderr;
 @property int global_errno;
 
 

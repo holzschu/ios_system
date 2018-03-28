@@ -19,7 +19,9 @@
     self.currentDir = [fileManager currentDirectoryPath];
     self.previousDirectory = [fileManager currentDirectoryPath];
     self.global_errno = 0;
-    
+    self.stdin = stdin;
+    self.stdout = stdout;
+    self.stderr = stderr;
     return self;
 }
 
