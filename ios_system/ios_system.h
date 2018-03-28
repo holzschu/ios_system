@@ -35,5 +35,6 @@ extern void initializeEnvironment(void);
 extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hierarchy
 extern void ios_switchSession(void* sessionid);
 extern void ios_closeSession(void* sessionid);
+extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
 extern NSError* addCommandList(NSString* fileLocation);

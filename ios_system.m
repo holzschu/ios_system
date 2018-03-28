@@ -552,6 +552,15 @@ int ios_isatty(int fd) {
     return 0;
 }
 
+void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
+    if (currentSession == NULL) return;
+    currentSession.stdin = _stdin;
+    currentSession.stdout = _stdout;
+    currentSession.stderr = _stderr;
+}
+
+
+
 // For customization:
 // replaces a function  (e.g. ls_main) with another one, provided by the user (ls_mine_main)
 // if the function does not exist, add it to the list
@@ -1094,5 +1103,7 @@ int ios_system(const char* inputCmd) {
         free(argv); // argv is otherwise freed in cleanup_function
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
+    fflush(thread_stdout);
+    fflush(thread_stderr);
     return currentSession.global_errno;
 }
