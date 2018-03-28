@@ -388,6 +388,10 @@ int ios_setMiniRoot(NSString* mRoot) {
                 miniRoot = [fileManager currentDirectoryPath];
                 // Back to where we we before:
                 [fileManager changeCurrentDirectoryPath:currentDir];
+                if (currentSession != nil) {
+                    currentSession.currentDir = miniRoot;
+                    currentSession.previousDirectory = miniRoot;
+                }
                 return 1; // mission accomplished
             }
         }
@@ -615,6 +619,9 @@ void ios_switchSession(void* sessionId) {
     } else {
         if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]])
             [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+        currentSession.stdin = stdin;
+        currentSession.stdout = stdout;
+        currentSession.stderr = stderr;
     }
 }
 
@@ -625,6 +632,27 @@ void ios_closeSession(void* sessionId) {
     [sessionList removeObjectForKey: sessionKey];
     currentSession = NULL;
 }
+
+int ios_isatty(int fd) {
+    if (currentSession == NULL) return 0;
+    // 2 possibilities: 0, 1, 2 (classical) or fileno(thread_stdout)
+    if ((fd == STDIN_FILENO) || (fd == fileno(currentSession.stdin)) || (fd == fileno(thread_stdin)))
+        return (fileno(thread_stdin) == fileno(currentSession.stdin));
+    if ((fd == STDOUT_FILENO) || (fd == fileno(currentSession.stdout)) || (fd == fileno(thread_stdout)))
+        return (fileno(thread_stdout) == fileno(currentSession.stdout));
+    if ((fd == STDERR_FILENO) || (fd == fileno(currentSession.stderr)) || (fd == fileno(thread_stderr)))
+        return (fileno(thread_stderr) == fileno(currentSession.stderr));
+    return 0;
+}
+
+void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
+    if (currentSession == NULL) return;
+    currentSession.stdin = _stdin;
+    currentSession.stdout = _stdout;
+    currentSession.stderr = _stderr;
+}
+
+
 
 // For customization:
 // replaces a function  (e.g. ls_main) with another one, provided by the user (ls_mine_main)
@@ -752,9 +780,9 @@ int ios_system(const char* inputCmd) {
     }
     
     // initialize:
-    if (thread_stdin == 0) thread_stdin = stdin;
-    if (thread_stdout == 0) thread_stdout = stdout;
-    if (thread_stderr == 0) thread_stderr = stderr;
+    if (thread_stdin == 0) thread_stdin = currentSession.stdin;
+    if (thread_stdout == 0) thread_stdout = currentSession.stdout;
+    if (thread_stderr == 0) thread_stderr = currentSession.stderr;
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -1136,5 +1164,7 @@ int ios_system(const char* inputCmd) {
         free(argv); // argv is otherwise freed in cleanup_function
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
+    fflush(thread_stdout);
+    fflush(thread_stderr);
     return currentSession.global_errno;
 }
