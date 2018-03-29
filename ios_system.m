@@ -30,7 +30,7 @@
 // If true, all functions are enabled + debug messages if dylib not found.
 // If false, you get a smaller set, but more compliance with AppStore rules.
 // *Must* be false in the main branch releases.
-bool sideLoading = true;
+bool sideLoading = false;
 
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
