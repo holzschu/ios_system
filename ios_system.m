@@ -556,6 +556,15 @@ int ios_isatty(int fd) {
     return 0;
 }
 
+void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL absoluteString]];
+    if (currentSession != NULL) {
+        currentSession.previousDirectory = currentSession.currentDir;
+        currentSession.currentDir = [workingDirectoryURL absoluteString];
+    }
+}
+
 void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     if (currentSession == NULL) return;
     currentSession.stdin = _stdin;
