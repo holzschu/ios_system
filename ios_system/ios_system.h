@@ -36,5 +36,6 @@ extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hie
 extern void ios_switchSession(void* sessionid);
 extern void ios_closeSession(void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
+extern void ios_setDirectoryURL(NSURL* workingDirectoryURL);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
 extern NSError* addCommandList(NSString* fileLocation);

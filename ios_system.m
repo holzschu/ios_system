@@ -329,8 +329,12 @@ int cd_main(int argc, char** argv) {
                     NSString* resultDir = [fileManager currentDirectoryPath];
                     if ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot])) {
                         fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
-                        [fileManager changeCurrentDirectoryPath:miniRoot];
-                        currentSession.currentDir = miniRoot;
+                        // If the user tried to go above the miniRoot, set it to miniRoot
+                        // NOPE. 
+                        if ([miniRoot hasPrefix:resultDir]) {
+                            [fileManager changeCurrentDirectoryPath:miniRoot];
+                            currentSession.currentDir = miniRoot;
+                        }
                     }
                     currentSession.previousDirectory = currentSession.currentDir;
                 } else fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
@@ -533,6 +537,15 @@ void ios_switchSession(void* sessionId) {
         currentSession.stdin = stdin;
         currentSession.stdout = stdout;
         currentSession.stderr = stderr;
+    }
+}
+
+void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL absoluteString]];
+    if (currentSession != NULL) {
+        currentSession.previousDirectory = currentSession.currentDir;
+        currentSession.currentDir = [workingDirectoryURL absoluteString];
     }
 }
 
