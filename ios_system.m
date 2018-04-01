@@ -310,6 +310,18 @@ int ios_setMiniRoot(NSString* mRoot) {
     return 0;
 }
 
+// Called when 
+int ios_setMiniRootURL(NSURL* mRoot) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    if (currentSession == NULL) currentSession = [[sessionParameters alloc] init];
+    currentSession.localMiniRoot = mRoot;
+    currentSession.previousDirectory = currentSession.currentDir;
+    currentSession.currentDir = [mRoot path];
+    [fileManager changeCurrentDirectoryPath:[mRoot path]];
+    return 1; // mission accomplished
+}
+
+
 int cd_main(int argc, char** argv) {
     if (currentSession == NULL) return 1;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
@@ -321,16 +333,21 @@ int cd_main(int argc, char** argv) {
             newDir = currentSession.previousDirectory;
         }
         BOOL isDir;
+        // Check for permission and existence:
         if ([fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
             if (isDir) {
-                if ([fileManager changeCurrentDirectoryPath:newDir]) {
+                if ([fileManager isReadableFileAtPath:newDir] &&
+                    [fileManager changeCurrentDirectoryPath:newDir]) {
                     // We managed to change the directory.
                     // Was that allowed?
+                    // Allowed "cd" = below miniRoot *or* below localMiniRoot
                     NSString* resultDir = [fileManager currentDirectoryPath];
-                    if ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot])) {
+                    bool notAllowedCd = ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot]));
+                    if (notAllowedCd && currentSession.localMiniRoot)
+                        notAllowedCd = !([resultDir hasPrefix:[currentSession.localMiniRoot path]]);
+                    if (notAllowedCd) {
                         fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
                         // If the user tried to go above the miniRoot, set it to miniRoot
-                        // NOPE. 
                         if ([miniRoot hasPrefix:resultDir]) {
                             [fileManager changeCurrentDirectoryPath:miniRoot];
                             currentSession.currentDir = miniRoot;
@@ -525,8 +542,11 @@ int ios_kill()
 
 void ios_switchSession(void* sessionId) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    if (sessionList == nil) sessionList = [NSMutableDictionary new];
     id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    if (sessionList == nil) {
+        sessionList = [NSMutableDictionary new];
+        if (currentSession != NULL) [sessionList setObject: currentSession forKey: sessionKey];
+    }
     currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession == NULL) {
         currentSession = [[sessionParameters alloc] init];
@@ -537,6 +557,16 @@ void ios_switchSession(void* sessionId) {
         currentSession.stdin = stdin;
         currentSession.stdout = stdout;
         currentSession.stderr = stderr;
+    }
+}
+
+void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL path]];
+    if (currentSession != NULL) {
+        if ([currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]]) return;
+        currentSession.previousDirectory = currentSession.currentDir;
+        currentSession.currentDir = [workingDirectoryURL path];
     }
 }
 
@@ -558,15 +588,6 @@ int ios_isatty(int fd) {
     if ((fd == STDERR_FILENO) || (fd == fileno(currentSession.stderr)) || (fd == fileno(thread_stderr)))
         return (fileno(thread_stderr) == fileno(currentSession.stderr));
     return 0;
-}
-
-void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL absoluteString]];
-    if (currentSession != NULL) {
-        currentSession.previousDirectory = currentSession.currentDir;
-        currentSession.currentDir = [workingDirectoryURL absoluteString];
-    }
 }
 
 void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
