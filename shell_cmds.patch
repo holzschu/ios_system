@@ -1012,7 +1012,7 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
 diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 --- shell_cmds-203/tee/tee.c	1999-04-23 04:44:50.000000000 +0200
-+++ shell_cmds/tee/tee.c	2018-03-23 12:29:14.000000000 +0100
++++ shell_cmds/tee/tee.c	2018-03-28 08:02:42.000000000 +0200
 @@ -57,29 +57,37 @@
  #include <string.h>
  #include <locale.h>
@@ -1058,7 +1058,14 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  	setlocale(LC_ALL, "");
  
  	append = 0;
-@@ -99,26 +107,30 @@
+@@ -93,32 +101,36 @@
+ 			break;
+ 		case '?':
+ 		default:
+-			(void)fprintf(stderr, "usage: tee [-ai] [file ...]\n");
++			(void)fprintf(thread_stderr, "usage: tee [-ai] [file ...]\n");
+ 			exit(1);
+ 		}
  	argv += optind;
  	argc -= optind;
  

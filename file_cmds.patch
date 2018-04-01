@@ -1351,7 +1351,7 @@ diff -Naur file_cmds-272/cksum/print.c file_cmds/cksum/print.c
  }
 diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
 --- file_cmds-272/compress/compress.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/compress/compress.c	2018-03-23 12:34:37.000000000 +0100
++++ file_cmds/compress/compress.c	2018-03-28 07:58:33.000000000 +0200
 @@ -56,28 +56,31 @@
  #include <unistd.h>
  
@@ -1483,7 +1483,7 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
  
 -	if (!isatty(fileno(stderr)))
 +//	if (!isatty(fileno(thread_stderr)))
-+    if (!(fileno(thread_stderr) == fileno(stderr)))
++    if (!ios_isatty(STDERR_FILENO))
  		return (0);
 -	(void)fprintf(stderr, "overwrite %s? ", fname);
 +	(void)fprintf(thread_stderr, "overwrite %s? ", fname);
@@ -2995,7 +2995,7 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  
 diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 --- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
-+++ file_cmds/gzip/gzip.c	2018-03-23 12:31:56.000000000 +0100
++++ file_cmds/gzip/gzip.c	2018-03-28 07:58:26.000000000 +0200
 @@ -68,9 +68,14 @@
  #ifdef __APPLE__
  #include <sys/attr.h>
@@ -3102,7 +3102,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			unlink(outfile);
 -		else if (isatty(STDIN_FILENO)) {
 +//		else if (isatty(fileno(thread_stdin))) {
-+        else if (fileno(thread_stdin) == fileno(stdin)) {
++        else if (ios_isatty(STDIN_FILENO)) {
  			char ans[10] = { 'n', '\0' };	/* default */
  
 -			fprintf(stderr, "%s already exists -- do you wish to "
@@ -3201,7 +3201,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifndef SMALL
 -	if (fflag == 0 && lflag == 0 && isatty(STDIN_FILENO)) {
 +//    if (fflag == 0 && lflag == 0 && isatty(fileno(thread_stdin))) {
-+	if (fflag == 0 && lflag == 0 && (fileno(thread_stdin) == fileno(stdin))) {
++	if (fflag == 0 && lflag == 0 && (ios_isatty(STDIN_FILENO))) {
  		maybe_warnx("standard input is a terminal -- ignoring");
  		return;
  	}
@@ -3278,7 +3278,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifndef SMALL
 -	if (fflag == 0 && isatty(STDOUT_FILENO)) {
 +//	if (fflag == 0 && isatty(fileno(thread_stdout))) {
-+    if (fflag == 0 && (fileno(thread_stdout) == fileno(stdout))) {
++    if (fflag == 0 && (ios_isatty(STDOUT_FILENO))) {
  		maybe_warnx("standard output is a terminal -- ignoring");
  		return;
  	}
@@ -3631,7 +3631,7 @@ diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
  int	 prn_octal(const char *);
 diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 --- file_cmds-272/ls/ls.c	2014-07-04 00:38:26.000000000 +0200
-+++ file_cmds/ls/ls.c	2018-03-23 12:43:34.000000000 +0100
++++ file_cmds/ls/ls.c	2018-03-28 08:05:57.000000000 +0200
 @@ -54,7 +54,7 @@
  #include <sys/ioctl.h>
  
@@ -3809,7 +3809,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 -	if (isatty(STDOUT_FILENO)) {
 +    // iOS: we *are* a terminal, but file(thread_stdout) doesn't tell it
-+	if (fileno(thread_stdout) == fileno(stdout)) {
++	if (ios_isatty(STDOUT_FILENO)) {
  		termwidth = 80;
  		if ((p = getenv("COLUMNS")) != NULL && *p != '\0')
  			termwidth = atoi(p);
@@ -3827,13 +3827,12 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		}
  	}
  	argc -= optind;
-@@ -374,25 +426,37 @@
+@@ -374,25 +426,36 @@
  
  	/* Enabling of colours is conditional on the environment. */
  	if (getenv("CLICOLOR") &&
 -	    (isatty(STDOUT_FILENO) || getenv("CLICOLOR_FORCE")))
-+//	    (isatty(fileno(thread_stdout)) || getenv("CLICOLOR_FORCE")))
-+        ((fileno(thread_stdout) == fileno(stdout)) || getenv("CLICOLOR_FORCE"))) {
++        ((ios_isatty(STDOUT_FILENO)) || getenv("CLICOLOR_FORCE"))) {
  #ifdef COLORLS
 -		if (tgetent(termcapbuf, getenv("TERM")) == 1) {
 -			ansi_fgcol = tgetstr("AF", &bp);
@@ -3882,7 +3881,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  #endif /*COLORLS*/
  
  #ifdef COLORLS
-@@ -402,7 +466,9 @@
+@@ -402,7 +465,9 @@
  		 * column number will be incremented incorrectly
  		 * for "stty oxtabs" mode.
  		 */
@@ -3892,7 +3891,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		(void)signal(SIGINT, colorquit);
  		(void)signal(SIGQUIT, colorquit);
  		parsecolors(getenv("LSCOLORS"));
-@@ -488,10 +554,9 @@
+@@ -488,10 +553,9 @@
  		traverse(argc, argv, fts_options);
  	else
  		traverse(1, dotav, fts_options);
@@ -3904,7 +3903,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  
  /*
   * Traverse() walks the logical directory structure specified by the argv list
-@@ -507,8 +572,11 @@
+@@ -507,8 +571,11 @@
  	int ch_options, error;
  
  	if ((ftsp =
@@ -3918,7 +3917,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  
  	display(NULL, fts_children(ftsp, 0));
  	if (f_listdir) {
-@@ -525,14 +593,16 @@
+@@ -525,14 +592,16 @@
  	while ((p = fts_read(ftsp)) != NULL)
  		switch (p->fts_info) {
  		case FTS_DC:
@@ -3937,7 +3936,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  			rval = 1;
  			break;
  		case FTS_D:
-@@ -548,9 +618,9 @@
+@@ -548,9 +617,9 @@
  			 * directory with its name.
  			 */
  			if (output)
@@ -3949,7 +3948,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  				output = 1;
  			}
  			chp = fts_children(ftsp, ch_options);
-@@ -569,7 +639,8 @@
+@@ -569,7 +638,8 @@
  		case FTS_SLNONE:	/* Same as default unless Unix conformance */
  			if (COMPAT_MODE("bin/ls", "Unix2003")) {
  				if ((options & FTS_LOGICAL)!=0) {	/* -L was specified */
@@ -3959,7 +3958,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  					rval = 1;
  				}
  			}
-@@ -581,8 +652,11 @@
+@@ -581,8 +651,11 @@
  	fts_close(ftsp);
  	errno = error;
  
@@ -3973,7 +3972,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  }
  
  /*
-@@ -640,8 +714,11 @@
+@@ -640,8 +713,11 @@
  
  		/* Fill-in "::" as "0:0:0" for the sake of scanf. */
  		jinitmax = initmax2 = malloc(strlen(initmax) * 2 + 2);
@@ -3987,7 +3986,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  		if (*initmax == ':')
  			strcpy(initmax2, "0:"), initmax2 += 2;
  		else
-@@ -713,8 +790,8 @@
+@@ -713,8 +789,8 @@
  	flags = NULL;
  	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
  		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
@@ -3998,7 +3997,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  			cur->fts_number = NO_PRINT;
  			rval = 1;
  			continue;
-@@ -778,8 +855,11 @@
+@@ -778,8 +854,11 @@
  						free(flags);
  						flags = strdup("-");
  					}
@@ -4012,7 +4011,7 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  					flen = strlen(flags);
  					if (flen > (size_t)maxflags)
  						maxflags = flen;
-@@ -790,7 +870,11 @@
+@@ -790,7 +869,11 @@
  				
  				if ((np = calloc(1, sizeof(NAMES) + lattrlen +
  				    ulen + glen + flen + 4)) == NULL)
@@ -4940,7 +4939,7 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  	exit(EX_USAGE);
 diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
 --- file_cmds-272/rm/rm.c	2016-09-16 18:43:23.000000000 +0200
-+++ file_cmds/rm/rm.c	2018-03-23 12:30:49.000000000 +0100
++++ file_cmds/rm/rm.c	2018-03-28 07:57:51.000000000 +0200
 @@ -51,7 +51,7 @@
  #include <sys/param.h>
  #include <sys/mount.h>
@@ -5006,17 +5005,16 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	/*
  	 * Test for the special case where the utility is called as
  	 * "unlink", for which the functionality provided is greatly
-@@ -160,7 +165,8 @@
+@@ -160,7 +165,7 @@
  	checkdot(argv);
  
  	if (*argv) {
 -		stdin_ok = isatty(STDIN_FILENO);
-+//		stdin_ok = isatty(fileno(thread_stdin));
-+        stdin_ok = (fileno(thread_stdin) == fileno(stdin));
++		stdin_ok = ios_isatty(STDIN_FILENO);
  
  		if (rflag)
  			rm_tree(argv);
-@@ -201,19 +207,24 @@
+@@ -201,19 +206,24 @@
  	if (!(fts = fts_open(argv, flags, NULL))) {
  		if (fflag && errno == ENOENT)
  			return;
@@ -5044,7 +5042,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  		case FTS_NS:
  			/*
  			 * FTS_NS: assume that if can't stat the file, it
-@@ -222,7 +233,8 @@
+@@ -222,7 +232,8 @@
  			if (!needstat)
  				break;
  			if (!fflag || p->fts_errno != ENOENT) {
@@ -5054,7 +5052,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  				    p->fts_path, strerror(p->fts_errno));
  				eval = 1;
  			}
-@@ -283,7 +295,7 @@
+@@ -283,7 +294,7 @@
  				rval = rmdir(p->fts_accpath);
  				if (rval == 0 || (fflag && errno == ENOENT)) {
  					if (rval == 0 && vflag)
@@ -5063,7 +5061,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  						    p->fts_path);
  					continue;
  				}
-@@ -293,7 +305,7 @@
+@@ -293,7 +304,7 @@
  				rval = undelete(p->fts_accpath);
  				if (rval == 0 && (fflag && errno == ENOENT)) {
  					if (vflag)
@@ -5072,7 +5070,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  						    p->fts_path);
  					continue;
  				}
-@@ -313,19 +325,23 @@
+@@ -313,19 +324,23 @@
  #endif	/* __APPLE__ */
  				if (rval == 0 || (fflag && errno == ENOENT)) {
  					if (rval == 0 && vflag)
@@ -5101,7 +5099,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  }
  
  void
-@@ -347,19 +363,22 @@
+@@ -347,19 +362,22 @@
  				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
  			} else {
  				if (!fflag || errno != ENOENT) {
@@ -5127,7 +5125,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  			eval = 1;
  			continue;
  		}
-@@ -390,11 +409,12 @@
+@@ -390,11 +408,12 @@
  			}
  		}
  		if (rval && (!fflag || errno != ENOENT)) {
@@ -5142,7 +5140,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	}
  }
  
-@@ -432,8 +452,11 @@
+@@ -432,8 +451,11 @@
  	if (fstatfs(fd, &fsb) == -1)
  		goto err;
  	bsize = MAX(fsb.f_iosize, 1024);
@@ -5156,7 +5154,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  
  #define	PASS(byte) {							\
  	memset(buf, byte, bsize);					\
-@@ -458,14 +481,15 @@
+@@ -458,14 +480,15 @@
  err:	eval = 1;
  	if (buf)
  		free(buf);
@@ -5174,7 +5172,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  
  	first = ch = getchar();
  	while (ch != '\n' && ch != EOF)
-@@ -479,7 +503,7 @@
+@@ -479,7 +502,7 @@
  {
  	if(!iflag)
  		return 1;	//if not interactive, process directory's contents
@@ -5183,7 +5181,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	return yes_or_no();
  }
  
-@@ -492,7 +516,7 @@
+@@ -492,7 +515,7 @@
  
  	/* Check -i first. */
  	if (iflag)
@@ -5192,7 +5190,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	else {
  		/*
  		 * If it's not a symbolic link and it's unwritable and we're
-@@ -506,9 +530,12 @@
+@@ -506,9 +529,12 @@
  		    (!(sp->st_flags & (UF_APPEND|UF_IMMUTABLE)) || !uid)))
  			return (1);
  		strmode(sp->st_mode, modep);
@@ -5208,7 +5206,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  		    modep + 1, modep[9] == ' ' ? "" : " ",
  		    user_from_uid(sp->st_uid, 0),
  		    group_from_gid(sp->st_gid, 0),
-@@ -554,7 +581,8 @@
+@@ -554,7 +580,8 @@
  		}
  		if (ISDOT(p)) {
  			if (!complained++)
@@ -5218,7 +5216,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  			eval = 1;
  			for (save = t; (t[0] = t[1]) != NULL; ++t)
  				continue;
-@@ -568,7 +596,7 @@
+@@ -568,7 +595,7 @@
  usage()
  {
  

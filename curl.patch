@@ -5069,7 +5069,7 @@ diff -Naur curl-105/curl/src/tool_main.h curl/curl/src/tool_main.h
  #endif /* HEADER_CURL_TOOL_MAIN_H */
 diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
 --- curl-105/curl/src/tool_operate.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_operate.c	2018-02-11 20:54:21.000000000 +0100
++++ curl/curl/src/tool_operate.c	2018-03-28 07:54:47.000000000 +0200
 @@ -40,6 +40,10 @@
  #endif
  
@@ -5126,6 +5126,15 @@ diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
            if(!strcmp(uploadfile, ".")) {
              if(curlx_nonblock((curl_socket_t)infd, TRUE) < 0)
                warnf(config->global,
+@@ -784,7 +788,7 @@
+           config->resume_from = -1; /* -1 will then force get-it-yourself */
+ 
+         if(output_expected(this_url, uploadfile) && outs.stream &&
+-           isatty(fileno(outs.stream)))
++           ios_isatty(fileno(outs.stream)))
+           /* we send the output to a tty, therefore we switch off the progress
+              meter */
+           global->noprogress = global->isatty = TRUE;
 @@ -842,12 +846,12 @@
          }
  

@@ -551,7 +551,7 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-02-24 21:52:51.000000000 +0100
++++ text_cmds/ed/main.c	2018-03-28 07:57:13.000000000 +0200
 @@ -59,14 +59,16 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -689,18 +689,16 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		}
  	argv += optind;
  	argc -= optind;
-@@ -158,7 +188,9 @@
+@@ -158,7 +188,7 @@
  	/* assert: reliable signals! */
  #ifdef SIGWINCH
  	handle_winch(SIGWINCH);
 -	if (isatty(0)) signal(SIGWINCH, handle_winch);
-+//	if (isatty(0)) signal(SIGWINCH, handle_winch);
-+//  also replaced 6x !isatty(0) below
-+    if (fileno(thread_stdin) == fileno(stdin)) signal(SIGWINCH, handle_winch);
++	if (ios_isatty(0)) signal(SIGWINCH, handle_winch);
  #endif
  	signal(SIGHUP, signal_hup);
  	signal(SIGQUIT, SIG_IGN);
-@@ -169,51 +201,51 @@
+@@ -169,51 +199,51 @@
  	if ((status = setjmp(env)))
  #endif
  	{
@@ -712,7 +710,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		sigactive = 1;			/* enable signal handlers */
  		if (argc>0 && *argv && is_legal_filename(*argv)) {
 -			if (read_file(*argv, 0) < 0 && !isatty(0))
-+			if (read_file(*argv, 0) < 0 && !(fileno(thread_stdin) == fileno(stdin)))
++			if (read_file(*argv, 0) < 0 && !(ios_isatty(0)))
  				quit(2);
  			else if (**argv != '!') {
  				if (strlen(*argv) < sizeof(old_filename)) {
@@ -729,7 +727,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			if (**argv == '\0')
  				errmsg = "invalid filename";
 -			if (!isatty(0))
-+			if (!(fileno(thread_stdin) == fileno(stdin)))
++			if (!(ios_isatty(0)))
  				quit(2);
  		}
  	}
@@ -753,7 +751,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				errmsg = "warning: file modified";
 -				if (!isatty(0)) {
 -					fprintf(stderr, garrulous ?
-+				if (!(fileno(thread_stdin) == fileno(stdin))) {
++				if (!(ios_isatty(0))) {
 +					fprintf(thread_stderr, garrulous ?
  					    "script, line %d: %s\n" :
 -					    "", lineno, errmsg);
@@ -765,7 +763,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				modified = 0;
  				status = EMOD;
  				continue;
-@@ -222,7 +254,7 @@
+@@ -222,7 +252,7 @@
  		} else if (ibuf[n - 1] != '\n') {
  			/* discard line */
  			errmsg = "unexpected end-of-file";
@@ -774,7 +772,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			status = ERR;
  			continue;
  		}
-@@ -238,30 +270,30 @@
+@@ -238,30 +268,30 @@
  			quit(0);
  		case EMOD:
  			modified = 0;
@@ -783,7 +781,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			errmsg = "warning: file modified";
 -			if (!isatty(0)) {
 -				fprintf(stderr, garrulous ?
-+			if (!(fileno(thread_stdin) == fileno(stdin))) {
++			if (!(ios_isatty(0))) {
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" :
 -				    "", lineno, errmsg);
@@ -794,7 +792,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		case FATAL:
 -			if (!isatty(0))
 -				fprintf(stderr, garrulous ?
-+			if (!(fileno(thread_stdin) == fileno(stdin)))
++			if (!(ios_isatty(0)))
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
@@ -809,7 +807,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 -			if (!isatty(0)) {
 -				fprintf(stderr, garrulous ?
 +			fputs("?\n", thread_stdout);
-+			if (!(fileno(thread_stdin) == fileno(stdin))) {
++			if (!(ios_isatty(0))) {
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
@@ -817,7 +815,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  			break;
-@@ -270,7 +302,7 @@
+@@ -270,7 +300,7 @@
  	/*NOTREACHED*/
  }
  
@@ -826,7 +824,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  
  /* extract_addr_range: get line addresses from the command buffer until an
     illegal address is seen; return status */
-@@ -440,9 +472,9 @@
+@@ -440,9 +470,9 @@
  #define SGR 004		/* use last regex instead of last pat */
  #define SGF 010		/* repeat last substitution */
  
@@ -838,7 +836,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  
  /* exec_command: execute the next command in command buffer; return print
     request, if any */
-@@ -519,7 +551,7 @@
+@@ -519,7 +549,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -847,7 +845,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -552,11 +584,11 @@
+@@ -552,11 +582,11 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -861,7 +859,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'g':
  	case 'v':
-@@ -584,7 +616,7 @@
+@@ -584,7 +614,7 @@
  			return ERR;
  		}
  		GET_COMMAND_SUFFIX();
@@ -870,7 +868,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'H':
  		if (addr_cnt > 0) {
-@@ -593,7 +625,7 @@
+@@ -593,7 +623,7 @@
  		}
  		GET_COMMAND_SUFFIX();
  		if ((garrulous = 1 - garrulous) && *errmsg)
@@ -879,7 +877,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'i':
  		if (second_addr == 0) {
-@@ -693,7 +725,7 @@
+@@ -693,7 +723,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -888,7 +886,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -835,7 +867,7 @@
+@@ -835,7 +865,7 @@
  			if  (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -897,7 +895,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -877,7 +909,7 @@
+@@ -877,7 +907,7 @@
  		break;
  	case '=':
  		GET_COMMAND_SUFFIX();
@@ -906,7 +904,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '!':
  		if (addr_cnt > 0) {
-@@ -886,10 +918,10 @@
+@@ -886,10 +916,10 @@
  		} else if ((sflags = get_shell_command()) < 0)
  			return ERR;
  		GET_COMMAND_SUFFIX();
@@ -921,7 +919,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '\n':
  		if (check_addr_range(first_addr = 1, current_addr + (posixly_correct ? !isglobal : 1)) < 0
-@@ -969,7 +1001,7 @@
+@@ -969,7 +999,7 @@
  			if ((n = get_shell_command()) < 0)
  				return NULL;
  			if (n)
@@ -930,7 +928,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			return shcmd;
  		} else if (n > PATH_MAX) {
  			errmsg = "filename too long";
-@@ -1065,7 +1097,7 @@
+@@ -1065,7 +1095,7 @@
  			if ((l = get_tty_line()) < 0)
  				return ERR;
  			else if (l == 0 || ibuf[l - 1] != '\n') {
@@ -939,7 +937,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				return  l ? EOF : 0;
  			}
  			lp = ibuf;
-@@ -1330,7 +1362,7 @@
+@@ -1330,7 +1360,7 @@
  	line_t *np;
  
  	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
@@ -948,7 +946,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		errmsg = "out of memory";
  		return NULL;
  	}
-@@ -1425,7 +1457,7 @@
+@@ -1425,7 +1455,7 @@
  }
  
  
@@ -1083,7 +1081,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-03-23 11:35:29.000000000 +0100
++++ text_cmds/grep/grep.c	2018-03-28 07:57:59.000000000 +0200
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -1469,17 +1467,16 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			break;
  		case COLOR_OPT:
  			color = NULL;
-@@ -643,7 +711,8 @@
+@@ -643,7 +711,7 @@
  				char *term;
  
  				term = getenv("TERM");
 -				if (isatty(STDOUT_FILENO) && term != NULL &&
-+//				if (isatty(fileno(thread_stdout)) && term != NULL &&
-+                if ((fileno(thread_stdout) == fileno(stdout)) && term != NULL &&
++				if (ios_isatty(STDOUT_FILENO) && term != NULL &&
  				    strcasecmp(term, "dumb") != 0)
  					color = init_color("01;31");
  			} else if (strcasecmp("always", optarg) == 0 ||
-@@ -652,8 +721,11 @@
+@@ -652,8 +720,11 @@
  				color = init_color("01;31");
  			} else if (strcasecmp("never", optarg) != 0 &&
  			    strcasecmp("none", optarg) != 0 &&
@@ -1493,7 +1490,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			cflags &= ~REG_NOSUB;
  			break;
  		case LABEL_OPT:
-@@ -748,7 +820,9 @@
+@@ -748,7 +819,9 @@
  			if (c != 0) {
  				regerror(c, &r_pattern[i], re_error,
  				    RE_ERROR_BUF);
@@ -1504,7 +1501,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			}
  #ifndef WITHOUT_FASTMATCH
  		}
-@@ -756,13 +830,15 @@
+@@ -756,13 +829,15 @@
  	}
  
  	if (lbflag)
@@ -1581,7 +1578,7 @@ diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
  /* For regex errors  */
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-03-23 11:33:26.000000000 +0100
++++ text_cmds/grep/util.c	2018-03-28 07:55:36.000000000 +0200
 @@ -39,7 +39,7 @@
  #endif
  
@@ -1633,20 +1630,19 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				p->fts_path);
  			break;
  		default:
-@@ -194,8 +200,10 @@
+@@ -194,8 +200,9 @@
  	if (strcmp(fn, "-") == 0) {
  #ifdef __APPLE__
  		/* 4053512, 10290183 */
 -		if (dirbehave == DIR_RECURSE && isatty(STDIN_FILENO)) {
 -			warnx("warning: recursive search of stdin");
-+		// if (dirbehave == DIR_RECURSE && isatty(fileno(thread_stdin))) {
-+        if (dirbehave == DIR_RECURSE && (fileno(thread_stdin) == fileno(stdin))) {
++		if (dirbehave == DIR_RECURSE && ios_isatty(STDIN_FILENO)) {
 +            fprintf(thread_stderr, "grep: warning: recursive search of stdin\n");
 +            // warnx("warning: recursive search of stdin");
  		}
  #endif
  		fn = label != NULL ? label : getstr(1);
-@@ -215,7 +223,8 @@
+@@ -215,7 +222,8 @@
  	if (f == NULL) {
  		file_err = true;
  		if (!sflag)
@@ -1656,7 +1652,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		return (0);
  	}
  
-@@ -230,9 +239,9 @@
+@@ -230,9 +238,9 @@
  	for (c = 0;  c == 0 || !(lflag || qflag); ) {
  		ln.off += ln.len + 1;
  		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL || ln.len == 0) {
@@ -1668,7 +1664,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				break;
  		}
  		if (ln.len > 0 && ln.dat[ln.len - 1] == '\n')
-@@ -266,16 +275,16 @@
+@@ -266,16 +274,16 @@
  	if (cflag) {
  #endif
  		if (!hflag)
@@ -1690,7 +1686,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  
  	free(ln.file);
  	free(f);
-@@ -459,11 +468,11 @@
+@@ -459,11 +467,11 @@
  	if ((tail || c) && !cflag && !qflag && !lflag && !Lflag) {
  		if (c) {
  			if (!first && !prev && !tail && Aflag)
@@ -1704,7 +1700,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				printqueue();
  			}
  			linesqueued = 0;
-@@ -494,8 +503,11 @@
+@@ -494,8 +502,11 @@
  {
  	void *ptr;
  
@@ -1718,7 +1714,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ptr);
  }
  
-@@ -507,8 +519,11 @@
+@@ -507,8 +518,11 @@
  {
  	void *ptr;
  
@@ -1732,7 +1728,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ptr);
  }
  
-@@ -519,8 +534,11 @@
+@@ -519,8 +533,11 @@
  grep_realloc(void *ptr, size_t size)
  {
  
@@ -1746,7 +1742,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ptr);
  }
  
-@@ -532,8 +550,11 @@
+@@ -532,8 +549,11 @@
  {
  	char *ret;
  
@@ -1760,7 +1756,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  	return (ret);
  }
  
-@@ -548,23 +569,23 @@
+@@ -548,23 +568,23 @@
  
  	if (!hflag) {
  		if (!nullflag) {
@@ -1788,7 +1784,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		++n;
  	}
  	if (n)
-@@ -574,26 +595,26 @@
+@@ -574,26 +594,26 @@
  		for (i = 0; i < m; i++) {
  			if (!oflag)
  				fwrite(line->dat + a, matches[i].rm_so - a, 1,
