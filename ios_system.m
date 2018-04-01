@@ -540,15 +540,6 @@ void ios_switchSession(void* sessionId) {
     }
 }
 
-void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL absoluteString]];
-    if (currentSession != NULL) {
-        currentSession.previousDirectory = currentSession.currentDir;
-        currentSession.currentDir = [workingDirectoryURL absoluteString];
-    }
-}
-
 void ios_closeSession(void* sessionId) {
     // delete information associated with current session:
     if (sessionList == nil) return;
