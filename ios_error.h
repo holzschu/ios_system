@@ -9,6 +9,10 @@
 #ifndef ios_error_h
 #define ios_error_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -53,4 +57,7 @@ extern int ios_execve(const char *path, char* const argv[], const char** envlist
 extern int ios_dup2(int fd1, int fd2);
 extern int ios_isatty(int fd);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* ios_error_h */
