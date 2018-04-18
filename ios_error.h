@@ -46,16 +46,17 @@ extern __thread FILE* thread_stderr;
 #define execve ios_execve
 #define dup2 ios_dup2
 
-extern int ios_executable(char* cmd); // is this command part of the "shell" commands?
+extern int ios_executable(const char* cmd); // is this command part of the "shell" commands?
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 extern int ios_kill(void); // kill the current running command
 
 extern void ios_exit(int errorCode) __dead2; // set error code and exits from the thread.
 extern int ios_execv(const char *path, char* const argv[]);
-extern int ios_execve(const char *path, char* const argv[], const char** envlist);
+extern int ios_execve(const char *path, char* const argv[], char** envlist);
 extern int ios_dup2(int fd1, int fd2);
 extern int ios_isatty(int fd);
+extern pthread_t ios_getLastThreadId(void); 
 
 #ifdef __cplusplus
 }

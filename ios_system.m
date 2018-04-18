@@ -24,13 +24,14 @@
 #include <sys/stat.h>
 #include <libgen.h> // for basename()
 #include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
+#include <spawn.h>
 // is executable, looking at "x" bit. Other methods fails on iOS:
 #define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH))
 // Sideloading: when you compile yourself, as opposed to uploading on the app store
 // If true, all functions are enabled + debug messages if dylib not found.
 // If false, you get a smaller set, but more compliance with AppStore rules.
 // *Must* be false in the main branch releases.
-bool sideLoading = false;
+bool sideLoading = true;
 
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
@@ -44,6 +45,8 @@ sessionParameters* currentSession;
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
+    fflush(thread_stdout); 
+    fflush(thread_stderr); 
     if (currentSession != NULL) currentSession.global_errno = n;
     pthread_exit(NULL);
 }
@@ -431,8 +434,7 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     return NULL;
 }
 
-int ios_execv(const char *path, char* const argv[]) {
-    // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
+static char* concatenateArgv(char* const argv[]) {
     int argc = 0;
     int cmdLength = 0;
     // concatenate all arguments into a big command.
@@ -467,18 +469,29 @@ int ios_execv(const char *path, char* const argv[]) {
         strcat(cmd, argv[argc]);
         argc++;
     }
+    return cmd;
+}
+
+int ios_execv(const char *path, char* const argv[]) {
+    // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
     // start "child" with the child streams:
+    char* cmd = concatenateArgv(argv);
     int returnValue = ios_system(cmd);
     free(cmd);
     return returnValue;
 }
 
-int ios_execve(const char *path, char* const argv[], char *const envp[]) {
+int ios_execve(const char *path, char* const argv[], char* envp[]) {
     // TODO: save the environment (HOW?) and current dir
     // TODO: replace environment with envp. envp looks a lot like current environment, though.
     int returnValue = ios_execv(path, argv);
     // TODO: restore the environment (HOW?)
     return returnValue;
+}
+
+const pthread_t ios_getLastThreadId() {
+    if (!currentSession) return nil;
+    return (currentSession.lastThreadId);
 }
 
 /*
