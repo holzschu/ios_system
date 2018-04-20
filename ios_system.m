@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include <libgen.h> // for basename()
 #include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
-#include <spawn.h>
+#include <glob.h>   // for wildcard expansion
 // is executable, looking at "x" bit. Other methods fails on iOS:
 #define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH))
 // Sideloading: when you compile yourself, as opposed to uploading on the app store
@@ -45,8 +45,6 @@ sessionParameters* currentSession;
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
-    fflush(thread_stdout); 
-    fflush(thread_stderr); 
     if (currentSession != NULL) currentSession.global_errno = n;
     pthread_exit(NULL);
 }
@@ -230,7 +228,7 @@ static char* parseArgument(char* argument, char* command) {
             }
         }
     }
-    char* newArgument = [argumentString UTF8String];
+    const char* newArgument = [argumentString UTF8String];
     if (strcmp(argument, newArgument) == 0) return argument; // nothing changed
     // Make sure the argument is reallocated, so it can be free-ed
     char* returnValue = realloc(argument, strlen(newArgument));
@@ -979,6 +977,27 @@ int ios_system(const char* inputCmd) {
         argv = argv_copy;
         // We have the arguments. Parse them for environment variables, ~, etc.
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) {  argv[i] = parseArgument(argv[i], argv[0]); }
+        // wildcard expansion (*, ?, []...) Has to be after $ and ~ expansion, results in larger arguments
+        for (int i = 1; i < argc; i++) if (!dontExpand[i]) {
+            if (strstr (argv[i],"*") || strstr (argv[i],"?") || strstr (argv[i],"[")) {
+                glob_t gt;
+                if (glob(argv[i], 0, NULL, &gt) == 0) {
+                    argc += gt.gl_matchc - 1;
+                    argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
+                    dontExpand = (bool *)realloc(dontExpand, sizeof(bool) * (argc + 1));
+                    // Move everything after i by gt.gl_matchc - 1 steps up:
+                    for (int j = argc; j - gt.gl_matchc + 1 > i; j--) {
+                        argv[j] = argv[j - gt.gl_matchc + 1];
+                        dontExpand[j] = dontExpand[j - gt.gl_matchc + 1];
+                    }
+                    for (int j = 0; j < gt.gl_matchc; j++) {
+                        argv[i + j] = strdup(gt.gl_pathv[j]);
+                    }
+                }
+                i += gt.gl_matchc - 1;
+                globfree(&gt);
+            }
+        }
         free(dontExpand);
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
