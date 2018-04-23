@@ -38,6 +38,7 @@ extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
 
 #define exit ios_exit
+#define abort() ios_exit(1)
 #define _exit ios_exit
 #define popen ios_popen
 #define pclose fclose
@@ -57,6 +58,7 @@ extern int ios_execve(const char *path, char* const argv[], char** envlist);
 extern int ios_dup2(int fd1, int fd2);
 extern int ios_isatty(int fd);
 extern pthread_t ios_getLastThreadId(void); 
+extern int ios_getCommandStatus(void); 
 
 #ifdef __cplusplus
 }

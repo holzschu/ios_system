@@ -49,6 +49,11 @@ void ios_exit(int n) {
     pthread_exit(NULL);
 }
 
+int ios_getCommandStatus() {
+    if (currentSession != NULL) return currentSession.global_errno;
+    else return 0;
+}
+
 typedef struct _functionParameters {
     int argc;
     char** argv;
@@ -989,7 +994,7 @@ int ios_system(const char* inputCmd) {
                     for (int j = argc; j - gt.gl_matchc + 1 > i; j--) {
                         argv[j] = argv[j - gt.gl_matchc + 1];
                         dontExpand[j] = dontExpand[j - gt.gl_matchc + 1];
-                    }
+                    }   
                     for (int j = 0; j < gt.gl_matchc; j++) {
                         argv[i + j] = strdup(gt.gl_pathv[j]);
                     }
