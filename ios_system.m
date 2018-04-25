@@ -31,7 +31,7 @@
 // If true, all functions are enabled + debug messages if dylib not found.
 // If false, you get a smaller set, but more compliance with AppStore rules.
 // *Must* be false in the main branch releases.
-bool sideLoading = false;
+bool sideLoading = true;
 
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
@@ -998,9 +998,17 @@ int ios_system(const char* inputCmd) {
                     for (int j = 0; j < gt.gl_matchc; j++) {
                         argv[i + j] = strdup(gt.gl_pathv[j]);
                     }
+                    i += gt.gl_matchc - 1;
+                    globfree(&gt);
+                } else {
+                    fprintf(thread_stderr, "%s: %s: No match\n", argv[0], argv[i]);
+                    fflush(thread_stderr);
+                    globfree(&gt);
+                    free(dontExpand);
+                    free(argv);
+                    free(originalCommand);
+                    return 127;
                 }
-                i += gt.gl_matchc - 1;
-                globfree(&gt);
             }
         }
         free(dontExpand);
@@ -1020,6 +1028,7 @@ int ios_system(const char* inputCmd) {
             NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
             BOOL isDir = false;
             BOOL cmdIsAFile = false;
+            bool cmdIsAPath = false;
             if ([commandName hasPrefix:@"~/"]) {
                 NSString* replacement_string = [NSString stringWithCString:(getenv("HOME")) encoding:NSUTF8StringEncoding];
                 NSString* test_string = @"~";
@@ -1033,62 +1042,89 @@ int ios_system(const char* inputCmd) {
                     cmdIsAFile = true;
                 }
             }
-            // We go through the path, because that command may be a file in the path
-            // i.e. user called /usr/local/bin/hg and it's ~/Library/bin/hg
-            NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSUTF8StringEncoding];
-            if (! [fullCommandPath isEqualToString:checkingPath]) {
-                fullCommandPath = checkingPath;
-                directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
-            }
-            for (NSString* path in directoriesInPath) {
-                // If we don't have access to the path component, there's no point in continuing:
-                if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
-                if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
-                NSString* locationName;
-                if (!cmdIsAFile) {
-                    locationName = [path stringByAppendingPathComponent:commandName];
-                    if (![fileManager fileExistsAtPath:locationName isDirectory:&isDir]) continue;
-                    if (isDir) continue;
-                    // isExecutableFileAtPath replies "NO" even if file has x-bit set.
-                    // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
-                    struct stat sb;
-                    if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
-                    // File exists, is executable, not a directory.
-                } else
-                    // if (cmdIsAFile) we are now ready to execute this file:
-                    locationName = commandName;
-                NSData *data = [NSData dataWithContentsOfFile:locationName];
-                NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
-                NSRange firstLineRange = [fileContent rangeOfString:@"\n"];
-                if (firstLineRange.location == NSNotFound) firstLineRange.location = 0;
-                firstLineRange.length = firstLineRange.location;
-                firstLineRange.location = 0;
-                NSString* firstLine = [fileContent substringWithRange:firstLineRange];
-                if ([firstLine hasPrefix:@"#!"]) {
-                    // So long as the 1st line begins with "#!" and contains "python" we accept it as a python script
-                    // "#! /usr/bin/python", "#! /usr/local/bin/python" and "#! /usr/bin/myStrangePath/python" are all OK.
-                    // We also accept "#! /usr/bin/env python" because it is used.
-                    // TODO: only accept "python" or "python2" at the end of the line
-                    // executable scripts files. Python and lua:
-                    // 1) get script language name
-                    if ([firstLine containsString:@"python"]) {
-                        scriptName = "python";
-                    } else if ([firstLine containsString:@"lua"]) {
-                        scriptName = "lua";
-                    }
-                    if (scriptName) {
-                        // 2) insert script language at beginning of argument list
+            // if commandName contains "/", then it's a path, and we don't search for it in PATH.
+            cmdIsAPath = ([commandName rangeOfString:@"/"].location != NSNotFound) && !cmdIsAFile;
+            if (!cmdIsAPath) {
+                // We go through the path, because that command may be a file in the path
+                NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSUTF8StringEncoding];
+                if (! [fullCommandPath isEqualToString:checkingPath]) {
+                    fullCommandPath = checkingPath;
+                    directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
+                }
+                for (NSString* path in directoriesInPath) {
+                    // If we don't have access to the path component, there's no point in continuing:
+                    if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
+                    if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
+                    NSString* locationName;
+                    if (!cmdIsAFile) {
+                        // search for 3 possibilities: name, name.bc and name.ll
+                        locationName = [path stringByAppendingPathComponent:commandName];
+                        bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                        if (fileFound && isDir) continue; // file exists, but is a directory
+                        if (!fileFound) {
+                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".bc"];
+                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            if (fileFound && isDir) continue; // file exists, but is a directory
+                        }
+                        if (!fileFound) {
+                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".ll"];
+                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            if (fileFound && isDir) continue; // file exists, but is a directory
+                        }
+                        if (!fileFound) continue;
+                        // isExecutableFileAtPath replies "NO" even if file has x-bit set.
+                        // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
+                        struct stat sb;
+                        if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
+                        // File exists, is executable, not a directory.
+                    } else
+                        // if (cmdIsAFile) we are now ready to execute this file:
+                        locationName = commandName;
+                    if (([locationName hasSuffix:@".bc"]) || ([locationName hasSuffix:@".ll"])) {
+                        // insert lli in front of argument list:
                         argc += 1;
                         argv = (char **)realloc(argv, sizeof(char*) * argc);
                         // Move everything one step up
                         for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
                         argv[1] = realloc(argv[1], strlen(locationName.UTF8String));
                         strcpy(argv[1], locationName.UTF8String);
-                        argv[0] = strdup(scriptName); // this one is new
+                        argv[0] = strdup("lli"); // this one is new
                         break;
+                    } else {
+                        NSData *data = [NSData dataWithContentsOfFile:locationName];
+                        NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+                        NSRange firstLineRange = [fileContent rangeOfString:@"\n"];
+                        if (firstLineRange.location == NSNotFound) firstLineRange.location = 0;
+                        firstLineRange.length = firstLineRange.location;
+                        firstLineRange.location = 0;
+                        NSString* firstLine = [fileContent substringWithRange:firstLineRange];
+                        if ([firstLine hasPrefix:@"#!"]) {
+                            // So long as the 1st line begins with "#!" and contains "python" we accept it as a python script
+                            // "#! /usr/bin/python", "#! /usr/local/bin/python" and "#! /usr/bin/myStrangePath/python" are all OK.
+                            // We also accept "#! /usr/bin/env python" because it is used.
+                            // TODO: only accept "python" or "python2" at the end of the line
+                            // executable scripts files. Python and lua:
+                            // 1) get script language name
+                            if ([firstLine containsString:@"python"]) {
+                                scriptName = "python";
+                            } else if ([firstLine containsString:@"lua"]) {
+                                scriptName = "lua";
+                            }
+                            if (scriptName) {
+                                // 2) insert script language at beginning of argument list
+                                argc += 1;
+                                argv = (char **)realloc(argv, sizeof(char*) * argc);
+                                // Move everything one step up
+                                for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
+                                argv[1] = realloc(argv[1], strlen(locationName.UTF8String));
+                                strcpy(argv[1], locationName.UTF8String);
+                                argv[0] = strdup(scriptName); // this one is new
+                                break;
+                            }
+                        }
                     }
+                    if (cmdIsAFile) break; // else keep going through the path elements.
                 }
-                if (cmdIsAFile) break; // else keep going through the path elements.
             }
         }
         // fprintf(thread_stderr, "Command after parsing: ");
