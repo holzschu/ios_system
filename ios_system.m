@@ -623,6 +623,10 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
 // you just happen to have a very fast uncompress, different from compress).
 // We work with function names, not function pointers.
 void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences) {
+    // Does that function exist / is reachable? We've had problems with stripping.
+    int (*function)(int ac, char** av) = NULL;
+    function = dlsym(RTLD_MAIN_ONLY, functionName.UTF8String);
+    if (!function) return; // if not, we don't replace.
     if (commandList == nil) initializeCommandList();
     NSArray* oldValues = [commandList objectForKey: commandName];
     NSString* oldFunctionName = nil;
@@ -1162,7 +1166,7 @@ int ios_system(const char* inputCmd) {
             if (currentSession.isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
-                                               params->isPipeOut || params->isPipeErr);
+                                               params->isPipeOut || params->isPipeErr);
                 NSString* currentPath = [fileManager currentDirectoryPath];
                 commandOperatesOnFiles &= (currentPath != nil); 
                 if (commandOperatesOnFiles) {
