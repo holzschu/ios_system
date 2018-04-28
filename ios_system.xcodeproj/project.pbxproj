@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		220E720920944900008E7FAF /* vis.c in Sources */ = {isa = PBXBuildFile; fileRef = 228E399620615B0C0055B5EF /* vis.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		222446342065642E0018D400 /* sessionParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = 222446322065642E0018D400 /* sessionParameters.h */; };
 		222446352065642E0018D400 /* sessionParameters.m in Sources */ = {isa = PBXBuildFile; fileRef = 222446332065642E0018D400 /* sessionParameters.m */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
@@ -2494,6 +2495,7 @@
 				22F6A19C20683E1200E618F9 /* xmalloc.c in Sources */,
 				22F6A18520683E1200E618F9 /* digest-openssl.c in Sources */,
 				22F6A17F20683E1200E618F9 /* poly1305.c in Sources */,
+				220E720920944900008E7FAF /* vis.c in Sources */,
 				22F6A1A020683E1200E618F9 /* sshbuf-getput-basic.c in Sources */,
 				22F6A1A620683E1200E618F9 /* ssh-keygen.c in Sources */,
 				22F6A17820683E1200E618F9 /* fe25519.c in Sources */,
