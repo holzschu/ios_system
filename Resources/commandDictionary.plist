@@ -191,6 +191,20 @@
 		<string></string>
 		<string>no</string>
 	</array>
+	<key>pbcopy</key>
+	<array>
+		<string>SELF</string>
+		<string>pbcopy</string>
+		<string></string>
+		<string>file</string>
+	</array>
+	<key>pbpaste</key>
+	<array>
+		<string>SELF</string>
+		<string>pbpaste</string>
+		<string></string>
+		<string>no</string>
+	</array>
 	<key>ping</key>
 	<array>
 		<string>network_ios.framework/network_ios</string>
