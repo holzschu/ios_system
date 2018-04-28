@@ -480,7 +480,8 @@ int pbpaste(int argc, char** argv) {
     }
     // We can paste strings and URLs.
     if ([UIPasteboard generalPasteboard].hasStrings) {
-        fprintf(currentSession.stdout, "%s\n", [[UIPasteboard generalPasteboard].string UTF8String]);
+        fprintf(currentSession.stdout, "%s", [[UIPasteboard generalPasteboard].string UTF8String]);
+        if (![[UIPasteboard generalPasteboard].string hasSuffix:@"\n"]) fprintf(currentSession.stdout, "\n");
         return 0;
     }
     if ([UIPasteboard generalPasteboard].hasURLs) {
@@ -496,6 +497,17 @@ int pbcopy(int argc, char** argv) {
         if (currentSession == NULL) {
             currentSession = [[sessionParameters alloc] init];
         }
+        const int bufsize = 1024;
+        char buffer[bufsize];
+        NSString* result = nil;
+        ssize_t count = 0;
+        while ((count = read(fileno(thread_stdin), buffer, bufsize-1))) {
+            buffer[count] = 0x0;
+            NSString* readBytes = [NSString stringWithCString:buffer  encoding:NSUTF8StringEncoding];
+            if (result == nil) result = readBytes;
+            else result = [result stringByAppendingString:readBytes];
+        }
+        [UIPasteboard generalPasteboard].string = result;
     } else {
         // threre are arguments, concatenate and paste:
         char* cmd = concatenateArgv(argv + 1);
