@@ -31,7 +31,7 @@
 // If true, all functions are enabled + debug messages if dylib not found.
 // If false, you get a smaller set, but more compliance with AppStore rules.
 // *Must* be false in the main branch releases.
-bool sideLoading = false;
+bool sideLoading = true;
 
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
@@ -327,7 +327,6 @@ int ios_setMiniRootURL(NSURL* mRoot) {
     return 1; // mission accomplished
 }
 
-
 int cd_main(int argc, char** argv) {
     if (currentSession == NULL) return 1;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
@@ -473,6 +472,37 @@ static char* concatenateArgv(char* const argv[]) {
         argc++;
     }
     return cmd;
+}
+
+int pbpaste(int argc, char** argv) {
+    if (currentSession == NULL) {
+        currentSession = [[sessionParameters alloc] init];
+    }
+    // We can paste strings and URLs.
+    if ([UIPasteboard generalPasteboard].hasStrings) {
+        fprintf(currentSession.stdout, "%s\n", [[UIPasteboard generalPasteboard].string UTF8String]);
+        return 0;
+    }
+    if ([UIPasteboard generalPasteboard].hasURLs) {
+        fprintf(currentSession.stdout, "%s\n", [[[UIPasteboard generalPasteboard].URL absoluteString] UTF8String]);
+        return 0;
+    }
+    return 1;
+}
+
+int pbcopy(int argc, char** argv) {
+    if (argc == 1) {
+        // no arguments, listen to stdin
+        if (currentSession == NULL) {
+            currentSession = [[sessionParameters alloc] init];
+        }
+    } else {
+        // threre are arguments, concatenate and paste:
+        char* cmd = concatenateArgv(argv + 1);
+        [UIPasteboard generalPasteboard].string = @(cmd);
+        free(cmd);
+    }
+    return 0;
 }
 
 int ios_execv(const char *path, char* const argv[]) {
