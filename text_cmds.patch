@@ -3935,6 +3935,53 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -	exit(1);
 +    exit(1);
  }
+diff -Naur text_cmds-99/uniq/uniq.c text_cmds/uniq/uniq.c
+--- text_cmds-99/uniq/uniq.c	2016-11-10 22:25:56.000000000 +0100
++++ text_cmds/uniq/uniq.c	2018-04-30 20:40:22.000000000 +0200
+@@ -62,6 +62,7 @@
+ #include <unistd.h>
+ #include <wchar.h>
+ #include <wctype.h>
++#include "ios_error.h"
+ 
+ static int cflag, dflag, uflag, iflag;
+ static long numchars, numfields;
+@@ -87,7 +88,7 @@
+ }
+ 
+ int
+-main (int argc, char *argv[])
++uniq_main (int argc, char *argv[])
+ {
+ 	wchar_t *tprev, *tthis;
+ 	FILE *ifp, *ofp;
+@@ -99,6 +100,14 @@
+ 	cap_rights_t rights;
+ #endif
+ 
++    cflag = 0;
++    dflag = 0;
++    uflag = 0;
++    iflag = 0;
++    numchars = 0;
++    numfields = 0;
++    repeats = 0;
++    
+ 	(void) setlocale(LC_ALL, "");
+ 
+ 	obsolete(argv);
+@@ -144,9 +153,9 @@
+ 	if (argc > 2)
+ 		usage();
+ 
+-	ifp = stdin;
++	ifp = thread_stdin;
+ 	ifn = "stdin";
+-	ofp = stdout;
++	ofp = thread_stdout;
+ 	if (argc > 0 && strcmp(argv[0], "-") != 0)
+ 		ifp = file(ifn = argv[0], "r");
+ #ifndef __APPLE__
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
 +++ text_cmds/wc/wc.c	2018-04-30 16:19:45.000000000 +0200
