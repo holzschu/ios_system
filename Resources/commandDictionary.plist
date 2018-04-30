@@ -51,13 +51,6 @@
 		<string>cHLPRXafinprv</string>
 		<string>file</string>
 	</array>
-	<key>ctags</key>
-	<array>
-		<string>libctags.dylib</string>
-		<string>ctags_main</string>
-		<string>aBeFGnNoRvVx:b:d:D:f:h:I:L:</string>
-		<string>file</string>
-	</array>
 	<key>curl</key>
 	<array>
 		<string>curl_ios.framework/curl_ios</string>
@@ -135,6 +128,13 @@
 		<string>123456789acdfhklLNnqrS:tVv</string>
 		<string>file</string>
 	</array>
+	<key>head</key>
+	<array>
+		<string>text.framework/text</string>
+		<string>head_main</string>
+		<string>n:c:</string>
+		<string>file</string>
+	</array>
 	<key>host</key>
 	<array>
 		<string>network_ios.framework/network_ios</string>
@@ -191,20 +191,6 @@
 		<string></string>
 		<string>no</string>
 	</array>
-	<key>pbcopy</key>
-	<array>
-		<string>SELF</string>
-		<string>pbcopy</string>
-		<string></string>
-		<string>file</string>
-	</array>
-	<key>pbpaste</key>
-	<array>
-		<string>SELF</string>
-		<string>pbpaste</string>
-		<string></string>
-		<string>no</string>
-	</array>
 	<key>ping</key>
 	<array>
 		<string>network_ios.framework/network_ios</string>
@@ -231,13 +217,6 @@
 		<string>files.framework/files</string>
 		<string>stat_main</string>
 		<string>n</string>
-		<string>file</string>
-	</array>
-	<key>readtags</key>
-	<array>
-		<string>libctags.dylib</string>
-		<string>readtags_main</string>
-		<string>aBeFGnNoRvVx:b:d:D:f:h:I:L:</string>
 		<string>file</string>
 	</array>
 	<key>rlogin</key>
@@ -303,6 +282,13 @@
 		<string>ABHLQXceghiklopquvxyC:D:E:F:G:I:J:K:M:N:O:P:R:S:T:V:W:Z:a:b:f:g:j:m:n:r:s:t:z:</string>
 		<string>file</string>
 	</array>
+	<key>sort</key>
+	<array>
+		<string>text.framework/text</string>
+		<string>sort_main</string>
+		<string>bcCdfghik:Mmno:RrsS:t:T:uVz</string>
+		<string>file</string>
+	</array>
 	<key>stat</key>
 	<array>
 		<string>files.framework/files</string>
@@ -315,6 +301,13 @@
 		<string>files.framework/files</string>
 		<string>chksum_main</string>
 		<string></string>
+		<string>file</string>
+	</array>
+	<key>tail</key>
+	<array>
+		<string>text.framework/text</string>
+		<string>tail_main</string>
+		<string>Fb:c:fn:qr</string>
 		<string>file</string>
 	</array>
 	<key>tar</key>
@@ -364,6 +357,13 @@
 		<string>files.framework/files</string>
 		<string>compress_main</string>
 		<string>b:cdfv</string>
+		<string>file</string>
+	</array>
+	<key>uniq</key>
+	<array>
+		<string>text.framework/text</string>
+		<string>uniq_main</string>
+		<string>cdif:s:u</string>
 		<string>file</string>
 	</array>
 	<key>unlink</key>

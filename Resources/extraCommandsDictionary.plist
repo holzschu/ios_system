@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>ctags</key>
+	<array>
+		<string>libctags.dylib</string>
+		<string>ctags_main</string>
+		<string>aBeFGnNoRvVx:b:d:D:f:h:I:L:</string>
+		<string>file</string>
+	</array>
+	<key>readtags</key>
+	<array>
+		<string>libctags.dylib</string>
+		<string>readtags_main</string>
+		<string>aBeFGnNoRvVx:b:d:D:f:h:I:L:</string>
+		<string>file</string>
+	</array>
 	<key>amstex</key>
 	<array>
 		<string>libpdftex.dylib</string>
