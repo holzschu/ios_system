@@ -121,12 +121,13 @@ To add a command:
 - (Optional) create an issue: https://github.com/holzschu/ios_system/issues That will let others know you're working on it, and possibly join forces with you (that's the beauty of OpenSource). 
 - find the source code for the command, preferrably with BSD license. [Apple OpenSource](https://opensource.apple.com) is a good place to start. Compile it first for OSX, to see if it works, and go through configuration. 
 - make the following changes to the code: 
-    - include `ios_error.h` (it will replace all calls to `exit` by calls to `pthread_exit`)
-    - replace calls to `warn`, `err`, `errx` and `warnx` by calls to `fprintf`, plus `pthread_exit` if needed.
-    - replace all occurences of `stdin`, `stdout`, `stderr` by `thread_stdin`, `thread_stdout`, `thread_stderr` (these are thread-local variables, taking a different value for each thread so we can pipe commands).
-    - replace all calls to `printf`, `write`,... with explicit calls to `fprintf(thread_stdout, ...)` (`ios_error.h` takes care of some of these).
-    - replace `STDIN_FILENO` with `fileno(stdin)`. Replace `STDOUT_FILENO` by calls to `fprintf` or `fwrite`; `fileno(thread_stdout)` does not always exist (it can be a stream with no files associated). Same with `stderr`. 
-    - replace calls to `isatty()` by tests `(stdout == thread_stdout)`. Normally, this is true if we're in the iOS equivalent of a tty. 
+    - change the `main()` function into `command_main()`.
+    - include `ios_error.h`.
+    - link with `ios_system.framework`; this will replace most function calls by `ios_system` version (`exit`, `warn`, `err`, `errx`, `warnx`, `printf`, `write`...)
+    - replace calls to `isatty()` with calls to `ios_isatty()`. 
+    - usually, this is enough for your command to compile, and sometimes to run. Check that it works.
+    - if you have no output: find where the output happens. Within `ios_system`, standard output must go to `thread_stout`. `libc_replacement.c` intercepts most of the output functions, but not all.
+    - if you have issues with input: find where it happens. Standard input comes from `thread_stdin`.
     - make sure you initialize all variables at startup, and release all memory on exit.
     - make all global variables thread-local with `__thread`, make sure local variables are marked with `static`. 
     - make sure your code doesn't use commands that don't work in a sandbox: `fork`, `exec`, `system`, `popen`, `isExecutableFileAtPath`, `access`... (some of these fail at compile time, others fail silently at run time). 
