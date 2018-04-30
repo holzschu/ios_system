@@ -162,6 +162,7 @@
 		22F08055209766BD003C3BF0 /* vsort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804D209766BD003C3BF0 /* vsort.c */; };
 		22F08056209766BD003C3BF0 /* coll.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804E209766BD003C3BF0 /* coll.c */; };
 		22F08057209766BD003C3BF0 /* radixsort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804F209766BD003C3BF0 /* radixsort.c */; };
+		22F0805A20979939003C3BF0 /* uniq.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0805920979938003C3BF0 /* uniq.c */; };
 		22F6A1142068393900E618F9 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		22F6A1152068393E00E618F9 /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
 		22F6A1162068394200E618F9 /* date.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27711FDB3FDA0087DDAD /* date.c */; };
@@ -901,6 +902,7 @@
 		22F0804D209766BD003C3BF0 /* vsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vsort.c; path = text_cmds/sort/vsort.c; sourceTree = SOURCE_ROOT; };
 		22F0804E209766BD003C3BF0 /* coll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = coll.c; path = text_cmds/sort/coll.c; sourceTree = SOURCE_ROOT; };
 		22F0804F209766BD003C3BF0 /* radixsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = radixsort.c; path = text_cmds/sort/radixsort.c; sourceTree = SOURCE_ROOT; };
+		22F0805920979938003C3BF0 /* uniq.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uniq.c; path = text_cmds/uniq/uniq.c; sourceTree = SOURCE_ROOT; };
 		22F567C72020B807009850FD /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = Frameworks/openssl.framework; sourceTree = "<group>"; };
 		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		22F568222020C42F009850FD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
@@ -1940,6 +1942,7 @@
 		22F0805820976B25003C3BF0 /* uniq */ = {
 			isa = PBXGroup;
 			children = (
+				22F0805920979938003C3BF0 /* uniq.c */,
 			);
 			name = uniq;
 			sourceTree = "<group>";
@@ -2531,6 +2534,7 @@
 				22F6A14920683A3400E618F9 /* wc.c in Sources */,
 				22F6A14320683A2800E618F9 /* undo.c in Sources */,
 				22F6A14420683A2B00E618F9 /* cat.c in Sources */,
+				22F0805A20979939003C3BF0 /* uniq.c in Sources */,
 				22F6A13720683A1D00E618F9 /* tr.c in Sources */,
 				22F6A14720683A3000E618F9 /* queue.c in Sources */,
 				22F08055209766BD003C3BF0 /* vsort.c in Sources */,
