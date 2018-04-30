@@ -147,6 +147,21 @@
 		22B753052068DF8400F2B025 /* shell.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B753042068DF8400F2B025 /* shell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22B7530B2069801700F2B025 /* curl_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B7530A2069801700F2B025 /* curl_ios.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
+		22F0803820973712003C3BF0 /* libc_replacement.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803620973712003C3BF0 /* libc_replacement.c */; };
+		22F0803B20975779003C3BF0 /* head.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803A20975779003C3BF0 /* head.c */; };
+		22F08041209761EA003C3BF0 /* forward.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803D209761EA003C3BF0 /* forward.c */; };
+		22F08042209761EA003C3BF0 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803E209761EA003C3BF0 /* misc.c */; };
+		22F08043209761EA003C3BF0 /* reverse.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803F209761EA003C3BF0 /* reverse.c */; };
+		22F08044209761EA003C3BF0 /* read.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08040209761EA003C3BF0 /* read.c */; };
+		22F08046209761F4003C3BF0 /* tail.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08045209761F4003C3BF0 /* tail.c */; };
+		22F08050209766BD003C3BF0 /* mem.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08048209766BC003C3BF0 /* mem.c */; };
+		22F08051209766BD003C3BF0 /* sort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08049209766BD003C3BF0 /* sort.c */; };
+		22F08052209766BD003C3BF0 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804A209766BD003C3BF0 /* file.c */; };
+		22F08053209766BD003C3BF0 /* commoncrypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804B209766BD003C3BF0 /* commoncrypto.c */; };
+		22F08054209766BD003C3BF0 /* bwstring.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804C209766BD003C3BF0 /* bwstring.c */; };
+		22F08055209766BD003C3BF0 /* vsort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804D209766BD003C3BF0 /* vsort.c */; };
+		22F08056209766BD003C3BF0 /* coll.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804E209766BD003C3BF0 /* coll.c */; };
+		22F08057209766BD003C3BF0 /* radixsort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804F209766BD003C3BF0 /* radixsort.c */; };
 		22F6A1142068393900E618F9 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		22F6A1152068393E00E618F9 /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
 		22F6A1162068394200E618F9 /* date.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27711FDB3FDA0087DDAD /* date.c */; };
@@ -871,6 +886,21 @@
 		22D8DEB920079E4C00FAADB7 /* cmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmap.c; path = text_cmds/tr/cmap.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBA20079E4C00FAADB7 /* tr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tr.c; path = text_cmds/tr/tr.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBB20079E4C00FAADB7 /* str.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = str.c; path = text_cmds/tr/str.c; sourceTree = SOURCE_ROOT; };
+		22F0803620973712003C3BF0 /* libc_replacement.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = libc_replacement.c; sourceTree = "<group>"; };
+		22F0803A20975779003C3BF0 /* head.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = head.c; path = text_cmds/head/head.c; sourceTree = SOURCE_ROOT; };
+		22F0803D209761EA003C3BF0 /* forward.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = forward.c; path = text_cmds/tail/forward.c; sourceTree = SOURCE_ROOT; };
+		22F0803E209761EA003C3BF0 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = text_cmds/tail/misc.c; sourceTree = SOURCE_ROOT; };
+		22F0803F209761EA003C3BF0 /* reverse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = reverse.c; path = text_cmds/tail/reverse.c; sourceTree = SOURCE_ROOT; };
+		22F08040209761EA003C3BF0 /* read.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = read.c; path = text_cmds/tail/read.c; sourceTree = SOURCE_ROOT; };
+		22F08045209761F4003C3BF0 /* tail.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tail.c; path = text_cmds/tail/tail.c; sourceTree = SOURCE_ROOT; };
+		22F08048209766BC003C3BF0 /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mem.c; path = text_cmds/sort/mem.c; sourceTree = SOURCE_ROOT; };
+		22F08049209766BD003C3BF0 /* sort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sort.c; path = text_cmds/sort/sort.c; sourceTree = SOURCE_ROOT; };
+		22F0804A209766BD003C3BF0 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file.c; path = text_cmds/sort/file.c; sourceTree = SOURCE_ROOT; };
+		22F0804B209766BD003C3BF0 /* commoncrypto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = commoncrypto.c; path = text_cmds/sort/commoncrypto.c; sourceTree = SOURCE_ROOT; };
+		22F0804C209766BD003C3BF0 /* bwstring.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bwstring.c; path = text_cmds/sort/bwstring.c; sourceTree = SOURCE_ROOT; };
+		22F0804D209766BD003C3BF0 /* vsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vsort.c; path = text_cmds/sort/vsort.c; sourceTree = SOURCE_ROOT; };
+		22F0804E209766BD003C3BF0 /* coll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = coll.c; path = text_cmds/sort/coll.c; sourceTree = SOURCE_ROOT; };
+		22F0804F209766BD003C3BF0 /* radixsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = radixsort.c; path = text_cmds/sort/radixsort.c; sourceTree = SOURCE_ROOT; };
 		22F567C72020B807009850FD /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = Frameworks/openssl.framework; sourceTree = "<group>"; };
 		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		22F568222020C42F009850FD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
@@ -975,6 +1005,7 @@
 				22878D4B2036212E00286AF1 /* ssh */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
 				225F060F2016751800466685 /* getopt_long.c */,
+				22F0803620973712003C3BF0 /* libc_replacement.c */,
 				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				22B7530A2069801700F2B025 /* curl_ios.h */,
 				22B753042068DF8400F2B025 /* shell.h */,
@@ -1808,6 +1839,10 @@
 		22CF27B01FDB42F50087DDAD /* text_cmds_grp */ = {
 			isa = PBXGroup;
 			children = (
+				22F0805820976B25003C3BF0 /* uniq */,
+				22F0804720976687003C3BF0 /* sort */,
+				22F0803C209761CC003C3BF0 /* tail */,
+				22F0803920975764003C3BF0 /* head */,
 				22D8DEB720079E4100FAADB7 /* tr */,
 				2248DB102004C5C500F2944C /* sed */,
 				2248DAFF2004A58600F2944C /* ed */,
@@ -1865,6 +1900,48 @@
 				22D8DEBA20079E4C00FAADB7 /* tr.c */,
 			);
 			path = tr;
+			sourceTree = "<group>";
+		};
+		22F0803920975764003C3BF0 /* head */ = {
+			isa = PBXGroup;
+			children = (
+				22F0803A20975779003C3BF0 /* head.c */,
+			);
+			name = head;
+			sourceTree = "<group>";
+		};
+		22F0803C209761CC003C3BF0 /* tail */ = {
+			isa = PBXGroup;
+			children = (
+				22F0803D209761EA003C3BF0 /* forward.c */,
+				22F0803E209761EA003C3BF0 /* misc.c */,
+				22F08040209761EA003C3BF0 /* read.c */,
+				22F0803F209761EA003C3BF0 /* reverse.c */,
+				22F08045209761F4003C3BF0 /* tail.c */,
+			);
+			name = tail;
+			sourceTree = "<group>";
+		};
+		22F0804720976687003C3BF0 /* sort */ = {
+			isa = PBXGroup;
+			children = (
+				22F0804C209766BD003C3BF0 /* bwstring.c */,
+				22F0804E209766BD003C3BF0 /* coll.c */,
+				22F0804B209766BD003C3BF0 /* commoncrypto.c */,
+				22F0804A209766BD003C3BF0 /* file.c */,
+				22F08048209766BC003C3BF0 /* mem.c */,
+				22F0804F209766BD003C3BF0 /* radixsort.c */,
+				22F08049209766BD003C3BF0 /* sort.c */,
+				22F0804D209766BD003C3BF0 /* vsort.c */,
+			);
+			name = sort;
+			sourceTree = "<group>";
+		};
+		22F0805820976B25003C3BF0 /* uniq */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = uniq;
 			sourceTree = "<group>";
 		};
 		22F6A10D2068390800E618F9 /* text */ = {
@@ -2271,6 +2348,7 @@
 			files = (
 				22319FA01FDC2332004D875A /* getopt.c in Sources */,
 				222446352065642E0018D400 /* sessionParameters.m in Sources */,
+				22F0803820973712003C3BF0 /* libc_replacement.c in Sources */,
 				225F06102016751900466685 /* getopt_long.c in Sources */,
 				223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */,
 			);
@@ -2426,27 +2504,41 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22F08050209766BD003C3BF0 /* mem.c in Sources */,
+				22F08042209761EA003C3BF0 /* misc.c in Sources */,
 				22F6A14020683A2800E618F9 /* main.c in Sources */,
+				22F08052209766BD003C3BF0 /* file.c in Sources */,
 				22F6A13D20683A2800E618F9 /* cbc.c in Sources */,
 				22F6A14820683A3000E618F9 /* util.c in Sources */,
 				22F6A13F20683A2800E618F9 /* io.c in Sources */,
+				22F08054209766BD003C3BF0 /* bwstring.c in Sources */,
 				22F6A13A20683A2200E618F9 /* misc.c in Sources */,
 				22F6A13B20683A2200E618F9 /* process.c in Sources */,
+				22F08053209766BD003C3BF0 /* commoncrypto.c in Sources */,
 				22F6A13820683A2200E618F9 /* compile.c in Sources */,
 				22F6A14120683A2800E618F9 /* re.c in Sources */,
 				22F6A13620683A1D00E618F9 /* str.c in Sources */,
+				22F0803B20975779003C3BF0 /* head.c in Sources */,
+				22F08056209766BD003C3BF0 /* coll.c in Sources */,
 				22F6A13920683A2200E618F9 /* main.c in Sources */,
 				22F6A13520683A1D00E618F9 /* cset.c in Sources */,
 				22F6A13C20683A2800E618F9 /* buf.c in Sources */,
+				22F08051209766BD003C3BF0 /* sort.c in Sources */,
 				22F6A14620683A3000E618F9 /* grep.c in Sources */,
 				22F6A13320683A1800E618F9 /* cmap.c in Sources */,
+				22F08041209761EA003C3BF0 /* forward.c in Sources */,
 				22F6A14220683A2800E618F9 /* sub.c in Sources */,
 				22F6A14920683A3400E618F9 /* wc.c in Sources */,
 				22F6A14320683A2800E618F9 /* undo.c in Sources */,
 				22F6A14420683A2B00E618F9 /* cat.c in Sources */,
 				22F6A13720683A1D00E618F9 /* tr.c in Sources */,
 				22F6A14720683A3000E618F9 /* queue.c in Sources */,
+				22F08055209766BD003C3BF0 /* vsort.c in Sources */,
+				22F08044209761EA003C3BF0 /* read.c in Sources */,
 				22F6A13E20683A2800E618F9 /* glbl.c in Sources */,
+				22F08057209766BD003C3BF0 /* radixsort.c in Sources */,
+				22F08046209761F4003C3BF0 /* tail.c in Sources */,
+				22F08043209761EA003C3BF0 /* reverse.c in Sources */,
 				22F6A14520683A3000E618F9 /* file.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
