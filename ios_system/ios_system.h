@@ -27,6 +27,9 @@ extern int ios_system(const char* inputCmd); // execute this command (executable
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 extern int ios_kill(void); // kill the current running command
 extern int ios_isatty(int fd); // test whether a file descriptor refers to a terminal
+extern const pthread_t ios_getLastThreadId(void);
+extern int ios_getCommandStatus(void);
+extern const char* ios_progname(void);
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays

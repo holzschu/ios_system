@@ -20,6 +20,7 @@
 @property FILE* stdout;
 @property FILE* stderr;
 @property int global_errno;
+@property NSString* commandName;
 
 
 - (instancetype)init;

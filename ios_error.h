@@ -17,19 +17,26 @@ extern "C" {
 #include <stdio.h>
 #include <pthread.h>
 
-#define errx compileError
+/* #define errx compileError
 #define err compileError
 #define warn compileError
 #define warnx compileError
 #ifndef printf
 #define printf(...) fprintf (thread_stdout, ##__VA_ARGS__)
-#endif
+#endif */
 
 #define putchar(a) fputc(a, thread_stdout)
 #define getchar() fgetc(thread_stdin)
 #define getwchar() fgetwc(thread_stdin)
 // iswprint depends on the given locale, and setlocale() fails on iOS:
 #define iswprint(a) 1
+#define write ios_write
+#define fwrite ios_fwrite
+#define puts ios_puts
+#define fputs ios_fputs
+#define fputc ios_fputc
+#define putw ios_putw
+#define fflush ios_fflush
 
 
 // Thread-local input and output streams
@@ -58,7 +65,16 @@ extern int ios_execve(const char *path, char* const argv[], char** envlist);
 extern int ios_dup2(int fd1, int fd2);
 extern int ios_isatty(int fd);
 extern pthread_t ios_getLastThreadId(void); 
-extern int ios_getCommandStatus(void); 
+extern int ios_getCommandStatus(void);
+extern const char* ios_progname(void);
+    
+extern ssize_t ios_write(int fildes, const void *buf, size_t nbyte);
+extern size_t ios_fwrite(const void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream);
+extern int ios_puts(const char *s);
+extern int ios_fputs(const char* s, FILE *stream);
+extern    int ios_fputc(int c, FILE *stream);
+extern int ios_putw(int w, FILE *stream);
+extern int ios_fflush(FILE *stream);
 
 #ifdef __cplusplus
 }

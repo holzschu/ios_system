@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2018-03-23 11:35:45.000000000 +0100
++++ text_cmds/cat/cat.c	2018-04-23 20:32:31.000000000 +0200
 @@ -55,7 +55,7 @@
  #endif
  
@@ -211,7 +211,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  			break;
 diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
 --- text_cmds-99/ed/buf.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/buf.c	2018-02-24 21:55:15.000000000 +0100
++++ text_cmds/ed/buf.c	2018-04-23 20:32:31.000000000 +0200
 @@ -33,6 +33,10 @@
  #include <sys/stat.h>
  
@@ -317,7 +317,7 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  	REQUE(&buffer_head, &buffer_head);
 diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 --- text_cmds-99/ed/ed.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/ed.h	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/ed/ed.h	2018-04-23 20:32:31.000000000 +0200
 @@ -258,25 +258,25 @@
  long write_stream(FILE *, long, long);
  
@@ -364,7 +364,7 @@ diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 +extern __thread int posixly_correct;
 diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
 --- text_cmds-99/ed/glbl.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/glbl.c	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/ed/glbl.c	2018-04-23 20:32:31.000000000 +0200
 @@ -34,6 +34,7 @@
  #include <sys/wait.h>
  
@@ -402,7 +402,7 @@ diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
  				return ERR;
 diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
 --- text_cmds-99/ed/io.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/io.c	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/ed/io.c	2018-04-23 20:32:31.000000000 +0200
 @@ -29,9 +29,10 @@
  __FBSDID("$FreeBSD: src/bin/ed/io.c,v 1.14 2003/01/01 18:48:39 schweikh Exp $");
  
@@ -551,7 +551,7 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-03-28 07:57:13.000000000 +0200
++++ text_cmds/ed/main.c	2018-04-25 22:18:01.000000000 +0200
 @@ -59,14 +59,16 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -664,7 +664,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 +    shcmd = 0;            /* shell command buffer */
 +    shcmdsz = 0;            /* shell command buffer size */
 +    shcmdi = 0;            /* shell command buffer index */
-+    ibuf = 0;            /* ed command-line buffer */
++    ibuf = 0;            /* ed command-line buffer */
 +    ibufsz = 0;            /* ed command-line buffer size */
 +    ibufp = 0;            /* pointer to ed command-line buffer */
 +
@@ -957,7 +957,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  handle_winch(int signo)
 diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
 --- text_cmds-99/ed/re.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/re.c	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/ed/re.c	2018-04-23 20:32:31.000000000 +0200
 @@ -30,11 +30,12 @@
  __FBSDID("$FreeBSD: src/bin/ed/re.c,v 1.20 2003/07/20 10:24:09 ru Exp $");
  
@@ -984,7 +984,7 @@ diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
  	}
 diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
 --- text_cmds-99/ed/sub.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/sub.c	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/ed/sub.c	2018-04-23 20:32:31.000000000 +0200
 @@ -30,6 +30,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/sub.c,v 1.15 2002/06/30 05:13:53 obrien Exp $");
  
@@ -1004,7 +1004,7 @@ diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
  		}
 diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
 --- text_cmds-99/ed/undo.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/undo.c	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/ed/undo.c	2018-04-23 20:32:31.000000000 +0200
 @@ -29,6 +29,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/undo.c,v 1.12 2002/06/30 05:13:53 obrien Exp $");
  
@@ -1044,7 +1044,7 @@ diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
  int
 diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
 --- text_cmds-99/grep/file.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/file.c	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/grep/file.c	2018-04-23 20:32:31.000000000 +0200
 @@ -38,7 +38,7 @@
  #include <sys/stat.h>
  #include <sys/types.h>
@@ -1081,7 +1081,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-03-28 07:57:59.000000000 +0200
++++ text_cmds/grep/grep.c	2018-04-23 20:32:31.000000000 +0200
 @@ -36,7 +36,7 @@
  #include <sys/types.h>
  
@@ -1522,7 +1522,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  		c = grep_tree(aargv);
 diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
 --- text_cmds-99/grep/grep.h	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.h	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/grep/grep.h	2018-04-23 20:32:31.000000000 +0200
 @@ -45,7 +45,7 @@
  #else
  #include <nl_types.h>
@@ -1578,7 +1578,7 @@ diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
  /* For regex errors  */
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-03-28 07:55:36.000000000 +0200
++++ text_cmds/grep/util.c	2018-04-23 20:32:31.000000000 +0200
 @@ -39,7 +39,7 @@
  #endif
  
@@ -1817,9 +1817,55 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		putchar('\n');
  	}
  }
+diff -Naur text_cmds-99/head/head.c text_cmds/head/head.c
+--- text_cmds-99/head/head.c	2010-05-13 03:07:37.000000000 +0200
++++ text_cmds/head/head.c	2018-04-30 17:14:59.000000000 +0200
+@@ -54,6 +54,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+ /*
+  * head - give the first few lines of a stream or of each of a set of files
+@@ -67,7 +68,7 @@
+ static void usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++head_main(int argc, char *argv[])
+ {
+ 	int ch;
+ 	FILE *fp;
+@@ -75,6 +76,10 @@
+ 	off_t bytecnt = -1;
+ 	char *ep;
+ 
++    linecnt = -1;
++    bytecnt = -1;
++    eval = 0;
++    //
+ 	obsolete(argv);
+ 	while ((ch = getopt(argc, argv, "n:c:")) != -1)
+ 		switch(ch) {
+@@ -123,11 +128,11 @@
+ 		}
+ 	} else {
+ 		if (bytecnt == -1) {
+-			head(stdin, linecnt);
++			head(thread_stdin, linecnt);
+ 		} else {
+-			head_bytes(stdin, bytecnt);
++			head_bytes(thread_stdin, bytecnt);
+ 		}
+-		if (ferror(stdin)) {
++		if (ferror(thread_stdin)) {
+ 			warnx("Error reading stdin");
+ 			eval = 1;
+ 		}
 diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 --- text_cmds-99/sed/compile.c	2006-12-05 23:29:30.000000000 +0100
-+++ text_cmds/sed/compile.c	2018-03-23 12:21:21.000000000 +0100
++++ text_cmds/sed/compile.c	2018-04-23 20:32:31.000000000 +0200
 @@ -54,12 +54,13 @@
  
  #include "defs.h"
@@ -2401,7 +2447,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	}
 diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
 --- text_cmds-99/sed/extern.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/extern.h	2018-02-11 20:54:07.000000000 +0100
++++ text_cmds/sed/extern.h	2018-04-23 20:32:31.000000000 +0200
 @@ -34,16 +34,16 @@
   * $FreeBSD: src/usr.bin/sed/extern.h,v 1.13 2004/08/09 15:29:41 dds Exp $
   */
@@ -2431,7 +2477,7 @@ diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
  void	 compile(void);
 diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 --- text_cmds-99/sed/main.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/main.c	2018-03-23 11:39:43.000000000 +0100
++++ text_cmds/sed/main.c	2018-04-23 20:32:31.000000000 +0200
 @@ -64,6 +64,9 @@
  
  #include "defs.h"
@@ -2746,7 +2792,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  	fl_nextp = &fp->next;
 diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
 --- text_cmds-99/sed/misc.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/misc.c	2018-03-23 11:38:43.000000000 +0100
++++ text_cmds/sed/misc.c	2018-04-23 20:32:31.000000000 +0200
 @@ -49,6 +49,9 @@
  
  #include "defs.h"
@@ -2772,7 +2818,7 @@ diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
  }
 diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 --- text_cmds-99/sed/process.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/process.c	2018-03-23 11:38:38.000000000 +0100
++++ text_cmds/sed/process.c	2018-04-23 20:32:31.000000000 +0200
 @@ -58,6 +58,7 @@
  
  #include "defs.h"
@@ -3041,9 +3087,511 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		case '{':
  			cfclose(cp->u.c, cp->next);
  			break;
+diff -Naur text_cmds-99/sort/bwstring.c text_cmds/sort/bwstring.c
+--- text_cmds-99/sort/bwstring.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/bwstring.c	2018-04-30 16:59:52.000000000 +0200
+@@ -40,6 +40,7 @@
+ 
+ #include "bwstring.h"
+ #include "sort.h"
++#include "ios_error.h"
+ 
+ bool byte_sort;
+ 
+diff -Naur text_cmds-99/sort/coll.c text_cmds/sort/coll.c
+--- text_cmds-99/sort/coll.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/coll.c	2018-04-30 16:59:58.000000000 +0200
+@@ -45,6 +45,7 @@
+ 
+ #include "coll.h"
+ #include "vsort.h"
++#include "ios_error.h"
+ 
+ struct key_specs *keys;
+ size_t keys_num = 0;
+diff -Naur text_cmds-99/sort/commoncrypto.c text_cmds/sort/commoncrypto.c
+--- text_cmds-99/sort/commoncrypto.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/commoncrypto.c	2018-04-30 16:59:58.000000000 +0200
+@@ -20,6 +20,7 @@
+ #include <stdlib.h>
+ 
+ #include "commoncrypto.h"
++#include "ios_error.h"
+ 
+ #define LENGTH CC_MD5_DIGEST_LENGTH
+ 
+diff -Naur text_cmds-99/sort/file.c text_cmds/sort/file.c
+--- text_cmds-99/sort/file.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/file.c	2018-04-30 17:14:10.000000000 +0200
+@@ -49,6 +49,7 @@
+ #include "coll.h"
+ #include "file.h"
+ #include "radixsort.h"
++#include "ios_error.h"
+ 
+ unsigned long long free_memory = 1000000;
+ unsigned long long available_free_memory = 1000000;
+@@ -540,7 +541,7 @@
+ 	FILE *file;
+ 
+ 	if (strcmp(fn, "-") == 0) {
+-		return ((mode && mode[0] == 'r') ? stdin : stdout);
++		return ((mode && mode[0] == 'r') ? thread_stdin : thread_stdout);
+ 	} else {
+ 		mode_t orig_file_mask = 0;
+ 		int is_tmp = file_is_tmp(fn);
+@@ -591,9 +592,9 @@
+ {
+ 	if (f == NULL) {
+ 		;
+-	} else if (f == stdin) {
++	} else if (f == thread_stdin) {
+ 		;
+-	} else if (f == stdout) {
++	} else if (f == thread_stdout) {
+ 		fflush(f);
+ 	} else {
+ 		if (file_is_tmp(fn) && compress_program != NULL) {
+@@ -718,7 +719,7 @@
+ 			}
+ 		}
+ 
+-	} else if (fr->file != stdin) {
++	} else if (fr->file != thread_stdin) {
+ 		unsigned char *strend;
+ 		size_t bsz1, remsz, search_start;
+ 
+@@ -815,7 +816,7 @@
+ 			sort_free(fr->buffer);
+ 
+ 		if (fr->file)
+-			if (fr->file != stdin)
++			if (fr->file != thread_stdin)
+ 				closefile(fr->file, fr->fname);
+ 
+ 		if(fr->fname)
+@@ -836,7 +837,7 @@
+ }
+ 
+ int
+-procfile(const char *fsrc, struct sort_list *list, struct file_list *fl)
++sort_procfile(const char *fsrc, struct sort_list *list, struct file_list *fl)
+ {
+ 	struct file_reader *fr;
+ 
+diff -Naur text_cmds-99/sort/file.h text_cmds/sort/file.h
+--- text_cmds-99/sort/file.h	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/file.h	2018-04-30 17:04:29.000000000 +0200
+@@ -114,7 +114,7 @@
+ void merge_files(struct file_list *fl, const char *fn_out);
+ FILE *openfile(const char *, const char *);
+ void closefile(FILE *, const char *);
+-int procfile(const char *fn, struct sort_list *list, struct file_list *fl);
++int sort_procfile(const char *fn, struct sort_list *list, struct file_list *fl);
+ 
+ void sort_list_init(struct sort_list *l);
+ void sort_list_add(struct sort_list *l, struct bwstring *str);
+diff -Naur text_cmds-99/sort/mem.c text_cmds/sort/mem.c
+--- text_cmds-99/sort/mem.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/mem.c	2018-04-30 16:59:58.000000000 +0200
+@@ -33,6 +33,7 @@
+ #include <string.h>
+ 
+ #include "mem.h"
++#include "ios_error.h"
+ 
+ /*
+  * malloc() wrapper.
+diff -Naur text_cmds-99/sort/radixsort.c text_cmds/sort/radixsort.c
+--- text_cmds-99/sort/radixsort.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/radixsort.c	2018-04-30 16:59:58.000000000 +0200
+@@ -44,6 +44,7 @@
+ 
+ #include "coll.h"
+ #include "radixsort.h"
++#include "ios_error.h"
+ 
+ #define DEFAULT_SORT_FUNC_RADIXSORT mergesort
+ 
+diff -Naur text_cmds-99/sort/sort.c text_cmds/sort/sort.c
+--- text_cmds-99/sort/sort.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/sort.c	2018-04-30 18:01:54.000000000 +0200
+@@ -53,10 +53,11 @@
+ #include "coll.h"
+ #include "file.h"
+ #include "sort.h"
++#include "ios_error.h"
+ 
+ #ifndef WITHOUT_NLS
+ #include <nl_types.h>
+-nl_catd catalog;
++nl_catd sort_catalog;
+ #endif
+ 
+ #define	OPTIONS	"bcCdfghik:Mmno:RrsS:t:T:uVz"
+@@ -219,7 +220,7 @@
+ 
+ 	if (opt_err)
+ 		out = stderr;
+-	fprintf(out, getstr(12), getprogname());
++	fprintf(out, getstr(12), ios_progname());
+ 	if (opt_err)
+ 		exit(2);
+ 	exit(0);
+@@ -557,7 +558,6 @@
+ static void
+ set_sort_opts(void)
+ {
+-
+ 	memset(&default_sort_mods_object, 0,
+ 	    sizeof(default_sort_mods_object));
+ 	memset(&sort_opts_vals, 0, sizeof(sort_opts_vals));
+@@ -970,19 +970,21 @@
+  * Main function.
+  */
+ int
+-main(int argc, char **argv)
++sort_main(int argc, char **argv)
+ {
+ 	char *outfile, *real_outfile;
+ 	int c, result;
+-	bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS] =
+-	    { false, false, false, false, false, false };
++    bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS];
++    
++    for (int i = 0; i < NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS; i++) mef_flags[i] = false;
+ 
+ 	result = 0;
++    keys_num = 0;
+ 	outfile = sort_strdup("-");
+ 	real_outfile = NULL;
+ 
+ 	struct sort_mods *sm = &default_sort_mods_object;
+-
++    
+ 	init_tmp_files();
+ 
+ 	set_signal_handler();
+@@ -1149,11 +1151,11 @@
+ 			}
+ 				break;
+ 			case VERSION_OPT:
+-#ifdef __APPLE__
+-				printf("%s (%s)\n", VERSION, strlen(SORT_VERSION) ? SORT_VERSION : "0");
+-#else
++//#ifdef __APPLE__
++//				printf("%s (%s)\n", VERSION, strlen(SORT_VERSION) ? SORT_VERSION : "0");
++//#else
+ 				printf("%s\n", VERSION);
+-#endif
++//#endif
+ 				exit(EXIT_SUCCESS);
+ 				/* NOTREACHED */
+ 				break;
+@@ -1180,14 +1182,14 @@
+ 	}
+ 
+ #ifndef WITHOUT_NLS
+-	catalog = catopen("sort", NL_CAT_LOCALE);
++	sort_catalog = catopen("sort", NL_CAT_LOCALE);
+ #endif
+ 
+ 	if (sort_opts_vals.cflag && sort_opts_vals.mflag)
+ 		errx(1, "%c:%c: %s", 'm', 'c', getstr(1));
+ 
+ #ifndef WITHOUT_NLS
+-	catclose(catalog);
++	catclose(sort_catalog);
+ #endif
+ 
+ 	if (keys_num == 0) {
+@@ -1273,10 +1275,10 @@
+ 		file_list_init(&fl, true);
+ 
+ 		if (argc < 1)
+-			procfile("-", &list, &fl);
++			sort_procfile("-", &list, &fl);
+ 		else {
+ 			while (argc > 0) {
+-				procfile(*argv, &list, &fl);
++				sort_procfile(*argv, &list, &fl);
+ 				--argc;
+ 				++argv;
+ 			}
+@@ -1299,9 +1301,10 @@
+ 		/*
+ 		 * We are about to exit the program, so we can ignore
+ 		 * the clean-up for speed
+-		 *
+-		 * sort_list_clean(&list);
++         * NH: Not with ios_system, we don't
+ 		 */
++		 sort_list_clean(&list);
++		 
+ 
+ 	} else if (sort_opts_vals.cflag) {
+ 		result = (argc == 0) ? (check("-")) : (check(*argv));
+diff -Naur text_cmds-99/sort/sort.h text_cmds/sort/sort.h
+--- text_cmds-99/sort/sort.h	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/sort.h	2018-04-30 17:05:51.000000000 +0200
+@@ -54,8 +54,8 @@
+ #else
+ #include <nl_types.h>
+ 
+-extern nl_catd catalog;
+-#define	getstr(n)	 catgets(catalog, 1, n, nlsstr[n])
++extern nl_catd sort_catalog;
++#define	getstr(n)	 catgets(sort_catalog, 1, n, nlsstr[n])
+ #endif
+ 
+ extern const char *nlsstr[];
+diff -Naur text_cmds-99/sort/vsort.c text_cmds/sort/vsort.c
+--- text_cmds-99/sort/vsort.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/vsort.c	2018-04-30 16:59:58.000000000 +0200
+@@ -36,6 +36,7 @@
+ 
+ #include "sort.h"
+ #include "vsort.h"
++#include "ios_error.h"
+ 
+ static inline bool
+ isdigit_clocale(wchar_t c)
+diff -Naur text_cmds-99/tail/extern.h text_cmds/tail/extern.h
+--- text_cmds-99/tail/extern.h	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/extern.h	2018-04-30 16:43:42.000000000 +0200
+@@ -72,5 +72,5 @@
+ int mapprint(struct mapinfo *, off_t, off_t);
+ int maparound(struct mapinfo *, off_t);
+ 
+-extern int Fflag, fflag, qflag, rflag, rval, no_files;
+-extern const char *fname;
++extern int Fflag, fflag, tail_qflag, rflag, rval, no_files;
++extern const char *tail_fname;
+diff -Naur text_cmds-99/tail/forward.c text_cmds/tail/forward.c
+--- text_cmds-99/tail/forward.c	2011-05-04 00:42:05.000000000 +0200
++++ text_cmds/tail/forward.c	2018-04-30 16:54:20.000000000 +0200
+@@ -60,6 +60,7 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ static void rlines(FILE *, off_t, struct stat *);
+ static void show(file_info_t *);
+@@ -297,15 +298,15 @@
+ 				goto done;
+ 			}
+ 
+-			flockfile(stdout);
++			flockfile(thread_stdout);
+ 			while(EOF != (ch = getc_unlocked(fp))) {
+-				if (EOF == putchar_unlocked(ch)) {
+-					funlockfile(stdout);
++				if (EOF == putc_unlocked(ch, thread_stdout)) {
++					funlockfile(thread_stdout);
+ 					oerr();
+ 					goto done;
+ 				}
+ 			}
+-			funlockfile(stdout);
++			funlockfile(thread_stdout);
+ 			goto done;
+ 		}
+ 	}
+@@ -368,7 +369,7 @@
+ 
+     while ((ch = getc(file->fp)) != EOF) {
+ 	if (last != file && no_files > 1) {
+-		if (!qflag)
++		if (!tail_qflag)
+ 			(void)printf("\n==> %s <==\n", file->file_name);
+ 		last = file;
+ 	}
+@@ -378,9 +379,9 @@
+     (void)fflush(stdout);
+     if (ferror(file->fp)) {
+ 	    file->fp = NULL;
+-	    fname = file->file_name;
++	    tail_fname = file->file_name;
+ 	    ierr();
+-	    fname = NULL;
++	    tail_fname = NULL;
+     } else
+ 	    clearerr(file->fp);
+ }
+@@ -444,11 +445,11 @@
+ 		if (file->fp) {
+ 			active = 1;
+ 			n++;
+-			if (no_files > 1 && !qflag)
++			if (no_files > 1 && !tail_qflag)
+ 				(void)printf("\n==> %s <==\n", file->file_name);
+-			fname = file->file_name;
++			tail_fname = file->file_name;
+ 			forward(file->fp, style, off, &file->st);
+-			fname = NULL;
++			tail_fname = NULL;
+ 			if (Fflag && fileno(file->fp) != STDIN_FILENO)
+ 			    n++;
+ 		}
+diff -Naur text_cmds-99/tail/misc.c text_cmds/tail/misc.c
+--- text_cmds-99/tail/misc.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/misc.c	2018-04-30 16:42:58.000000000 +0200
+@@ -54,11 +54,12 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ void
+ ierr()
+ {
+-	warn("%s", fname);
++	warn("%s", tail_fname);
+ 	rval = 1;
+ }
+ 
+diff -Naur text_cmds-99/tail/read.c text_cmds/tail/read.c
+--- text_cmds-99/tail/read.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/read.c	2018-04-30 16:40:10.000000000 +0200
+@@ -54,6 +54,7 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ /*
+  * bytes -- read bytes to an offset from the end and display.
+diff -Naur text_cmds-99/tail/reverse.c text_cmds/tail/reverse.c
+--- text_cmds-99/tail/reverse.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/reverse.c	2018-04-30 16:40:10.000000000 +0200
+@@ -57,6 +57,7 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ static void r_buf(FILE *);
+ static void r_reg(FILE *, enum STYLE, off_t, struct stat *);
+diff -Naur text_cmds-99/tail/tail.c text_cmds/tail/tail.c
+--- text_cmds-99/tail/tail.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/tail.c	2018-04-30 17:14:44.000000000 +0200
+@@ -59,9 +59,10 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+-int Fflag, fflag, qflag, rflag, rval, no_files;
+-const char *fname;
++int Fflag, fflag, tail_qflag, rflag, rval, no_files;
++const char *tail_fname;
+ 
+ file_info_t *files;
+ 
+@@ -69,7 +70,7 @@
+ static void usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++tail_main(int argc, char *argv[])
+ {
+ 	struct stat sb;
+ 	FILE *fp;
+@@ -79,6 +80,13 @@
+ 	file_info_t *file;
+ 	char *p;
+ 
++    Fflag = 0;
++    fflag = 0;
++    tail_qflag = 0;
++    rflag = 0;
++    rval = 0;
++    no_files = 0;
++    
+ 	/*
+ 	 * Tail's options are weird.  First, -n10 is the same as -n-10, not
+ 	 * -n+10.  Second, the number options are 1 based and not offsets,
+@@ -132,7 +140,7 @@
+ 			ARG(1, FLINES, RLINES);
+ 			break;
+ 		case 'q':
+-			qflag = 1;
++			tail_qflag = 1;
+ 			break;
+ 		case 'r':
+ 			rflag = 1;
+@@ -178,7 +186,7 @@
+ 		 * Determine if input is a pipe.  4.4BSD will set the SOCKET
+ 		 * bit in the st_mode field for pipes.  Fix this then.
+ 		 */
+-		if (lseek(fileno(stdin), (off_t)0, SEEK_CUR) == -1 &&
++		if (lseek(fileno(thread_stdin), (off_t)0, SEEK_CUR) == -1 &&
+ 		    errno == ESPIPE) {
+ 			errno = 0;
+ 			fflag = 0;		/* POSIX.2 requires this. */
+@@ -190,12 +198,12 @@
+ 		if (! files)
+ 			err(1, "Couldn't malloc space for file descriptors.");
+ 
+-		for (file = files; (fname = argc ? *argv++ : "stdin"); file++) {
+-			file->file_name = malloc(strlen(fname)+1);
++		for (file = files; (tail_fname = argc ? *argv++ : "stdin"); file++) {
++			file->file_name = malloc(strlen(tail_fname)+1);
+ 			if (! file->file_name)
+ 				errx(1, "Couldn't malloc space for file name.");
+-			strncpy(file->file_name, fname, strlen(fname)+1);
+-			file->fp = argc ? fopen(file->file_name, "r") : stdin;
++			strncpy(file->file_name, tail_fname, strlen(tail_fname)+1);
++			file->fp = argc ? fopen(file->file_name, "r") : thread_stdin;
+ 			if (file->fp == NULL ||
+ 			    fstat(fileno(file->fp), &file->st)) {
+ 				file->fp = NULL;
+@@ -211,15 +219,15 @@
+ 		}
+ 		free(files);
+ 	} else if (*argv) {
+-		for (first = 1; (fname = *argv++);) {
+-			if ((fp = fopen(fname, "r")) == NULL ||
++		for (first = 1; (tail_fname = *argv++);) {
++			if ((fp = fopen(tail_fname, "r")) == NULL ||
+ 			    fstat(fileno(fp), &sb)) {
+ 				ierr();
+ 				continue;
+ 			}
+-			if (argc > 1 && !qflag) {
++			if (argc > 1 && !tail_qflag) {
+ 				(void)printf("%s==> %s <==\n",
+-				    first ? "" : "\n", fname);
++				    first ? "" : "\n", tail_fname);
+ 				first = 0;
+ 				(void)fflush(stdout);
+ 			}
+@@ -236,17 +244,17 @@
+ 				forward(fp, style, off, &sb);
+ 		}
+ 	} else {
+-		fname = "stdin";
++		tail_fname = "stdin";
+ 
+-		if (fstat(fileno(stdin), &sb)) {
++		if (fstat(fileno(thread_stdin), &sb)) {
+ 			ierr();
+ 			exit(1);
+ 		}
+ 
+ 		if (rflag)
+-			reverse(stdin, style, off, &sb);
++			reverse(thread_stdin, style, off, &sb);
+ 		else
+-			forward(stdin, style, off, &sb);
++			forward(thread_stdin, style, off, &sb);
+ 	}
+ 	exit(rval);
+ }
 diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 --- text_cmds-99/tr/str.c	2005-08-18 23:20:18.000000000 +0200
-+++ text_cmds/tr/str.c	2018-03-23 12:25:01.000000000 +0100
++++ text_cmds/tr/str.c	2018-04-23 20:32:31.000000000 +0200
 @@ -53,6 +53,10 @@
  #include <wctype.h>
  
@@ -3148,7 +3696,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
  
 diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 --- text_cmds-99/tr/tr.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/tr/tr.c	2018-03-23 12:23:29.000000000 +0100
++++ text_cmds/tr/tr.c	2018-04-23 20:32:31.000000000 +0200
 @@ -61,6 +61,9 @@
  #include "cmap.h"
  #include "cset.h"
@@ -3389,16 +3937,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  }
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2018-02-11 20:54:07.000000000 +0100
-@@ -51,7 +51,7 @@
- #include <sys/stat.h>
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <locale.h>
++++ text_cmds/wc/wc.c	2018-04-30 16:19:45.000000000 +0200
 @@ -62,24 +62,29 @@
  #include <unistd.h>
  #include <wchar.h>
@@ -3465,7 +4004,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	exit(errors == 0 ? 0 : 1);
  }
  
-@@ -156,10 +162,11 @@
+@@ -156,10 +162,10 @@
  	linect = wordct = charct = 0;
  	if (file == NULL) {
  		file = "stdin";
@@ -3474,12 +4013,11 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	} else {
  		if ((fd = open(file, O_RDONLY, 0)) < 0) {
 -			warn("%s: open", file);
-+            fprintf(thread_stderr, "wc: %s: open: %s\n", file, strerror(errno));
-+			// warn("%s: open", file);
++            warn("%s: open", file);
  			return (1);
  		}
  	}
-@@ -187,22 +194,23 @@
+@@ -187,22 +193,22 @@
  	 * logic.
  	 */
  	if (doline) {
@@ -3487,8 +4025,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 +        while ((len = read(fd, buf, buf_size))) {
  			if (len == -1) {
 -				warn("%s: read", file);
-+                fprintf(thread_stderr, "wc: %s: read: %s\n", file, strerror(errno));
-+                // warn("%s: read", file);
++                warn("%s: read", file);
  				(void)close(fd);
  				return (1);
  			}
@@ -3508,13 +4045,12 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  		}
  		(void)close(fd);
  		return (0);
-@@ -213,12 +221,13 @@
+@@ -213,12 +219,12 @@
  	 */
  	if (dochar || domulti) {
  		if (fstat(fd, &sb)) {
 -			warn("%s: fstat", file);
-+            fprintf(thread_stderr, "wc: %s: fstat: %s\n", file, strerror(errno));
-+            // warn("%s: fstat", file);
++            warn("%s: fstat", file);
  			(void)close(fd);
  			return (1);
  		}
@@ -3524,33 +4060,30 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  			tcharct += sb.st_size;
  			(void)close(fd);
  			return (0);
-@@ -231,7 +240,8 @@
+@@ -231,7 +237,7 @@
  	memset(&mbs, 0, sizeof(mbs));
  	while ((len = read(fd, buf, buf_size)) != 0) {
  		if (len == -1) {
 -			warn("%s: read", file);
-+            fprintf(thread_stderr, "wc: %s: read: %s\n", file, strerror(errno));
-+            // warn("%s: read", file);
++            warn("%s: read", file);
  			(void)close(fd);
  			return (1);
  		}
-@@ -244,7 +254,8 @@
+@@ -244,7 +250,7 @@
  			    (size_t)-1) {
  				if (!warned) {
  					errno = EILSEQ;
 -					warn("%s", file);
-+                    fprintf(thread_stderr, "wc: %s: %s\n", file, strerror(errno));
-+                    // warn("%s", file);
++                    warn("%s", file);
  					warned = 1;
  				}
  				memset(&mbs, 0, sizeof(mbs));
-@@ -269,18 +280,19 @@
+@@ -269,18 +275,18 @@
  	}
  	if (domulti && MB_CUR_MAX > 1)
  		if (mbrtowc(NULL, NULL, 0, &mbs) == (size_t)-1 && !warned)
 -			warn("%s", file);
-+            fprintf(thread_stderr, "wc: %s: %s\n", file, strerror(errno));
-+            // warn("%s", file);
++            warn("%s", file);
  	if (doline) {
  		tlinect += linect;
 -		(void)printf(" %7ju", linect);
@@ -3568,11 +4101,3 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	}
  	(void)close(fd);
  	return (0);
-@@ -289,6 +301,6 @@
- static void
- usage()
- {
--	(void)fprintf(stderr, "usage: wc [-clmw] [file ...]\n");
-+	(void)fprintf(thread_stderr, "usage: wc [-clmw] [file ...]\n");
- 	exit(1);
- }

@@ -54,6 +54,12 @@ int ios_getCommandStatus() {
     else return 0;
 }
 
+extern const char* ios_progname(void) {
+    if (currentSession != NULL) return [currentSession.commandName UTF8String];
+    else return "";
+}
+
+
 typedef struct _functionParameters {
     int argc;
     char** argv;
@@ -137,6 +143,8 @@ void initializeEnvironment() {
         setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     }
     setenv("APPDIR", [[NSBundle mainBundle] resourcePath].UTF8String, 1);
+    setenv("PATH_LOCALE", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
+
     setenv("TERM", "xterm", 1); // 1 = override existing value
     setenv("TMPDIR", NSTemporaryDirectory().UTF8String, 0); // tmp directory
     setenv("CLICOLOR", "1", 1);
@@ -1072,6 +1080,7 @@ int ios_system(const char* inputCmd) {
             memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {
             NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
+            currentSession.commandName = commandName;
             BOOL isDir = false;
             BOOL cmdIsAFile = false;
             bool cmdIsAPath = false;
