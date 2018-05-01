@@ -70,7 +70,7 @@ extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
     
 extern ssize_t ios_write(int fildes, const void *buf, size_t nbyte);
-extern size_t ios_fwrite(const void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream);
+extern size_t ios_fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 extern int ios_puts(const char *s);
 extern int ios_fputs(const char* s, FILE *stream);
 extern    int ios_fputc(int c, FILE *stream);
