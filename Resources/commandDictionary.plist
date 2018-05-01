@@ -65,6 +65,13 @@
 		<string>d:f:jnRr:t:uv:</string>
 		<string>no</string>
 	</array>
+	<key>diff</key>
+	<array>
+		<string>text.framework/text</string>
+		<string>diff_main</string>
+		<string>0123456789aBbC:cdD:efHhI:iL:lnNPpqrS:sTtU:uwX:x:</string>
+		<string>file</string>
+	</array>
 	<key>dig</key>
 	<array>
 		<string>network_ios.framework/network_ios</string>
