@@ -107,6 +107,13 @@
 		<string>0123456789A:B:C:D:EFGHIJMLOPSRUVZabcd:e:f:hilm:nopqrsuvwxXy</string>
 		<string>file</string>
 	</array>
+	<key>find</key>
+	<array>
+		<string>shell.framework/shell</string>
+		<string>find_main</string>
+		<string>EHLPXdf:sx</string>
+		<string>directory</string>
+	</array>
 	<key>grep</key>
 	<array>
 		<string>text.framework/text</string>

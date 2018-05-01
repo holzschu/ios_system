@@ -51,6 +51,7 @@ extern __thread FILE* thread_stderr;
 #define pclose fclose
 #define system ios_system
 #define execv ios_execv
+#define execvp ios_execv
 #define execve ios_execve
 #define dup2 ios_dup2
 
