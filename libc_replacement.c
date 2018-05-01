@@ -44,12 +44,12 @@ int fprintf(FILE * restrict stream, const char * restrict format, ...) {
     
     return done;
 }
-// fwrite()
 int scanf (const char *format, ...) {
     int             count;
     va_list ap;
     
     fflush(thread_stdout);
+    fflush(thread_stderr);
     va_start (ap, format);
     count = vfscanf (thread_stdin, format, ap);
     va_end (ap);
