@@ -901,7 +901,7 @@ diff -Naur file_cmds-272/cksum/print.c file_cmds/cksum/print.c
  }
 diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
 --- file_cmds-272/compress/compress.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/compress/compress.c	2018-04-30 16:23:41.000000000 +0200
++++ file_cmds/compress/compress.c	2018-05-01 10:07:35.000000000 +0200
 @@ -56,28 +56,31 @@
  #include <unistd.h>
  
@@ -989,7 +989,7 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
  		    in);
  			eval = 2;
  			if (unlink(out))
-@@ -412,7 +420,7 @@
+@@ -412,9 +420,10 @@
  {
  	int ch, first;
  
@@ -997,19 +997,13 @@ diff -Naur file_cmds-272/compress/compress.c file_cmds/compress/compress.c
 +    if (!ios_isatty(STDERR_FILENO))
  		return (0);
  	(void)fprintf(stderr, "overwrite %s? ", fname);
++    fflush(stderr);
  	first = ch = getchar();
+ 	while (ch != '\n' && ch != EOF)
+ 		ch = getchar();
 diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 --- file_cmds-272/cp/cp.c	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/cp.c	2018-04-23 20:32:25.000000000 +0200
-@@ -62,7 +62,7 @@
- #include <sys/types.h>
- #include <sys/stat.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fts.h>
- #include <limits.h>
++++ file_cmds/cp/cp.c	2018-04-30 21:34:07.000000000 +0200
 @@ -74,9 +74,10 @@
  
  #ifdef __APPLE__
@@ -1070,7 +1064,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  			break;
  		case 'H':
  			Hflag = 1;
-@@ -136,60 +144,68 @@
+@@ -136,60 +144,62 @@
  			Xflag = 1;
  			break;
  		case 'f':
@@ -1130,11 +1124,8 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 +		cp_usage();
  
 -	if (cflag && Xflag) {
--		errx(1, "the -c and -X options may not be specified together");
 +	if (cp_cflag && Xflag) {
-+		// errx(1, "the -c and -X options may not be specified together");
-+        fprintf(thread_stderr, "cp: the -c and -X options may not be specified together\n");
-+        ios_exit(1);
+ 		errx(1, "the -c and -X options may not be specified together");
  	}
  
  	fts_options = FTS_NOCHDIR | FTS_PHYSICAL;
@@ -1146,44 +1137,34 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 -			errx(1,
 -	"the -H, -L, and -P options may not be specified with the -r option.");
 +        if (Rflag) {
-+            // errx(1,
-+			fprintf(thread_stderr,
-+		    "cp: the -R and -r options may not be specified together.\n");
-+            ios_exit(1);
++            errx(1,
++			"cp: the -R and -r options may not be specified together.\n");
 +        }
 +        if (Hflag || Lflag || Pflag) {
-+            // errx(1,
-+            fprintf(thread_stderr,
-+	"cp: the -H, -L, and -P options may not be specified with the -r option.\n");
-+            ios_exit(1);
++            errx(1,
++                 "cp: the -H, -L, and -P options may not be specified with the -r option.\n");
 +        }
  		fts_options &= ~FTS_PHYSICAL;
  		fts_options |= FTS_LOGICAL;
  	}
-@@ -208,8 +224,11 @@
+@@ -208,8 +218,9 @@
  
  	/* Save the target base in "to". */
  	target = argv[--argc];
 -	if (strlcpy(to.p_path, target, sizeof(to.p_path)) >= sizeof(to.p_path))
--		errx(1, "%s: name too long", target);
 +    if (strlcpy(to.p_path, target, sizeof(to.p_path)) >= sizeof(to.p_path)) {
-+		// errx(1, "%s: name too long", target);
-+        fprintf(thread_stderr, "cp: %s: name too long\n", target);
-+        ios_exit(1);
+ 		errx(1, "%s: name too long", target);
 +    }
  	to.p_end = to.p_path + strlen(to.p_path);
          if (to.p_path == to.p_end) {
  		*to.p_end++ = '.';
-@@ -238,14 +257,17 @@
+@@ -238,14 +249,15 @@
  	 * In (2), the real target is not directory, but "directory/source".
  	 */
  	r = stat(to.p_path, &to_stat);
 -	if (r == -1 && errno != ENOENT)
--		err(1, "%s", to.p_path);
 +    if (r == -1 && errno != ENOENT) {
-+		// err(1, "%s", to.p_path);
-+        fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+        ios_exit(1);
+ 		err(1, "%s", to.p_path);
 +    }
  	if (r == -1 || !S_ISDIR(to_stat.st_mode)) {
  		/*
@@ -1195,29 +1176,24 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  			exit(1);
  		}
  		/*
-@@ -269,11 +291,17 @@
+@@ -269,11 +281,13 @@
  			type = FILE_TO_FILE;
  
  		if (have_trailing_slash && type == FILE_TO_FILE) {
 -			if (r == -1)
 -				errx(1, "directory %s does not exist",
 +            if (r == -1) {
-+                // errx(1, "directory %s does not exist",
-+				fprintf(thread_stderr, "cp: directory %s does not exist\n",
++                errx(1, "directory %s does not exist",
  				     to.p_path);
 -			else
--				errx(1, "%s is not a directory", to.p_path);
-+                ios_exit(1);
 +            }
 +            else {
-+				// errx(1, "%s is not a directory", to.p_path);
-+                fprintf(thread_stderr, "cp: %s is not a directory\n", to.p_path);
-+                ios_exit(1);
+ 				errx(1, "%s is not a directory", to.p_path);
 +            }
  		}
  	} else
  		/*
-@@ -281,7 +309,7 @@
+@@ -281,7 +295,7 @@
  		 */
  		type = FILE_TO_DIR;
  
@@ -1226,36 +1202,32 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  }
  
  static int
-@@ -302,19 +330,24 @@
+@@ -302,20 +316,21 @@
  	mask = ~umask(0777);
  	umask(~mask);
  
 -	if ((ftsp = fts_open(argv, fts_options, NULL)) == NULL)
--		err(1, "fts_open");
 +    if ((ftsp = fts_open(argv, fts_options, NULL)) == NULL) {
-+		// err(1, "fts_open");
-+        fprintf(thread_stderr, "cp: fts_open: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "fts_open");
 +    }
  	for (badcp = rval = 0; (curr = fts_read(ftsp)) != NULL; badcp = 0) {
  		switch (curr->fts_info) {
  		case FTS_NS:
  		case FTS_DNR:
  		case FTS_ERR:
--			warnx("%s: %s",
-+			// warnx("%s: %s",
-+            fprintf(thread_stderr, "cp: %s: %s\n",
- 			    curr->fts_path, strerror(curr->fts_errno));
+ 			warnx("%s: %s",
+-			    curr->fts_path, strerror(curr->fts_errno));
++                curr->fts_path, strerror(curr->fts_errno));
  			rval = 1;
  			continue;
  		case FTS_DC:			/* Warn, continue. */
--			warnx("%s: directory causes a cycle", curr->fts_path);
-+			// warnx("%s: directory causes a cycle", curr->fts_path);
-+            fprintf(thread_stderr, "cp: %s: directory causes a cycle\n", curr->fts_path);
- 			rval = 1;
+ 			warnx("%s: directory causes a cycle", curr->fts_path);
+-			rval = 1;
++            rval = 1;
  			continue;
  		default:
-@@ -328,7 +361,7 @@
+ 			;
+@@ -328,7 +343,7 @@
  #pragma clang diagnostic ignored "-Warray-bounds"
  #endif
  		/* Skip ._<file> when using copyfile and <file> exists */
@@ -1264,17 +1236,16 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  		    (curr->fts_namelen > 2) && /* ._\0 is not AppleDouble */
  		    (curr->fts_name[0] == '.') && (curr->fts_name[1] == '_')) {
  #ifdef __clang__
-@@ -394,7 +427,8 @@
- 				*target_mid++ = '/';
+@@ -395,7 +410,7 @@
  			*target_mid = 0;
  			if (target_mid - to.p_path + nlen >= PATH_MAX) {
--				warnx("%s%s: name too long (not copied)",
-+				// warnx("%s%s: name too long (not copied)",
-+                fprintf(thread_stderr, "cp: %s%s: name too long (not copied)\n",
- 				    to.p_path, p);
+ 				warnx("%s%s: name too long (not copied)",
+-				    to.p_path, p);
++                    to.p_path, p);
  				rval = 1;
  				continue;
-@@ -422,13 +456,14 @@
+ 			}
+@@ -422,7 +437,7 @@
  			 * honour setuid, setgid and sticky bits, but we
  			 * normally want to preserve them on directories.
  			 */
@@ -1283,85 +1254,47 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  				if (setfile(curr->fts_statp, -1))
  					rval = 1;
  #ifdef __APPLE__
- 				/* setfile will fail if writeattr is denied */
- 				if (copyfile(curr->fts_path, to.p_path, NULL, COPYFILE_ACL)<0)
--					warn("%s: unable to copy ACL to %s", curr->fts_path, to.p_path);
-+					// warn("%s: unable to copy ACL to %s", curr->fts_path, to.p_path);
-+                    fprintf(thread_stderr, "cp: %s: unable to copy ACL to %s: %s\n", curr->fts_path, to.p_path, strerror(errno));
- #else  /* !__APPLE__ */
- 				if (preserve_dir_acls(curr->fts_statp,
- 				    curr->fts_accpath, to.p_path) != 0)
-@@ -439,7 +474,8 @@
- 				if ((mode & (S_ISUID | S_ISGID | S_ISTXT)) ||
- 				    ((mode | S_IRWXU) & mask) != (mode & mask))
- 					if (chmod(to.p_path, mode & mask) != 0){
--						warn("chmod: %s", to.p_path);
-+						// warn("chmod: %s", to.p_path);
-+                        fprintf(thread_stderr, "cp: chmod: %s: %s\n", to.p_path, strerror(errno));
- 						rval = 1;
- 					}
- 			}
-@@ -452,7 +488,8 @@
- 		else {
+@@ -453,7 +468,7 @@
  			if (to_stat.st_dev == curr->fts_statp->st_dev &&
  			    to_stat.st_ino == curr->fts_statp->st_ino) {
--				warnx("%s and %s are identical (not copied).",
-+				// warnx("%s and %s are identical (not copied).",
-+                fprintf(thread_stderr, "cp: %s and %s are identical (not copied).\n",
- 				    to.p_path, curr->fts_path);
+ 				warnx("%s and %s are identical (not copied).",
+-				    to.p_path, curr->fts_path);
++                    to.p_path, curr->fts_path);
  				rval = 1;
  				if (S_ISDIR(curr->fts_statp->st_mode))
-@@ -461,8 +498,9 @@
+ 					(void)fts_set(ftsp, curr, FTS_SKIP);
+@@ -461,8 +476,8 @@
  			}
  			if (!S_ISDIR(curr->fts_statp->st_mode) &&
  			    S_ISDIR(to_stat.st_mode)) {
 -				warnx("cannot overwrite directory %s with "
 -				    "non-directory %s",
-+                // warnx("cannot overwrite directory %s with "
-+                fprintf(thread_stderr, "cp: cannot overwrite directory %s with "
-+				    "non-directory %s\n",
++                warnx("cannot overwrite directory %s with "
++                    "non-directory %s\n",
  				    to.p_path, curr->fts_path);
  				rval = 1;
  				continue;
-@@ -485,7 +523,8 @@
+@@ -485,8 +500,8 @@
  			break;
  		case S_IFDIR:
  			if (!Rflag && !rflag) {
 -				warnx("%s is a directory (not copied).",
-+                // warnx("%s is a directory (not copied).",
-+                fprintf(thread_stderr, "cp: %s is a directory (not copied).\n",
- 				    curr->fts_path);
+-				    curr->fts_path);
++                warnx("%s is a directory (not copied).",
++                    curr->fts_path);
  				(void)fts_set(ftsp, curr, FTS_SKIP);
  				badcp = rval = 1;
-@@ -503,17 +542,23 @@
+ 				break;
+@@ -503,7 +518,7 @@
  				if (mkdir(to.p_path,
  					  curr->fts_statp->st_mode | S_IRWXU) < 0) {
  					if (COMPAT_MODE("bin/cp", "unix2003")) {
 -						warn("%s", to.p_path);
-+                        fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+                        // warn("%s", to.p_path);
++                        warn("%s", to.p_path);
  					} else {
--						err(1, "%s", to.p_path);
-+						// err(1, "%s", to.p_path);
-+                        fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+                        ios_exit(1);
+ 						err(1, "%s", to.p_path);
  					}
- 				}
- 			} else if (!S_ISDIR(to_stat.st_mode)) {
- 				errno = ENOTDIR;
- 				if (COMPAT_MODE("bin/cp", "unix2003")) {
--					warn("%s", to.p_path);
-+					// warn("%s", to.p_path);
-+                    fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
- 				} else {
--					err(1, "%s", to.p_path);
-+					// err(1, "%s", to.p_path);
-+                    fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+                    ios_exit(1);
- 				}
- 			}
- 			/*
-@@ -521,11 +566,12 @@
+@@ -521,11 +536,11 @@
  			 * (in the post-order phase) if this is a new
  			 * directory, or if the -p flag is in effect.
  			 */
@@ -1371,12 +1304,11 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
  			if (!Xflag) {
  				if (copyfile(curr->fts_path, to.p_path, NULL, COPYFILE_XATTR) < 0)
 -					warn("%s: unable to copy extended attributes to %s", curr->fts_path, to.p_path);
-+                    fprintf(thread_stderr, "cp: %s: unable to copy extended attributes to %s: %s\n", curr->fts_path, to.p_path, strerror(errno));
-+                // warn("%s: unable to copy extended attributes to %s", curr->fts_path, to.p_path);
++                    warn("%s: unable to copy extended attributes to %s", curr->fts_path, to.p_path);
  				/* ACL and mtime set in postorder traversal */
  			}
  #endif /* __APPLE__ */
-@@ -554,12 +600,15 @@
+@@ -554,12 +569,13 @@
  				badcp = rval = 1;
  			break;
  		}
@@ -1390,9 +1322,7 @@ diff -Naur file_cmds-272/cp/cp.c file_cmds/cp/cp.c
 -	fts_close(ftsp);
 +    fts_close(ftsp);
 +    if (errno) {
-+        fprintf(thread_stderr, "cp: fts_read: %s\n", strerror(errno));
-+        ios_exit(1);
-+		// err(1, "fts_read");
++        err(1, "fts_read");
 +    }
  	return (rval);
  }
@@ -1426,16 +1356,7 @@ diff -Naur file_cmds-272/cp/extern.h file_cmds/cp/extern.h
  __END_DECLS
 diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
 --- file_cmds-272/cp/utils.c	2017-04-17 19:33:52.000000000 +0200
-+++ file_cmds/cp/utils.c	2018-04-23 20:32:25.000000000 +0200
-@@ -43,7 +43,7 @@
- #include <sys/mman.h>
- #endif
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <fts.h>
++++ file_cmds/cp/utils.c	2018-05-01 10:08:18.000000000 +0200
 @@ -58,14 +58,15 @@
  #include <copyfile.h>
  #include <string.h>
@@ -1454,17 +1375,16 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  #define	cp_pct(x,y)	(int)(100.0 * (double)(x) / (double)(y))
  
  int
-@@ -86,7 +87,8 @@
+@@ -86,7 +87,7 @@
  	struct stat to_stat;
  
  	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 -		warn("%s", entp->fts_path);
-+        fprintf(thread_stderr, "cp: %s: %s\n", entp->fts_path, strerror(errno));
-+        // warn("%s", entp->fts_path);
++        warn("%s", entp->fts_path);
  		return (1);
  	}
  
-@@ -102,29 +104,30 @@
+@@ -102,29 +103,31 @@
  	 */
  	if (!dne) {
  #define YESNO "(y/n [n]) "
@@ -1481,6 +1401,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
 +		} else if (cp_iflag) {
 +			(void)fprintf(thread_stderr, "overwrite %s? %s", 
  					to.p_path, YESNO);
++            fflush(thread_stderr);
  			checkch = ch = getchar();
  			while (ch != '\n' && ch != EOF)
  				ch = getchar();
@@ -1488,6 +1409,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  				(void)close(from_fd);
 -				(void)fprintf(stderr, "not overwritten\n");
 +				(void)fprintf(thread_stderr, "not overwritten\n");
++                fflush(thread_stderr);
  				return (1);
  			}
  		}
@@ -1498,8 +1420,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  			int error = clonefile(entp->fts_path, to.p_path, 0);
  			if (error)
 -				warn("%s: clonefile failed", to.p_path);
-+                fprintf(thread_stderr, "cp: %s: clonefile failed: %s\n", to.p_path, strerror(errno));
-+            // warn("%s: clonefile failed", to.p_path);
++                warn("%s: clonefile failed", to.p_path);
  			(void)close(from_fd);
  			return error == 0 ? 0 : 1;
  		}
@@ -1521,7 +1442,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  			    /* remove existing destination file name, 
  			     * create a new file  */
  			    (void)unlink(to.p_path);
-@@ -153,10 +156,11 @@
+@@ -153,10 +156,10 @@
  		}
  	} else {
  
@@ -1530,48 +1451,43 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  			int error = clonefile(entp->fts_path, to.p_path, 0);
  			if (error)
 -				warn("%s: clonefile failed", to.p_path);
-+                fprintf(thread_stderr, "cp: %s: clonefile failed: %s\n", to.p_path, strerror(errno));
-+            //  warn("%s: clonefile failed", to.p_path);
++                warn("%s: clonefile failed", to.p_path);
  			(void)close(from_fd);
  			return error == 0 ? 0 : 1;
  		}
-@@ -166,7 +170,8 @@
+@@ -166,7 +169,7 @@
  	}
  
  	if (to_fd == -1) {
 -		warn("%s", to.p_path);
-+        fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+        // warn("%s", to.p_path);
++        warn("%s", to.p_path);
  		(void)close(from_fd);
  		return (1);
  	}
-@@ -200,11 +205,13 @@
+@@ -200,11 +203,11 @@
  	       if ((mode & (S_IRWXG|S_IRWXO))
  		   && fchmod(to_fd, mode & ~(S_IRWXG|S_IRWXO))) {
  		       if (errno != EPERM) /* we have write access but do not own the file */
 -			       warn("%s: fchmod failed", to.p_path);
-+                   fprintf(thread_stderr, "cp: %s: fchmod failed: %s\n", to.p_path, strerror(errno));
-+                   // warn("%s: fchmod failed", to.p_path);
++                   warn("%s: fchmod failed", to.p_path);
  		       mode = 0;
  	       }
         } else {
 -	       warn("%s", to.p_path);
-+           fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+           // warn("%s", to.p_path);
++           warn("%s", to.p_path);
         }
  	/*
  	 * Mmap and write if less than 8M (the limit is so we don't totally
-@@ -216,7 +223,8 @@
+@@ -216,7 +219,7 @@
  	    fs->st_size <= 8 * 1048576) {
  		if ((p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
  		    MAP_SHARED, from_fd, (off_t)0)) == MAP_FAILED) {
 -			warn("%s", entp->fts_path);
-+            fprintf(thread_stderr, "cp: %s: %s\n", entp->fts_path, strerror(errno));
-+            // warn("%s", entp->fts_path);
++            warn("%s", entp->fts_path);
  			rval = 1;
  		} else {
  			wtotal = 0;
-@@ -226,7 +234,7 @@
+@@ -226,7 +229,7 @@
  				wtotal += wcount;
  				if (info) {
  					info = 0;
@@ -1580,24 +1496,22 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  						"%s -> %s %3d%%\n",
  						entp->fts_path, to.p_path,
  						cp_pct(wtotal, fs->st_size));
-@@ -236,12 +244,14 @@
+@@ -236,12 +239,12 @@
  					break;
  			}
  			if (wcount != (ssize_t)wresid) {
 -				warn("%s", to.p_path);
-+                fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+                // warn("%s", to.p_path);
++                warn("%s", to.p_path);
  				rval = 1;
  			}
  			/* Some systems don't unmap on close(2). */
  			if (munmap(p, fs->st_size) < 0) {
 -				warn("%s", entp->fts_path);
-+                fprintf(thread_stderr, "cp: %s: %s\n", entp->fts_path, strerror(errno));
-+                // warn("%s", entp->fts_path);
++                warn("%s", entp->fts_path);
  				rval = 1;
  			}
  		}
-@@ -256,7 +266,7 @@
+@@ -256,7 +259,7 @@
  				wtotal += wcount;
  				if (info) {
  					info = 0;
@@ -1606,38 +1520,34 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  						"%s -> %s %3d%%\n",
  						entp->fts_path, to.p_path,
  						cp_pct(wtotal, fs->st_size));
-@@ -266,13 +276,15 @@
+@@ -266,13 +269,13 @@
  					break;
  			}
  			if (wcount != (ssize_t)wresid) {
 -				warn("%s", to.p_path);
-+                fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+                // warn("%s", to.p_path);
++                warn("%s", to.p_path);
  				rval = 1;
  				break;
  			}
  		}
  		if (rcount < 0) {
 -			warn("%s", entp->fts_path);
-+            fprintf(thread_stderr, "cp: %s: %s\n", entp->fts_path, strerror(errno));
-+            // warn("%s", entp->fts_path);
++            warn("%s", entp->fts_path);
  			rval = 1;
  		}
  	}
-@@ -285,29 +297,33 @@
+@@ -285,29 +288,29 @@
  	 */
  	if (mode != 0)
  		if (fchmod(to_fd, mode))
 -			warn("%s: fchmod failed", to.p_path);
-+            fprintf(thread_stderr, "cp: %s: fchmod failed: %s\n", to.p_path, strerror(errno));
-+            // warn("%s: fchmod failed", to.p_path);
++            warn("%s: fchmod failed", to.p_path);
  #ifdef __APPLE__
  	/* do these before setfile in case copyfile changes mtime */
  	if (!Xflag && S_ISREG(fs->st_mode)) { /* skip devices, etc */
  		if (fcopyfile(from_fd, to_fd, NULL, COPYFILE_XATTR) < 0)
 -			warn("%s: could not copy extended attributes to %s", entp->fts_path, to.p_path);
-+            fprintf(thread_stderr, "cp: %s: could not copy extended attributes to %s: %s\n", entp->fts_path, to.p_path, strerror(errno));
-+            // warn("%s: could not copy extended attributes to %s", entp->fts_path, to.p_path);
++            warn("%s: could not copy extended attributes to %s", entp->fts_path, to.p_path);
  	}
 -	if (pflag && setfile(fs, to_fd))
 +	if (cp_pflag && setfile(fs, to_fd))
@@ -1647,8 +1557,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  		/* If this ACL denies writeattr then setfile will fail... */
  		if (fcopyfile(from_fd, to_fd, NULL, COPYFILE_ACL) < 0)
 -			warn("%s: could not copy ACL to %s", entp->fts_path, to.p_path);
-+            fprintf(thread_stderr, "cp: %s: could not copy ACL to %s: %s\n", entp->fts_path, to.p_path, strerror(errno));
-+            // warn("%s: could not copy ACL to %s", entp->fts_path, to.p_path);
++            warn("%s: could not copy ACL to %s", entp->fts_path, to.p_path);
  	}
  #else  /* !__APPLE__ */
 -	if (pflag && setfile(fs, to_fd))
@@ -1661,31 +1570,27 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  	(void)close(from_fd);
  	if (close(to_fd)) {
 -		warn("%s", to.p_path);
-+        fprintf(thread_stderr, "cp: %s: %s\n", to.p_path, strerror(errno));
-+        // warn("%s", to.p_path);
++        warn("%s", to.p_path);
  		rval = 1;
  	}
  	return (rval);
-@@ -320,53 +336,61 @@
+@@ -320,53 +323,53 @@
  	char llink[PATH_MAX];
  
  	if ((len = readlink(p->fts_path, llink, sizeof(llink) - 1)) == -1) {
 -		warn("readlink: %s", p->fts_path);
-+        fprintf(thread_stderr, "cp: readlink: %s: %s\n", p->fts_path, strerror(errno));
-+        // warn("readlink: %s", p->fts_path);
++        warn("readlink: %s", p->fts_path);
  		return (1);
  	}
  	llink[len] = '\0';
  	if (exists && unlink(to.p_path)) {
 -		warn("unlink: %s", to.p_path);
-+        fprintf(thread_stderr, "cp: unlink: %s: %s\n", to.p_path, strerror(errno));
-+        // warn("unlink: %s", to.p_path);
++        warn("unlink: %s", to.p_path);
  		return (1);
  	}
  	if (symlink(llink, to.p_path)) {
 -		warn("symlink: %s", llink);
-+        fprintf(thread_stderr, "cp: symlink: %s: %s\n", llink, strerror(errno));
-+        // warn("symlink: %s", llink);
++        warn("symlink: %s", llink);
  		return (1);
  	}
  #ifdef __APPLE__
@@ -1693,9 +1598,8 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  		if (copyfile(p->fts_path, to.p_path, NULL, COPYFILE_XATTR | COPYFILE_NOFOLLOW_SRC) <0)
 -			warn("%s: could not copy extended attributes to %s",
 -			     p->fts_path, to.p_path);
-+            // warn("%s: could not copy extended attributes to %s",
-+            fprintf(thread_stderr, "cp: %s: could not copy extended attributes to %s: %s\n",
-+			     p->fts_path, to.p_path, strerror(errno));
++            warn("%s: could not copy extended attributes to %s",
++                 p->fts_path, to.p_path, strerror(errno));
  #endif
 -	return (pflag ? setfile(p->fts_statp, -1) : 0);
 +	return (cp_pflag ? setfile(p->fts_statp, -1) : 0);
@@ -1706,14 +1610,12 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  {
  	if (exists && unlink(to.p_path)) {
 -		warn("unlink: %s", to.p_path);
-+        fprintf(thread_stderr, "cp: unlink: %s: %s\n", to.p_path, strerror(errno));
-+        // warn("unlink: %s", to.p_path);
++        warn("unlink: %s", to.p_path);
  		return (1);
  	}
  	if (mkfifo(to.p_path, from_stat->st_mode)) {
 -		warn("mkfifo: %s", to.p_path);
-+        fprintf(thread_stderr, "cp: mkfifo: %s: %s\n", to.p_path, strerror(errno));
-+        // warn("mkfifo: %s", to.p_path);
++        warn("mkfifo: %s", to.p_path);
  		return (1);
  	}
 -	return (pflag ? setfile(from_stat, -1) : 0);
@@ -1725,14 +1627,12 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  {
  	if (exists && unlink(to.p_path)) {
 -		warn("unlink: %s", to.p_path);
-+        fprintf(thread_stderr, "cp: unlink: %s: %s\n", to.p_path, strerror(errno));
-+        // warn("unlink: %s", to.p_path);
++        warn("unlink: %s", to.p_path);
  		return (1);
  	}
  	if (mknod(to.p_path, from_stat->st_mode, from_stat->st_rdev)) {
 -		warn("mknod: %s", to.p_path);
-+        fprintf(thread_stderr, "cp: mknod: %s: %s\n", to.p_path, strerror(errno));
-+        // warn("mknod: %s", to.p_path);
++        warn("mknod: %s", to.p_path);
  		return (1);
  	}
 -	return (pflag ? setfile(from_stat, -1) : 0);
@@ -1740,53 +1640,48 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  }
  
  int
-@@ -384,7 +408,8 @@
+@@ -384,7 +387,7 @@
  	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
  	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
  	if (fdval ? futimes(fd, tv) : (islink ? lutimes(to.p_path, tv) : utimes(to.p_path, tv))) {
 -		warn("%sutimes: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
-+        fprintf(thread_stderr, "cp: %sutimes: %s: %s\n", fdval ? "f" : (islink ? "l" : ""), to.p_path, strerror(errno));
-+        // warn("%sutimes: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
++        warn("%sutimes: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
  		rval = 1;
  	}
  	if (fdval ? fstat(fd, &ts) : (islink ? lstat(to.p_path, &ts) :
-@@ -405,7 +430,8 @@
+@@ -405,7 +408,7 @@
  								  lchown(to.p_path, fs->st_uid, fs->st_gid) :
  								  chown(to.p_path, fs->st_uid, fs->st_gid))) {
  			    if (errno != EPERM) {
 -				    warn("%schown: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
-+                    fprintf(thread_stderr, "cp: %schown: %s: %s\n", fdval ? "f" : (islink ? "l" : ""), to.p_path, strerror(errno));
-+                    // warn("%schown: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
++                    warn("%schown: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
  				    rval = 1;
  			    }
  			    fs->st_mode &= ~(S_ISUID | S_ISGID);
-@@ -416,7 +442,8 @@
+@@ -416,7 +419,7 @@
  		if (fdval ? fchmod(fd, fs->st_mode) : (islink ?
  						       lchmod(to.p_path, fs->st_mode) :
  						       chmod(to.p_path, fs->st_mode))) {
 -			warn("%schmod: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
-+            fprintf(thread_stderr, "cp: %schmod: %s: %s\n", fdval ? "f" : (islink ? "l" : ""), to.p_path, strerror(errno));
-+            // warn("%schmod: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
++            warn("%schmod: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
  			rval = 1;
  		}
  	}
-@@ -426,7 +453,8 @@
+@@ -426,7 +429,7 @@
  							  lchflags(to.p_path, fs->st_flags) :
  							  chflags(to.p_path, fs->st_flags))) {
  			if (errno != EPERM) {
 -				warn("%schflags: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
-+                fprintf(thread_stderr, "cp: %schflags: %s: %s\n", fdval ? "f" : (islink ? "l" : ""), to.p_path, strerror(errno));
-+                // warn("%schflags: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
++                warn("%schflags: %s", fdval ? "f" : (islink ? "l" : ""), to.p_path);
  				rval = 1;
  			}
  		}
-@@ -446,14 +474,16 @@
+@@ -446,14 +449,14 @@
  		return (0);
  	acl = acl_get_fd(source_fd);
  	if (acl == NULL) {
 -		warn("failed to get acl entries while setting %s", to.p_path);
-+        fprintf(thread_stderr, "cp: failed to get acl entries while setting %s: %s\n", to.p_path, strerror(errno));
-+        // warn("failed to get acl entries while setting %s", to.p_path);
++        warn("failed to get acl entries while setting %s", to.p_path);
  		return (1);
  	}
  	aclp = &acl->ats_acl;
@@ -1794,20 +1689,16 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  		return (0);
  	if (acl_set_fd(dest_fd, acl) < 0) {
 -		warn("failed to set acl entries for %s", to.p_path);
-+        fprintf(thread_stderr, "cp: failed to set acl entries for %s: %s\n", to.p_path, strerror(errno));
-+        // warn("failed to set acl entries for %s", to.p_path);
++        warn("failed to set acl entries for %s", to.p_path);
  		return (1);
  	}
  	return (0);
-@@ -487,25 +517,29 @@
- 	 */
+@@ -488,24 +491,24 @@
  	acl = aclgetf(source_dir, ACL_TYPE_DEFAULT);
  	if (acl == NULL) {
--		warn("failed to get default acl entries on %s",
+ 		warn("failed to get default acl entries on %s",
 -		    source_dir);
-+		// warn("failed to get default acl entries on %s",
-+        fprintf(thread_stderr, "cp: failed to get default acl entries on %s: %s\n",
-+		    source_dir, strerror(errno));
++            source_dir, strerror(errno));
  		return (1);
  	}
  	aclp = &acl->ats_acl;
@@ -1815,27 +1706,24 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  	    ACL_TYPE_DEFAULT, acl) < 0) {
 -		warn("failed to set default acl entries on %s",
 -		    dest_dir);
-+        // warn("failed to set default acl entries on %s",
-+        fprintf(thread_stderr, "cp: failed to set default acl entries on %s: %s\n",
-+		    dest_dir, strerror(errno));
++        warn("failed to set default acl entries on %s",
++            dest_dir, strerror(errno));
  		return (1);
  	}
  	acl = aclgetf(source_dir, ACL_TYPE_ACCESS);
  	if (acl == NULL) {
 -		warn("failed to get acl entries on %s", source_dir);
-+        fprintf(thread_stderr, "cp: failed to get acl entries on %s: %s\n", source_dir, strerror(errno));
-+        // warn("failed to get acl entries on %s", source_dir);
++        warn("failed to get acl entries on %s", source_dir);
  		return (1);
  	}
  	aclp = &acl->ats_acl;
  	if (aclsetf(dest_dir, ACL_TYPE_ACCESS, acl) < 0) {
 -		warn("failed to set acl entries on %s", dest_dir);
-+        fprintf(thread_stderr, "cp: failed to set acl entries on %s: %s\n", dest_dir, strerror(errno));
-+        // warn("failed to set acl entries on %s", dest_dir);
++        warn("failed to set acl entries on %s", dest_dir);
  		return (1);
  	}
  	return (0);
-@@ -513,16 +547,16 @@
+@@ -513,16 +516,16 @@
  #endif /* !__APPLE__ */
  
  void
@@ -1857,16 +1745,7 @@ diff -Naur file_cmds-272/cp/utils.c file_cmds/cp/utils.c
  "target_directory");
 diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
 --- file_cmds-272/df/df.c	2015-05-13 02:57:59.000000000 +0200
-+++ file_cmds/df/df.c	2018-04-23 20:32:25.000000000 +0200
-@@ -61,7 +61,7 @@
- #include <sys/stat.h>
- #include <sys/mount.h>
- #include <sys/sysctl.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <fstab.h>
++++ file_cmds/df/df.c	2018-04-30 21:41:22.000000000 +0200
 @@ -71,11 +71,12 @@
  #include <string.h>
  #include <sysexits.h>
@@ -1961,69 +1840,57 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	}
  
  	vfslist = NULL;
-@@ -204,8 +212,11 @@
+@@ -204,8 +212,9 @@
  			hflag = 0;
  			break;
  		case 'l':
 -			if (tflag)
--				errx(1, "-l and -T are mutually exclusive.");
 +            if (tflag) {
-+				// errx(1, "-l and -T are mutually exclusive.");
-+                fprintf(thread_stderr, "df: -l and -T are mutually exclusive.\n");
-+                ios_exit(1);
+ 				errx(1, "-l and -T are mutually exclusive.");
 +            }
  			if (vfslist != NULL)
  				break;
  			vfslist = makevfslist(makenetvfslist());
-@@ -225,10 +236,16 @@
+@@ -225,10 +234,12 @@
  			}
  		case 'T':
  			if (vfslist != NULL) {
 -				if (tflag)
--					errx(1, "only one -%c option may be specified", ch);
--				else
--					errx(1, "-l and -%c are mutually exclusive.", ch);
 +                if (tflag) {
-+					// errx(1, "only one -%c option may be specified", ch);
-+                    fprintf(thread_stderr, "df: only one -%c option may be specified\n", ch);
-+                    ios_exit(1);
+ 					errx(1, "only one -%c option may be specified", ch);
+-				else
 +                }
 +                else {
-+					// errx(1, "-l and -%c are mutually exclusive.", ch);
-+                    fprintf(thread_stderr, "df: -l and -%c are mutually exclusive.\n", ch);
-+                    ios_exit(1);
+ 					errx(1, "-l and -%c are mutually exclusive.", ch);
 +                }
  			}
  			tflag++;
  			vfslist = makevfslist(optarg);
-@@ -269,12 +286,14 @@
+@@ -269,12 +280,12 @@
  	for (; *argv; argv++) {
  		if (stat(*argv, &stbuf) < 0) {
  			if ((mntpt = getmntpt(*argv)) == 0) {
 -				warn("%s", *argv);
-+                fprintf(thread_stderr, "df: %s: %s\n", *argv, strerror(errno));
-+                // warn("%s", *argv);
++                warn("%s", *argv);
  				rv = 1;
  				continue;
  			}
  		} else if (S_ISCHR(stbuf.st_mode) || S_ISBLK(stbuf.st_mode)) {
 -			warnx("%s: Raw devices not supported", *argv);
-+            fprintf(thread_stderr, "df: %s: Raw devices not supported: %s\n", *argv, strerror(errno));
-+            // warnx("%s: Raw devices not supported", *argv);
++            warnx("%s: Raw devices not supported", *argv);
  			rv = 1;
  			continue;
  		} else
-@@ -284,7 +303,8 @@
+@@ -284,7 +295,7 @@
  		 * implement nflag here.
  		 */
  		if (statfs(mntpt, &statfsbuf) < 0) {
 -			warn("%s", mntpt);
-+            fprintf(thread_stderr, "df: %s: %s\n", mntpt, strerror(errno));
-+            // warn("%s", mntpt);
++            warn("%s", mntpt);
  			rv = 1;
  			continue;
  		}
-@@ -405,9 +425,9 @@
+@@ -405,9 +416,9 @@
  			bytes, "", HN_AUTOSCALE, flags);
  
  	if (hflag == UNITS_SI)
@@ -2035,17 +1902,16 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	    
  }
  
-@@ -418,7 +438,8 @@
+@@ -418,7 +429,7 @@
  static intmax_t fsbtoblk(int64_t num, uint64_t fsbs, u_long bs, char *fs) 
  {
  	if (num < 0) {
 -		warnx("negative filesystem block count/size from fs %s", fs);
-+        fprintf(thread_stderr, "df: negative filesystem block count/size from fs %s\n", fs);
-+        // warnx("negative filesystem block count/size from fs %s", fs);
++        warnx("negative filesystem block count/size from fs %s", fs);
  		return 0;
  	} else if ((fsbs != 0) && (fsbs < bs)) {
  		return (num / (intmax_t) (bs / fsbs));
-@@ -434,7 +455,7 @@
+@@ -434,7 +445,7 @@
  prtstat(struct statfs *sfsp, struct maxwidths *mwp)
  {
  	static long blocksize;
@@ -2054,7 +1920,7 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	static const char *header;
  	uint64_t used, availblks, inodes;
  	char * avail_str;
-@@ -456,19 +477,19 @@
+@@ -456,19 +467,19 @@
  		}
  		mwp->avail = imax(mwp->avail, (int)strlen(avail_str));
  
@@ -2078,7 +1944,7 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	if (sfsp->f_blocks > sfsp->f_bfree)
  		used = sfsp->f_blocks - sfsp->f_bfree;
  	else
-@@ -477,7 +498,7 @@
+@@ -477,7 +488,7 @@
  	if (hflag) {
  		prthuman(sfsp, used);
  	} else {
@@ -2087,7 +1953,7 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  			     fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize, sfsp->f_mntonname),
  			     mwp->used, fsbtoblk(used, sfsp->f_bsize, blocksize, sfsp->f_mntonname),
  			     mwp->avail, fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize, sfsp->f_mntonname));
-@@ -492,20 +513,20 @@
+@@ -492,20 +503,20 @@
  			value = (double)used / (double)availblks * 100.0;
  			if ((value-(int)value) > 0.0) value = value + 1.0;
  		}
@@ -2113,7 +1979,7 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  }
  
  /*
-@@ -558,7 +579,7 @@
+@@ -558,7 +569,7 @@
  {
  
  	char *t_flag = COMPAT_MODE("bin/df", "unix2003") ? "[-t]" : "[-t type]";
@@ -2122,62 +1988,53 @@ diff -Naur file_cmds-272/df/df.c file_cmds/df/df.c
  	    "usage: df [-b | -H | -h | -k | -m | -g | -P] [-ailn] [-T type] %s [filesystem ...]\n", t_flag);
  	exit(EX_USAGE);
  }
-@@ -581,12 +602,14 @@
+@@ -581,12 +592,12 @@
  	miblen=sizeof(maxvfsconf);
  	if (sysctl(mib, 3,
  	    &maxvfsconf, &miblen, NULL, 0)) {
 -		warn("sysctl failed");
-+        fprintf(thread_stderr, "df: sysctl failed: %s\n", strerror(errno));
-+        // warn("sysctl failed");
++        warn("sysctl failed");
  		return (NULL);
  	}
  
  	if ((listptr = malloc(sizeof(char*) * maxvfsconf)) == NULL) {
 -		warnx("malloc failed");
-+        fprintf(thread_stderr, "df: malloc failed: %s\n", strerror(errno));
-+        // warnx("malloc failed");
++        warnx("malloc failed");
  		return (NULL);
  	}
  
-@@ -595,7 +618,8 @@
+@@ -595,7 +606,7 @@
  		if (ptr->vfc_flags & VFCF_NETWORK) {
  			listptr[cnt++] = strdup(ptr->vfc_name);
  			if (listptr[cnt-1] == NULL) {
 -				warnx("malloc failed");
-+                fprintf(thread_stderr, "df: malloc failed: %s\n", strerror(errno));
-+				// warnx("malloc failed");
++                warnx("malloc failed");
  				return (NULL);
  			}
  		}
-@@ -609,7 +633,8 @@
+@@ -609,7 +620,7 @@
  	                        listptr[cnt++] = strdup(vfc.vfc_name);
  	                        if (listptr[cnt-1] == NULL) {
  					free(listptr);
 -	                                warnx("malloc failed");
-+                                fprintf(thread_stderr, "df: malloc failed: %s\n", strerror(errno));
-+	                                // warnx("malloc failed");
++                                warnx("malloc failed");
  	                                return (NULL);
  	                        }
  	                }
-@@ -620,7 +645,8 @@
+@@ -620,7 +631,7 @@
  	if (cnt == 0 ||
  	    (str = malloc(sizeof(char) * (32 * cnt + cnt + 2))) == NULL) {
  		if (cnt > 0)
 -			warnx("malloc failed");
-+            fprintf(thread_stderr, "df: malloc failed: %s\n", strerror(errno));
-+			// warnx("malloc failed");
++            warnx("malloc failed");
  		free(listptr);
  		return (NULL);
  	}
 diff -Naur file_cmds-272/df/vfslist.c file_cmds/df/vfslist.c
 --- file_cmds-272/df/vfslist.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/df/vfslist.c	2018-04-23 20:32:25.000000000 +0200
-@@ -40,9 +40,12 @@
-   "$FreeBSD: src/sbin/mount/vfslist.c,v 1.4 1999/08/28 00:13:27 peter Exp $";
- #endif /* not lint */
- 
--#include <err.h>
-+// #include <err.h>
++++ file_cmds/df/vfslist.c	2018-04-30 21:42:33.000000000 +0200
+@@ -43,6 +43,9 @@
+ #include <err.h>
  #include <stdlib.h>
  #include <string.h>
 +#include <stdio.h>
@@ -2186,28 +2043,18 @@ diff -Naur file_cmds-272/df/vfslist.c file_cmds/df/vfslist.c
  
  #ifndef __APPLE__
  #include "extern.h"
-@@ -88,7 +91,8 @@
+@@ -88,7 +91,7 @@
  		if (*cnextcp == ',')
  			i++;
  	if ((av = malloc((size_t)(i + 2) * sizeof(char *))) == NULL) {
 -		warnx("malloc failed");
-+        fprintf(thread_stderr, "df: malloc failed: %s\n", strerror(errno));
-+        // warnx("malloc failed");
++        warnx("malloc failed");
  		return (NULL);
  	}
  	nextcp = strdup(fslist);
 diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
 --- file_cmds-272/du/du.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/du/du.c	2018-04-30 13:33:18.000000000 +0200
-@@ -55,7 +55,7 @@
- #include <sys/stat.h>
- #include <sys/attr.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fnmatch.h>
- #include <fts.h>
++++ file_cmds/du/du.c	2018-04-30 21:49:07.000000000 +0200
 @@ -67,10 +67,11 @@
  #include <string.h>
  #include <sysexits.h>
@@ -2269,31 +2116,27 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  
  	save = argv;
  	ftsoptions = FTS_NOCHDIR;
-@@ -169,7 +171,8 @@
+@@ -169,7 +171,7 @@
  				errno = 0;
  				depth = atoi(optarg);
  				if (errno == ERANGE || depth < 0) {
 -					warnx("invalid argument to option d: %s", optarg);
-+                    fprintf(thread_stderr, "du: invalid argument to option d: %s\n", optarg);
-+                    // warnx("invalid argument to option d: %s", optarg);
++                    warnx("invalid argument to option d: %s", optarg);
  					usage();
  				}
  				break;
-@@ -257,8 +260,11 @@
+@@ -257,8 +259,9 @@
  
  	rval = 0;
  
 -	if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL)
--		err(1, "fts_open");
 +    if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL) {
-+		// err(1, "fts_open");
-+        fprintf(thread_stderr, "du: fts_open: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "fts_open");
 +    }
  
  	while ((p = fts_read(fts)) != NULL) {
  		switch (p->fts_info) {
-@@ -281,9 +287,9 @@
+@@ -281,9 +284,9 @@
  				if (p->fts_level <= depth) {
  					if (hflag) {
  						(void) prthumanval(howmany(*ftsnum, blocksize));
@@ -2305,37 +2148,16 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  					    (intmax_t)howmany(*ftsnum, blocksize),
  					    p->fts_path);
  					}
-@@ -291,13 +297,16 @@
- 				break;
- 			case FTS_DC:			/* Ignore. */
- 				if (COMPAT_MODE("bin/du", "unix2003")) {
--					errx(1, "Can't follow symlink cycle from %s to %s", p->fts_path, p->fts_cycle->fts_path);
-+					// errx(1, "Can't follow symlink cycle from %s to %s", p->fts_path, p->fts_cycle->fts_path);
-+                    fprintf(thread_stderr, "du: Can't follow symlink cycle from %s to %s\n", p->fts_path, p->fts_cycle->fts_path);
-+                    ios_exit(1);
- 				}
- 				break;
+@@ -297,7 +300,7 @@
  			case FTS_DNR:			/* Warn, continue. */
  			case FTS_ERR:
  			case FTS_NS:
 -				warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
-+                fprintf(thread_stderr, "du: %s: %s\n", p->fts_path, strerror(p->fts_errno));
-+                // warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
++                warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
  				rval = 1;
  				break;
  			case FTS_SLNONE:
-@@ -305,7 +314,9 @@
- 					struct stat sb;
- 					int rc = stat(p->fts_path, &sb);
- 					if (rc < 0 && errno == ELOOP) {
--						errx(1, "Too many symlinks at %s", p->fts_path);
-+						// errx(1, "Too many symlinks at %s", p->fts_path);
-+                        fprintf(thread_stderr, "du: Too many symlinks at %s\n", p->fts_path);
-+                        ios_exit(1);
- 					}
- 				}
- 			default:
-@@ -324,14 +335,14 @@
+@@ -324,14 +327,14 @@
  						(void) prthumanval(howmany(howmany(p->fts_statp->st_size, 512LL),
  							blocksize));
  					    }
@@ -2353,16 +2175,13 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  							(intmax_t)howmany(howmany(p->fts_statp->st_size, 512LL), blocksize),
  							p->fts_path);
  					    }
-@@ -348,15 +359,18 @@
+@@ -348,15 +351,16 @@
  		savednumber = ((off_t *)&p->fts_parent->fts_number)[0];
  	}
  
 -	if (errno)
--		err(1, "fts_read");
 +    if (errno) {
-+		// err(1, "fts_read");
-+        fprintf(thread_stderr, "du: fts_read: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "fts_read");
 +    }
  
  	if (cflag) {
@@ -2376,75 +2195,65 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  		}
  	}
  
-@@ -391,8 +405,11 @@
+@@ -391,8 +395,9 @@
  	if (buckets == NULL) {
  		number_buckets = links_hash_initial_size;
  		buckets = malloc(number_buckets * sizeof(buckets[0]));
 -		if (buckets == NULL)
--			errx(1, "No memory for hardlink detection");
 +        if (buckets == NULL) {
-+			// errx(1, "No memory for hardlink detection");
-+            fprintf(thread_stderr, "du: No memory for hardlink detection\n");
-+            ios_exit(1);
+ 			errx(1, "No memory for hardlink detection");
 +        }
  		for (i = 0; i < number_buckets; i++)
  			buckets[i] = NULL;
  	}
-@@ -414,7 +431,8 @@
+@@ -414,7 +419,7 @@
  
  		if (new_buckets == NULL) {
  			stop_allocating = 1;
 -			warnx("No more memory for tracking hard links");
-+            fprintf(thread_stderr, "du: No more memory for tracking hard links\n");
-+            // warnx("No more memory for tracking hard links");
++            warnx("No more memory for tracking hard links");
  		} else {
  			memset(new_buckets, 0,
  			    new_size * sizeof(struct links_entry *));
-@@ -482,7 +500,8 @@
+@@ -482,7 +487,7 @@
  		le = malloc(sizeof(struct links_entry));
  	if (le == NULL) {
  		stop_allocating = 1;
 -		warnx("No more memory for tracking hard links");
-+        fprintf(thread_stderr, "du: No more memory for tracking hard links\n");
-+		// warnx("No more memory for tracking hard links");
++        warnx("No more memory for tracking hard links");
  		return (0);
  	}
  	le->dev = st->st_dev;
-@@ -536,8 +555,11 @@
+@@ -536,8 +541,9 @@
  	if (buckets == NULL) {
  		number_buckets = links_hash_initial_size;
  		buckets = malloc(number_buckets * sizeof(buckets[0]));
 -		if (buckets == NULL)
--			errx(1, "No memory for directory hardlink detection");
 +        if (buckets == NULL) {
-+			// errx(1, "No memory for directory hardlink detection");
-+            fprintf(thread_stderr, "du: No memory for directory hardlink detection\n");
-+            ios_exit(1);
+ 			errx(1, "No memory for directory hardlink detection");
 +        }
  		for (i = 0; i < number_buckets; i++)
  			buckets[i] = NULL;
  	}
-@@ -559,7 +581,8 @@
+@@ -559,7 +565,7 @@
  
  		if (new_buckets == NULL) {
  			stop_allocating = 1;
 -			warnx("No more memory for tracking directory hard links");
-+            fprintf(thread_stderr, "du: No more memory for tracking directory hard links\n");
-+			// warnx("No more memory for tracking directory hard links");
++            warnx("No more memory for tracking directory hard links");
  		} else {
  			memset(new_buckets, 0,
  			    new_size * sizeof(struct links_entry *));
-@@ -626,7 +649,8 @@
+@@ -626,7 +632,7 @@
  		le = malloc(sizeof(struct links_entry));
  	if (le == NULL) {
  		stop_allocating = 1;
 -		warnx("No more memory for tracking hard links");
-+        fprintf(thread_stderr, "du: No more memory for tracking hard links\n");
-+		// warnx("No more memory for tracking hard links");
++        warnx("No more memory for tracking hard links");
  		return (0);
  	}
  	le->dev = st->st_dev;
-@@ -677,17 +701,17 @@
+@@ -677,17 +683,17 @@
  	unit = unit_adjust(&bytes);
  
  	if (bytes == 0)
@@ -2466,31 +2275,25 @@ diff -Naur file_cmds-272/du/du.c file_cmds/du/du.c
  		"usage: du [-H | -L | -P] [-a | -s | -d depth] [-c] [-h | -k | -m | -g] [-x] [-I mask] [file ...]\n");
  	exit(EX_USAGE);
  }
-@@ -698,11 +722,17 @@
+@@ -698,11 +704,13 @@
  	struct ignentry *ign;
  
  	ign = calloc(1, sizeof(*ign));
 -	if (ign == NULL)
--		errx(1, "cannot allocate memory");
 +    if (ign == NULL) {
-+		// errx(1, "cannot allocate memory");
-+        fprintf(thread_stderr, "du: cannot allocate memory\n");
-+        ios_exit(1);
+ 		errx(1, "cannot allocate memory");
 +    }
  	ign->mask = strdup(mask);
 -	if (ign->mask == NULL)
--		errx(1, "cannot allocate memory");
 +    if (ign->mask == NULL) {
-+		// errx(1, "cannot allocate memory");
-+        fprintf(thread_stderr, "du: cannot allocate memory\n");
-+        ios_exit(1);
+ 		errx(1, "cannot allocate memory");
 +    }
  	SLIST_INSERT_HEAD(&ignores, ign, next);
  }
  
 diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 --- file_cmds-272/gzip/gzip.c	2016-07-29 20:21:04.000000000 +0200
-+++ file_cmds/gzip/gzip.c	2018-04-30 17:10:40.000000000 +0200
++++ file_cmds/gzip/gzip.c	2018-05-01 10:09:41.000000000 +0200
 @@ -68,9 +68,14 @@
  #ifdef __APPLE__
  #include <sys/attr.h>
@@ -2577,21 +2380,18 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			break;
  		case 'f':
  			fflag = 1;
-@@ -401,8 +417,11 @@
+@@ -401,8 +417,9 @@
  		case 'S':
  			len = strlen(optarg);
  			if (len != 0) {
 -				if (len > SUFFIX_MAXLEN)
--					errx(1, "incorrect suffix: '%s': too long", optarg);
 +                if (len > SUFFIX_MAXLEN) {
-+					// errx(1, "incorrect suffix: '%s': too long", optarg);
-+                    fprintf(thread_stderr, "incorrect suffix: '%s': too long", optarg);
-+                    ios_exit(1);
+ 					errx(1, "incorrect suffix: '%s': too long", optarg);
 +                }
  				suffixes[0].zipped = optarg;
  				suffixes[0].ziplen = len;
  			} else {
-@@ -1181,14 +1200,15 @@
+@@ -1181,14 +1198,16 @@
  	if (lflag == 0 && stat(outfile, &sb) == 0) {
  		if (fflag)
  			unlink(outfile);
@@ -2604,6 +2404,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
 +			fprintf(thread_stderr, "%s already exists -- do you wish to "
  					"overwrite (y or n)? " , outfile);
 -			(void)fgets(ans, sizeof(ans) - 1, stdin);
++            fflush(thread_stderr);
 +			(void)fgets(ans, sizeof(ans) - 1, thread_stdin);
  			if (ans[0] != 'y' && ans[0] != 'Y') {
 -				fprintf(stderr, "\tnot overwriting\n");
@@ -2611,7 +2412,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  				ok = 0;
  			} else
  				unlink(outfile);
-@@ -1336,14 +1356,14 @@
+@@ -1336,14 +1355,14 @@
  		out = open(outfile, O_WRONLY | O_CREAT | O_EXCL, 0600);
  		if (out == -1) {
  			maybe_warn("could not create output: %s", outfile);
@@ -2628,7 +2429,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
  	insize = gz_compress(in, out, &size, basename(file), (uint32_t)isb.st_mtime);
  
-@@ -1520,10 +1540,10 @@
+@@ -1520,10 +1539,10 @@
  
  	if (cflag == 0 && lflag == 0) {
  		zfd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
@@ -2641,7 +2442,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		}
  		if (zfd == -1) {
  			maybe_warn("can't open %s", outfile);
-@@ -1533,7 +1553,7 @@
+@@ -1533,7 +1552,7 @@
  		remove_file = outfile;
  #endif
  	} else
@@ -2650,7 +2451,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
  	switch (method) {
  #ifndef NO_BZIP2_SUPPORT
-@@ -1630,7 +1650,7 @@
+@@ -1630,7 +1649,7 @@
  
  	if (close(fd) != 0)
  		maybe_warn("couldn't close input");
@@ -2659,7 +2460,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		maybe_warn("couldn't close output");
  
  	if (size == -1) {
-@@ -1688,7 +1708,7 @@
+@@ -1688,7 +1707,7 @@
      lose:
  	if (fd != -1)
  		close(fd);
@@ -2668,7 +2469,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		close(fd);
  	return -1;
  }
-@@ -1702,8 +1722,9 @@
+@@ -1702,8 +1721,9 @@
  	ssize_t w;
  
  	in_tot = count;
@@ -2680,7 +2481,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		maybe_warn("write to stdout");
  		return -1;
  	}
-@@ -1718,7 +1739,8 @@
+@@ -1718,7 +1738,8 @@
  			break;
  		}
  
@@ -2690,7 +2491,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			maybe_warn("write to stdout");
  			break;
  		}
-@@ -1743,7 +1765,8 @@
+@@ -1743,7 +1764,8 @@
  #endif
  
  #ifndef SMALL
@@ -2700,7 +2501,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  		maybe_warnx("standard input is a terminal -- ignoring");
  		return;
  	}
-@@ -1753,15 +1776,15 @@
+@@ -1753,15 +1775,15 @@
  		struct stat isb;
  
  		/* XXX could read the whole file, etc. */
@@ -2719,7 +2520,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	if (bytes_read == -1) {
  		maybe_warn("can't read stdin");
  		return;
-@@ -1778,40 +1801,40 @@
+@@ -1778,40 +1800,40 @@
  			maybe_warnx("unknown compression format");
  			return;
  		}
@@ -2767,7 +2568,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			     (char *)header1, sizeof header1, &gsize);
  		break;
  #endif
-@@ -1836,13 +1859,14 @@
+@@ -1836,13 +1858,14 @@
  	int ret;
  
  #ifndef SMALL
@@ -2784,7 +2585,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
  #ifndef SMALL
  	if (ret < 0) {
-@@ -1864,7 +1888,7 @@
+@@ -1864,7 +1887,7 @@
  		mtime = (uint32_t)systime;
  	}
  	 		
@@ -2793,17 +2594,16 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifndef SMALL
          if (vflag && !tflag && usize != -1 && gsize != -1)
  		print_verbage(NULL, NULL, usize, gsize);
-@@ -1991,7 +2015,8 @@
- 	path_argv[1] = 0;
+@@ -1992,7 +2015,7 @@
  	fts = fts_open(path_argv, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
  	if (fts == NULL) {
--		warn("couldn't fts_open %s", dir);
-+		// warn("couldn't fts_open %s", dir);
-+        fprintf(thread_stderr, "gzip: couldn't fts_open %s: %s\n", dir, strerror(errno));
- 		return;
+ 		warn("couldn't fts_open %s", dir);
+-		return;
++        return;
  	}
  
-@@ -2058,13 +2083,13 @@
+ 	while ((entry = fts_read(fts))) {
+@@ -2058,13 +2081,13 @@
  print_verbage(const char *file, const char *nfile, off_t usize, off_t gsize)
  {
  	if (file)
@@ -2822,7 +2622,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  
  /* print test results */
-@@ -2074,9 +2099,9 @@
+@@ -2074,9 +2097,9 @@
  
  	if (exit_value == 0 && ok == 0)
  		exit_value = 1;
@@ -2834,7 +2634,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  #endif
  
-@@ -2098,10 +2123,10 @@
+@@ -2098,10 +2121,10 @@
  	if (first) {
  #ifndef SMALL
  		if (vflag)
@@ -2847,7 +2647,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  			       "ratio uncompressed_name\n");
  	}
  	first = 0;
-@@ -2140,23 +2165,23 @@
+@@ -2140,23 +2163,23 @@
  
  #ifndef SMALL
  	if (vflag && fd == -1)
@@ -2876,7 +2676,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  }
  
  /* display the usage of NetBSD gzip */
-@@ -2164,8 +2189,8 @@
+@@ -2164,8 +2187,8 @@
  usage(void)
  {
  
@@ -2887,7 +2687,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  #ifdef SMALL
      "usage: %s [-" OPT_LIST "] [<file> [<file> ...]]\n",
  #else
-@@ -2191,7 +2216,7 @@
+@@ -2191,7 +2214,7 @@
      " -V --version         display program version\n"
      " -v --verbose         print extra statistics\n",
  #endif
@@ -2896,7 +2696,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	exit(0);
  }
  
-@@ -2202,11 +2227,11 @@
+@@ -2202,11 +2225,11 @@
  {
  
  #ifdef __APPLE__
@@ -2911,7 +2711,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  	exit(0);
  }
  #endif
-@@ -2216,7 +2241,7 @@
+@@ -2216,7 +2239,7 @@
  display_version(void)
  {
  
@@ -2922,16 +2722,7 @@ diff -Naur file_cmds-272/gzip/gzip.c file_cmds/gzip/gzip.c
  
 diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
 --- file_cmds-272/ln/ln.c	2013-10-31 01:07:31.000000000 +0100
-+++ file_cmds/ln/ln.c	2018-04-23 20:32:25.000000000 +0200
-@@ -44,7 +44,7 @@
- #include <sys/param.h>
- #include <sys/stat.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <libgen.h>
- #include <limits.h>
++++ file_cmds/ln/ln.c	2018-04-30 21:52:34.000000000 +0200
 @@ -52,27 +52,30 @@
  #include <stdlib.h>
  #include <string.h>
@@ -2997,27 +2788,18 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  	default:
  		;
  	}
-@@ -152,10 +156,15 @@
- 		 * the target--simulate "not a directory" error
- 		 */
+@@ -154,8 +158,9 @@
  		errno = ENOTDIR;
--		err(1, "%s", sourcedir);
--	}
+ 		err(1, "%s", sourcedir);
+ 	}
 -	if (stat(sourcedir, &sb))
--		err(1, "%s", sourcedir);
-+		// err(1, "%s", sourcedir);
-+        fprintf(thread_stderr, "ln: %s: %s\n", sourcedir, strerror(errno));
-+        ios_exit(1);
-+	}
 +    if (stat(sourcedir, &sb)) {
-+		// err(1, "%s", sourcedir);
-+        fprintf(thread_stderr, "ln: %s: %s\n", sourcedir, strerror(errno));
-+        ios_exit(1);
+ 		err(1, "%s", sourcedir);
 +    }
  	if (!S_ISDIR(sb.st_mode))
  		usage();
  	for (exitval = 0; *argv != sourcedir; ++argv)
-@@ -163,7 +172,7 @@
+@@ -163,7 +168,7 @@
  	exit(exitval);
  }
  
@@ -3026,47 +2808,42 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  linkit(const char *target, const char *source, int isdir)
  {
  	struct stat sb;
-@@ -175,13 +184,15 @@
+@@ -175,13 +180,13 @@
  	if (!sflag) {
  		/* If target doesn't exist, quit now. */
  		if (stat(target, &sb)) {
 -			warn("%s", target);
-+            fprintf(thread_stderr, "ln: %s: %s\n", target, strerror(errno));
-+            // warn("%s", target);
++            warn("%s", target);
  			return (1);
  		}
  		/* Only symbolic links to directories. */
  		if (S_ISDIR(sb.st_mode)) {
  			errno = EISDIR;
 -			warn("%s", target);
-+            fprintf(thread_stderr, "ln: %s: %s\n", target, strerror(errno));
-+			// warn("%s", target);
++            warn("%s", target);
  			return (1);
  		}
  	}
-@@ -198,7 +209,8 @@
+@@ -198,7 +203,7 @@
  		    snprintf(path, sizeof(path), "%s/%s", source, p) >=
  		    (ssize_t)sizeof(path)) {
  			errno = ENAMETOOLONG;
 -			warn("%s", target);
-+            fprintf(thread_stderr, "ln: %s: %s\n", target, strerror(errno));
-+			// warn("%s", target);
++            warn("%s", target);
  			return (1);
  		}
  		source = path;
-@@ -212,50 +224,55 @@
+@@ -212,50 +217,51 @@
  	if (fflag && exists) {
  		if (Fflag && S_ISDIR(sb.st_mode)) {
  			if (rmdir(source)) {
 -				warn("%s", source);
-+                fprintf(thread_stderr, "ln: %s: %s\n", source, strerror(errno));
-+				// warn("%s", source);
++                warn("%s", source);
  				return (1);
  			}
  		} else if (unlink(source)) {
 -			warn("%s", source);
-+            fprintf(thread_stderr, "ln: %s: %s\n", source, strerror(errno));
-+			// warn("%s", source);
++            warn("%s", source);
  			return (1);
  		}
  	} else if (iflag && exists) {
@@ -3074,6 +2851,7 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
 -		fprintf(stderr, "replace %s? ", source);
 +		fflush(thread_stdout);
 +		fprintf(thread_stderr, "replace %s? ", source);
++        fflush(thread_stderr);
  
  		first = ch = getchar();
  		while(ch != '\n' && ch != EOF)
@@ -3087,14 +2865,12 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  		if (Fflag && S_ISDIR(sb.st_mode)) {
  			if (rmdir(source)) {
 -				warn("%s", source);
-+                fprintf(thread_stderr, "ln: %s: %s\n", source, strerror(errno));
-+				// warn("%s", source);
++                warn("%s", source);
  				return (1);
  			}
  		} else if (unlink(source)) {
 -			warn("%s", source);
-+            fprintf(thread_stderr, "ln: %s: %s\n", source, strerror(errno));
-+			// warn("%s", source);
++            warn("%s", source);
  			return (1);
  		}
  	}
@@ -3102,8 +2878,7 @@ diff -Naur file_cmds-272/ln/ln.c file_cmds/ln/ln.c
  	/* Attempt the link. */
  	if ((*linkf)(target, source)) {
 -		warn("%s", source);
-+        fprintf(thread_stderr, "ln: %s: %s\n", source, strerror(errno));
-+		// warn("%s", source);
++        warn("%s", source);
  		return (1);
  	}
  	if (vflag)
@@ -3135,16 +2910,7 @@ diff -Naur file_cmds-272/ls/extern.h file_cmds/ls/extern.h
  int	 prn_octal(const char *);
 diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
 --- file_cmds-272/ls/ls.c	2014-07-04 00:38:26.000000000 +0200
-+++ file_cmds/ls/ls.c	2018-04-30 13:33:28.000000000 +0200
-@@ -54,7 +54,7 @@
- #include <sys/ioctl.h>
- 
- #include <dirent.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fts.h>
- #include <grp.h>
++++ file_cmds/ls/ls.c	2018-04-30 21:58:42.000000000 +0200
 @@ -65,20 +65,22 @@
  #include <stdlib.h>
  #include <string.h>
@@ -3408,40 +3174,36 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  
  /*
   * Traverse() walks the logical directory structure specified by the argv list
-@@ -507,8 +571,11 @@
+@@ -507,8 +571,9 @@
  	int ch_options, error;
  
  	if ((ftsp =
 -	    fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL)
--		err(1, "fts_open");
 +         fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL) {
-+		// err(1, "fts_open");
-+        fprintf(thread_stderr, "ls: fts_open: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "fts_open");
 +    }
  
  	display(NULL, fts_children(ftsp, 0));
  	if (f_listdir) {
-@@ -525,14 +592,16 @@
+@@ -525,7 +590,7 @@
  	while ((p = fts_read(ftsp)) != NULL)
  		switch (p->fts_info) {
  		case FTS_DC:
 -			warnx("%s: directory causes a cycle", p->fts_name);
-+                fprintf(thread_stderr, "ls: %s: directory causes a cycle\n", p->fts_name);
-+            //    warnx("%s: directory causes a cycle", p->fts_name);
++                warnx("%s: directory causes a cycle", p->fts_name);
  			if (COMPAT_MODE("bin/ls", "Unix2003")) {
  				rval = 1;
  			}
- 			break;
+@@ -533,7 +598,7 @@
  		case FTS_DNR:
  		case FTS_ERR:
--			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
-+			// warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
-+            fprintf(thread_stderr, "ls: %s: %s\n", p->fts_name, strerror(p->fts_errno));
- 			rval = 1;
+ 			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
+-			rval = 1;
++            rval = 1;
  			break;
  		case FTS_D:
-@@ -548,9 +617,9 @@
+ 			if (p->fts_level != FTS_ROOTLEVEL &&
+@@ -548,9 +613,9 @@
  			 * directory with its name.
  			 */
  			if (output)
@@ -3453,78 +3215,68 @@ diff -Naur file_cmds-272/ls/ls.c file_cmds/ls/ls.c
  				output = 1;
  			}
  			chp = fts_children(ftsp, ch_options);
-@@ -569,7 +638,8 @@
- 		case FTS_SLNONE:	/* Same as default unless Unix conformance */
+@@ -570,7 +635,7 @@
  			if (COMPAT_MODE("bin/ls", "Unix2003")) {
  				if ((options & FTS_LOGICAL)!=0) {	/* -L was specified */
--					warnx("%s: %s", p->fts_name, strerror(p->fts_errno ?: ENOENT));
-+					// warnx("%s: %s", p->fts_name, strerror(p->fts_errno ?: ENOENT));
-+                    fprintf(thread_stderr, "ls: %s: %s\n", p->fts_name, strerror(p->fts_errno ?: ENOENT));
- 					rval = 1;
+ 					warnx("%s: %s", p->fts_name, strerror(p->fts_errno ?: ENOENT));
+-					rval = 1;
++                    rval = 1;
  				}
  			}
-@@ -581,8 +651,11 @@
+ 			break;
+@@ -581,8 +646,9 @@
  	fts_close(ftsp);
  	errno = error;
  
 -	if (errno)
 -		err(1, "fts_read");
 +    if (errno) {
-+        fprintf(thread_stderr, "ls: fts_read: %s\n", strerror(errno));
-+        ios_exit(1);
-+		// err(1, "fts_read");
++        err(1, "fts_read");
 +    }
  }
  
  /*
-@@ -640,8 +713,11 @@
+@@ -640,8 +706,9 @@
  
  		/* Fill-in "::" as "0:0:0" for the sake of scanf. */
  		jinitmax = initmax2 = malloc(strlen(initmax) * 2 + 2);
 -		if (jinitmax == NULL)
 -			err(1, "malloc");
 +        if (jinitmax == NULL) {
-+            fprintf(thread_stderr, "ls: malloc: %s\n", strerror((errno)));
-+            ios_exit(1);
-+            // err(1, "malloc");
++            err(1, "malloc");
 +        }
  		if (*initmax == ':')
  			strcpy(initmax2, "0:"), initmax2 += 2;
  		else
-@@ -713,8 +789,8 @@
+@@ -713,8 +780,7 @@
  	flags = NULL;
  	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
  		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
 -			warnx("%s: %s",
 -			    cur->fts_name, strerror(cur->fts_errno));
-+            fprintf(thread_stderr, "ls: %s: %s\n", cur->fts_name, strerror(cur->fts_errno));
-+			// warnx("%s: %s", cur->fts_name, strerror(cur->fts_errno));
++            warnx("%s: %s", cur->fts_name, strerror(cur->fts_errno));
  			cur->fts_number = NO_PRINT;
  			rval = 1;
  			continue;
-@@ -778,8 +854,11 @@
+@@ -778,8 +844,9 @@
  						free(flags);
  						flags = strdup("-");
  					}
 -					if (flags == NULL)
 -						err(1, "fflagstostr");
 +                    if (flags == NULL) {
-+                        fprintf(thread_stderr, "ls: fflagstostr: %s\n", strerror(errno));
-+                        ios_exit(1);
-+                        // err(1, "fflagstostr");
++                        err(1, "fflagstostr");
 +                    }
  					flen = strlen(flags);
  					if (flen > (size_t)maxflags)
  						maxflags = flen;
-@@ -790,7 +869,11 @@
+@@ -790,7 +857,9 @@
  				
  				if ((np = calloc(1, sizeof(NAMES) + lattrlen +
  				    ulen + glen + flen + 4)) == NULL)
 -					err(1, "malloc");
 +                {
-+                    fprintf(thread_stderr, "ls: malloc: %s\n", strerror(errno));
-+                    // err(1, "malloc");
-+                    ios_exit(1);
++                    err(1, "malloc");
 +                }
  
  				np->user = &np->data[0];
@@ -3590,14 +3342,8 @@ diff -Naur file_cmds-272/ls/ls.h file_cmds/ls/ls.h
  #include <sys/acl.h>
 diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 --- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
-+++ file_cmds/ls/print.c	2018-04-23 20:32:25.000000000 +0200
-@@ -56,12 +56,12 @@
- #include <uuid/uuid.h>
- #endif
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
++++ file_cmds/ls/print.c	2018-04-30 21:58:42.000000000 +0200
+@@ -61,7 +61,7 @@
  #include <fts.h>
  #include <math.h>
  #include <langinfo.h>
@@ -3641,18 +3387,16 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	}
  
  	for (p = dp->list; p; p = p->fts_link) {
-@@ -209,7 +212,9 @@
+@@ -209,7 +212,7 @@
  	name = (char *) malloc(MAXNAMETAG);
  	
  	if (NULL == name) {
 -		err(1, "malloc");
-+        fprintf(thread_stderr, "ls: malloc: %s\n", strerror(errno));
-+        ios_exit(1);
-+        // err(1, "malloc");
++        err(1, "malloc");
  	}
  	
  	if (f_numericonly) {
-@@ -281,7 +286,7 @@
+@@ -281,7 +284,7 @@
  			type = "unknown";
  		}
  
@@ -3661,7 +3405,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  		    index,
  		    name,
  		    acl_get_flag_np(flags, ACL_ENTRY_INHERITED) ? " inherited" : "",
-@@ -295,14 +300,14 @@
+@@ -295,14 +298,14 @@
  				continue;
  			if (!(acl_perms[i].flags & (isdir ? ACL_PERM_DIR : ACL_PERM_FILE)))
  				continue;
@@ -3678,7 +3422,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  		}
  			
  		(void)putchar('\n');
-@@ -322,7 +327,7 @@
+@@ -322,7 +325,7 @@
  #endif
  
  	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
@@ -3687,7 +3431,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  
  	for (p = dp->list; p; p = p->fts_link) {
  		if (IS_NOPRINT(p))
-@@ -330,12 +335,12 @@
+@@ -330,12 +333,12 @@
  		sp = p->fts_statp;
  		if (f_inode) 
  #if _DARWIN_FEATURE_64_BIT_INODE
@@ -3703,7 +3447,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			    dp->s_block, (u_int64_t)howmany(sp->st_blocks, blocksize));
  		strmode(sp->st_mode, buf);
  		np = p->fts_pointer;
-@@ -345,54 +350,54 @@
+@@ -345,54 +348,54 @@
  #endif /* __APPLE__ */
  		if (f_group && f_owner) {	/* means print neither */
  #ifdef __APPLE__
@@ -3770,7 +3514,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			    8 - dp->s_size, "", dp->s_size, (u_int64_t)sp->st_size);
  		else
  			printsize(dp->s_size, sp->st_size);
-@@ -433,7 +438,7 @@
+@@ -433,7 +436,7 @@
  printstream(DISPLAY *dp)
  {
  	FTSENT *p;
@@ -3779,7 +3523,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	int chcnt;
  
  	for (p = dp->list, chcnt = 0; p; p = p->fts_link) {
-@@ -446,7 +451,7 @@
+@@ -446,7 +449,7 @@
  		}
  		chcnt += printaname(p, dp->s_inode, dp->s_block);
  		if (p->fts_link) {
@@ -3788,7 +3532,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			chcnt += 2;
  		}
  	}
-@@ -457,7 +462,7 @@
+@@ -457,7 +460,7 @@
  void
  printcol(DISPLAY *dp)
  {
@@ -3797,17 +3541,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	static FTSENT **array;
  	static int lastentries = -1;
  	FTSENT *p;
-@@ -485,7 +490,8 @@
- 	if ((lastentries == -1) || (dp->entries > lastentries)) {
- 		lastentries = dp->entries;
- 		if ((array = realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
--			warn(NULL);
-+			// warn(NULL);
-+            fprintf(thread_stderr, "%s\n", strerror(errno));
- 			printscol(dp);
- 			return;
- 		}
-@@ -515,7 +521,7 @@
+@@ -515,7 +518,7 @@
  
  	assert(dp->list);
  	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
@@ -3816,7 +3550,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  
  	base = 0;
  	for (row = 0; row < numrows; ++row) {
-@@ -561,12 +567,12 @@
+@@ -561,12 +564,12 @@
  	chcnt = 0;
  	if (f_inode)
  #if _DARWIN_FEATURE_64_BIT_INODE
@@ -3832,7 +3566,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  		    (int)sizefield, (u_int64_t)howmany(sp->st_blocks, blocksize));
  #ifdef COLORLS
  	if (f_color)
-@@ -614,7 +620,7 @@
+@@ -614,7 +617,7 @@
  		/* mmm dd  yyyy || dd mmm  yyyy */
  		format = d_first ? "%e %b  %Y " : "%b %e  %Y ";
  	strftime(longstring, sizeof(longstring), format, localtime(&ftime));
@@ -3841,7 +3575,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
  
  static int
-@@ -668,25 +674,34 @@
+@@ -668,25 +671,34 @@
  {
  	char tmp = c;
  
@@ -3878,7 +3612,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  		if (ansiseq)
  			tputs(ansiseq, 1, putch);
  	}
-@@ -767,7 +782,7 @@
+@@ -767,7 +779,7 @@
  			if (c[j] >= '0' && c[j] <= '7') {
  				colors[i].num[j] = c[j] - '0';
  				if (!legacy_warn) {
@@ -3887,7 +3621,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  					    "warn: LSCOLORS should use "
  					    "characters a-h instead of 0-9 ("
  					    "see the manual page)\n");
-@@ -781,7 +796,7 @@
+@@ -781,7 +793,7 @@
  			} else if (tolower((unsigned char)c[j] == 'x'))
  				colors[i].num[j] = -1;
  			else {
@@ -3896,7 +3630,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  				    "error: invalid character '%c' in LSCOLORS"
  				    " env var\n", c[j]);
  				colors[i].num[j] = -1;
-@@ -796,7 +811,8 @@
+@@ -796,7 +808,8 @@
  	endcolor(sig);
  
  	(void)signal(sig, SIG_DFL);
@@ -3906,7 +3640,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
  
  #endif /* COLORLS */
-@@ -814,11 +830,11 @@
+@@ -814,11 +827,11 @@
  		(void)snprintf(name, sizeof(name),
  		    "%s/%s", p->fts_parent->fts_accpath, p->fts_name);
  	if ((lnklen = readlink(name, path, sizeof(path) - 1)) == -1) {
@@ -3920,7 +3654,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	(void)printname(path);
  }
  
-@@ -831,7 +847,7 @@
+@@ -831,7 +844,7 @@
  
      humanize_number(buf, sizeof(buf), (int64_t)bytes, "",
  		    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
@@ -3932,16 +3666,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
 diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
 --- file_cmds-272/ls/util.c	2008-03-12 21:31:12.000000000 +0100
-+++ file_cmds/ls/util.c	2018-04-23 20:32:25.000000000 +0200
-@@ -42,7 +42,7 @@
- #include <sys/stat.h>
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <fts.h>
- #include <limits.h>
- #include <stdio.h>
++++ file_cmds/ls/util.c	2018-04-30 21:42:54.000000000 +0200
 @@ -53,6 +53,7 @@
  
  #include "ls.h"
@@ -3973,16 +3698,7 @@ diff -Naur file_cmds-272/ls/util.c file_cmds/ls/util.c
  #else
 diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
 --- file_cmds-272/mkdir/mkdir.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/mkdir/mkdir.c	2018-04-23 20:32:25.000000000 +0200
-@@ -49,7 +49,7 @@
- #include <sys/types.h>
- #include <sys/stat.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <libgen.h>
- #include <stdio.h>
++++ file_cmds/mkdir/mkdir.c	2018-04-30 21:58:42.000000000 +0200
 @@ -57,18 +57,22 @@
  #include <string.h>
  #include <sysexits.h>
@@ -4009,38 +3725,33 @@ diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
  	pflag = 0;
  	mode = NULL;
  	while ((ch = getopt(argc, argv, "m:pv")) != -1)
-@@ -95,8 +99,11 @@
+@@ -95,8 +99,9 @@
  	if (mode == NULL) {
  		omode = S_IRWXU | S_IRWXG | S_IRWXO;
  	} else {
 -		if ((set = setmode(mode)) == NULL)
--			errx(1, "invalid file mode: %s", mode);
 +        if ((set = setmode(mode)) == NULL) {
-+			// errx(1, "invalid file mode: %s", mode);
-+            fprintf(thread_stderr, "mkdir: invalid file mode: %s\n", mode);
-+            ios_exit(1);
+ 			errx(1, "invalid file mode: %s", mode);
 +        }
  		omode = getmode(set, S_IRWXU | S_IRWXG | S_IRWXO);
  		free(set);
  	}
-@@ -106,17 +113,20 @@
+@@ -106,17 +111,18 @@
  		if (pflag) {
  			int status = mkpath_np(*argv, omode);
  			if (status && status != EEXIST) {
 -				warnc(status, "%s", *argv);
-+                fprintf(thread_stderr, "mkdir: %s: %s\n", *argv, strerror(errno));
++                fprintf(thread_stderr, "mkdir: %s: %s\n", *argv, strerror(status));
 +                // warnc(status, "%s", *argv);
  				success = 0;
  			}
  		} else if (mkdir(*argv, omode) < 0) {
  			if (errno == ENOTDIR || errno == ENOENT)
 -				warn("%s", dirname(*argv));
-+                fprintf(thread_stderr, "mkdir: %s: %s\n", dirname(*argv), strerror(errno));
-+				// warn("%s", dirname(*argv));
++                warn("%s", dirname(*argv));
  			else
 -				warn("%s", *argv);
-+                fprintf(thread_stderr, "mkdir: %s: %s\n", *argv, strerror(errno));
-+				// warn("%s", *argv);
++                warn("%s", *argv);
  			success = 0;
  		} else if (vflag)
 -			(void)printf("mkdir: created directory '%s'\n", *argv);
@@ -4048,13 +3759,12 @@ diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
  		
  		if (!success)
  			exitval = 1;
-@@ -128,17 +138,18 @@
+@@ -128,17 +134,17 @@
  		 * as chmod will (obviously) ignore the umask.
  		 */
  		if (success && mode != NULL && chmod(*argv, omode) == -1) {
 -			warn("%s", *argv);
-+            fprintf(thread_stderr, "mkdir: %s: %s\n", *argv, strerror(errno));
-+			// warn("%s", *argv);
++            warn("%s", *argv);
  			exitval = 1;
  		}
  	}
@@ -4072,16 +3782,7 @@ diff -Naur file_cmds-272/mkdir/mkdir.c file_cmds/mkdir/mkdir.c
  }
 diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
 --- file_cmds-272/mv/mv.c	2015-08-04 22:32:26.000000000 +0200
-+++ file_cmds/mv/mv.c	2018-04-23 20:32:25.000000000 +0200
-@@ -55,7 +55,7 @@
- #include <sys/stat.h>
- #include <sys/mount.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <grp.h>
++++ file_cmds/mv/mv.c	2018-05-01 10:09:06.000000000 +0200
 @@ -74,22 +74,22 @@
  #endif
  
@@ -4149,31 +3850,27 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  			}
  			if (q == argv[1]) {
  				if (p == argv[0] || *(p-1) == '/')
-@@ -183,8 +187,11 @@
+@@ -183,8 +187,9 @@
  #endif /* __APPLE__ */
  
  	/* It's a directory, move each file into it. */
 -	if (strlen(argv[argc - 1]) > sizeof(path) - 1)
--		errx(1, "%s: destination pathname too long", *argv);
 +    if (strlen(argv[argc - 1]) > sizeof(path) - 1) {
-+		// errx(1, "%s: destination pathname too long", *argv);
-+        fprintf(thread_stderr, "mv: %s: destination pathname too long\n", *argv);
-+        ios_exit(1);
+ 		errx(1, "%s: destination pathname too long", *argv);
 +    }
  	(void)strcpy(path, argv[argc - 1]);
  	baselen = strlen(path);
  	endp = &path[baselen];
-@@ -204,7 +211,8 @@
+@@ -204,7 +209,7 @@
  			--p;
  
  		if ((baselen + (len = strlen(p))) >= PATH_MAX) {
 -			warnx("%s: destination pathname too long", *argv);
-+            fprintf(thread_stderr, "mv: %s: destination pathname too long\n", *argv);
-+            // warnx("%s: destination pathname too long", *argv);
++            warnx("%s: destination pathname too long", *argv);
  			rval = 1;
  		} else {
  			memmove(endp, p, (size_t)len + 1);
-@@ -218,7 +226,7 @@
+@@ -218,7 +223,7 @@
  					fsb.st_ino == tsb.st_ino && 
  					fsb.st_dev == tsb.st_dev &&
  					fsb.st_gen == tsb.st_gen) {
@@ -4182,17 +3879,16 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  								*argv, path);
  					rval = 2; /* Like the Sun */
  				} else {
-@@ -250,7 +258,8 @@
+@@ -250,7 +255,7 @@
  
  		/* prompt only if source exist */
  	        if (lstat(from, &sb) == -1) {
 -			warn("%s", from);
-+                fprintf(thread_stderr, "mv: %s: %s\n", from, strerror(errno));
-+            //warn("%s", from);
++                warn("%s", from);
  			return (1);
  		}
  
-@@ -258,14 +267,14 @@
+@@ -258,32 +263,33 @@
  		ask = 0;
  		if (nflg) {
  			if (vflg)
@@ -4210,7 +3906,11 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  			    modep + 1, modep[9] == ' ' ? "" : " ",
  			    user_from_uid(sb.st_uid, 0),
  			    group_from_gid(sb.st_gid, 0), to, YESNO);
-@@ -276,14 +285,14 @@
+ 			ask = 1;
+ 		}
+ 		if (ask) {
++            fflush(thread_stderr);
+ 			first = ch = getchar();
  			while (ch != '\n' && ch != EOF)
  				ch = getchar();
  			if (first != 'y' && first != 'Y') {
@@ -4227,35 +3927,31 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  		return (0);
  	}
  
-@@ -293,15 +302,18 @@
+@@ -293,15 +299,15 @@
  
  		/* Can't mv(1) a mount point. */
  		if (realpath(from, path) == NULL) {
 -			warnx("cannot resolve %s: %s", from, path);
-+            fprintf(thread_stderr, "mv: cannot resolve %s: %s\n", from, path);
-+            // warnx("cannot resolve %s: %s", from, path);
++            warnx("cannot resolve %s: %s", from, path);
  			return (1);
  		}
  		if (!statfs(path, &sfs) && !strcmp(path, sfs.f_mntonname)) {
 -			warnx("cannot rename a mount point");
-+            fprintf(thread_stderr, "mv: cannot rename a mount point\n");
-+            // warnx("cannot rename a mount point");
++            warnx("cannot rename a mount point");
  			return (1);
  		}
  	} else {
 -		warn("rename %s to %s", from, to);
-+        fprintf(thread_stderr, "mv: rename %s to %s: %s\n", from, to, strerror(errno));
-+        // warn("rename %s to %s", from, to);
++        warn("rename %s to %s", from, to);
  		return (1);
  	}
  
-@@ -311,11 +323,12 @@
+@@ -311,11 +317,11 @@
  	 * cp and rm.
  	 */
  	if (lstat(from, &sb)) {
 -		warn("%s", from);
-+        fprintf(thread_stderr, "mv: %s: %s\n", from, strerror(errno));
-+        // warn("%s", from);
++        warn("%s", from);
  		return (1);
  	}
  	return (S_ISREG(sb.st_mode) ?
@@ -4264,65 +3960,58 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  }
  
  int
-@@ -329,7 +342,8 @@
+@@ -329,7 +335,7 @@
  	int from_fd, to_fd;
  
  	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
 -		warn("%s", from);
-+        fprintf(thread_stderr, "mv: %s: %s\n", from, strerror(errno));
-+		// warn("%s", from);
++        warn("%s", from);
  		return (1);
  	}
  	if (blen < sbp->st_blksize) {
-@@ -337,7 +351,8 @@
+@@ -337,7 +343,7 @@
  			free(bp);
  		if ((bp = malloc((size_t)sbp->st_blksize)) == NULL) {
  			blen = 0;
 -			warnx("malloc failed");
-+            fprintf(thread_stderr, "mv: malloc failed\n");
-+			// warnx("malloc failed");
++            warnx("malloc failed");
  			return (1);
  		}
  		blen = sbp->st_blksize;
-@@ -346,7 +361,8 @@
+@@ -346,7 +352,7 @@
  	    open(to, O_CREAT | O_EXCL | O_TRUNC | O_WRONLY, 0)) < 0) {
  		if (errno == EEXIST && unlink(to) == 0)
  			continue;
 -		warn("%s", to);
-+        fprintf(thread_stderr, "mv: %s: %s\n", to, strerror(errno));
-+		// warn("%s", to);
++        warn("%s", to);
  		(void)close(from_fd);
  		return (1);
  	}
-@@ -373,13 +389,16 @@
+@@ -373,13 +379,13 @@
  #endif /* __APPLE__ */
  	while ((nread = read(from_fd, bp, (size_t)blen)) > 0)
  		if (write(to_fd, bp, (size_t)nread) != nread) {
 -			warn("%s", to);
-+            fprintf(thread_stderr, "mv: %s: %s\n", to, strerror(errno));
-+			// warn("%s", to);
++            warn("%s", to);
  			goto err;
  		}
  	if (nread < 0) {
 -		warn("%s", from);
-+        fprintf(thread_stderr, "mv: %s: %s\n", from, strerror(errno));
-+		// warn("%s", from);
++        warn("%s", from);
  err:		if (unlink(to))
 -			warn("%s: remove", to);
-+                fprintf(thread_stderr, "mv: %s: remove: %s\n", to, strerror(errno));
-+            // warn("%s: remove", to);
++                warn("%s: remove", to);
  		(void)close(from_fd);
  		(void)close(to_fd);
  		return (1);
-@@ -387,25 +406,29 @@
+@@ -387,25 +393,25 @@
  #ifdef __APPLE__
  	/* XATTR can fail if to_fd has mode 000 */
  	if (fcopyfile(from_fd, to_fd, NULL, COPYFILE_ACL | COPYFILE_XATTR) < 0) {
 -		warn("%s: unable to move extended attributes and ACL from %s",
 -		     to, from);
-+        // warn("%s: unable to move extended attributes and ACL from %s",
-+        fprintf(thread_stderr, "mv: %s: unable to move extended attributes and ACL from %s: %s\n",
-+                to, from, strerror(errno));
++        warn("%s: unable to move extended attributes and ACL from %s",
++                to, from);
  	}
  #endif
  	(void)close(from_fd);
@@ -4331,53 +4020,46 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  	if (fchown(to_fd, sbp->st_uid, sbp->st_gid)) {
 -		warn("%s: set owner/group (was: %lu/%lu)", to,
 -		    (u_long)sbp->st_uid, (u_long)sbp->st_gid);
-+        // warn("%s: set owner/group (was: %lu/%lu)", to,
-+        fprintf(thread_stderr, "mv: %s: set owner/group (was: %lu/%lu): %s\n", to,
-+		    (u_long)sbp->st_uid, (u_long)sbp->st_gid, strerror(errno));
++        warn("%s: set owner/group (was: %lu/%lu)", to,
++            (u_long)sbp->st_uid, (u_long)sbp->st_gid);
  		if (oldmode & (S_ISUID | S_ISGID)) {
 -			warnx(
 -"%s: owner/group changed; clearing suid/sgid (mode was 0%03o)",
-+            // warnx(
-+			fprintf(thread_stderr,
-+                    "mv: %s: owner/group changed; clearing suid/sgid (mode was 0%03o)\n",
++            warnx(
++			        "mv: %s: owner/group changed; clearing suid/sgid (mode was 0%03o)\n",
  			    to, oldmode);
  			sbp->st_mode &= ~(S_ISUID | S_ISGID);
  		}
  	}
  	if (fchmod(to_fd, sbp->st_mode))
 -		warn("%s: set mode (was: 0%03o)", to, oldmode);
-+        fprintf(thread_stderr, "mv: %s: set mode (was: 0%03o): %s\n", to, oldmode, strerror(errno));
-+        // warn("%s: set mode (was: 0%03o)", to, oldmode);
++        warn("%s: set mode (was: 0%03o)", to, oldmode);
  	/*
  	 * XXX
  	 * NFS doesn't support chflags; ignore errors unless there's reason
-@@ -416,72 +439,29 @@
+@@ -416,72 +422,25 @@
  	errno = 0;
  	if (fchflags(to_fd, (u_int)sbp->st_flags))
  		if (errno != ENOTSUP || sbp->st_flags != 0)
 -			warn("%s: set flags (was: 0%07o)", to, sbp->st_flags);
-+            fprintf(thread_stderr, "mv: %s: set flags (was: 0%07o): %s\n", to, sbp->st_flags, strerror(errno));
-+            // warn("%s: set flags (was: 0%07o)", to, sbp->st_flags);
++            warn("%s: set flags (was: 0%07o)", to, sbp->st_flags);
  
  	tval[0].tv_sec = sbp->st_atime;
  	tval[1].tv_sec = sbp->st_mtime;
  	tval[0].tv_usec = tval[1].tv_usec = 0;
  	if (utimes(to, tval))
 -		warn("%s: set times", to);
-+        fprintf(thread_stderr, "mv: %s: set times: %s\n", to, strerror(errno));
-+        // warn("%s: set times", to);
++        warn("%s: set times", to);
  
  	if (close(to_fd)) {
 -		warn("%s", to);
-+        fprintf(thread_stderr, "mv: %s\n", to);
-+        // warn("%s", to);
++        warn("%s", to);
  		return (1);
  	}
  
  	if (unlink(from)) {
 -		warn("%s: remove", from);
-+        fprintf(thread_stderr, "mv: %s: remove: %s\n", from, strerror(errno));
-+        // warn("%s: remove", from);
++        warn("%s: remove", from);
  		return (1);
  	}
  	if (vflg)
@@ -4433,7 +4115,7 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  	return (0);
  }
  
-@@ -489,7 +469,7 @@
+@@ -489,7 +448,7 @@
  usage(void)
  {
  
@@ -4444,16 +4126,7 @@ diff -Naur file_cmds-272/mv/mv.c file_cmds/mv/mv.c
  	exit(EX_USAGE);
 diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
 --- file_cmds-272/rm/rm.c	2016-09-16 18:43:23.000000000 +0200
-+++ file_cmds/rm/rm.c	2018-04-23 20:32:25.000000000 +0200
-@@ -51,7 +51,7 @@
- #include <sys/param.h>
- #include <sys/mount.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <fts.h>
++++ file_cmds/rm/rm.c	2018-04-30 22:08:07.000000000 +0200
 @@ -65,22 +65,23 @@
  #include <removefile.h>
  #include <pwd.h>
@@ -4519,45 +4192,34 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  
  		if (rflag)
  			rm_tree(argv);
-@@ -201,19 +206,24 @@
+@@ -201,14 +206,14 @@
  	if (!(fts = fts_open(argv, flags, NULL))) {
  		if (fflag && errno == ENOENT)
  			return;
 -		err(1, NULL);
-+        fprintf(thread_stderr, "rm: %s\n", strerror(errno));
-+        ios_exit(1);
-+		// err(1, NULL);
++        err(1, NULL);
  	}
  	while ((p = fts_read(fts)) != NULL) {
  		switch (p->fts_info) {
  		case FTS_DNR:
  			if (!fflag || p->fts_errno != ENOENT) {
 -				warnx("%s: %s",
-+                // warnx("%s: %s",
-+                fprintf(thread_stderr, "rm: %s: %s\n",
- 				    p->fts_path, strerror(p->fts_errno));
+-				    p->fts_path, strerror(p->fts_errno));
++                warnx("%s: %s",
++                    p->fts_path);
  				eval = 1;
  			}
  			continue;
- 		case FTS_ERR:
--			errx(1, "%s: %s", p->fts_path, strerror(p->fts_errno));
-+			// errx(1, "%s: %s", p->fts_path, strerror(p->fts_errno));
-+            fprintf(thread_stderr, "rm: %s: %s\n", p->fts_path, strerror(p->fts_errno));
-+            ios_exit(1);
- 		case FTS_NS:
- 			/*
- 			 * FTS_NS: assume that if can't stat the file, it
-@@ -222,7 +232,8 @@
- 			if (!needstat)
+@@ -223,7 +228,7 @@
  				break;
  			if (!fflag || p->fts_errno != ENOENT) {
--				warnx("%s: %s",
-+				// warnx("%s: %s",
-+                fprintf(thread_stderr, "rm: %s: %s\n",
- 				    p->fts_path, strerror(p->fts_errno));
+ 				warnx("%s: %s",
+-				    p->fts_path, strerror(p->fts_errno));
++                    p->fts_path);
  				eval = 1;
  			}
-@@ -283,7 +294,7 @@
+ 			continue;
+@@ -283,7 +288,7 @@
  				rval = rmdir(p->fts_accpath);
  				if (rval == 0 || (fflag && errno == ENOENT)) {
  					if (rval == 0 && vflag)
@@ -4566,7 +4228,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  						    p->fts_path);
  					continue;
  				}
-@@ -293,7 +304,7 @@
+@@ -293,7 +298,7 @@
  				rval = undelete(p->fts_accpath);
  				if (rval == 0 && (fflag && errno == ENOENT)) {
  					if (vflag)
@@ -4575,7 +4237,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  						    p->fts_path);
  					continue;
  				}
-@@ -313,19 +324,23 @@
+@@ -313,19 +318,20 @@
  #endif	/* __APPLE__ */
  				if (rval == 0 || (fflag && errno == ENOENT)) {
  					if (rval == 0 && vflag)
@@ -4588,55 +4250,33 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  		}
  err:
 -		warn("%s", p->fts_path);
-+        fprintf(thread_stderr, "rm: %s: %s\n", p->fts_path, strerror(errno));
-+        // warn("%s", p->fts_path);
++        warn("%s", p->fts_path);
  		eval = 1;
  	}
 -	if (errno)
--		err(1, "fts_read");
--	fts_close(fts);
 +    fts_close(fts);
 +    if (errno) {
-+		// err(1, "fts_read");
-+        fprintf(thread_stderr, "rm: fts_read: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "fts_read");
+-	fts_close(fts);
 +    }
  }
  
  void
-@@ -347,19 +362,22 @@
+@@ -347,7 +353,7 @@
  				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
  			} else {
  				if (!fflag || errno != ENOENT) {
 -					warn("%s", f);
-+                    fprintf(thread_stderr, "rm: %s: %s\n", f, strerror(errno));
-+                    // warn("%s", f);
++                    warn("%s", f);
  					eval = 1;
  				}
  				continue;
- 			}
- 		} else if (Wflag) {
--			warnx("%s: %s", f, strerror(EEXIST));
-+			fprintf(thread_stderr, "rm: %s: %s\n", f, strerror(EEXIST));
-+            // warnx("%s: %s", f, strerror(EEXIST));
- 			eval = 1;
- 			continue;
- 		}
- 
- 		if (S_ISDIR(sb.st_mode) && !dflag) {
--			warnx("%s: is a directory", f);
-+			fprintf(thread_stderr, "rm: %s: is a directory\n", f);
-+            //warnx("%s: is a directory", f);
- 			eval = 1;
- 			continue;
- 		}
-@@ -390,11 +408,12 @@
+@@ -390,11 +396,11 @@
  			}
  		}
  		if (rval && (!fflag || errno != ENOENT)) {
 -			warn("%s", f);
-+            fprintf(thread_stderr, "rm: %s: %s\n", f, strerror(errno));
-+            // warn("%s", f);
++            warn("%s", f);
  			eval = 1;
  		}
  		if (vflag && rval == 0)
@@ -4645,27 +4285,23 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	}
  }
  
-@@ -432,8 +451,11 @@
+@@ -432,8 +438,9 @@
  	if (fstatfs(fd, &fsb) == -1)
  		goto err;
  	bsize = MAX(fsb.f_iosize, 1024);
 -	if ((buf = malloc(bsize)) == NULL)
--		err(1, "malloc");
 +    if ((buf = malloc(bsize)) == NULL) {
-+		// err(1, "malloc");
-+        fprintf(thread_stderr, "rm: malloc: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "malloc");
 +    }
  
  #define	PASS(byte) {							\
  	memset(buf, byte, bsize);					\
-@@ -458,14 +480,15 @@
+@@ -458,14 +465,14 @@
  err:	eval = 1;
  	if (buf)
  		free(buf);
 -	warn("%s", file);
-+        fprintf(thread_stderr, "rm: %s: %s\n", file, strerror(errno));
-+    // warn("%s", file);
++        warn("%s", file);
  }
  
  int 
@@ -4677,7 +4313,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  
  	first = ch = getchar();
  	while (ch != '\n' && ch != EOF)
-@@ -479,7 +502,7 @@
+@@ -479,7 +486,7 @@
  {
  	if(!iflag)
  		return 1;	//if not interactive, process directory's contents
@@ -4686,7 +4322,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	return yes_or_no();
  }
  
-@@ -492,7 +515,7 @@
+@@ -492,7 +499,7 @@
  
  	/* Check -i first. */
  	if (iflag)
@@ -4695,7 +4331,7 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	else {
  		/*
  		 * If it's not a symbolic link and it's unwritable and we're
-@@ -506,9 +529,12 @@
+@@ -506,9 +513,10 @@
  		    (!(sp->st_flags & (UF_APPEND|UF_IMMUTABLE)) || !uid)))
  			return (1);
  		strmode(sp->st_mode, modep);
@@ -4703,25 +4339,22 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
 -			err(1, NULL);
 -		(void)fprintf(stderr, "override %s%s%s/%s %s%sfor %s? ",
 +        if ((flagsp = fflagstostr(sp->st_flags)) == NULL) {
-+            fprintf(thread_stderr, "rm: %s\n", strerror(errno));
-+            ios_exit(1);
-+			// err(1, NULL);
++            err(1, NULL);
 +        }
 +		(void)fprintf(thread_stderr, "override %s%s%s/%s %s%sfor %s? ",
  		    modep + 1, modep[9] == ' ' ? "" : " ",
  		    user_from_uid(sp->st_uid, 0),
  		    group_from_gid(sp->st_gid, 0),
-@@ -554,7 +580,8 @@
+@@ -554,7 +562,7 @@
  		}
  		if (ISDOT(p)) {
  			if (!complained++)
 -				warnx("\".\" and \"..\" may not be removed");
-+                fprintf(thread_stderr, "rm: \".\" and \"..\" may not be removed\n");
-+				// warnx("\".\" and \"..\" may not be removed");
++                warnx("\".\" and \"..\" may not be removed");
  			eval = 1;
  			for (save = t; (t[0] = t[1]) != NULL; ++t)
  				continue;
-@@ -568,7 +595,7 @@
+@@ -568,7 +576,7 @@
  usage()
  {
  
@@ -4732,15 +4365,8 @@ diff -Naur file_cmds-272/rm/rm.c file_cmds/rm/rm.c
  	exit(EX_USAGE);
 diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
 --- file_cmds-272/rmdir/rmdir.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/rmdir/rmdir.c	2018-04-23 20:32:25.000000000 +0200
-@@ -46,23 +46,26 @@
- #include <sys/cdefs.h>
- __RCSID("$FreeBSD: src/bin/rmdir/rmdir.c,v 1.13 2002/06/30 05:15:03 obrien Exp $");
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <stdio.h>
++++ file_cmds/rmdir/rmdir.c	2018-04-30 22:10:47.000000000 +0200
+@@ -52,17 +52,20 @@
  #include <stdlib.h>
  #include <string.h>
  #include <unistd.h>
@@ -4764,27 +4390,25 @@ diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
  	while ((ch = getopt(argc, argv, "p")) != -1)
  		switch(ch) {
  		case 'p':
-@@ -80,7 +83,8 @@
+@@ -80,7 +83,7 @@
  
  	for (errors = 0; *argv; argv++) {
  		if (rmdir(*argv) < 0) {
 -			warn("%s", *argv);
-+            fprintf(thread_stderr, "rmdir: %s: %s\n", *argv, strerror(errno));
-+            // warn("%s", *argv);
++            warn("%s", *argv);
  			errors = 1;
  		} else if (pflag)
  			errors |= rm_path(*argv);
-@@ -105,7 +109,8 @@
+@@ -105,7 +108,7 @@
  		*++p = '\0';
  
  		if (rmdir(path) < 0) {
 -			warn("%s", path);
-+            fprintf(thread_stderr, "rmdir: %s: %s\n", path, strerror(errno));
-+            // warn("%s", path);
++            warn("%s", path);
  			return (1);
  		}
  	}
-@@ -117,6 +122,6 @@
+@@ -117,6 +120,6 @@
  usage(void)
  {
  
@@ -4794,16 +4418,7 @@ diff -Naur file_cmds-272/rmdir/rmdir.c file_cmds/rmdir/rmdir.c
  }
 diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
 --- file_cmds-272/stat/stat.c	2014-02-11 01:17:24.000000000 +0100
-+++ file_cmds/stat/stat.c	2018-04-23 20:32:25.000000000 +0200
-@@ -58,7 +58,7 @@
- #include <sys/stat.h>
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <grp.h>
- #include <limits.h>
- #include <pwd.h>
++++ file_cmds/stat/stat.c	2018-04-30 22:09:57.000000000 +0200
 @@ -67,6 +67,8 @@
  #include <string.h>
  #include <time.h>
@@ -4862,36 +4477,31 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  		am_readlink = 1;
  		options = "n";
  		synopsis = "[-n] [file ...]";
-@@ -250,9 +257,12 @@
+@@ -250,9 +257,10 @@
  		case 'r':
  		case 's':
  		case 'x':
 -			if (fmtchar != 0)
--				errx(1, "can't use format '%c' with '%c'",
 +            if (fmtchar != 0) {
-+				// errx(1, "can't use format '%c' with '%c'",
-+                fprintf(thread_stderr, "stat: can't use format '%c' with '%c'\n",
- 				    fmtchar, ch);
-+                ios_exit(1);
+ 				errx(1, "can't use format '%c' with '%c'",
+-				    fmtchar, ch);
++                    fmtchar, ch);
 +            }
  			fmtchar = ch;
  			break;
  		case 't':
-@@ -275,8 +285,11 @@
+@@ -275,8 +283,9 @@
  		}
  	}
  
 -	if (lsF && fmtchar != 'l')
--		errx(1, "can't use format '%c' with -F", fmtchar);
 +    if (lsF && fmtchar != 'l') {
-+		// errx(1, "can't use format '%c' with -F", fmtchar);
-+        fprintf(thread_stderr, "stat: can't use format '%c' with -F\n", fmtchar);
-+        ios_exit(1);
+ 		errx(1, "can't use format '%c' with -F", fmtchar);
 +    }
  
  	switch (fmtchar) {
  	case 'f':
-@@ -307,7 +320,7 @@
+@@ -307,7 +316,7 @@
  	errs = 0;
  	do {
  		if (argc == 0)
@@ -4900,19 +4510,16 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  		else if (usestat)
  			rc = stat(argv[0], &st);
  		else
-@@ -317,8 +330,9 @@
- 			errs = 1;
+@@ -318,7 +327,7 @@
  			linkfail = 1;
  			if (!quiet)
--				warn("%s: stat",
+ 				warn("%s: stat",
 -				    argc == 0 ? "(stdin)" : argv[0]);
-+				// warn("%s: stat",
-+                fprintf(thread_stderr, "stat: %s: stat: %s\n",
-+				    argc == 0 ? "(stdin)" : argv[0], strerror(errno));
++                    argc == 0 ? "(stdin)" : argv[0]);
  		}
  		else
  			output(&st, argv[0], statfmt, fn, nonl, quiet);
-@@ -334,8 +348,8 @@
+@@ -334,8 +343,8 @@
  void
  usage(const char *synopsis)
  {
@@ -4923,7 +4530,7 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  	exit(1);
  }
  
-@@ -358,7 +372,7 @@
+@@ -358,7 +367,7 @@
  		 * Non-format characters go straight out.
  		 */
  		if (*statfmt != FMT_MAGIC) {
@@ -4932,7 +4539,7 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  			statfmt++;
  			continue;
  		}
-@@ -375,15 +389,15 @@
+@@ -375,15 +384,15 @@
  		 */
  		switch (*statfmt) {
  		case SIMPLE_NEWLINE:
@@ -4951,7 +4558,7 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  			statfmt++;
  			continue;
  		case SIMPLE_NUMBER: {
-@@ -391,7 +405,7 @@
+@@ -391,7 +400,7 @@
  
  			snprintf(num, sizeof(num), "%d", fn);
  			for (p = &num[0]; *p; p++)
@@ -4960,7 +4567,7 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  			statfmt++;
  			continue;
  		}
-@@ -518,18 +532,20 @@
+@@ -518,18 +527,18 @@
  		     flags, size, prec, ofmt, hilo, what);
  
  		for (i = 0; i < t && i < sizeof(buf); i++)
@@ -4971,10 +4578,8 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  
  	badfmt:
 -		errx(1, "%.*s: bad format",
-+        // errx(1, "%.*s: bad format",
-+        fprintf(thread_stderr, "stat: %.*s: bad format\n",
++        errx(1, "%.*s: bad format",
  		    (int)(statfmt - subfmt + 1), subfmt);
-+        ios_exit(1);
  	}
  
  	if (!nl && !nonl)
@@ -4985,56 +4590,31 @@ diff -Naur file_cmds-272/stat/stat.c file_cmds/stat/stat.c
  }
  
  /*
-@@ -858,15 +874,20 @@
- 		}
- 		/*NOTREACHED*/
- 	default:
--		errx(1, "%.*s: bad format", (int)flen, fmt);
-+		// errx(1, "%.*s: bad format", (int)flen, fmt);
-+        fprintf(thread_stderr, "stat: %.*s: bad format\n", (int)flen, fmt);
-+        ios_exit(1);
- 	}
- 
- 	/*
+@@ -865,8 +874,9 @@
  	 * If a subdatum was specified but not supported, or an output
  	 * format was selected that is not supported, that's an error.
  	 */
 -	if (hilo != 0 || (ofmt & formats) == 0)
--		errx(1, "%.*s: bad format", (int)flen, fmt);
 +    if (hilo != 0 || (ofmt & formats) == 0) {
-+		// errx(1, "%.*s: bad format", (int)flen, fmt);
-+        fprintf(thread_stderr, "stat: %.*s: bad format\n", (int)flen, fmt);
-+        ios_exit(1);
+ 		errx(1, "%.*s: bad format", (int)flen, fmt);
 +    }
  
  	/*
  	 * Assemble the format string for passing to printf(3).
-@@ -969,8 +990,11 @@
+@@ -969,8 +979,9 @@
  	 * String output uses the temporary sdata.
  	 */
  	if (ofmt == FMTF_STRING) {
 -		if (sdata == NULL)
--			errx(1, "%.*s: bad format", (int)flen, fmt);
 +        if (sdata == NULL) {
-+			// errx(1, "%.*s: bad format", (int)flen, fmt);
-+            fprintf(thread_stderr, "stat: %.*s: bad format\n", (int)flen, fmt);
-+            ios_exit(1);
+ 			errx(1, "%.*s: bad format", (int)flen, fmt);
 +        }
  		(void)strcat(lfmt, "s");
  		return (snprintf(buf, blen, lfmt, sdata));
  	}
 diff -Naur file_cmds-272/touch/touch.c file_cmds/touch/touch.c
 --- file_cmds-272/touch/touch.c	2013-10-05 00:39:00.000000000 +0200
-+++ file_cmds/touch/touch.c	2018-04-23 20:32:25.000000000 +0200
-@@ -49,7 +49,7 @@
- #include <sys/stat.h>
- #include <sys/time.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <libgen.h>
++++ file_cmds/touch/touch.c	2018-04-30 22:11:57.000000000 +0200
 @@ -58,16 +58,17 @@
  #include <string.h>
  #include <time.h>
@@ -5060,7 +4640,7 @@ diff -Naur file_cmds-272/touch/touch.c file_cmds/touch/touch.c
  {
  	struct stat sb;
  	struct timeval tv[2];
-@@ -79,10 +80,14 @@
+@@ -79,10 +80,12 @@
  
  	myname = basename(argv[0]);
  	Aflag = aflag = cflag = fflag = mflag = timeset = 0;
@@ -5068,179 +4648,128 @@ diff -Naur file_cmds-272/touch/touch.c file_cmds/touch/touch.c
  	stat_f = stat;
  	utimes_f = utimes;
 -	if (gettimeofday(&tv[0], NULL))
--		err(1, "gettimeofday");
 +    if (gettimeofday(&tv[0], NULL)) {
-+		// err(1, "gettimeofday");
-+        fprintf(thread_stderr, "touch: gettimeofday: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "gettimeofday");
 +    }
  
  	while ((ch = getopt(argc, argv, "A:acfhmr:t:")) != -1)
  		switch(ch) {
-@@ -166,7 +171,8 @@
+@@ -166,7 +169,7 @@
  		if (stat_f(*argv, &sb) != 0) {
  			if (errno != ENOENT) {
  				rval = 1;
 -				warn("%s", *argv);
-+                fprintf(thread_stderr, "touch: %s: %s\n", *argv, strerror(errno));
-+                // warn("%s", *argv);
++                warn("%s", *argv);
  				continue;
  			}
  			if (!cflag) {
-@@ -175,7 +181,8 @@
+@@ -175,7 +178,7 @@
  				    O_WRONLY | O_CREAT, DEFFILEMODE);
  				if (fd == -1 || fstat(fd, &sb) || close(fd)) {
  					rval = 1;
 -					warn("%s", *argv);
-+                    fprintf(thread_stderr, "touch: %s: %s\n", *argv, strerror(errno));
-+                    // warn("%s", *argv);
++                    warn("%s", *argv);
  					continue;
  				}
  
-@@ -213,7 +220,8 @@
+@@ -213,7 +216,7 @@
  		/* If the user specified a time, nothing else we can do. */
  		if (timeset || Aflag) {
  			rval = 1;
 -			warn("%s", *argv);
-+            fprintf(thread_stderr, "touch: %s: %s\n", *argv, strerror(errno));
-+            // warn("%s", *argv);
++            warn("%s", *argv);
  			continue;
  		}
  
-@@ -232,7 +240,8 @@
+@@ -232,7 +235,7 @@
  				rval = 1;
  		} else {
  			rval = 1;
 -			warn("%s", *argv);
-+            fprintf(thread_stderr, "touch: %s: %s\n", *argv, strerror(errno));
-+            // warn("%s", *argv);
++            warn("%s", *argv);
  		}
  	}
  	exit(rval);
-@@ -249,8 +258,11 @@
+@@ -249,8 +252,9 @@
  	char *p;
  					/* Start with the current time. */
  	now = tvp[0].tv_sec;
 -	if ((t = localtime(&now)) == NULL)
--		err(1, "localtime");
 +    if ((t = localtime(&now)) == NULL) {
-+		// err(1, "localtime");
-+        fprintf(thread_stderr, "touch: localtime: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "localtime");
 +    }
  					/* [[CC]YY]MMDDhhmm[.SS] */
  	if ((p = strchr(arg, '.')) == NULL)
  		t->tm_sec = 0;		/* Seconds defaults to 0. */
-@@ -295,8 +307,12 @@
+@@ -295,8 +299,8 @@
  	t->tm_isdst = -1;		/* Figure out DST. */
  	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
  	if (tvp[0].tv_sec == -1)
 -terr:		errx(1,
 -	"out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
-+// terr:        errx(1,
-+        terr:		{
-+            fprintf(thread_stderr,
++        terr:        errx(1,
 +                      "touch: out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]\n");
-+            ios_exit(1);
-+        }
  
  	tvp[0].tv_usec = tvp[1].tv_usec = 0;
  }
-@@ -308,8 +324,11 @@
+@@ -308,8 +312,9 @@
  	struct tm *t;
  					/* Start with the current time. */
  	now = tvp[0].tv_sec;
 -	if ((t = localtime(&now)) == NULL)
--		err(1, "localtime");
 +    if ((t = localtime(&now)) == NULL) {
-+		// err(1, "localtime");
-+        fprintf(thread_stderr, "touch: localtime: %s\n", strerror(errno));
-+        ios_exit(1);
+ 		err(1, "localtime");
 +    }
  
  	t->tm_mon = ATOI2(arg);		/* MMDDhhmm[yy] */
  	--t->tm_mon;			/* Convert from 01-12 to 00-11 */
-@@ -324,9 +343,12 @@
+@@ -324,9 +329,10 @@
  
  	t->tm_isdst = -1;		/* Figure out DST. */
  	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
 -	if (tvp[0].tv_sec == -1)
--		errx(1,
--	"out of range or illegal time specification: MMDDhhmm[yy]");
 +    if (tvp[0].tv_sec == -1) {
-+		// errx(1,
-+        fprintf(thread_stderr,
+ 		errx(1,
+-	"out of range or illegal time specification: MMDDhhmm[yy]");
 +                "touch: out of range or illegal time specification: MMDDhhmm[yy]\n");
-+        ios_exit(1);
 +    }
  
  	tvp[0].tv_usec = tvp[1].tv_usec = 0;
  }
-@@ -344,7 +366,9 @@
- 		arg++;
- 	switch (strlen(arg)) {
- 	default:				/* invalid */
--		errx(1, "Invalid offset spec, must be [-][[HH]MM]SS");
-+		// errx(1, "Invalid offset spec, must be [-][[HH]MM]SS");
-+        fprintf(thread_stderr, "touch: Invalid offset spec, must be [-][[HH]MM]SS\n");
-+        ios_exit(1);
- 
- 	case 6:					/* HHMMSS */
- 		offset = ATOI2(arg);
-@@ -366,8 +390,11 @@
+@@ -366,8 +372,9 @@
  {
  	struct stat sb;
  
 -	if (stat(fname, &sb))
--		err(1, "%s", fname);
 +    if (stat(fname, &sb)) {
-+		// err(1, "%s", fname);
-+        fprintf(thread_stderr, "touch: %s: %s\n", fname, strerror(errno));
-+        ios_exit(1);
+ 		err(1, "%s", fname);
 +    }
  	TIMESPEC_TO_TIMEVAL(tvp, &sb.st_atimespec);
  	TIMESPEC_TO_TIMEVAL(tvp + 1, &sb.st_mtimespec);
  }
-@@ -380,7 +407,8 @@
- 
- 	/* Try regular files. */
- 	if (!S_ISREG(sbp->st_mode)) {
--		warnx("%s: %s", fname, strerror(EFTYPE));
-+		// warnx("%s: %s", fname, strerror(EFTYPE));
-+        fprintf(thread_stderr, "touch: %s: %s\n", fname, strerror(EFTYPE));
- 		return (1);
- 	}
- 
-@@ -403,20 +431,24 @@
+@@ -403,10 +410,10 @@
  	} else {
  		if (write(fd, &byte, sizeof(byte)) != sizeof(byte)) {
  err:			rval = 1;
 -			warn("%s", fname);
-+            fprintf(thread_stderr, "touch: %s: %s\n", fname, strerror(errno));
-+            // warn("%s", fname);
++            warn("%s", fname);
  		} else if (ftruncate(fd, (off_t)0)) {
  			rval = 1;
 -			warn("%s: file modified", fname);
-+            fprintf(thread_stderr, "touch: %s: file modified: %s\n", fname, strerror(errno));
-+            // warn("%s: file modified", fname);
++            warn("%s: file modified", fname);
  		}
  	}
  
- 	if (close(fd) && rval != 1) {
- 		rval = 1;
--		warn("%s", fname);
-+		fprintf(thread_stderr, "touch: %s\n", fname);
-+        // warn("%s", fname);
+@@ -416,7 +423,7 @@
  	}
  	if (needed_chmod && chmod(fname, sbp->st_mode) && rval != 1) {
  		rval = 1;
 -		warn("%s: permissions modified", fname);
-+        fprintf(thread_stderr, "touch: %s: permissions modified: %s\n", fname, strerror(errno));
-+        // warn("%s: permissions modified", fname);
++        warn("%s: permissions modified", fname);
  	}
  	return (rval);
  }
-@@ -424,7 +456,7 @@
+@@ -424,7 +431,7 @@
  void
  usage(char *myname)
  {
