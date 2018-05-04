@@ -223,7 +223,7 @@
 		2219E1CF1FD73D4600675252 /* timeval.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E0BA1FD73D4500675252 /* timeval.h */; };
 		2219E1D01FD73D4600675252 /* transfer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E0BB1FD73D4500675252 /* transfer.c */; };
 		2219E1D11FD73D4600675252 /* transfer.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E0BC1FD73D4500675252 /* transfer.h */; };
-		2219E1D21FD73D4600675252 /* url.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E0BD1FD73D4500675252 /* url.c */; };
+		2219E1D21FD73D4600675252 /* url.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E0BD1FD73D4500675252 /* url.c */; settings = {COMPILER_FLAGS = "-x objective-c"; }; };
 		2219E1D31FD73D4600675252 /* url.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E0BE1FD73D4500675252 /* url.h */; };
 		2219E1D41FD73D4600675252 /* urldata.h in Headers */ = {isa = PBXBuildFile; fileRef = 2219E0BF1FD73D4500675252 /* urldata.h */; };
 		2219E1D51FD73D4600675252 /* cleartext.c in Sources */ = {isa = PBXBuildFile; fileRef = 2219E0C11FD73D4500675252 /* cleartext.c */; };
