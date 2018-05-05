@@ -11,6 +11,8 @@
 		222446342065642E0018D400 /* sessionParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = 222446322065642E0018D400 /* sessionParameters.h */; };
 		222446352065642E0018D400 /* sessionParameters.m in Sources */ = {isa = PBXBuildFile; fileRef = 222446332065642E0018D400 /* sessionParameters.m */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
+		22327A9F209E3ADD0026B98C /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 22327A9E209E3ADD0026B98C /* md5.c */; };
+		22327AA1209E3AE30026B98C /* commoncrypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 22327AA0209E3AE30026B98C /* commoncrypto.c */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
 		225782911FDB4D390050F312 /* curl_config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257811A1FDB4D380050F312 /* curl_config.h */; };
@@ -464,6 +466,8 @@
 		222446322065642E0018D400 /* sessionParameters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sessionParameters.h; sourceTree = "<group>"; };
 		222446332065642E0018D400 /* sessionParameters.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = sessionParameters.m; sourceTree = "<group>"; };
 		22319F9E1FDC2332004D875A /* getopt.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = getopt.c; sourceTree = "<group>"; };
+		22327A9E209E3ADD0026B98C /* md5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = md5.c; path = text_cmds/md5/md5.c; sourceTree = SOURCE_ROOT; };
+		22327AA0209E3AE30026B98C /* commoncrypto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = commoncrypto.c; path = text_cmds/md5/commoncrypto.c; sourceTree = SOURCE_ROOT; };
 		223496AB1FD5FC71007ED1A9 /* ios_system.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ios_system.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		223496AE1FD5FC71007ED1A9 /* ios_system.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_system.h; sourceTree = "<group>"; };
 		223496AF1FD5FC71007ED1A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -1025,6 +1029,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		22327A9D209E3AB20026B98C /* md5 */ = {
+			isa = PBXGroup;
+			children = (
+				22327A9E209E3ADD0026B98C /* md5.c */,
+				22327AA0209E3AE30026B98C /* commoncrypto.c */,
+			);
+			name = md5;
+			sourceTree = "<group>";
+		};
 		223496A11FD5FC71007ED1A9 = {
 			isa = PBXGroup;
 			children = (
@@ -1893,6 +1906,7 @@
 		22CF27B01FDB42F50087DDAD /* text_cmds_grp */ = {
 			isa = PBXGroup;
 			children = (
+				22327A9D209E3AB20026B98C /* md5 */,
 				22C5058D2098B51A00FDDFA9 /* diff */,
 				22F0805820976B25003C3BF0 /* uniq */,
 				22F0804720976687003C3BF0 /* sort */,
@@ -2568,6 +2582,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22327A9F209E3ADD0026B98C /* md5.c in Sources */,
 				22C505942098B56400FDDFA9 /* diff.c in Sources */,
 				22F08050209766BD003C3BF0 /* mem.c in Sources */,
 				22F08042209761EA003C3BF0 /* misc.c in Sources */,
@@ -2602,6 +2617,7 @@
 				22F0805A20979939003C3BF0 /* uniq.c in Sources */,
 				22F6A13720683A1D00E618F9 /* tr.c in Sources */,
 				22F6A14720683A3000E618F9 /* queue.c in Sources */,
+				22327AA1209E3AE30026B98C /* commoncrypto.c in Sources */,
 				22F08055209766BD003C3BF0 /* vsort.c in Sources */,
 				22F08044209761EA003C3BF0 /* read.c in Sources */,
 				22F6A13E20683A2800E618F9 /* glbl.c in Sources */,
