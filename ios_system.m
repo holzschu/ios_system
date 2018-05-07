@@ -56,7 +56,7 @@ int ios_getCommandStatus() {
 
 extern const char* ios_progname(void) {
     if (currentSession != NULL) return [currentSession.commandName UTF8String];
-    else return "";
+    else return getprogname();
 }
 
 
@@ -499,6 +499,7 @@ int pbpaste(int argc, char** argv) {
     return 1;
 }
 
+
 int pbcopy(int argc, char** argv) {
     if (argc == 1) {
         // no arguments, listen to stdin
@@ -507,14 +508,19 @@ int pbcopy(int argc, char** argv) {
         }
         const int bufsize = 1024;
         char buffer[bufsize];
-        NSString* result = nil;
+        NSMutableData* data = [[NSMutableData alloc] init];
+        
         ssize_t count = 0;
         while ((count = read(fileno(thread_stdin), buffer, bufsize-1))) {
-            buffer[count] = 0x0;
-            NSString* readBytes = [NSString stringWithCString:buffer  encoding:NSUTF8StringEncoding];
-            if (result == nil) result = readBytes;
-            else result = [result stringByAppendingString:readBytes];
+            [data appendBytes:buffer length:count];
         }
+        
+        NSString* result = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        
+        if (!result) {
+            return 1;
+        }
+        
         [UIPasteboard generalPasteboard].string = result;
     } else {
         // threre are arguments, concatenate and paste:
