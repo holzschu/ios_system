@@ -19,6 +19,7 @@ FOUNDATION_EXPORT const unsigned char ios_systemVersionString[];
 extern __thread FILE* thread_stdin;
 extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
+extern __thread void* thread_context;
 // set to true to have more commands available, more debugging information.
 extern bool sideLoading;
 
@@ -41,6 +42,7 @@ extern int ios_setMiniRootURL(NSURL*);  // restricts operations to a certain hie
 extern void ios_switchSession(void* sessionid);
 extern void ios_closeSession(void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
+extern void ios_setContext(void *context);
 extern void ios_setDirectoryURL(NSURL* workingDirectoryURL);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
 extern NSError* addCommandList(NSString* fileLocation);

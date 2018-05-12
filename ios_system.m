@@ -37,6 +37,7 @@ extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
+__thread void* thread_context;
 
 #import "sessionParameters.h"
 
@@ -66,6 +67,7 @@ typedef struct _functionParameters {
     char** argv_ref;
     int (*function)(int ac, char** av);
     FILE *stdin, *stdout, *stderr;
+    void* context;
     void* dlHandle;
     bool isPipeOut;
     bool isPipeErr;
@@ -107,6 +109,7 @@ static void* run_function(void* parameters) {
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
+    thread_context = p->context;
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
@@ -669,6 +672,11 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     currentSession.stderr = _stderr;
 }
 
+void ios_setContext(void *context) {
+    if (currentSession == NULL) return;
+    currentSession.context = context;
+}
+
 
 
 // For customization:
@@ -840,6 +848,7 @@ int ios_system(const char* inputCmd) {
     if (thread_stdin == 0) thread_stdin = currentSession.stdin;
     if (thread_stdout == 0) thread_stdout = currentSession.stdout;
     if (thread_stderr == 0) thread_stderr = currentSession.stderr;
+    if (thread_context == 0) thread_context = currentSession.context;
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -878,6 +887,8 @@ int ios_system(const char* inputCmd) {
     params->stdin = child_stdin;
     params->stdout = child_stdout;
     params->stderr = child_stderr;
+    params->context = thread_context;
+  
     child_stdin = child_stdout = child_stderr = NULL;
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
     params->function = NULL; params->isPipeOut = false; params->isPipeErr = false;
