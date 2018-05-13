@@ -23,6 +23,7 @@
     self.stdin = stdin;
     self.stdout = stdout;
     self.stderr = stderr;
+    self.context = nil; 
     self.commandName = nil;
     return self;
 }
