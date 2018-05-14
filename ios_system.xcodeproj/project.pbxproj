@@ -148,6 +148,7 @@
 		22AFD0792067F88500881B2A /* pathmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4C1FDB47A90050F312 /* pathmatch.c */; };
 		22B753052068DF8400F2B025 /* shell.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B753042068DF8400F2B025 /* shell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22B7530B2069801700F2B025 /* curl_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B7530A2069801700F2B025 /* curl_ios.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		22C1D2E920A842460093127F /* ios_error.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27661FDB3FDA0087DDAD /* ios_error.h */; };
 		22C505852098ADD800FDDFA9 /* y.tab.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057D2098ADD700FDDFA9 /* y.tab.c */; };
 		22C505862098ADD800FDDFA9 /* find.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057E2098ADD700FDDFA9 /* find.c */; };
 		22C505872098ADD800FDDFA9 /* ls.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057F2098ADD700FDDFA9 /* ls.c */; };
@@ -2075,6 +2076,7 @@
 				22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */,
 				226378B21FDB3EE400AE8827 /* zopen.h in Headers */,
 				226378811FDB3EE400AE8827 /* ncurses_dll.h in Headers */,
+				22C1D2E920A842460093127F /* ios_error.h in Headers */,
 				222446342065642E0018D400 /* sessionParameters.h in Headers */,
 				226378A81FDB3EE400AE8827 /* chmod_acl.h in Headers */,
 			);
@@ -3023,8 +3025,9 @@
 				);
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3060,7 +3063,7 @@
 				);
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -3097,6 +3100,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3159,6 +3163,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.files";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -3207,6 +3212,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.shell";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -3255,6 +3261,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.text";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -3303,6 +3310,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3369,8 +3377,9 @@
 				);
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.ssh-cmd";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -3397,7 +3406,7 @@
 				);
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.ssh-cmd";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -3425,8 +3434,9 @@
 				);
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-F",
@@ -3458,7 +3468,7 @@
 				);
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"-ObjC",
