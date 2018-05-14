@@ -2,7 +2,7 @@
 
 
 <p align="center">
-<img src="https://img.shields.io/badge/Platform-iOS%2011.0+-lightgrey.svg" alt="Platform: iOS">
+<img src="https://img.shields.io/badge/Platform-iOS%2010.0+-lightgrey.svg" alt="Platform: iOS">
 <a href="https://travis-ci.org/holzschu/ios_system"><img src="https://travis-ci.org/holzschu/ios_system.svg?branch=master" alt="Build Status"/></a>
 <br>
 <a href="http://twitter.com/nholzschuch"><img src="https://img.shields.io/badge/Twitter-@nholzschuch-blue.svg?style=flat" alt="Twitter"/></a>
