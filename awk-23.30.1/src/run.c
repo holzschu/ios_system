@@ -153,6 +153,7 @@ void freeTree(Node *u, int eraseSelf)    /* scan the entire tree, and frees the 
     Node *anext;
     
     if (u == NULL) return;
+    if (u == 0x1) return; // safeguard
     
     // If it's a tree, freetr will do the job:
     if ((u->nobj == CCL) || (u->nobj == NCCL) || (u->nobj == CHAR) || (u->nobj == DOT) || (u->nobj == FINAL)
