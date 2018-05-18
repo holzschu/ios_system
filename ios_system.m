@@ -1274,11 +1274,21 @@ int ios_system(const char* inputCmd) {
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid;
             }
         } else {
+            fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            free(argv);
+            // If command output was redirected to a pipe, we still need to close it.
+            // (to warn the other command that it can stop waiting)
+            if (params->stdout != thread_stdout) {
+                fclose(params->stdout);
+            }
+            if ((params->stderr != thread_stderr) && (params->stderr != params->stdout)) {
+                fclose(params->stderr);
+            }
             if ((handle != NULL) && (handle != RTLD_SELF)
                 && (handle != RTLD_MAIN_ONLY)
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
-            fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            free(params); // This was malloc'ed in ios_system
             currentSession.global_errno = 127;
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
