@@ -3342,7 +3342,7 @@ diff -Naur file_cmds-272/ls/ls.h file_cmds/ls/ls.h
  #include <sys/acl.h>
 diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 --- file_cmds-272/ls/print.c	2016-09-28 00:43:20.000000000 +0200
-+++ file_cmds/ls/print.c	2018-04-30 21:58:42.000000000 +0200
++++ file_cmds/ls/print.c	2018-05-22 22:05:57.000000000 +0200
 @@ -61,7 +61,7 @@
  #include <fts.h>
  #include <math.h>
@@ -3387,7 +3387,185 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	}
  
  	for (p = dp->list; p; p = p->fts_link) {
-@@ -209,7 +212,7 @@
+@@ -198,6 +201,177 @@
+ 	{0, NULL, 0}
+ };
+ 
++//  mbr_identifier_translate source code
++#define MBR_REC_TYPE_USER 1
++#define MBR_REC_TYPE_GROUP 2
++
++/* only supported by mbr_identifier_translate for target type */
++#define ID_TYPE_UID_OR_GID 30
++#define ID_TYPE_NAME 31
++#define ID_TYPE_WINDOWS_FQN 32
++
++static const uuid_t _user_compat_prefix = {0xff, 0xff, 0xee, 0xee, 0xdd, 0xdd, 0xcc, 0xcc, 0xbb, 0xbb, 0xaa, 0xaa, 0x00, 0x00, 0x00, 0x00};
++static const uuid_t _group_compat_prefix = {0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef, 0x00, 0x00, 0x00, 0x00};
++
++#define COMPAT_PREFIX_LEN  (sizeof(uuid_t) - sizeof(id_t))
++
++static int
++_ios_mbr_od_available(void)
++{
++#if DS_AVAILABLE
++    xpc_pipe_t pipe = _mbr_xpc_pipe(false);
++    if (pipe != NULL) {
++        xpc_release(pipe);
++        return 1;
++    }
++#endif
++    return 0;
++}
++
++static int
++ios_mbr_identifier_translate(int id_type, const void *identifier, size_t identifier_size, int target_type, void **result, int *rec_type)
++{
++#if DS_AVAILABLE
++    xpc_object_t payload, reply;
++#endif
++    id_t tempID;
++    size_t identifier_len;
++    int rc = EIO;
++    
++    if (identifier == NULL || result == NULL || identifier_size == 0) return EIO;
++    
++    if (identifier_size == -1) {
++        identifier_size = strlen(identifier);
++    } else {
++        /* 10898647: For types that are known to be strings, send the smallest necessary amount of data. */
++        switch (id_type) {
++            case ID_TYPE_USERNAME:
++            case ID_TYPE_GROUPNAME:
++            case ID_TYPE_GROUP_NFS:
++            case ID_TYPE_USER_NFS:
++            case ID_TYPE_X509_DN:
++            case ID_TYPE_KERBEROS:
++            case ID_TYPE_NAME:
++                identifier_len = strlen(identifier);
++                if (identifier_size > identifier_len) {
++                    identifier_size = identifier_len;
++                }
++                break;
++        }
++    }
++    
++    switch (target_type) {
++        case ID_TYPE_GID:
++        case ID_TYPE_UID:
++        case ID_TYPE_UID_OR_GID:
++            /* shortcut UUIDs using compatibilty prefixes */
++            if (id_type == ID_TYPE_UUID) {
++                const uint8_t *uu = identifier;
++                
++                if (identifier_size != sizeof(uuid_t)) return EINVAL;
++                
++                if (memcmp(uu, _user_compat_prefix, COMPAT_PREFIX_LEN) == 0) {
++                    id_t *tempRes = malloc(sizeof(*tempRes));
++                    memcpy(&tempID, &uu[COMPAT_PREFIX_LEN], sizeof(tempID));
++                    (*tempRes) = ntohl(tempID);
++                    (*result) = tempRes;
++                    if (rec_type != NULL) {
++                        (*rec_type) = MBR_REC_TYPE_USER;
++                    }
++                    return 0;
++                } else if (memcmp(uu, _group_compat_prefix, COMPAT_PREFIX_LEN) == 0) {
++                    id_t *tempRes = malloc(sizeof(*tempRes));
++                    memcpy(&tempID, &uu[COMPAT_PREFIX_LEN], sizeof(tempID));
++                    (*tempRes) = ntohl(tempID);
++                    (*result) = tempRes;
++                    if (rec_type != NULL) {
++                        (*rec_type) = MBR_REC_TYPE_GROUP;
++                    }
++                    return 0;
++                }
++            }
++            break;
++            
++        case ID_TYPE_UUID:
++            /* if this is a UID or GID translation, we shortcut UID/GID 0 */
++            /* or if no OD, we return compatibility UUIDs */
++            switch (id_type) {
++                case ID_TYPE_UID:
++                    if (identifier_size != sizeof(tempID)) return EINVAL;
++                    
++                    tempID = *((id_t *) identifier);
++                    if ((tempID == 0) || (_ios_mbr_od_available() == 0)) {
++                        uint8_t *tempUU = malloc(sizeof(uuid_t));
++                        uuid_copy(tempUU, _user_compat_prefix);
++                        *((id_t *) &tempUU[COMPAT_PREFIX_LEN]) = htonl(tempID);
++                        (*result) = tempUU;
++                        if (rec_type != NULL) {
++                            (*rec_type) = MBR_REC_TYPE_USER;
++                        }
++                        return 0;
++                    }
++                    break;
++                    
++                case ID_TYPE_GID:
++                    if (identifier_size != sizeof(tempID)) return EINVAL;
++                    
++                    tempID = *((id_t *) identifier);
++                    if ((tempID == 0) || (_ios_mbr_od_available() == 0)) {
++                        uint8_t *tempUU = malloc(sizeof(uuid_t));
++                        uuid_copy(tempUU, _group_compat_prefix);
++                        *((id_t *) &tempUU[COMPAT_PREFIX_LEN]) = htonl(tempID);
++                        (*result) = tempUU;
++                        if (rec_type != NULL) {
++                            (*rec_type) = MBR_REC_TYPE_GROUP;
++                        }
++                        return 0;
++                    }
++                    break;
++            }
++            break;
++    }
++    
++#if DS_AVAILABLE
++    payload = xpc_dictionary_create(NULL, NULL, 0);
++    if (payload == NULL) return EIO;
++    
++    xpc_dictionary_set_int64(payload, "requesting", target_type);
++    xpc_dictionary_set_int64(payload, "type", id_type);
++    xpc_dictionary_set_data(payload, "identifier", identifier, identifier_size);
++    
++    reply = _od_rpc_call("mbr_identifier_translate", payload, _mbr_xpc_pipe);
++    if (reply != NULL) {
++        const void *reply_id;
++        size_t idLen;
++        
++        rc = (int) xpc_dictionary_get_int64(reply, "error");
++        if (rc == 0) {
++            reply_id = xpc_dictionary_get_data(reply, "identifier", &idLen);
++            if (reply_id != NULL) {
++                char *identifier = malloc(idLen);
++                
++                memcpy(identifier, reply_id, idLen); // should already be NULL terminated, etc.
++                (*result) = identifier;
++                
++                if (rec_type != NULL) {
++                    (*rec_type) = (int) xpc_dictionary_get_int64(reply, "rectype");
++                }
++            } else {
++                (*result) = NULL;
++                rc = ENOENT;
++            }
++        }
++        
++        xpc_release(reply);
++    }
++    
++    xpc_release(payload);
++#endif
++    
++    return rc;
++}
++
++
+ static char *
+ uuid_to_name(uuid_t *uu) 
+ {
+@@ -209,14 +383,14 @@
  	name = (char *) malloc(MAXNAMETAG);
  	
  	if (NULL == name) {
@@ -3396,7 +3574,15 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	}
  	
  	if (f_numericonly) {
-@@ -281,7 +284,7 @@
+ 		goto errout;
+ 	}
+ 	
+-	if (mbr_identifier_translate(ID_TYPE_UUID, *uu, sizeof(*uu), ID_TYPE_NAME, (void **) &recname, &type)) {
++	if (ios_mbr_identifier_translate(ID_TYPE_UUID, *uu, sizeof(*uu), ID_TYPE_NAME, (void **) &recname, &type)) {
+ 		goto errout;
+ 	}
+ 	
+@@ -281,7 +455,7 @@
  			type = "unknown";
  		}
  
@@ -3405,7 +3591,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  		    index,
  		    name,
  		    acl_get_flag_np(flags, ACL_ENTRY_INHERITED) ? " inherited" : "",
-@@ -295,14 +298,14 @@
+@@ -295,14 +469,14 @@
  				continue;
  			if (!(acl_perms[i].flags & (isdir ? ACL_PERM_DIR : ACL_PERM_FILE)))
  				continue;
@@ -3422,7 +3608,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  		}
  			
  		(void)putchar('\n');
-@@ -322,7 +325,7 @@
+@@ -322,7 +496,7 @@
  #endif
  
  	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
@@ -3431,7 +3617,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  
  	for (p = dp->list; p; p = p->fts_link) {
  		if (IS_NOPRINT(p))
-@@ -330,12 +333,12 @@
+@@ -330,12 +504,12 @@
  		sp = p->fts_statp;
  		if (f_inode) 
  #if _DARWIN_FEATURE_64_BIT_INODE
@@ -3447,7 +3633,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			    dp->s_block, (u_int64_t)howmany(sp->st_blocks, blocksize));
  		strmode(sp->st_mode, buf);
  		np = p->fts_pointer;
-@@ -345,54 +348,54 @@
+@@ -345,54 +519,54 @@
  #endif /* __APPLE__ */
  		if (f_group && f_owner) {	/* means print neither */
  #ifdef __APPLE__
@@ -3514,7 +3700,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			    8 - dp->s_size, "", dp->s_size, (u_int64_t)sp->st_size);
  		else
  			printsize(dp->s_size, sp->st_size);
-@@ -433,7 +436,7 @@
+@@ -433,7 +607,7 @@
  printstream(DISPLAY *dp)
  {
  	FTSENT *p;
@@ -3523,7 +3709,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	int chcnt;
  
  	for (p = dp->list, chcnt = 0; p; p = p->fts_link) {
-@@ -446,7 +449,7 @@
+@@ -446,7 +620,7 @@
  		}
  		chcnt += printaname(p, dp->s_inode, dp->s_block);
  		if (p->fts_link) {
@@ -3532,7 +3718,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  			chcnt += 2;
  		}
  	}
-@@ -457,7 +460,7 @@
+@@ -457,7 +631,7 @@
  void
  printcol(DISPLAY *dp)
  {
@@ -3541,7 +3727,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	static FTSENT **array;
  	static int lastentries = -1;
  	FTSENT *p;
-@@ -515,7 +518,7 @@
+@@ -515,7 +689,7 @@
  
  	assert(dp->list);
  	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
@@ -3550,7 +3736,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  
  	base = 0;
  	for (row = 0; row < numrows; ++row) {
-@@ -561,12 +564,12 @@
+@@ -561,12 +735,12 @@
  	chcnt = 0;
  	if (f_inode)
  #if _DARWIN_FEATURE_64_BIT_INODE
@@ -3566,7 +3752,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  		    (int)sizefield, (u_int64_t)howmany(sp->st_blocks, blocksize));
  #ifdef COLORLS
  	if (f_color)
-@@ -614,7 +617,7 @@
+@@ -614,7 +788,7 @@
  		/* mmm dd  yyyy || dd mmm  yyyy */
  		format = d_first ? "%e %b  %Y " : "%b %e  %Y ";
  	strftime(longstring, sizeof(longstring), format, localtime(&ftime));
@@ -3575,7 +3761,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
  
  static int
-@@ -668,25 +671,34 @@
+@@ -668,35 +842,49 @@
  {
  	char tmp = c;
  
@@ -3592,7 +3778,9 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 +	char ansiseq[10];
  
  	if (colors[c].bold)
- 		tputs(enter_bold, 1, putch);
+-		tputs(enter_bold, 1, putch);
++        fprintf(thread_stdout, "%s", enter_bold);
++		// tputs(enter_bold, 1, putch);
  
  	if (colors[c].num[0] != -1) {
 +#ifndef TARGET_OS_IPHONE
@@ -3601,7 +3789,9 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 +        sprintf(ansiseq, "%s%dm", ansi_fgcol,colors[c].num[0]);
 +#endif
  		if (ansiseq)
- 			tputs(ansiseq, 1, putch);
+-			tputs(ansiseq, 1, putch);
++            fprintf(thread_stdout, "%s", ansiseq);
++			// tputs(ansiseq, 1, putch);
  	}
  	if (colors[c].num[1] != -1) {
 +#ifndef TARGET_OS_IPHONE
@@ -3610,9 +3800,25 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
 +        sprintf(ansiseq, "%s%dm", ansi_bgcol,colors[c].num[1]);
 +#endif
  		if (ansiseq)
- 			tputs(ansiseq, 1, putch);
+-			tputs(ansiseq, 1, putch);
++            fprintf(thread_stdout, "%s", ansiseq);
++			// tputs(ansiseq, 1, putch);
  	}
-@@ -767,7 +779,7 @@
+ }
+ 
+ static void
+ endcolor(int sig)
+ {
+-	tputs(ansi_coloff, 1, sig ? writech : putch);
+-	tputs(attrs_off, 1, sig ? writech : putch);
++    fprintf(thread_stdout, "%s", ansi_coloff);
++    fprintf(thread_stdout, "%s", attrs_off);
++	// tputs(ansi_coloff, 1, sig ? writech : putch);
++	// tputs(attrs_off, 1, sig ? writech : putch);
+ }
+ 
+ static int
+@@ -767,7 +955,7 @@
  			if (c[j] >= '0' && c[j] <= '7') {
  				colors[i].num[j] = c[j] - '0';
  				if (!legacy_warn) {
@@ -3621,7 +3827,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  					    "warn: LSCOLORS should use "
  					    "characters a-h instead of 0-9 ("
  					    "see the manual page)\n");
-@@ -781,7 +793,7 @@
+@@ -781,7 +969,7 @@
  			} else if (tolower((unsigned char)c[j] == 'x'))
  				colors[i].num[j] = -1;
  			else {
@@ -3630,7 +3836,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  				    "error: invalid character '%c' in LSCOLORS"
  				    " env var\n", c[j]);
  				colors[i].num[j] = -1;
-@@ -796,7 +808,8 @@
+@@ -796,7 +984,8 @@
  	endcolor(sig);
  
  	(void)signal(sig, SIG_DFL);
@@ -3640,7 +3846,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  }
  
  #endif /* COLORLS */
-@@ -814,11 +827,11 @@
+@@ -814,11 +1003,11 @@
  		(void)snprintf(name, sizeof(name),
  		    "%s/%s", p->fts_parent->fts_accpath, p->fts_name);
  	if ((lnklen = readlink(name, path, sizeof(path) - 1)) == -1) {
@@ -3654,7 +3860,7 @@ diff -Naur file_cmds-272/ls/print.c file_cmds/ls/print.c
  	(void)printname(path);
  }
  
-@@ -831,7 +844,7 @@
+@@ -831,7 +1020,7 @@
  
      humanize_number(buf, sizeof(buf), (int64_t)bytes, "",
  		    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
