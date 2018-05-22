@@ -367,9 +367,14 @@ int cd_main(int argc, char** argv) {
                         if ([miniRoot hasPrefix:resultDir]) {
                             [fileManager changeCurrentDirectoryPath:miniRoot];
                             currentSession.currentDir = miniRoot;
+                            currentSession.previousDirectory = currentSession.currentDir;
+                        } else {
+                            // go back to where we were before:
+                            [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
                         }
+                    } else {
+                        currentSession.previousDirectory = currentSession.currentDir;
                     }
-                    currentSession.previousDirectory = currentSession.currentDir;
                 } else fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
             }
             else  fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
