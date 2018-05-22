@@ -179,7 +179,7 @@ char *new_format_cipher = NULL;
 int rounds = 0;
 
 /* argv0 */
-extern char *__progname;
+extern char *ssh_progname;
 
 char hostname[NI_MAXHOST];
 
@@ -449,7 +449,7 @@ do_convert_to(struct passwd *pw)
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
 	if (stat(identity_file, &st) < 0)
-		fprintf(thread_stderr, "%s: %s: %s", __progname, identity_file, strerror(errno));
+		fprintf(thread_stderr, "%s: %s: %s", ssh_progname, identity_file, strerror(errno));
 	if ((r = sshkey_load_public(identity_file, &k, NULL)) != 0)
 		k = load_identity(identity_file);
 	switch (convert_format) {
@@ -635,7 +635,7 @@ do_convert_from_ssh2(struct passwd *pw, struct sshkey **k, int *private)
 	FILE *fp;
 
 	if ((fp = fopen(identity_file, "r")) == NULL)
-		fprintf(thread_stderr, "%s: %s: %s", __progname, identity_file, strerror(errno));
+		fprintf(thread_stderr, "%s: %s: %s", ssh_progname, identity_file, strerror(errno));
 	encoded[0] = '\0';
 	while ((blen = get_line(fp, line, sizeof(line))) != -1) {
 		if (blen > 0 && line[blen - 1] == '\\')
@@ -680,7 +680,7 @@ do_convert_from_pkcs8(struct sshkey **k, int *private)
 	FILE *fp;
 
 	if ((fp = fopen(identity_file, "r")) == NULL)
-		fprintf(thread_stderr, "%s: %s: %s", __progname, identity_file, strerror(errno));
+		fprintf(thread_stderr, "%s: %s: %s", ssh_progname, identity_file, strerror(errno));
 	if ((pubkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL)) == NULL) {
 		fprintf(thread_stderr, "%s: %s is not a recognised public key format", __func__,
 		    identity_file);
@@ -726,7 +726,7 @@ do_convert_from_pem(struct sshkey **k, int *private)
 #endif
 
 	if ((fp = fopen(identity_file, "r")) == NULL)
-		fprintf(thread_stderr, "%s: %s: %s", __progname, identity_file, strerror(errno));
+		fprintf(thread_stderr, "%s: %s: %s", ssh_progname, identity_file, strerror(errno));
 	if ((rsa = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL)) != NULL) {
 		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
 			fprintf(thread_stderr, "sshkey_new failed");
@@ -760,7 +760,7 @@ do_convert_from(struct passwd *pw)
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
 	if (stat(identity_file, &st) < 0)
-		fprintf(thread_stderr, "%s: %s: %s", __progname, identity_file, strerror(errno));
+		fprintf(thread_stderr, "%s: %s: %s", ssh_progname, identity_file, strerror(errno));
 
 	switch (convert_format) {
 	case FMT_RFC4716:
@@ -961,7 +961,7 @@ do_fingerprint(struct passwd *pw)
 		f = thread_stdin;
 		path = "(thread_stdin)";
 	} else if ((f = fopen(path, "r")) == NULL)
-		fprintf(thread_stderr, "%s: %s: %s", __progname, path, strerror(errno));
+		fprintf(thread_stderr, "%s: %s: %s", ssh_progname, path, strerror(errno));
 
 	while (read_keyfile_line(f, path, line, sizeof(line), &lnum) == 0) {
 		cp = line;
@@ -1078,7 +1078,7 @@ do_gen_all_hostkeys(struct passwd *pw)
 
 		if (first == 0) {
 			first = 1;
-			fprintf(thread_stdout, "%s: generating new host keys: ", __progname);
+			fprintf(thread_stdout, "%s: generating new host keys: ", ssh_progname);
 		}
 		fprintf(thread_stdout, "%s ", key_types[i].key_type_display);
 		fflush(thread_stdout);
@@ -2015,7 +2015,7 @@ do_show_cert(struct passwd *pw)
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
 	if (strcmp(identity_file, "-") != 0 && stat(identity_file, &st) < 0)
-		fprintf(thread_stderr, "%s: %s: %s", __progname, identity_file, strerror(errno));
+		fprintf(thread_stderr, "%s: %s: %s", ssh_progname, identity_file, strerror(errno));
 
 	path = identity_file;
 	if (strcmp(path, "-") == 0) {
@@ -2366,7 +2366,7 @@ sshkeygen_main(int argc, char **argv)
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
-	__progname = ssh_get_progname(argv[0]);
+	ssh_progname = ssh_get_progname(argv[0]);
 
 #ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
