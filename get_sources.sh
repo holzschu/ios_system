@@ -37,6 +37,7 @@ curl https://opensource.apple.com/tarballs/Libinfo/$libinfo.tar.gz -O
 tar xfz $libinfo.tar.gz
 rm $libinfo.tar.gz 
 mv $libinfo libinfo
+(cd libinfo ; patch -p1 < ../libinfo.patch ; cd ..)
 
 # get source for shell_cmds:
 echo "Getting shell_cmds"

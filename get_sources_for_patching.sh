@@ -29,6 +29,14 @@ echo "Creating libutil.patch"
 diff -Naur $libutil libutil > libutil.patch
 rm -rf $libutil
 
+echo "Getting libinfo"
+curl https://opensource.apple.com/tarballs/Libinfo/$libinfo.tar.gz -O
+tar xfz $libinfo.tar.gz
+rm $libinfo.tar.gz 
+echo "Creating libinfo.patch"
+diff -Naur $libinfo libinfo > libinfo.patch
+rm -rf $libinfo
+
 
 # get source for shell_cmds:
 echo "Getting shell_cmds"
