@@ -75,7 +75,7 @@ diff -Naur Libinfo-517/lookup.subproj/kvbuf.c libinfo/lookup.subproj/kvbuf.c
  
 diff -Naur Libinfo-517/lookup.subproj/libinfo.c libinfo/lookup.subproj/libinfo.c
 --- Libinfo-517/lookup.subproj/libinfo.c	2017-06-02 21:00:18.000000000 +0200
-+++ libinfo/lookup.subproj/libinfo.c	2018-05-22 20:52:39.000000000 +0200
++++ libinfo/lookup.subproj/libinfo.c	2018-05-22 21:12:46.000000000 +0200
 @@ -28,19 +28,19 @@
  #include <errno.h>
  #include <netdb.h>
@@ -100,6 +100,15 @@ diff -Naur Libinfo-517/lookup.subproj/libinfo.c libinfo/lookup.subproj/libinfo.c
  #include <sys/stat.h>
  
  #define SOCK_UNSPEC 0
+@@ -782,7 +782,7 @@
+ }
+ 
+ int32_t
+-getgrouplist_2(const char *name, gid_t basegid, gid_t **groups)
++ios_getgrouplist_2(const char *name, gid_t basegid, gid_t **groups)
+ {
+ 	/*
+ 	 * Passes back a gid_t list containing all the users groups (and basegid).
 @@ -1564,28 +1564,6 @@
  int
  ether_hostton(const char *name, struct ether_addr *e)
