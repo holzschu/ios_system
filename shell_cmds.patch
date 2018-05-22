@@ -486,7 +486,7 @@ diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 +extern __thread int	 env_verbosity;
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2018-04-30 22:22:55.000000000 +0200
++++ shell_cmds/id/id.c	2018-05-22 20:39:30.000000000 +0200
 @@ -62,18 +62,19 @@
  #include <stdlib.h>
  #include <string.h>
