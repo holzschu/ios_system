@@ -75,7 +75,7 @@ diff -Naur Libinfo-517/lookup.subproj/kvbuf.c libinfo/lookup.subproj/kvbuf.c
  
 diff -Naur Libinfo-517/lookup.subproj/libinfo.c libinfo/lookup.subproj/libinfo.c
 --- Libinfo-517/lookup.subproj/libinfo.c	2017-06-02 21:00:18.000000000 +0200
-+++ libinfo/lookup.subproj/libinfo.c	2018-05-22 21:12:46.000000000 +0200
++++ libinfo/lookup.subproj/libinfo.c	2018-05-23 11:31:09.000000000 +0200
 @@ -28,19 +28,19 @@
  #include <errno.h>
  #include <netdb.h>

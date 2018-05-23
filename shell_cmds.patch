@@ -486,7 +486,7 @@ diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 +extern __thread int	 env_verbosity;
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2018-05-22 21:12:55.000000000 +0200
++++ shell_cmds/id/id.c	2018-05-23 11:34:48.000000000 +0200
 @@ -62,26 +62,27 @@
  #include <stdlib.h>
  #include <string.h>
@@ -517,7 +517,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  #ifdef __APPLE__
  // SPI for 5235093
 -int32_t getgrouplist_2(const char *, gid_t, gid_t **);
-+int32_t ios_getgrouplist_2(const char *, gid_t, gid_t **);
++// int32_t getgrouplist_2(const char *, gid_t, gid_t **);
  #endif
  
  int
@@ -612,7 +612,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  #ifdef __APPLE__
  		// 5235093
 -		ngroups = getgrouplist_2(pw->pw_name, gid, &groups);
-+		ngroups = ios_getgrouplist_2(pw->pw_name, gid, &groups);
++		// ngroups = getgrouplist_2(pw->pw_name, gid, &groups);
  #else
  		ngroups = NGROUPS + 1;
  		getgrouplist(pw->pw_name, gid, groups, &ngroups);
@@ -707,7 +707,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  #ifdef __APPLE__
  		// 5235093
 -		ngroups = getgrouplist_2(pw->pw_name, pw->pw_gid, &groups);
-+		ngroups = ios_getgrouplist_2(pw->pw_name, pw->pw_gid, &groups);
++		// ngroups = getgrouplist_2(pw->pw_name, pw->pw_gid, &groups);
  #else
  		ngroups = NGROUPS + 1;
  		(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);

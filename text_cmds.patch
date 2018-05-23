@@ -2063,8 +2063,8 @@ diff -Naur text_cmds-99/md5/CommonDigestSPI.h text_cmds/md5/CommonDigestSPI.h
 +#endif /* _CC_DigestSPI_H_ */
 diff -Naur text_cmds-99/md5/commoncrypto.c text_cmds/md5/commoncrypto.c
 --- text_cmds-99/md5/commoncrypto.c	2016-03-08 08:31:57.000000000 +0100
-+++ text_cmds/md5/commoncrypto.c	2018-05-05 17:36:03.000000000 +0200
-@@ -1,9 +1,10 @@
++++ text_cmds/md5/commoncrypto.c	2018-05-23 13:14:55.000000000 +0200
+@@ -1,24 +1,81 @@
  /* Generic CommonDigest wrappers to match the semantics of libmd. */
  
  #include <dispatch/dispatch.h>
@@ -2076,41 +2076,117 @@ diff -Naur text_cmds-99/md5/commoncrypto.c text_cmds/md5/commoncrypto.c
  
  #include "commoncrypto.h"
  
-@@ -16,9 +17,12 @@
+ #define CHUNK_SIZE (10 * 1024 * 1024)
+ 
++int ios_CCDigestInit(ios_CCDigestAlgorithm alg, ios_CCDigestRef ctx) {
++  ctx->algorithm = alg;
++  switch (alg) {
++    case kCCDigestMD5:
++      return CC_MD5_Init(&ctx->ctx);
++    case kCCDigestSHA1:
++      return CC_SHA1_Init(&ctx->ctx);
++    case kCCDigestSHA256:
++      return CC_SHA256_Init(&ctx->ctx);
++    default:
++      return 0;
++  }
++}
++
++int ios_CCDigestFinal(ios_CCDigestRef ctx, unsigned char *md) {
++  switch (ctx->algorithm) {
++    case kCCDigestMD5:
++      return CC_MD5_Final(md, &ctx->ctx);
++    case kCCDigestSHA1:
++      return CC_SHA1_Final(md, &ctx->ctx);
++    case kCCDigestSHA256:
++      return CC_SHA256_Final(md, &ctx->ctx);
++    default:
++      return -1;
++  }
++}
++
++int ios_CCDigestUpdate(ios_CCDigestRef ctx, const void *data, size_t len) {
++  switch (ctx->algorithm) {
++    case kCCDigestMD5:
++      return CC_MD5_Update(&ctx->ctx, data, len);
++    case kCCDigestSHA1:
++      return CC_SHA1_Update(&ctx->ctx, data, len);
++    case kCCDigestSHA256:
++      return CC_SHA256_Update(&ctx->ctx, data, len);
++    default:
++      return -1;
++  }
++}
++
++size_t ios_CCDigestOutputSize(ios_CCDigestRef ctx) {
++  switch (ctx->algorithm) {
++    case kCCDigestMD5:
++      return CC_MD5_DIGEST_LENGTH;
++    case kCCDigestSHA1:
++      return CC_SHA1_DIGEST_LENGTH;
++    case kCCDigestSHA256:
++      return CC_SHA256_DIGEST_LENGTH;
++    default:
++      return 0;
++  }
++}
++
+ char *
+-Digest_End(CCDigestRef ctx, char *buf)
++Digest_End(ios_CCDigestRef ctx, char *buf)
+ {
+ 	static const char hex[] = "0123456789abcdef";
  	uint8_t digest[32]; // SHA256 is the biggest
  	size_t i, length;
  
 -	(void)os_assumes_zero(CCDigestFinal(ctx, digest));
-+//  (void)os_assumes_zero(CCDigestFinal(ctx, digest));
-+  assert(CCDigestFinal(ctx, digest) == 0);
- 	length = CCDigestOutputSize(ctx);
+-	length = CCDigestOutputSize(ctx);
 -	os_assert(length <= sizeof(digest));
++//  (void)os_assumes_zero(CCDigestFinal(ctx, digest));
++  assert(ios_CCDigestFinal(ctx, digest) == 1);
++	length = ios_CCDigestOutputSize(ctx);
 +	//os_assert(length <= sizeof(digest));
 +  assert(length <= sizeof(digest));
 +  
  	for (i = 0; i < length; i++) {
  		buf[i+i] = hex[digest[i] >> 4];
  		buf[i+i+1] = hex[digest[i] & 0x0f];
-@@ -32,8 +36,10 @@
+@@ -28,20 +85,22 @@
+ }
+ 
+ char *
+-Digest_Data(CCDigestAlg algorithm, const void *data, size_t len, char *buf)
++Digest_Data(ios_CCDigestAlg algorithm, const void *data, size_t len, char *buf)
  {
- 	CCDigestCtx ctx;
+-	CCDigestCtx ctx;
++	ios_CCDigestCtx ctx;
  
 -	(void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
 -	(void)os_assumes_zero(CCDigestUpdate(&ctx, data, len));
 +//  (void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
-+  assert(CCDigestInit(algorithm, &ctx) == 0);
++  assert(ios_CCDigestInit(algorithm, &ctx) == 1);
 +//  (void)os_assumes_zero(CCDigestUpdate(&ctx, data, len));
-+  assert(CCDigestUpdate(&ctx, data, len));
++  assert(ios_CCDigestUpdate(&ctx, data, len));
  	return Digest_End(&ctx, buf);
  }
  
-@@ -57,12 +63,15 @@
+ char *
+-Digest_File(CCDigestAlg algorithm, const char *filename, char *buf)
++Digest_File(ios_CCDigestAlg algorithm, const char *filename, char *buf)
+ {
+ 	int fd;
+-	__block CCDigestCtx ctx;
++	__block ios_CCDigestCtx ctx;
+ 	dispatch_queue_t queue;
+ 	dispatch_semaphore_t sema;
+ 	dispatch_io_t io;
+@@ -57,12 +116,15 @@
  
  	(void)fcntl(fd, F_NOCACHE, 1);
  
 -	(void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
 +//  (void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
-+  assert(CCDigestInit(algorithm, &ctx) == 0);
++  assert(ios_CCDigestInit(algorithm, &ctx) == 1);
  
  	queue = dispatch_queue_create("com.apple.mtree.io", NULL);
 -	os_assert(queue);
@@ -2123,7 +2199,7 @@ diff -Naur text_cmds-99/md5/commoncrypto.c text_cmds/md5/commoncrypto.c
  
  	io = dispatch_io_create(DISPATCH_IO_STREAM, fd, queue, ^(int error) {
  		if (error != 0) {
-@@ -71,12 +80,14 @@
+@@ -71,12 +133,14 @@
  		(void)close(fd);
  		(void)dispatch_semaphore_signal(sema);
  	});
@@ -2136,25 +2212,72 @@ diff -Naur text_cmds-99/md5/commoncrypto.c text_cmds/md5/commoncrypto.c
  				(void)dispatch_data_apply(data, ^(__unused dispatch_data_t region, __unused size_t offset, const void *buffer, size_t size) {
 -					(void)os_assumes_zero(CCDigestUpdate(&ctx, buffer, size));
 +//          (void)os_assumes_zero(CCDigestUpdate(&ctx, buffer, size));
-+          assert(CCDigestUpdate(&ctx, buffer, size) == 0);
++          assert(ios_CCDigestUpdate(&ctx, buffer, size) == 1);
  					return (bool)true;
  				});
  			}
 diff -Naur text_cmds-99/md5/commoncrypto.h text_cmds/md5/commoncrypto.h
 --- text_cmds-99/md5/commoncrypto.h	2011-10-05 00:53:29.000000000 +0200
-+++ text_cmds/md5/commoncrypto.h	2018-05-05 17:36:03.000000000 +0200
-@@ -1,5 +1,7 @@
++++ text_cmds/md5/commoncrypto.h	2018-05-23 13:15:19.000000000 +0200
+@@ -1,8 +1,51 @@
  #include <CommonCrypto/CommonDigest.h>
 -#include <CommonCrypto/CommonDigestSPI.h>
 +//#include <CommonCrypto/CommonDigestSPI.h>
-+#include "CommonDigestSPI.h"
++//#include "CommonDigestSPI.h"
+ 
+-char *Digest_End(CCDigestRef, char *);
++enum {
++  kCCDigestNone       = 0,
++//  kCCDigestMD2        = 1,
++//  kCCDigestMD4        = 2,
++  kCCDigestMD5        = 3,
++//  kCCDigestRMD128     = 4,
++//  kCCDigestRMD160     = 5,
++//  kCCDigestRMD256     = 6,
++//  kCCDigestRMD320     = 7,
++  kCCDigestSHA1        = 8,
++//  kCCDigestSHA224        = 9,
++  kCCDigestSHA256        = 10,
++//  kCCDigestSHA384        = 11,
++//  kCCDigestSHA512        = 12,
++//  kCCDigestSkein128      = 13,
++//  kCCDigestSkein160      = 14,
++//  kCCDigestSkein224      = 16,
++//  kCCDigestSkein256      = 17,
++//  kCCDigestSkein384      = 18,
++//  kCCDigestSkein512      = 19,
++};
++typedef uint32_t ios_CCDigestAlgorithm;
+ 
+-char *Digest_Data(CCDigestAlg, const void *, size_t, char *);
++#define ios_CCDigestAlg ios_CCDigestAlgorithm
+ 
+-char *Digest_File(CCDigestAlg, const char *, char *);
++typedef union {
++  CC_MD5_CTX md5;
++  CC_SHA1_CTX sha1;
++  CC_SHA256_CTX sha256;
++//  RIPEMD160_CTX ripemd160;
++} _DIGEST_CTX;
 +
- 
- char *Digest_End(CCDigestRef, char *);
- 
++typedef struct ios_CCDigestCtx_t {
++  ios_CCDigestAlgorithm algorithm;
++  _DIGEST_CTX ctx;
++} ios_CCDigestCtx, *ios_CCDigestRef;
++
++
++int ios_CCDigestInit(ios_CCDigestAlgorithm alg, ios_CCDigestRef ctx);
++int ios_CCDigestFinal(ios_CCDigestRef ctx, unsigned char *md);
++int ios_CCDigestUpdate(ios_CCDigestRef ctx, const void *data, size_t len);
++
++char *Digest_End(ios_CCDigestRef, char *);
++
++char *Digest_Data(ios_CCDigestAlg, const void *, size_t, char *);
++
++char *Digest_File(ios_CCDigestAlg, const char *, char *);
 diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
 --- text_cmds-99/md5/md5.c	2011-10-05 00:53:29.000000000 +0200
-+++ text_cmds/md5/md5.c	2018-05-05 17:36:03.000000000 +0200
++++ text_cmds/md5/md5.c	2018-05-23 13:14:10.000000000 +0200
 @@ -36,6 +36,7 @@
  #include <time.h>
  #include <unistd.h>
@@ -2179,7 +2302,36 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  
  typedef void (DIGEST_Init)(void *);
  typedef void (DIGEST_Update)(void *, const unsigned char *, size_t);
-@@ -142,7 +146,7 @@
+@@ -66,7 +70,7 @@
+ 	const char *name;
+ 	const char *(*TestOutput)[MDTESTCOUNT];
+ #ifdef __APPLE__
+-	CCDigestAlg algorithm;
++	ios_CCDigestAlg algorithm;
+ #else /* !__APPLE__ */
+ 	DIGEST_Init *Init;
+ 	DIGEST_Update *Update;
+@@ -85,8 +89,9 @@
+ static void MDFilter(Algorithm_t *, int);
+ static void usage(Algorithm_t *);
+ 
++
+ #ifdef __APPLE__
+-typedef CCDigestCtx DIGEST_CTX;
++typedef ios_CCDigestCtx DIGEST_CTX;
+ #else /* !__APPLE__ */
+ typedef union {
+ 	MD5_CTX md5;
+@@ -107,7 +112,7 @@
+ 	{ "md5", "MD5", &MD5TestOutput, kCCDigestMD5, },
+ 	{ "sha1", "SHA1", &SHA1_TestOutput, kCCDigestSHA1 },
+ 	{ "sha256", "SHA256", &SHA256_TestOutput, kCCDigestSHA256 },
+-	{ "rmd160", "RMD160", &RIPEMD160_TestOutput, kCCDigestRMD160 },
++//  { "rmd160", "RMD160", &RIPEMD160_TestOutput, kCCDigestRMD160 },
+ #else
+ 	{ "md5", "MD5", &MD5TestOutput, (DIGEST_Init*)&MD5Init,
+ 		(DIGEST_Update*)&MD5_Update, (DIGEST_End*)&MD5End,
+@@ -142,7 +147,7 @@
    (none)   - digests standard input
   */
  int
@@ -2188,7 +2340,7 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  {
  	int     ch;
  	char   *p;
-@@ -171,13 +175,16 @@
+@@ -171,13 +176,16 @@
  			MDFilter(&Algorithm[digest], 1);
  			break;
  		case 'q':
@@ -2208,7 +2360,7 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  			MDString(&Algorithm[digest], optarg);
  			break;
  		case 't':
-@@ -203,15 +210,18 @@
+@@ -203,15 +211,18 @@
  				warn("%s", *argv);
  				failed++;
  			} else {
@@ -2230,7 +2382,7 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  		MDFilter(&Algorithm[digest], 0);
  
  	if (failed != 0)
-@@ -228,10 +238,12 @@
+@@ -228,10 +239,12 @@
  	size_t len = strlen(string);
  	char buf[HEX_DIGEST_LENGTH];
  
@@ -2245,7 +2397,7 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  		printf("%s \"%s\"\n", Digest_Data(alg->algorithm, string, len, buf), string);
  	else
  		printf("%s (\"%s\") = %s\n", alg->name, string, Digest_Data(alg->algorithm, string, len, buf));
-@@ -260,7 +272,7 @@
+@@ -260,7 +273,7 @@
  	printf
  	    ("%s time trial. Digesting %d %d-byte blocks ...",
  	    alg->name, TEST_BLOCK_COUNT, TEST_BLOCK_LEN);
@@ -2254,7 +2406,24 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  
  	/* Initialize block */
  	for (i = 0; i < TEST_BLOCK_LEN; i++)
-@@ -391,8 +403,8 @@
+@@ -271,9 +284,9 @@
+ 
+ 	/* Digest blocks */
+ #ifdef __APPLE__
+-	CCDigestInit(alg->algorithm, &context);
++	ios_CCDigestInit(alg->algorithm, &context);
+ 	for (i = 0; i < TEST_BLOCK_COUNT; i++)
+-		CCDigestUpdate(&context, block, TEST_BLOCK_LEN);
++		ios_CCDigestUpdate(&context, block, TEST_BLOCK_LEN);
+ 	p = Digest_End(&context, buf);
+ #else
+ 	alg->Init(&context);
+@@ -387,20 +400,20 @@
+ 	char buf[HEX_DIGEST_LENGTH];
+ 
+ #ifdef __APPLE__
+-	CCDigestInit(alg->algorithm, &context);
++	ios_CCDigestInit(alg->algorithm, &context);
  #else
  	alg->Init(&context);
  #endif
@@ -2264,8 +2433,9 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
 +		if (tee && len != fwrite(buffer, 1, len, thread_stdout))
  			err(1, "stdout");
  #ifdef __APPLE__
- 		CCDigestUpdate(&context, buffer, len);
-@@ -400,7 +412,7 @@
+-		CCDigestUpdate(&context, buffer, len);
++		ios_CCDigestUpdate(&context, buffer, len);
+ #else
  		alg->Update(&context, buffer, len);
  #endif
  	}
@@ -2274,7 +2444,7 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  		errx(EX_IOERR, NULL);
  	}
  #ifdef __APPLE__
-@@ -414,6 +426,6 @@
+@@ -414,6 +427,6 @@
  usage(Algorithm_t *alg)
  {
  
