@@ -149,13 +149,6 @@
 		<string></string>
 		<string>file</string>
 	</array>
-	<key>groups</key>
-	<array>
-		<string>shell.framework/shell</string>
-		<string>id_main</string>
-		<string></string>
-		<string>no</string>
-	</array>
 	<key>id</key>
 	<array>
 		<string>shell.framework/shell</string>
