@@ -162,20 +162,6 @@
 		22C505942098B56400FDDFA9 /* diff.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505902098B56400FDDFA9 /* diff.c */; };
 		22C505952098B56400FDDFA9 /* diffreg.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505912098B56400FDDFA9 /* diffreg.c */; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
-		22D2FC4F20B49BC7003DF7C2 /* kvbuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4120B49BC6003DF7C2 /* kvbuf.c */; };
-		22D2FC5020B49BC7003DF7C2 /* search_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4220B49BC6003DF7C2 /* search_module.c */; };
-		22D2FC5120B49BC7003DF7C2 /* si_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4320B49BC6003DF7C2 /* si_module.c */; };
-		22D2FC5220B49BC7003DF7C2 /* getnameinfo_link.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4420B49BC6003DF7C2 /* getnameinfo_link.c */; };
-		22D2FC5320B49BC7003DF7C2 /* muser_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4520B49BC6003DF7C2 /* muser_module.c */; };
-		22D2FC5420B49BC7003DF7C2 /* cache_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4620B49BC6003DF7C2 /* cache_module.c */; };
-		22D2FC5520B49BC7003DF7C2 /* si_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4720B49BC6003DF7C2 /* si_data.c */; };
-		22D2FC5620B49BC7003DF7C2 /* mdns_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4820B49BC6003DF7C2 /* mdns_module.c */; };
-		22D2FC5720B49BC7003DF7C2 /* si_getaddrinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4920B49BC6003DF7C2 /* si_getaddrinfo.c */; };
-		22D2FC5820B49BC7003DF7C2 /* ds_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4A20B49BC7003DF7C2 /* ds_module.c */; };
-		22D2FC5920B49BC7003DF7C2 /* ils.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4B20B49BC7003DF7C2 /* ils.c */; };
-		22D2FC5A20B49BC7003DF7C2 /* libinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4C20B49BC7003DF7C2 /* libinfo.c */; };
-		22D2FC5B20B49BC7003DF7C2 /* thread_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4D20B49BC7003DF7C2 /* thread_data.c */; };
-		22D2FC5C20B49BC7003DF7C2 /* file_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D2FC4E20B49BC7003DF7C2 /* file_module.c */; };
 		22F0803820973712003C3BF0 /* libc_replacement.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803620973712003C3BF0 /* libc_replacement.c */; };
 		22F0803B20975779003C3BF0 /* head.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803A20975779003C3BF0 /* head.c */; };
 		22F08041209761EA003C3BF0 /* forward.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803D209761EA003C3BF0 /* forward.c */; };
@@ -925,20 +911,6 @@
 		22CF27B71FDB43070087DDAD /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
 		22CF27BA1FDB43070087DDAD /* cat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cat.c; sourceTree = "<group>"; };
 		22CF27C01FDB43080087DDAD /* wc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wc.c; sourceTree = "<group>"; };
-		22D2FC4120B49BC6003DF7C2 /* kvbuf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kvbuf.c; path = libinfo/lookup.subproj/kvbuf.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4220B49BC6003DF7C2 /* search_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = search_module.c; path = libinfo/lookup.subproj/search_module.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4320B49BC6003DF7C2 /* si_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = si_module.c; path = libinfo/lookup.subproj/si_module.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4420B49BC6003DF7C2 /* getnameinfo_link.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = getnameinfo_link.c; path = libinfo/lookup.subproj/getnameinfo_link.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4520B49BC6003DF7C2 /* muser_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = muser_module.c; path = libinfo/lookup.subproj/muser_module.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4620B49BC6003DF7C2 /* cache_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cache_module.c; path = libinfo/lookup.subproj/cache_module.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4720B49BC6003DF7C2 /* si_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = si_data.c; path = libinfo/lookup.subproj/si_data.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4820B49BC6003DF7C2 /* mdns_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdns_module.c; path = libinfo/lookup.subproj/mdns_module.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4920B49BC6003DF7C2 /* si_getaddrinfo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = si_getaddrinfo.c; path = libinfo/lookup.subproj/si_getaddrinfo.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4A20B49BC7003DF7C2 /* ds_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ds_module.c; path = libinfo/lookup.subproj/ds_module.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4B20B49BC7003DF7C2 /* ils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ils.c; path = libinfo/lookup.subproj/ils.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4C20B49BC7003DF7C2 /* libinfo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libinfo.c; path = libinfo/lookup.subproj/libinfo.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4D20B49BC7003DF7C2 /* thread_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = thread_data.c; path = libinfo/lookup.subproj/thread_data.c; sourceTree = SOURCE_ROOT; };
-		22D2FC4E20B49BC7003DF7C2 /* file_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file_module.c; path = libinfo/lookup.subproj/file_module.c; sourceTree = SOURCE_ROOT; };
 		22D8DEB5200791BB00FAADB7 /* echo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = echo.c; path = shell_cmds/echo/echo.c; sourceTree = SOURCE_ROOT; };
 		22D8DEB820079E4C00FAADB7 /* cset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cset.c; path = text_cmds/tr/cset.c; sourceTree = SOURCE_ROOT; };
 		22D8DEB920079E4C00FAADB7 /* cmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmap.c; path = text_cmds/tr/cmap.c; sourceTree = SOURCE_ROOT; };
@@ -1927,20 +1899,6 @@
 			isa = PBXGroup;
 			children = (
 				22CF27881FDB3FDA0087DDAD /* id.c */,
-				22D2FC4620B49BC6003DF7C2 /* cache_module.c */,
-				22D2FC4A20B49BC7003DF7C2 /* ds_module.c */,
-				22D2FC4E20B49BC7003DF7C2 /* file_module.c */,
-				22D2FC4420B49BC6003DF7C2 /* getnameinfo_link.c */,
-				22D2FC4B20B49BC7003DF7C2 /* ils.c */,
-				22D2FC4120B49BC6003DF7C2 /* kvbuf.c */,
-				22D2FC4C20B49BC7003DF7C2 /* libinfo.c */,
-				22D2FC4820B49BC6003DF7C2 /* mdns_module.c */,
-				22D2FC4520B49BC6003DF7C2 /* muser_module.c */,
-				22D2FC4220B49BC6003DF7C2 /* search_module.c */,
-				22D2FC4720B49BC6003DF7C2 /* si_data.c */,
-				22D2FC4920B49BC6003DF7C2 /* si_getaddrinfo.c */,
-				22D2FC4320B49BC6003DF7C2 /* si_module.c */,
-				22D2FC4D20B49BC7003DF7C2 /* thread_data.c */,
 			);
 			name = id;
 			path = shell_cmds/id;
@@ -2597,41 +2555,27 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				22D2FC5B20B49BC7003DF7C2 /* thread_data.c in Sources */,
-				22D2FC5920B49BC7003DF7C2 /* ils.c in Sources */,
 				22C505872098ADD800FDDFA9 /* ls.c in Sources */,
 				22F6A11E2068395B00E618F9 /* fmt.c in Sources */,
 				22F6A1212068395B00E618F9 /* w.c in Sources */,
 				22C505882098ADD800FDDFA9 /* misc.c in Sources */,
 				22F6A11A2068394B00E618F9 /* id.c in Sources */,
-				22D2FC5720B49BC7003DF7C2 /* si_getaddrinfo.c in Sources */,
 				22C5058A2098ADD800FDDFA9 /* function.c in Sources */,
 				22F6A11F2068395B00E618F9 /* pr_time.c in Sources */,
 				22C5058B2098ADD800FDDFA9 /* operator.c in Sources */,
 				22C5058C2098ADD800FDDFA9 /* main.c in Sources */,
 				22F6A1202068395B00E618F9 /* proc_compare.c in Sources */,
-				22D2FC4F20B49BC7003DF7C2 /* kvbuf.c in Sources */,
-				22D2FC5220B49BC7003DF7C2 /* getnameinfo_link.c in Sources */,
-				22D2FC5420B49BC7003DF7C2 /* cache_module.c in Sources */,
 				22F6A11B2068394E00E618F9 /* printenv.c in Sources */,
-				22D2FC5120B49BC7003DF7C2 /* si_module.c in Sources */,
 				22F6A1152068393E00E618F9 /* echo.c in Sources */,
 				22F6A11C2068395200E618F9 /* pwd.c in Sources */,
-				22D2FC5A20B49BC7003DF7C2 /* libinfo.c in Sources */,
 				22C505862098ADD800FDDFA9 /* find.c in Sources */,
 				22F6A1172068394200E618F9 /* vary.c in Sources */,
 				22C505852098ADD800FDDFA9 /* y.tab.c in Sources */,
 				22F6A1182068394700E618F9 /* env.c in Sources */,
 				22F6A1162068394200E618F9 /* date.c in Sources */,
-				22D2FC5520B49BC7003DF7C2 /* si_data.c in Sources */,
-				22D2FC5820B49BC7003DF7C2 /* ds_module.c in Sources */,
-				22D2FC5620B49BC7003DF7C2 /* mdns_module.c in Sources */,
-				22D2FC5020B49BC7003DF7C2 /* search_module.c in Sources */,
 				22F6A1142068393900E618F9 /* tee.c in Sources */,
-				22D2FC5C20B49BC7003DF7C2 /* file_module.c in Sources */,
 				22F6A11D2068395600E618F9 /* uname.c in Sources */,
 				22F6A1192068394700E618F9 /* envopts.c in Sources */,
-				22D2FC5320B49BC7003DF7C2 /* muser_module.c in Sources */,
 				22C505892098ADD800FDDFA9 /* option.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
