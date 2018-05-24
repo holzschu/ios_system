@@ -39,6 +39,7 @@ extern NSString* operatesOn(NSString* command);
 extern void initializeEnvironment(void);
 extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hierarchy
 extern int ios_setMiniRootURL(NSURL*);  // restricts operations to a certain hierarchy
+extern int ios_setAllowedPaths(NSArray<NSString *> *paths);  // restricts operations to a certain hierarchy
 extern void ios_switchSession(void* sessionid);
 extern void ios_closeSession(void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
