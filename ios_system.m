@@ -305,32 +305,39 @@ int ios_setMiniRoot(NSString* mRoot) {
     BOOL isDir;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
 
-    if ([fileManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
-        if (isDir) {
-            // fileManager has different ways of expressing the same directory.
-            // We need to actually change to the directory to get its "real name".
-            NSString* currentDir = [fileManager currentDirectoryPath];
-            if ([fileManager changeCurrentDirectoryPath:mRoot]) {
-                // also don't set the miniRoot if we can't go in there
-                // get the real name for miniRoot:
-                miniRoot = [fileManager currentDirectoryPath];
-                // Back to where we we before:
-                [fileManager changeCurrentDirectoryPath:currentDir];
-                if (currentSession != nil) {
-                    currentSession.currentDir = miniRoot;
-                    currentSession.previousDirectory = miniRoot;
-                }
-                return 1; // mission accomplished
-            }
-        }
+    if (![fileManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
+      return 0;
     }
-    return 0;
+
+    if (!isDir) {
+      return 0;
+    }
+
+    // fileManager has different ways of expressing the same directory.
+    // We need to actually change to the directory to get its "real name".
+    NSString* currentDir = [fileManager currentDirectoryPath];
+
+    if (![fileManager changeCurrentDirectoryPath:mRoot]) {
+      return 0;
+    }
+    // also don't set the miniRoot if we can't go in there
+    // get the real name for miniRoot:
+    miniRoot = [fileManager currentDirectoryPath];
+    // Back to where we we before:
+    [fileManager changeCurrentDirectoryPath:currentDir];
+    if (currentSession != nil) {
+        currentSession.currentDir = miniRoot;
+        currentSession.previousDirectory = miniRoot;
+    }
+    return 1; // mission accomplished
 }
 
 // Called when 
 int ios_setMiniRootURL(NSURL* mRoot) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    if (currentSession == NULL) currentSession = [[sessionParameters alloc] init];
+    if (currentSession == NULL) {
+      currentSession = [[sessionParameters alloc] init];
+    }
     currentSession.localMiniRoot = mRoot;
     currentSession.previousDirectory = currentSession.currentDir;
     currentSession.currentDir = [mRoot path];
@@ -338,8 +345,77 @@ int ios_setMiniRootURL(NSURL* mRoot) {
     return 1; // mission accomplished
 }
 
+int ios_setAllowedPaths(NSArray<NSString *> *paths) {
+  if (currentSession == nil) {
+    return 0;
+  }
+  
+  currentSession.allowedPaths = paths;
+  return 1;
+}
+
+BOOL __allowed_cd_to_path(NSString *path) {
+  if (miniRoot == nil || [path hasPrefix:miniRoot]) {
+    return YES;
+  }
+  
+  NSString *localMiniRootPath = currentSession.localMiniRoot.path;
+  if (localMiniRootPath && [path hasPrefix:localMiniRootPath]) {
+    return YES;
+  }
+  
+  for (NSString *dir in currentSession.allowedPaths) {
+    if ([path hasPrefix:dir]) {
+      return YES;
+    }
+  }
+  
+  return NO;
+}
+
+void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
+  BOOL isDir;
+  // Check for permission and existence:
+  if (![fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
+    fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
+    return;
+  }
+  if (!isDir) {
+    fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
+    return;
+  }
+  if (![fileManager isReadableFileAtPath:newDir] ||
+      ![fileManager changeCurrentDirectoryPath:newDir]) {
+    fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
+    return;
+  }
+
+  // We managed to change the directory.
+  // Was that allowed?
+  // Allowed "cd" = below miniRoot *or* below localMiniRoot
+  NSString* resultDir = [fileManager currentDirectoryPath];
+  
+  if (__allowed_cd_to_path(resultDir)) {
+    currentSession.previousDirectory = currentSession.currentDir;
+    return;
+  }
+  
+  fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
+  // If the user tried to go above the miniRoot, set it to miniRoot
+  if ([miniRoot hasPrefix:resultDir]) {
+    [fileManager changeCurrentDirectoryPath:miniRoot];
+    currentSession.currentDir = miniRoot;
+    currentSession.previousDirectory = currentSession.currentDir;
+  } else {
+    // go back to where we were before:
+    [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+  }
+}
+
 int cd_main(int argc, char** argv) {
-    if (currentSession == NULL) return 1;
+    if (currentSession == NULL) {
+      return 1;
+    }
     NSFileManager *fileManager = [[NSFileManager alloc] init];
 
     if (argc > 1) {
@@ -348,39 +424,7 @@ int cd_main(int argc, char** argv) {
             // "cd -" option to pop back to previous directory
             newDir = currentSession.previousDirectory;
         }
-        BOOL isDir;
-        // Check for permission and existence:
-        if ([fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
-            if (isDir) {
-                if ([fileManager isReadableFileAtPath:newDir] &&
-                    [fileManager changeCurrentDirectoryPath:newDir]) {
-                    // We managed to change the directory.
-                    // Was that allowed?
-                    // Allowed "cd" = below miniRoot *or* below localMiniRoot
-                    NSString* resultDir = [fileManager currentDirectoryPath];
-                    bool notAllowedCd = ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot]));
-                    if (notAllowedCd && currentSession.localMiniRoot)
-                        notAllowedCd = !([resultDir hasPrefix:[currentSession.localMiniRoot path]]);
-                    if (notAllowedCd) {
-                        fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
-                        // If the user tried to go above the miniRoot, set it to miniRoot
-                        if ([miniRoot hasPrefix:resultDir]) {
-                            [fileManager changeCurrentDirectoryPath:miniRoot];
-                            currentSession.currentDir = miniRoot;
-                            currentSession.previousDirectory = currentSession.currentDir;
-                        } else {
-                            // go back to where we were before:
-                            [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
-                        }
-                    } else {
-                        currentSession.previousDirectory = currentSession.currentDir;
-                    }
-                } else fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
-            }
-            else  fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
-        } else {
-            fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
-        }
+        __cd_to_dir(newDir, fileManager);
     } else { // [cd] Help, I'm lost, bring me back home
         currentSession.previousDirectory = [fileManager currentDirectoryPath];
 
