@@ -14,7 +14,6 @@
 @property NSString *currentDir;
 @property NSString *previousDirectory;
 @property NSURL    *localMiniRoot;
-@property NSArray<NSString*> *allowedPaths;
 @property pthread_t current_command_root_thread; // thread ID of first command
 @property pthread_t lastThreadId; // thread ID of last command
 @property FILE* stdin;
