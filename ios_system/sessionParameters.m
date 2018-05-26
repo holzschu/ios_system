@@ -19,7 +19,6 @@
     self.currentDir = [fileManager currentDirectoryPath];
     self.previousDirectory = [fileManager currentDirectoryPath];
     self.localMiniRoot = nil;
-    self.allowedPaths = nil;
     self.global_errno = 0;
     self.stdin = stdin;
     self.stdout = stdout;

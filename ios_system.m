@@ -120,6 +120,7 @@ static void* run_function(void* parameters) {
 }
 
 static NSString* miniRoot = nil; // limit operations to below a certain directory (~, usually).
+static NSArray<NSString*> *allowedPaths = nil;
 static NSDictionary *commandList = nil;
 // do recompute directoriesInPath only if $PATH has changed
 static NSString* fullCommandPath = @"";
@@ -346,11 +347,7 @@ int ios_setMiniRootURL(NSURL* mRoot) {
 }
 
 int ios_setAllowedPaths(NSArray<NSString *> *paths) {
-  if (currentSession == nil) {
-    return 0;
-  }
-  
-  currentSession.allowedPaths = paths;
+  allowedPaths = paths;
   return 1;
 }
 
@@ -364,7 +361,7 @@ BOOL __allowed_cd_to_path(NSString *path) {
     return YES;
   }
   
-  for (NSString *dir in currentSession.allowedPaths) {
+  for (NSString *dir in allowedPaths) {
     if ([path hasPrefix:dir]) {
       return YES;
     }
