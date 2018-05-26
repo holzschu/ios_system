@@ -115,7 +115,7 @@ pid_t fork(void) { return 0; } // Always go through the child branch
 pid_t waitpid(pid_t pid, int *stat_loc, int options) {
     pthread_join(ios_getLastThreadId(), NULL); // best we can do
     if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
-    return 0;
+    return pid;
 }
 //
 void vwarn(const char *fmt, va_list args)
