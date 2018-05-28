@@ -1712,16 +1712,12 @@
 					curl/curl/lib/,
 					"-DBUILDING_LIBCURL",
 					"-I",
-					../blink/Settings/Model/,
+					../../Settings/Model/,
 					"-I",
-					../blink/Frameworks/libssh2.framework/Headers/,
-					"-DBLINKSHELL",
+					../libssh2.framework/Headers/,
 					"-I",
 					../ios_system/,
-				);
-				OTHER_LDFLAGS = (
-					"-F",
-					"../../libssh2-for-iOS/",
+					"-DBLINKSHELL",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "Acube.curl-ios";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -1752,16 +1748,12 @@
 					curl/curl/lib/,
 					"-DBUILDING_LIBCURL",
 					"-I",
-					../blink/Settings/Model/,
+					../../Settings/Model/,
 					"-I",
-					../blink/Frameworks/libssh2.framework/Headers/,
-					"-DBLINKSHELL",
+					../libssh2.framework/Headers/,
 					"-I",
 					../ios_system/,
-				);
-				OTHER_LDFLAGS = (
-					"-F",
-					"../../libssh2-for-iOS/",
+					"-DBLINKSHELL",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "Acube.curl-ios";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
