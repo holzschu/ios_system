@@ -134,7 +134,7 @@ To add a command:
     - compile the digital library, add it to the embedded frameworks of your app. 
     - Edit the `Resources/extraCommandsDictionary.plist` to add your command, and run. 
     - That's it. 
-    - Test a lot. Side effects appear can after several launches.
+    - Test a lot. Side effects can appear after several launches.
     - if your command has a large code base, work out the difference in your edits and make a patch, rather than commit the entire code. See `get_sources_for_patching.sh` for an example. 
 
 **Frequently asked commands:** here is a list of commands that are often requested, and my experience with them:
