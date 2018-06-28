@@ -1316,6 +1316,7 @@ int ios_system(const char* inputCmd) {
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
                 pthread_create(&_tid, NULL, run_function, params);
+                pthread_detach(_tid); // a thread must be either joined or detached.
                 // The last command on the command line (with multiple pipes) will be created first
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid;
             }
