@@ -713,7 +713,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
        }
 diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
 --- curl-105/curl/lib/url.c	2017-05-17 22:04:33.000000000 +0300
-+++ curl/curl/lib/url.c	2018-10-02 16:22:45.000000000 +0300
++++ curl/curl/lib/url.c	2018-10-03 13:35:04.000000000 +0300
 @@ -119,6 +119,18 @@
  #include "pipeline.h"
  #include "dotdot.h"
@@ -827,7 +827,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
 +                *userp = strdup([host.user UTF8String]);
 +            }
 +            // grab remote port from host settings too
-+            if (host.port.intValue) {
++            if (conn->remote_port == -1 && host.port.intValue) {
 +                conn->remote_port = host.port.intValue;
 +            }
 +        }
