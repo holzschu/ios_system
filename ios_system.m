@@ -871,6 +871,75 @@ static char* unquoteArgument(char* argument) {
     return argument;
 }
 
+char *strstrquoted(char* str1, char* str2) {
+  
+  if (str1 == NULL || str2 == NULL) {
+    return NULL;
+  }
+  size_t len1 = strlen(str1);
+  size_t len2 = strlen(str2);
+  
+  if (len1 < len2) {
+    return NULL;
+  }
+  
+  if (strcmp(str1, str2) == 0) {
+    return str1;
+  }
+  
+  char quotechar = 0;
+  int esclen = 0;
+  int matchlen = 0;
+  
+  for (int i = 0; i < len1; i++) {
+    char ch = str1[i];
+    if (quotechar) {
+      if (ch == '\\') {
+        esclen++;
+        continue;
+      }
+      
+      if (ch == quotechar) {
+        if (esclen % 2 == 1) {
+          esclen = 0;
+          continue;
+        }
+        quotechar = 0;
+        esclen = 0;
+        continue;
+      }
+      
+      esclen = 0;
+      continue;
+    }
+    
+    if (ch == '"' || ch == '\'') {
+      if (esclen % 2 == 0) {
+        quotechar = ch;
+      }
+      matchlen = 0;
+      esclen = 0;
+      continue;
+    }
+    
+    if (ch == '\\') {
+      esclen++;
+    }
+    
+    if (str2[matchlen] == ch) {
+      matchlen++;
+      if (matchlen == len2) {
+        return str1 + i - matchlen + 1;
+      }
+      continue;
+    }
+    
+    matchlen = 0;
+  }
+  return NULL;
+}
+
+
 int ios_system(const char* inputCmd) {
     char* command;
     // The names of the files for stdin, stdout, stderr
@@ -939,7 +1008,7 @@ int ios_system(const char* inputCmd) {
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
     params->function = NULL; params->isPipeOut = false; params->isPipeErr = false;
     // scan until first "<" (input file)
-    inputFileMarker = strstr(inputFileMarker, "<");
+    inputFileMarker = strstrquoted(inputFileMarker, "<");
     // scan until first non-space character:
     if (inputFileMarker) {
         inputFileName = inputFileMarker + 1; // skip past '<'
@@ -950,8 +1019,8 @@ int ios_system(const char* inputCmd) {
     // We assume here a logical command order: < before pipe, pipe before >.
     // TODO: check what happens for unlogical commands. Refuse them, but gently.
     // TODO: implement tee, because that has been removed
-    char* pipeMarker = strstr (outputFileMarker,"&|");
-    if (!pipeMarker) pipeMarker = strstr (outputFileMarker,"|&"); // both seem to work
+    char* pipeMarker = strstrquoted(outputFileMarker,"&|");
+    if (!pipeMarker) pipeMarker = strstrquoted(outputFileMarker,"|&"); // both seem to work
     if (pipeMarker) {
         bool pushMainThread = currentSession.isMainThread;
         currentSession.isMainThread = false;
@@ -960,7 +1029,7 @@ int ios_system(const char* inputCmd) {
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
     } else {
-        pipeMarker = strstr (outputFileMarker,"|");
+        pipeMarker = strstrquoted(outputFileMarker,"|");
         if (pipeMarker) {
             bool pushMainThread = currentSession.isMainThread;
             currentSession.isMainThread = false;
@@ -971,24 +1040,24 @@ int ios_system(const char* inputCmd) {
     }
     // We have removed the pipe part. Still need to parse the rest of the command
     // Must scan in strstr by reverse order of inclusion. So "2>&1" before "2>" before ">"
-    errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
+    errorFileMarker = strstrquoted(outputFileMarker,"&>"); // both stderr/stdout sent to same file
     // output file name will be after "&>"
     if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
     if (!errorFileMarker) {
         // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
         // ...except with a pipe.
         // Currently, we don't check for that.
-        errorFileMarker = strstr (outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
+        errorFileMarker = strstrquoted(outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
         if (errorFileMarker) {
             if (params->stdout) params->stderr = params->stdout;
-            outputFileMarker = strstr(outputFileMarker, ">");
+            outputFileMarker = strstrquoted(outputFileMarker, ">");
             if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
         }
     }
     if (errorFileMarker) { sharedErrorOutput = true; }
     else {
         // specific name for error file?
-        errorFileMarker = strstr(outputFileMarker,"2>");
+        errorFileMarker = strstrquoted(outputFileMarker,"2>");
         if (errorFileMarker) {
             errorFileName = errorFileMarker + 2; // skip past "2>"
             // skip past all spaces:
@@ -997,7 +1066,7 @@ int ios_system(const char* inputCmd) {
     }
     // scan until first ">"
     if (!sharedErrorOutput) {
-        outputFileMarker = strstr(outputFileMarker, ">");
+        outputFileMarker = strstrquoted(outputFileMarker, ">");
         if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
     }
     if (outputFileName) {
@@ -1006,7 +1075,7 @@ int ios_system(const char* inputCmd) {
     if (errorFileName && (outputFileName == errorFileName)) {
         // we got the same ">" twice, pick the next one ("2>" was before ">")
         outputFileMarker = errorFileName;
-        outputFileMarker = strstr(outputFileMarker, ">");
+        outputFileMarker = strstrquoted(outputFileMarker, ">");
         if (outputFileMarker) {
             outputFileName = outputFileMarker + 1; // skip past '>'
             while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
