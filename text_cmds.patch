@@ -1,16 +1,7 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2018-03-29 20:29:32.000000000 +0200
-@@ -55,7 +55,7 @@
- #endif
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <fcntl.h>
- #include <locale.h>
- #include <stdio.h>
-@@ -63,9 +63,10 @@
++++ text_cmds/cat/cat.c	2018-05-05 21:30:50.000000000 +0200
+@@ -63,10 +63,11 @@
  #include <string.h>
  #include <unistd.h>
  #include <stddef.h>
@@ -18,11 +9,13 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  
 -int bflag, eflag, nflag, sflag, tflag, vflag;
 -int rval;
-+static int bflag, eflag, nflag, sflag, tflag, vflag;
-+static int rval;
- const char *filename;
+-const char *filename;
++static __thread int bflag, eflag, nflag, sflag, tflag, vflag;
++static __thread int rval;
++const __thread char *filename;
  
  static void usage(void);
+ static void scanfiles(char *argv[], int cooked);
 @@ -78,11 +79,14 @@
  #endif
  
@@ -78,13 +71,12 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  		} else {
  			filename = path;
  			fd = open(path, O_RDONLY);
-@@ -152,11 +156,12 @@
+@@ -152,11 +156,11 @@
  #endif
  		}
  		if (fd < 0) {
 -			warn("%s", path);
-+            fprintf(thread_stderr, "cat: %s: %s\n", path, strerror(errno));
-+            // warn("%s", path);
++            warn("%s", path);
  			rval = 1;
  		} else if (cooked) {
 -			if (fd == STDIN_FILENO)
@@ -94,7 +86,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  			else {
  				fp = fdopen(fd, "r");
  				cook_cat(fp);
-@@ -164,7 +169,7 @@
+@@ -164,7 +168,7 @@
  			}
  		} else {
  			raw_cat(fd);
@@ -103,7 +95,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  				close(fd);
  		}
  		if (path == NULL)
-@@ -179,8 +184,8 @@
+@@ -179,8 +183,8 @@
  	int ch, gobble, line, prev;
  
  	/* Reset EOF condition on stdin. */
@@ -114,7 +106,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  
  	line = gobble = 0;
  	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
-@@ -194,8 +199,8 @@
+@@ -194,8 +198,8 @@
  					gobble = 0;
  			}
  			if (nflag && (!bflag || ch != '\n')) {
@@ -125,28 +117,23 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  					break;
  			}
  		}
-@@ -226,12 +231,17 @@
+@@ -226,12 +230,13 @@
  			break;
  	}
  	if (ferror(fp)) {
 -		warn("%s", filename);
-+        fprintf(thread_stderr, "cat: %s: %s\n", filename, strerror(errno));
-+        // warn("%s", filename);
++        warn("%s", filename);
  		rval = 1;
  		clearerr(fp);
  	}
 -	if (ferror(stdout))
--		err(1, "stdout");
 +    if (ferror(thread_stdout)) {
-+		// err(1, "stdout");
-+        fprintf(thread_stderr, "cat: stdout: %s\n", strerror(errno));
-+        global_errno = 1;
-+        pthread_exit(NULL);
+ 		err(1, "stdout");
 +    }
  }
  
  static void
-@@ -241,24 +251,37 @@
+@@ -241,24 +246,33 @@
  	ssize_t nr, nw;
  	static size_t bsize;
  	static char *buf = NULL;
@@ -165,10 +152,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 +			// err(1, "%s", filename);
 +        bsize = 1024; // MAX(sbuf.st_blksize, 1024);
 +        if ((buf = malloc(bsize)) == NULL) {
-+            // err(1, "buffer");
-+            global_errno = 1;
-+            fprintf(thread_stderr, "cat: buffer: %s\n", strerror(errno));
-+            pthread_exit(NULL);
++            err(1, "buffer");
 +        }
  	}
  	while ((nr = read(rfd, buf, bsize)) > 0)
@@ -186,8 +170,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 +        }
  	if (nr < 0) {
 -		warn("%s", filename);
-+        fprintf(thread_stderr, "cat: %s: %s\n", filename, strerror(errno));
-+        // warn("%s", filename);
++        warn("%s", filename);
  		rval = 1;
  	}
 +    free(buf);
@@ -195,25 +178,23 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  }
  
  #ifndef NO_UDOM_SUPPORT
-@@ -298,11 +321,13 @@
+@@ -298,11 +312,11 @@
  		switch(flags & O_ACCMODE) {
  		case O_RDONLY:
  			if (shutdown(fd, SHUT_WR) == -1)
 -				warn(NULL);
-+                fprintf(thread_stderr, "cat: %s\n", strerror(errno));
-+                // warn(NULL);
++                warn(NULL);
  			break;
  		case O_WRONLY:
  			if (shutdown(fd, SHUT_RD) == -1)
 -				warn(NULL);
-+                fprintf(thread_stderr, "cat: %s\n", strerror(errno));
-+				// warn(NULL);
++                warn(NULL);
  			break;
  		default:
  			break;
 diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
 --- text_cmds-99/ed/buf.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/buf.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/buf.c	2018-04-23 20:32:31.000000000 +0200
 @@ -33,6 +33,10 @@
  #include <sys/stat.h>
  
@@ -319,7 +300,7 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  	REQUE(&buffer_head, &buffer_head);
 diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 --- text_cmds-99/ed/ed.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/ed.h	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/ed.h	2018-04-23 20:32:31.000000000 +0200
 @@ -258,25 +258,25 @@
  long write_stream(FILE *, long, long);
  
@@ -366,7 +347,7 @@ diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 +extern __thread int posixly_correct;
 diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
 --- text_cmds-99/ed/glbl.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/glbl.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/glbl.c	2018-04-23 20:32:31.000000000 +0200
 @@ -34,6 +34,7 @@
  #include <sys/wait.h>
  
@@ -404,7 +385,7 @@ diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
  				return ERR;
 diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
 --- text_cmds-99/ed/io.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/io.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/io.c	2018-04-23 20:32:31.000000000 +0200
 @@ -29,9 +29,10 @@
  __FBSDID("$FreeBSD: src/bin/ed/io.c,v 1.14 2003/01/01 18:48:39 schweikh Exp $");
  
@@ -553,7 +534,7 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/main.c	2018-04-25 22:18:01.000000000 +0200
 @@ -59,14 +59,16 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -666,7 +647,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 +    shcmd = 0;            /* shell command buffer */
 +    shcmdsz = 0;            /* shell command buffer size */
 +    shcmdi = 0;            /* shell command buffer index */
-+    ibuf = 0;            /* ed command-line buffer */
++    ibuf = 0;            /* ed command-line buffer */
 +    ibufsz = 0;            /* ed command-line buffer size */
 +    ibufp = 0;            /* pointer to ed command-line buffer */
 +
@@ -691,18 +672,16 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		}
  	argv += optind;
  	argc -= optind;
-@@ -158,7 +188,9 @@
+@@ -158,7 +188,7 @@
  	/* assert: reliable signals! */
  #ifdef SIGWINCH
  	handle_winch(SIGWINCH);
 -	if (isatty(0)) signal(SIGWINCH, handle_winch);
-+//	if (isatty(0)) signal(SIGWINCH, handle_winch);
-+//  also replaced 6x !isatty(0) below
-+    if (fileno(thread_stdin) == fileno(stdin)) signal(SIGWINCH, handle_winch);
++	if (ios_isatty(0)) signal(SIGWINCH, handle_winch);
  #endif
  	signal(SIGHUP, signal_hup);
  	signal(SIGQUIT, SIG_IGN);
-@@ -169,51 +201,51 @@
+@@ -169,51 +199,51 @@
  	if ((status = setjmp(env)))
  #endif
  	{
@@ -714,7 +693,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		sigactive = 1;			/* enable signal handlers */
  		if (argc>0 && *argv && is_legal_filename(*argv)) {
 -			if (read_file(*argv, 0) < 0 && !isatty(0))
-+			if (read_file(*argv, 0) < 0 && !(fileno(thread_stdin) == fileno(stdin)))
++			if (read_file(*argv, 0) < 0 && !(ios_isatty(0)))
  				quit(2);
  			else if (**argv != '!') {
  				if (strlen(*argv) < sizeof(old_filename)) {
@@ -731,7 +710,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			if (**argv == '\0')
  				errmsg = "invalid filename";
 -			if (!isatty(0))
-+			if (!(fileno(thread_stdin) == fileno(stdin)))
++			if (!(ios_isatty(0)))
  				quit(2);
  		}
  	}
@@ -755,7 +734,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				errmsg = "warning: file modified";
 -				if (!isatty(0)) {
 -					fprintf(stderr, garrulous ?
-+				if (!(fileno(thread_stdin) == fileno(stdin))) {
++				if (!(ios_isatty(0))) {
 +					fprintf(thread_stderr, garrulous ?
  					    "script, line %d: %s\n" :
 -					    "", lineno, errmsg);
@@ -767,7 +746,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				modified = 0;
  				status = EMOD;
  				continue;
-@@ -222,7 +254,7 @@
+@@ -222,7 +252,7 @@
  		} else if (ibuf[n - 1] != '\n') {
  			/* discard line */
  			errmsg = "unexpected end-of-file";
@@ -776,7 +755,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			status = ERR;
  			continue;
  		}
-@@ -238,30 +270,30 @@
+@@ -238,30 +268,30 @@
  			quit(0);
  		case EMOD:
  			modified = 0;
@@ -785,7 +764,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			errmsg = "warning: file modified";
 -			if (!isatty(0)) {
 -				fprintf(stderr, garrulous ?
-+			if (!(fileno(thread_stdin) == fileno(stdin))) {
++			if (!(ios_isatty(0))) {
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" :
 -				    "", lineno, errmsg);
@@ -796,7 +775,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		case FATAL:
 -			if (!isatty(0))
 -				fprintf(stderr, garrulous ?
-+			if (!(fileno(thread_stdin) == fileno(stdin)))
++			if (!(ios_isatty(0)))
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
@@ -811,7 +790,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 -			if (!isatty(0)) {
 -				fprintf(stderr, garrulous ?
 +			fputs("?\n", thread_stdout);
-+			if (!(fileno(thread_stdin) == fileno(stdin))) {
++			if (!(ios_isatty(0))) {
 +				fprintf(thread_stderr, garrulous ?
  				    "script, line %d: %s\n" : "",
 -				    lineno, errmsg);
@@ -819,7 +798,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  			break;
-@@ -270,7 +302,7 @@
+@@ -270,7 +300,7 @@
  	/*NOTREACHED*/
  }
  
@@ -828,7 +807,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  
  /* extract_addr_range: get line addresses from the command buffer until an
     illegal address is seen; return status */
-@@ -440,9 +472,9 @@
+@@ -440,9 +470,9 @@
  #define SGR 004		/* use last regex instead of last pat */
  #define SGF 010		/* repeat last substitution */
  
@@ -840,7 +819,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  
  /* exec_command: execute the next command in command buffer; return print
     request, if any */
-@@ -519,7 +551,7 @@
+@@ -519,7 +549,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -849,7 +828,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -552,11 +584,11 @@
+@@ -552,11 +582,11 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -863,7 +842,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'g':
  	case 'v':
-@@ -584,7 +616,7 @@
+@@ -584,7 +614,7 @@
  			return ERR;
  		}
  		GET_COMMAND_SUFFIX();
@@ -872,7 +851,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'H':
  		if (addr_cnt > 0) {
-@@ -593,7 +625,7 @@
+@@ -593,7 +623,7 @@
  		}
  		GET_COMMAND_SUFFIX();
  		if ((garrulous = 1 - garrulous) && *errmsg)
@@ -881,7 +860,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case 'i':
  		if (second_addr == 0) {
-@@ -693,7 +725,7 @@
+@@ -693,7 +723,7 @@
  			if (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -890,7 +869,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -835,7 +867,7 @@
+@@ -835,7 +865,7 @@
  			if  (strlen(fnp) < sizeof(old_filename)) {
  				strcpy(old_filename, fnp);
  			} else {
@@ -899,7 +878,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				quit(2);
  			}
  		}
-@@ -877,7 +909,7 @@
+@@ -877,7 +907,7 @@
  		break;
  	case '=':
  		GET_COMMAND_SUFFIX();
@@ -908,7 +887,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '!':
  		if (addr_cnt > 0) {
-@@ -886,10 +918,10 @@
+@@ -886,10 +916,10 @@
  		} else if ((sflags = get_shell_command()) < 0)
  			return ERR;
  		GET_COMMAND_SUFFIX();
@@ -923,7 +902,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		break;
  	case '\n':
  		if (check_addr_range(first_addr = 1, current_addr + (posixly_correct ? !isglobal : 1)) < 0
-@@ -969,7 +1001,7 @@
+@@ -969,7 +999,7 @@
  			if ((n = get_shell_command()) < 0)
  				return NULL;
  			if (n)
@@ -932,7 +911,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  			return shcmd;
  		} else if (n > PATH_MAX) {
  			errmsg = "filename too long";
-@@ -1065,7 +1097,7 @@
+@@ -1065,7 +1095,7 @@
  			if ((l = get_tty_line()) < 0)
  				return ERR;
  			else if (l == 0 || ibuf[l - 1] != '\n') {
@@ -941,7 +920,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  				return  l ? EOF : 0;
  			}
  			lp = ibuf;
-@@ -1330,7 +1362,7 @@
+@@ -1330,7 +1360,7 @@
  	line_t *np;
  
  	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
@@ -950,7 +929,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  		errmsg = "out of memory";
  		return NULL;
  	}
-@@ -1425,7 +1457,7 @@
+@@ -1425,7 +1455,7 @@
  }
  
  
@@ -961,7 +940,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  handle_winch(int signo)
 diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
 --- text_cmds-99/ed/re.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/re.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/re.c	2018-04-23 20:32:31.000000000 +0200
 @@ -30,11 +30,12 @@
  __FBSDID("$FreeBSD: src/bin/ed/re.c,v 1.20 2003/07/20 10:24:09 ru Exp $");
  
@@ -988,7 +967,7 @@ diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
  	}
 diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
 --- text_cmds-99/ed/sub.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/sub.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/sub.c	2018-04-23 20:32:31.000000000 +0200
 @@ -30,6 +30,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/sub.c,v 1.15 2002/06/30 05:13:53 obrien Exp $");
  
@@ -1008,7 +987,7 @@ diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
  		}
 diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
 --- text_cmds-99/ed/undo.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/undo.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/ed/undo.c	2018-04-23 20:32:31.000000000 +0200
 @@ -29,6 +29,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/undo.c,v 1.12 2002/06/30 05:13:53 obrien Exp $");
  
@@ -1048,16 +1027,7 @@ diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
  int
 diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
 --- text_cmds-99/grep/file.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/file.c	2018-03-29 20:29:32.000000000 +0200
-@@ -38,7 +38,7 @@
- #include <sys/stat.h>
- #include <sys/types.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #ifndef WITHOUT_LZMA
++++ text_cmds/grep/file.c	2018-04-30 21:42:54.000000000 +0200
 @@ -57,6 +57,7 @@
  #endif
  
@@ -1085,16 +1055,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-03-29 20:29:32.000000000 +0200
-@@ -36,7 +36,7 @@
- #include <sys/types.h>
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <getopt.h>
++++ text_cmds/grep/grep.c	2018-05-01 11:46:27.000000000 +0200
 @@ -53,10 +53,11 @@
  #include "fastmatch.h"
  #endif
@@ -1251,17 +1212,13 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  	exit(2);
  }
  
-@@ -328,16 +332,24 @@
+@@ -328,16 +332,18 @@
  	char *line;
  	size_t len;
  
 -	if ((f = fopen(fn, "r")) == NULL)
--		err(2, "%s", fn);
 +    if ((f = fopen(fn, "r")) == NULL) {
-+		// err(2, "%s", fn);
-+        global_errno = 2;
-+        fprintf(thread_stderr, "grep: %s: %s\n", fn, strerror(errno));
-+        pthread_exit(NULL);
+ 		err(2, "%s", fn);
 +    }
  	if ((fstat(fileno(f), &st) == -1) || (S_ISDIR(st.st_mode))) {
  		fclose(f);
@@ -1270,17 +1227,13 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
          while ((line = fgetln(f, &len)) != NULL)
  		add_pattern(line, line[0] == '\n' ? 0 : len);
 -	if (ferror(f))
--		err(2, "%s", fn);
 +    if (ferror(f)) {
-+		// err(2, "%s", fn);
-+        global_errno = 2;
-+        fprintf(thread_stderr, "grep: %s: %s\n", fn, strerror(errno));
-+        pthread_exit(NULL);
+ 		err(2, "%s", fn);
 +    }
  	fclose(f);
  }
  
-@@ -351,7 +363,7 @@
+@@ -351,7 +357,7 @@
  }
  
  int
@@ -1289,7 +1242,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  {
  	char **aargv, **eargv, *eopts;
  	char *ep;
-@@ -360,8 +372,37 @@
+@@ -360,8 +366,37 @@
  	unsigned int aargc, eargc, i;
  	int c, lastc, needpattern, newarg, prevoptind;
  
@@ -1329,7 +1282,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  #ifndef WITHOUT_NLS
  	catalog = catopen("grep", NL_CAT_LOCALE);
  #endif
-@@ -369,7 +410,9 @@
+@@ -369,7 +404,9 @@
  	/* Check what is the program name of the binary.  In this
  	   way we can have all the funcionalities in one binary
  	   without the need of scripting and using ugly hacks. */
@@ -1340,115 +1293,70 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  	if (pn[0] == 'b' && pn[1] == 'z') {
  		filebehave = FILE_BZIP;
  		pn += 2;
-@@ -441,7 +484,10 @@
+@@ -441,7 +478,7 @@
  				Aflag = 0;
  			else if (Aflag > LLONG_MAX / 10) {
  				errno = ERANGE;
 -				err(2, NULL);
-+                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
-+                global_errno = 2;
-+                pthread_exit(NULL);
-+				// err(2, NULL);
++                err(2, NULL);
  			}
  			Aflag = Bflag = (Aflag * 10) + (c - '0');
  			break;
-@@ -457,11 +503,18 @@
+@@ -457,11 +494,12 @@
  			errno = 0;
  			l = strtoull(optarg, &ep, 10);
  			if (((errno == ERANGE) && (l == ULLONG_MAX)) ||
 -			    ((errno == EINVAL) && (l == 0)))
 -				err(2, NULL);
 +                ((errno == EINVAL) && (l == 0))) {
-+                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
-+                global_errno = 2;
-+                pthread_exit(NULL);
-+                // err(2, NULL);
++                err(2, NULL);
 +            }
  			else if (ep[0] != '\0') {
  				errno = EINVAL;
 -				err(2, NULL);
-+                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
-+                global_errno = 2;
-+                pthread_exit(NULL);
-+                // err(2, NULL);
++                err(2, NULL);
  			}
  			if (c == 'A')
  				Aflag = l;
-@@ -484,8 +537,12 @@
+@@ -484,8 +522,9 @@
  				devbehave = DEV_SKIP;
  			else if (strcasecmp(optarg, "read") == 0)
  				devbehave = DEV_READ;
 -			else
--				errx(2, getstr(3), "--devices");
 +            else {
-+				// errx(2, getstr(3), "--devices");
-+                global_errno = 2;
-+                fprintf(thread_stderr, getstr(3), "--devices");
-+                pthread_exit(NULL);
+ 				errx(2, getstr(3), "--devices");
 +            }
  			break;
  		case 'd':
  			if (strcasecmp("recurse", optarg) == 0) {
-@@ -495,8 +552,12 @@
+@@ -495,8 +534,9 @@
  				dirbehave = DIR_SKIP;
  			else if (strcasecmp("read", optarg) == 0)
  				dirbehave = DIR_READ;
 -			else
--				errx(2, getstr(3), "--directories");
 +            else {
-+				// errx(2, getstr(3), "--directories");
-+                global_errno = 2;
-+                fprintf(thread_stderr, getstr(3), "--directories");
-+                pthread_exit(NULL);
+ 				errx(2, getstr(3), "--directories");
 +            }
  			break;
  		case 'E':
  			grepbehave = GREP_EXTENDED;
-@@ -533,7 +594,10 @@
- 		case 'J':
- #ifdef WITHOUT_BZIP2
- 			errno = EOPNOTSUPP;
--			err(2, "bzip2 support was disabled at compile-time");
-+            global_errno = 2;
-+			// err(2, "bzip2 support was disabled at compile-time");
-+                fprintf(thread_stderr, "grep: bzip2 support was disabled at compile-time: %s\n", strerror(errno));
-+            pthread_exit(NULL);
- #endif
- 			filebehave = FILE_BZIP;
- 			break;
-@@ -550,17 +614,27 @@
+@@ -550,11 +590,12 @@
  			errno = 0;
  			mcount = strtoll(optarg, &ep, 10);
  			if (((errno == ERANGE) && (mcount == LLONG_MAX)) ||
 -			    ((errno == EINVAL) && (mcount == 0)))
 -				err(2, NULL);
 +                ((errno == EINVAL) && (mcount == 0))) {
-+                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
-+                global_errno = 2;
-+                pthread_exit(NULL);
-+                // err(2, NULL);
++                err(2, NULL);
 +            }
  			else if (ep[0] != '\0') {
  				errno = EINVAL;
 -				err(2, NULL);
-+                fprintf(thread_stderr, "grep: %s\n", strerror(errno));
-+                global_errno = 2;
-+                pthread_exit(NULL);
-+                // err(2, NULL);
++                err(2, NULL);
  			}
  			break;
  		case 'M':
- #ifdef WITHOUT_LZMA
- 			errno = EOPNOTSUPP;
--			err(2, "lzma support was disabled at compile-time");
-+            global_errno = 2;
-+			// err(2, "lzma support was disabled at compile-time");
-+            fprintf(thread_stderr, "grep: lzma support was disabled at compile-time: %s\n", strerror(errno));
-+            pthread_exit(NULL);
- #endif
- 			filebehave = FILE_LZMA;
- 			break;
-@@ -602,7 +676,7 @@
+@@ -602,7 +643,7 @@
  #endif
  			break;
  		case 'V':
@@ -1457,71 +1365,38 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  			exit(0);
  		case 'v':
  			vflag = true;
-@@ -618,7 +692,10 @@
- 		case 'X':
- #ifdef WITHOUT_LZMA
- 			errno = EOPNOTSUPP;
--			err(2, "xz support was disabled at compile-time");
-+			// err(2, "xz support was disabled at compile-time");
-+            global_errno = 2;
-+            fprintf(thread_stderr, "grep: xz support was disabled at compile-time: %s\n", strerror(errno));
-+            pthread_exit(NULL);
- #endif
- 			filebehave = FILE_XZ;
- 			break;
-@@ -632,8 +709,12 @@
+@@ -632,8 +673,9 @@
  				binbehave = BINFILE_SKIP;
  			else if (strcasecmp("text", optarg) == 0)
  				binbehave = BINFILE_TEXT;
 -			else
--				errx(2, getstr(3), "--binary-files");
 +            else {
-+				// errx(2, getstr(3), "--binary-files");
-+                global_errno = 2;
-+                fprintf(thread_stderr, getstr(3), "--binary-files");
-+                pthread_exit(NULL);
+ 				errx(2, getstr(3), "--binary-files");
 +            }
  			break;
  		case COLOR_OPT:
  			color = NULL;
-@@ -643,7 +724,8 @@
+@@ -643,7 +685,7 @@
  				char *term;
  
  				term = getenv("TERM");
 -				if (isatty(STDOUT_FILENO) && term != NULL &&
-+//				if (isatty(fileno(thread_stdout)) && term != NULL &&
-+                if ((fileno(thread_stdout) == fileno(stdout)) && term != NULL &&
++				if (ios_isatty(STDOUT_FILENO) && term != NULL &&
  				    strcasecmp(term, "dumb") != 0)
  					color = init_color("01;31");
  			} else if (strcasecmp("always", optarg) == 0 ||
-@@ -652,8 +734,12 @@
+@@ -652,8 +694,9 @@
  				color = init_color("01;31");
  			} else if (strcasecmp("never", optarg) != 0 &&
  			    strcasecmp("none", optarg) != 0 &&
 -			    strcasecmp("no", optarg) != 0)
--				errx(2, getstr(3), "--color");
 +                strcasecmp("no", optarg) != 0) {
-+				// errx(2, getstr(3), "--color");
-+                fprintf(thread_stderr, getstr(3), "--color");
-+                global_errno = 2;
-+                pthread_exit(NULL);
+ 				errx(2, getstr(3), "--color");
 +            }
  			cflags &= ~REG_NOSUB;
  			break;
  		case LABEL_OPT:
-@@ -748,7 +834,10 @@
- 			if (c != 0) {
- 				regerror(c, &r_pattern[i], re_error,
- 				    RE_ERROR_BUF);
--				errx(2, "%s", re_error);
-+				// errx(2, "%s", re_error);
-+                fprintf(thread_stderr, "grep: %s\n", re_error);
-+                global_errno = 2;
-+                pthread_exit(NULL);
- 			}
- #ifndef WITHOUT_FASTMATCH
- 		}
-@@ -756,13 +845,15 @@
+@@ -756,13 +799,15 @@
  	}
  
  	if (lbflag)
@@ -1542,7 +1417,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  		c = grep_tree(aargv);
 diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
 --- text_cmds-99/grep/grep.h	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.h	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/grep/grep.h	2018-04-23 20:32:31.000000000 +0200
 @@ -45,7 +45,7 @@
  #else
  #include <nl_types.h>
@@ -1598,16 +1473,7 @@ diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
  /* For regex errors  */
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-03-29 20:29:32.000000000 +0200
-@@ -39,7 +39,7 @@
- #endif
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fnmatch.h>
- #include <fts.h>
++++ text_cmds/grep/util.c	2018-05-01 11:46:27.000000000 +0200
 @@ -59,6 +59,7 @@
  #include "fastmatch.h"
  #endif
@@ -1616,65 +1482,47 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  
  static int	 linesqueued;
  static int	 procline(struct str *l, int);
-@@ -135,8 +136,12 @@
+@@ -135,8 +136,9 @@
  
  	fts_flags |= FTS_NOSTAT | FTS_NOCHDIR;
  
 -	if (!(fts = fts_open(argv, fts_flags, NULL)))
--		err(2, "fts_open");
 +    if (!(fts = fts_open(argv, fts_flags, NULL))) {
-+		// err(2, "fts_open");
-+        global_errno = 2;
-+        fprintf(thread_stderr, "grep: fts_open: %s\n", strerror(errno));
-+        pthread_exit(NULL);
+ 		err(2, "fts_open");
 +    }
  	while ((p = fts_read(fts)) != NULL) {
  		switch (p->fts_info) {
  		case FTS_DNR:
-@@ -144,7 +149,8 @@
+@@ -144,7 +146,7 @@
  		case FTS_ERR:
  			file_err = true;
  			if(!sflag)
 -				warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
-+                fprintf(thread_stderr, "grep: %s: %s\n", p->fts_path, strerror(p->fts_errno));
-+                // warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
++                warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
  			break;
  		case FTS_D:
  			/* FALLTHROUGH */
-@@ -156,7 +162,8 @@
- 			break;
- 		case FTS_DC:
- 			/* Print a warning for recursive directory loop */
--			warnx("warning: %s: recursive directory loop",
-+			// warnx("warning: %s: recursive directory loop",
-+                fprintf(thread_stderr, "grep; warning: %s: recursive directory loop\n",
- 				p->fts_path);
- 			break;
- 		default:
-@@ -194,8 +201,10 @@
+@@ -194,8 +196,8 @@
  	if (strcmp(fn, "-") == 0) {
  #ifdef __APPLE__
  		/* 4053512, 10290183 */
 -		if (dirbehave == DIR_RECURSE && isatty(STDIN_FILENO)) {
 -			warnx("warning: recursive search of stdin");
-+		// if (dirbehave == DIR_RECURSE && isatty(fileno(thread_stdin))) {
-+        if (dirbehave == DIR_RECURSE && (fileno(thread_stdin) == fileno(stdin))) {
-+            fprintf(thread_stderr, "grep: warning: recursive search of stdin\n");
-+            // warnx("warning: recursive search of stdin");
++		if (dirbehave == DIR_RECURSE && ios_isatty(STDIN_FILENO)) {
++            warnx("warning: recursive search of stdin");
  		}
  #endif
  		fn = label != NULL ? label : getstr(1);
-@@ -215,7 +224,8 @@
+@@ -215,7 +217,7 @@
  	if (f == NULL) {
  		file_err = true;
  		if (!sflag)
 -			warn("%s", fn);
-+            fprintf(thread_stderr, "grep: %s: %s\n", fn, strerror(errno));
-+            // warn("%s", fn);
++            warn("%s", fn);
  		return (0);
  	}
  
-@@ -230,9 +240,9 @@
+@@ -230,9 +232,9 @@
  	for (c = 0;  c == 0 || !(lflag || qflag); ) {
  		ln.off += ln.len + 1;
  		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL || ln.len == 0) {
@@ -1686,7 +1534,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				break;
  		}
  		if (ln.len > 0 && ln.dat[ln.len - 1] == '\n')
-@@ -266,16 +276,16 @@
+@@ -266,16 +268,16 @@
  	if (cflag) {
  #endif
  		if (!hflag)
@@ -1708,7 +1556,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  
  	free(ln.file);
  	free(f);
-@@ -459,11 +469,11 @@
+@@ -459,11 +461,11 @@
  	if ((tail || c) && !cflag && !qflag && !lflag && !Lflag) {
  		if (c) {
  			if (!first && !prev && !tail && Aflag)
@@ -1722,67 +1570,54 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  				printqueue();
  			}
  			linesqueued = 0;
-@@ -494,8 +504,12 @@
+@@ -494,8 +496,9 @@
  {
  	void *ptr;
  
 -	if ((ptr = malloc(size)) == NULL)
--		err(2, "malloc");
 +    if ((ptr = malloc(size)) == NULL) {
-+		// err(2, "malloc");
-+        global_errno = 2;
-+        fprintf(thread_stderr, "grep: malloc: %s\n", strerror(errno));
-+        pthread_exit(NULL);
+ 		err(2, "malloc");
 +    }
  	return (ptr);
  }
  
-@@ -507,8 +521,12 @@
+@@ -507,8 +510,9 @@
  {
  	void *ptr;
  
 -	if ((ptr = calloc(nmemb, size)) == NULL)
 -		err(2, "calloc");
 +    if ((ptr = calloc(nmemb, size)) == NULL) {
-+        // err(2, "calloc");
-+        global_errno = 2;
-+        fprintf(thread_stderr, "grep: calloc: %s\n", strerror(errno));
-+        pthread_exit(NULL);
++        err(2, "calloc");
 +    }
  	return (ptr);
  }
  
-@@ -519,8 +537,12 @@
+@@ -519,8 +523,9 @@
  grep_realloc(void *ptr, size_t size)
  {
  
 -	if ((ptr = realloc(ptr, size)) == NULL)
 -		err(2, "realloc");
 +    if ((ptr = realloc(ptr, size)) == NULL) {
-+        // err(2, "realloc");
-+        global_errno = 2;
-+        fprintf(thread_stderr, "grep: realloc: %s\n", strerror(errno));
-+        pthread_exit(NULL);
++        err(2, "realloc");
 +    }
  	return (ptr);
  }
  
-@@ -532,8 +554,12 @@
+@@ -532,8 +537,9 @@
  {
  	char *ret;
  
 -	if ((ret = strdup(str)) == NULL)
 -		err(2, "strdup");
 +    if ((ret = strdup(str)) == NULL) {
-+        // err(2, "strdup");
-+        global_errno = 2;
-+        fprintf(thread_stderr, "grep: strdup: %s\n", strerror(errno));
-+        pthread_exit(NULL);
++        err(2, "strdup");
 +    }
  	return (ret);
  }
  
-@@ -548,23 +574,23 @@
+@@ -548,23 +554,23 @@
  
  	if (!hflag) {
  		if (!nullflag) {
@@ -1810,7 +1645,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		++n;
  	}
  	if (n)
-@@ -574,26 +600,26 @@
+@@ -574,26 +580,26 @@
  		for (i = 0; i < m; i++) {
  			if (!oflag)
  				fwrite(line->dat + a, matches[i].rm_so - a, 1,
@@ -1843,9 +1678,783 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  		putchar('\n');
  	}
  }
+diff -Naur text_cmds-99/head/head.c text_cmds/head/head.c
+--- text_cmds-99/head/head.c	2010-05-13 03:07:37.000000000 +0200
++++ text_cmds/head/head.c	2018-04-30 17:14:59.000000000 +0200
+@@ -54,6 +54,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+ /*
+  * head - give the first few lines of a stream or of each of a set of files
+@@ -67,7 +68,7 @@
+ static void usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++head_main(int argc, char *argv[])
+ {
+ 	int ch;
+ 	FILE *fp;
+@@ -75,6 +76,10 @@
+ 	off_t bytecnt = -1;
+ 	char *ep;
+ 
++    linecnt = -1;
++    bytecnt = -1;
++    eval = 0;
++    //
+ 	obsolete(argv);
+ 	while ((ch = getopt(argc, argv, "n:c:")) != -1)
+ 		switch(ch) {
+@@ -123,11 +128,11 @@
+ 		}
+ 	} else {
+ 		if (bytecnt == -1) {
+-			head(stdin, linecnt);
++			head(thread_stdin, linecnt);
+ 		} else {
+-			head_bytes(stdin, bytecnt);
++			head_bytes(thread_stdin, bytecnt);
+ 		}
+-		if (ferror(stdin)) {
++		if (ferror(thread_stdin)) {
+ 			warnx("Error reading stdin");
+ 			eval = 1;
+ 		}
+diff -Naur text_cmds-99/md5/CommonDigestSPI.h text_cmds/md5/CommonDigestSPI.h
+--- text_cmds-99/md5/CommonDigestSPI.h	1970-01-01 01:00:00.000000000 +0100
++++ text_cmds/md5/CommonDigestSPI.h	2018-05-05 17:36:03.000000000 +0200
+@@ -0,0 +1,333 @@
++/*
++ * Copyright (c) 2010 Apple Inc. All Rights Reserved.
++ *
++ * @APPLE_LICENSE_HEADER_START@
++ *
++ * This file contains Original Code and/or Modifications of Original Code
++ * as defined in and that are subject to the Apple Public Source License
++ * Version 2.0 (the 'License'). You may not use this file except in
++ * compliance with the License. Please obtain a copy of the License at
++ * http://www.opensource.apple.com/apsl/ and read it before using this
++ * file.
++ *
++ * The Original Code and all software distributed under the License are
++ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
++ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
++ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
++ * Please see the License for the specific language governing rights and
++ * limitations under the License.
++ *
++ * @APPLE_LICENSE_HEADER_END@
++ */
++
++#ifndef  _CC_DigestSPI_H_
++#define _CC_DigestSPI_H_
++
++#include <stdint.h>
++#include <sys/types.h>
++
++#include <Availability.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++  
++  
++  /*!
++   @enum       CCDigestAlgorithm
++   @abstract   Algorithms implemented in this module.
++   
++   @constant   kCCDigestNone    Digest Selector for "no digest"
++   @constant   kCCDigestMD2    MD2 digest
++   @constant   kCCDigestMD4    MD4 digest
++   @constant   kCCDigestMD5    MD5 digest
++   @constant   kCCDigestRMD128    RMD 128 bit digest
++   @constant   kCCDigestRMD160    RMD 160 bit digest
++   @constant   kCCDigestRMD256    RMD 256 bit digest
++   @constant   kCCDigestRMD320    RMD 320 bit digest
++   @constant   kCCDigestSHA1    SHA-1 digest
++   @constant   kCCDigestSHA224    SHA-2 224 bit digest
++   @constant   kCCDigestSHA256    SHA-2 256 bit digest
++   @constant   kCCDigestSHA384    SHA-2 384 bit digest
++   @constant   kCCDigestSHA512    SHA-2 512 bit digest
++   @constant   kCCDigestSkein128  Skein 128 bit digest
++   @constant   kCCDigestSkein160  Skein 160 bit digest
++   @constant   kCCDigestSkein224  Skein 224 bit digest
++   @constant   kCCDigestSkein256  Skein 256 bit digest
++   @constant   kCCDigestSkein384  Skein 384 bit digest
++   @constant   kCCDigestSkein512  Skein 512 bit digest
++   */
++  
++  enum {
++    kCCDigestNone               = 0,
++    kCCDigestMD2        = 1,
++    kCCDigestMD4        = 2,
++    kCCDigestMD5        = 3,
++    kCCDigestRMD128        = 4,
++    kCCDigestRMD160        = 5,
++    kCCDigestRMD256        = 6,
++    kCCDigestRMD320        = 7,
++    kCCDigestSHA1        = 8,
++    kCCDigestSHA224        = 9,
++    kCCDigestSHA256        = 10,
++    kCCDigestSHA384        = 11,
++    kCCDigestSHA512        = 12,
++    kCCDigestSkein128      = 13,
++    kCCDigestSkein160      = 14,
++    kCCDigestSkein224      = 16,
++    kCCDigestSkein256      = 17,
++    kCCDigestSkein384      = 18,
++    kCCDigestSkein512      = 19,
++  };
++  typedef uint32_t CCDigestAlgorithm;
++  
++  // Hold this until Heimdal has changed.
++  
++#define CCDigestAlg CCDigestAlgorithm
++  
++  /*!
++   @typedef    CCDigestCtx
++   @abstract   Digest context.
++   */
++  
++#define CC_DIGEST_SIZE 1032
++  typedef struct CCDigestCtx_t {
++    uint8_t context[CC_DIGEST_SIZE];
++  } CCDigestCtx, *CCDigestRef;
++  
++#define CC_RMD128_DIGEST_LENGTH   16          /* digest length in bytes */
++#define CC_RMD128_BLOCK_BYTES     64          /* block size in bytes */
++#define CC_RMD128_BLOCK_LONG      (CC_RMD128_BLOCK_BYTES / sizeof(CC_LONG))
++  
++#define CC_RMD160_DIGEST_LENGTH   20          /* digest length in bytes */
++#define CC_RMD160_BLOCK_BYTES     64          /* block size in bytes */
++#define CC_RMD160_BLOCK_LONG      (CC_RMD160_BLOCK_BYTES / sizeof(CC_LONG))
++  
++#define CC_RMD256_DIGEST_LENGTH   32          /* digest length in bytes */
++#define CC_RMD256_BLOCK_BYTES     64          /* block size in bytes */
++#define CC_RMD256_BLOCK_LONG      (CC_RMD256_BLOCK_BYTES / sizeof(CC_LONG))
++  
++#define CC_RMD320_DIGEST_LENGTH   40          /* digest length in bytes */
++#define CC_RMD320_BLOCK_BYTES     64          /* block size in bytes */
++#define CC_RMD320_BLOCK_LONG      (CC_RMD320_BLOCK_BYTES / sizeof(CC_LONG))
++  
++  /**************************************************************************/
++  /* SPI Only                                                               */
++  /**************************************************************************/
++  
++  /*
++   * This information will remain SPI - internal functions available
++   * to callers not needing a stable ABI that have a need to provide
++   * their own memory for use as contexts and return digest values.
++   */
++  
++  
++  /*!
++   @function   CCDigestInit
++   @abstract   Initialize a CCDigestCtx for a digest.
++   
++   @param      algorithm   Digest algorithm to perform.
++   @param      ctx         A digest context.
++   
++   returns 0 on success.
++   */
++  
++  int
++  CCDigestInit(CCDigestAlgorithm algorithm, CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  
++  
++  /**************************************************************************/
++  /* Future API                                                             */
++  /**************************************************************************/
++  
++  /*
++   * These functions will be put out for API review after this release.  For
++   * right now we're "road testing" them internally.
++   */
++  
++  /*!
++   @function   CCDigest
++   @abstract   Stateless, one-shot Digest function.
++   
++   @param      algorithm   Digest algorithm to perform.
++   @param      data        The data to digest.
++   @param      length      The length of the data to digest.
++   @param      output      The digest bytes (space provided by the caller).
++   
++   Output is written to caller-supplied buffer, as in CCDigestFinal().
++   */
++  
++  int
++  CCDigest(CCDigestAlgorithm algorithm,
++           const uint8_t *data, size_t length, uint8_t *output)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  /*!
++   @function   CCDigestCreate
++   @abstract   Allocate and initialize a CCDigestCtx for a digest.
++   
++   @param      algorithm   Digest algorithm to setup.
++   
++   returns a pointer to a digestRef on success.
++   */
++  
++  CCDigestRef
++  CCDigestCreate(CCDigestAlgorithm alg)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  /*!
++   @function   CCDigestUpdate
++   @abstract   Continue to digest data.
++   
++   @param      ctx         A digest context.
++   @param      data        The data to digest.
++   @param      length      The length of the data to digest.
++   
++   returns 0 on success.
++   */
++  
++  int
++  CCDigestUpdate(CCDigestRef ctx, const void *data, size_t length)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  /*!
++   @function   CCDigestFinal
++   @abstract   Conclude digest operations and produce the digest output.
++   
++   @param      ctx         A digest context.
++   @param      output      The digest bytes (space provided by the caller).
++   
++   returns 0 on success.
++   */
++  
++  int
++  CCDigestFinal(CCDigestRef ctx, uint8_t *output)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  /*!
++   @function   CCDigestDestroy
++   @abstract   Clear and free a CCDigestCtx
++   
++   @param      ctx         A digest context.
++   */
++  
++  
++  void
++  CCDigestDestroy(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  /*!
++   @function   CCDigestReset
++   @abstract   Clear and re-initialize a CCDigestCtx for the same algorithm.
++   
++   @param      ctx         A digest context.
++   */
++  
++  void
++  CCDigestReset(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  /*!
++   @function   CCDigestRefGetDigest
++   @abstract   Produce the digest output result for the bytes currently
++   processed.
++   
++   @param      ctx         A digest context.
++   @param      output      The digest bytes (space provided by the caller).
++   
++   returns 0 on success.
++   */
++  
++  int
++  CCDigestGetDigest(CCDigestRef ctx, uint8_t *output)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  /*!
++   @function   CCDigestGetBlockSize
++   @abstract   Provides the block size of the digest algorithm
++   
++   @param      algorithm         A digest algorithm selector.
++   
++   returns 0 on failure or the block size on success.
++   */
++  
++  size_t
++  CCDigestGetBlockSize(CCDigestAlgorithm algorithm)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  
++  
++  /*!
++   @function   CCDigestGetOutputSize
++   @abstract   Provides the digest output size of the digest algorithm
++   
++   @param      algorithm         A digest algorithm selector.
++   
++   returns 0 on failure or the digest output size on success.
++   */
++  
++  size_t
++  CCDigestGetOutputSize(CCDigestAlgorithm algorithm)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  /*!
++   @function   CCDigestGetBlockSizeFromRef
++   @abstract   Provides the block size of the digest algorithm
++   
++   @param      ctx         A digest context.
++   
++   returns 0 on failure or the block size on success.
++   */
++  
++  size_t
++  CCDigestGetBlockSizeFromRef(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  // Until Heimdal Changes
++  // #define CCDigestBlockSize CCDigestGetBlockSizeFromRef
++  size_t
++  CCDigestBlockSize(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_NA);
++  
++  /*!
++   @function   CCDigestGetOutputSizeFromRef
++   @abstract   Provides the digest output size of the digest algorithm
++   
++   @param      ctx         A digest context.
++   
++   returns 0 on failure or the digest output size on success.
++   */
++  
++  size_t
++  CCDigestGetOutputSizeFromRef(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  // Until Heimdal Changes
++  // #define CCDigestOutputSize CCDigestGetOutputSizeFromRef
++  size_t
++  CCDigestOutputSize(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  
++  
++  uint8_t *
++  CCDigestOID(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  size_t
++  CCDigestOIDLen(CCDigestRef ctx)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  CCDigestRef
++  CCDigestCreateByOID(uint8_t *OID, size_t OIDlen)
++  __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
++  
++  
++  
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* _CC_DigestSPI_H_ */
+diff -Naur text_cmds-99/md5/commoncrypto.c text_cmds/md5/commoncrypto.c
+--- text_cmds-99/md5/commoncrypto.c	2016-03-08 08:31:57.000000000 +0100
++++ text_cmds/md5/commoncrypto.c	2018-05-23 13:14:55.000000000 +0200
+@@ -1,24 +1,81 @@
+ /* Generic CommonDigest wrappers to match the semantics of libmd. */
+ 
+ #include <dispatch/dispatch.h>
+-#include <os/assumes.h>
++//#include <os_assumes.h>
+ #include <errno.h>
+ #include <fcntl.h>
++#include <assert.h>
+ 
+ #include "commoncrypto.h"
+ 
+ #define CHUNK_SIZE (10 * 1024 * 1024)
+ 
++int ios_CCDigestInit(ios_CCDigestAlgorithm alg, ios_CCDigestRef ctx) {
++  ctx->algorithm = alg;
++  switch (alg) {
++    case kCCDigestMD5:
++      return CC_MD5_Init(&ctx->ctx);
++    case kCCDigestSHA1:
++      return CC_SHA1_Init(&ctx->ctx);
++    case kCCDigestSHA256:
++      return CC_SHA256_Init(&ctx->ctx);
++    default:
++      return 0;
++  }
++}
++
++int ios_CCDigestFinal(ios_CCDigestRef ctx, unsigned char *md) {
++  switch (ctx->algorithm) {
++    case kCCDigestMD5:
++      return CC_MD5_Final(md, &ctx->ctx);
++    case kCCDigestSHA1:
++      return CC_SHA1_Final(md, &ctx->ctx);
++    case kCCDigestSHA256:
++      return CC_SHA256_Final(md, &ctx->ctx);
++    default:
++      return -1;
++  }
++}
++
++int ios_CCDigestUpdate(ios_CCDigestRef ctx, const void *data, size_t len) {
++  switch (ctx->algorithm) {
++    case kCCDigestMD5:
++      return CC_MD5_Update(&ctx->ctx, data, len);
++    case kCCDigestSHA1:
++      return CC_SHA1_Update(&ctx->ctx, data, len);
++    case kCCDigestSHA256:
++      return CC_SHA256_Update(&ctx->ctx, data, len);
++    default:
++      return -1;
++  }
++}
++
++size_t ios_CCDigestOutputSize(ios_CCDigestRef ctx) {
++  switch (ctx->algorithm) {
++    case kCCDigestMD5:
++      return CC_MD5_DIGEST_LENGTH;
++    case kCCDigestSHA1:
++      return CC_SHA1_DIGEST_LENGTH;
++    case kCCDigestSHA256:
++      return CC_SHA256_DIGEST_LENGTH;
++    default:
++      return 0;
++  }
++}
++
+ char *
+-Digest_End(CCDigestRef ctx, char *buf)
++Digest_End(ios_CCDigestRef ctx, char *buf)
+ {
+ 	static const char hex[] = "0123456789abcdef";
+ 	uint8_t digest[32]; // SHA256 is the biggest
+ 	size_t i, length;
+ 
+-	(void)os_assumes_zero(CCDigestFinal(ctx, digest));
+-	length = CCDigestOutputSize(ctx);
+-	os_assert(length <= sizeof(digest));
++//  (void)os_assumes_zero(CCDigestFinal(ctx, digest));
++  assert(ios_CCDigestFinal(ctx, digest) == 1);
++	length = ios_CCDigestOutputSize(ctx);
++	//os_assert(length <= sizeof(digest));
++  assert(length <= sizeof(digest));
++  
+ 	for (i = 0; i < length; i++) {
+ 		buf[i+i] = hex[digest[i] >> 4];
+ 		buf[i+i+1] = hex[digest[i] & 0x0f];
+@@ -28,20 +85,22 @@
+ }
+ 
+ char *
+-Digest_Data(CCDigestAlg algorithm, const void *data, size_t len, char *buf)
++Digest_Data(ios_CCDigestAlg algorithm, const void *data, size_t len, char *buf)
+ {
+-	CCDigestCtx ctx;
++	ios_CCDigestCtx ctx;
+ 
+-	(void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
+-	(void)os_assumes_zero(CCDigestUpdate(&ctx, data, len));
++//  (void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
++  assert(ios_CCDigestInit(algorithm, &ctx) == 1);
++//  (void)os_assumes_zero(CCDigestUpdate(&ctx, data, len));
++  assert(ios_CCDigestUpdate(&ctx, data, len));
+ 	return Digest_End(&ctx, buf);
+ }
+ 
+ char *
+-Digest_File(CCDigestAlg algorithm, const char *filename, char *buf)
++Digest_File(ios_CCDigestAlg algorithm, const char *filename, char *buf)
+ {
+ 	int fd;
+-	__block CCDigestCtx ctx;
++	__block ios_CCDigestCtx ctx;
+ 	dispatch_queue_t queue;
+ 	dispatch_semaphore_t sema;
+ 	dispatch_io_t io;
+@@ -57,12 +116,15 @@
+ 
+ 	(void)fcntl(fd, F_NOCACHE, 1);
+ 
+-	(void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
++//  (void)os_assumes_zero(CCDigestInit(algorithm, &ctx));
++  assert(ios_CCDigestInit(algorithm, &ctx) == 1);
+ 
+ 	queue = dispatch_queue_create("com.apple.mtree.io", NULL);
+-	os_assert(queue);
++//  os_assert(queue);
++  assert(queue);
+ 	sema = dispatch_semaphore_create(0);
+-	os_assert(sema);
++//  os_assert(sema);
++  assert(sema);
+ 
+ 	io = dispatch_io_create(DISPATCH_IO_STREAM, fd, queue, ^(int error) {
+ 		if (error != 0) {
+@@ -71,12 +133,14 @@
+ 		(void)close(fd);
+ 		(void)dispatch_semaphore_signal(sema);
+ 	});
+-	os_assert(io);
++//  os_assert(io);
++  assert(io);
+ 	for (chunk_offset = 0; eof == false && s_error == 0; chunk_offset += CHUNK_SIZE) {
+ 		dispatch_io_read(io, chunk_offset, CHUNK_SIZE, queue, ^(bool done, dispatch_data_t data, int error) {
+ 			if (data != NULL) {
+ 				(void)dispatch_data_apply(data, ^(__unused dispatch_data_t region, __unused size_t offset, const void *buffer, size_t size) {
+-					(void)os_assumes_zero(CCDigestUpdate(&ctx, buffer, size));
++//          (void)os_assumes_zero(CCDigestUpdate(&ctx, buffer, size));
++          assert(ios_CCDigestUpdate(&ctx, buffer, size) == 1);
+ 					return (bool)true;
+ 				});
+ 			}
+diff -Naur text_cmds-99/md5/commoncrypto.h text_cmds/md5/commoncrypto.h
+--- text_cmds-99/md5/commoncrypto.h	2011-10-05 00:53:29.000000000 +0200
++++ text_cmds/md5/commoncrypto.h	2018-05-23 13:15:19.000000000 +0200
+@@ -1,8 +1,51 @@
+ #include <CommonCrypto/CommonDigest.h>
+-#include <CommonCrypto/CommonDigestSPI.h>
++//#include <CommonCrypto/CommonDigestSPI.h>
++//#include "CommonDigestSPI.h"
+ 
+-char *Digest_End(CCDigestRef, char *);
++enum {
++  kCCDigestNone       = 0,
++//  kCCDigestMD2        = 1,
++//  kCCDigestMD4        = 2,
++  kCCDigestMD5        = 3,
++//  kCCDigestRMD128     = 4,
++//  kCCDigestRMD160     = 5,
++//  kCCDigestRMD256     = 6,
++//  kCCDigestRMD320     = 7,
++  kCCDigestSHA1        = 8,
++//  kCCDigestSHA224        = 9,
++  kCCDigestSHA256        = 10,
++//  kCCDigestSHA384        = 11,
++//  kCCDigestSHA512        = 12,
++//  kCCDigestSkein128      = 13,
++//  kCCDigestSkein160      = 14,
++//  kCCDigestSkein224      = 16,
++//  kCCDigestSkein256      = 17,
++//  kCCDigestSkein384      = 18,
++//  kCCDigestSkein512      = 19,
++};
++typedef uint32_t ios_CCDigestAlgorithm;
+ 
+-char *Digest_Data(CCDigestAlg, const void *, size_t, char *);
++#define ios_CCDigestAlg ios_CCDigestAlgorithm
+ 
+-char *Digest_File(CCDigestAlg, const char *, char *);
++typedef union {
++  CC_MD5_CTX md5;
++  CC_SHA1_CTX sha1;
++  CC_SHA256_CTX sha256;
++//  RIPEMD160_CTX ripemd160;
++} _DIGEST_CTX;
++
++typedef struct ios_CCDigestCtx_t {
++  ios_CCDigestAlgorithm algorithm;
++  _DIGEST_CTX ctx;
++} ios_CCDigestCtx, *ios_CCDigestRef;
++
++
++int ios_CCDigestInit(ios_CCDigestAlgorithm alg, ios_CCDigestRef ctx);
++int ios_CCDigestFinal(ios_CCDigestRef ctx, unsigned char *md);
++int ios_CCDigestUpdate(ios_CCDigestRef ctx, const void *data, size_t len);
++
++char *Digest_End(ios_CCDigestRef, char *);
++
++char *Digest_Data(ios_CCDigestAlg, const void *, size_t, char *);
++
++char *Digest_File(ios_CCDigestAlg, const char *, char *);
+diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
+--- text_cmds-99/md5/md5.c	2011-10-05 00:53:29.000000000 +0200
++++ text_cmds/md5/md5.c	2018-05-23 13:14:10.000000000 +0200
+@@ -36,6 +36,7 @@
+ #include <time.h>
+ #include <unistd.h>
+ #include <sysexits.h>
++#include "ios_error.h"
+ 
+ #ifdef __APPLE__
+ #include "commoncrypto.h"
+@@ -48,9 +49,12 @@
+ #define TEST_BLOCK_COUNT 100000
+ #define MDTESTCOUNT 8
+ 
+-int qflag;
+-int rflag;
+-int sflag;
++//int qflag;
++__thread int md5_qflag;
++//int rflag;
++__thread int md5_rflag;
++//int sflag;
++__thread int md5_sflag;
+ 
+ typedef void (DIGEST_Init)(void *);
+ typedef void (DIGEST_Update)(void *, const unsigned char *, size_t);
+@@ -66,7 +70,7 @@
+ 	const char *name;
+ 	const char *(*TestOutput)[MDTESTCOUNT];
+ #ifdef __APPLE__
+-	CCDigestAlg algorithm;
++	ios_CCDigestAlg algorithm;
+ #else /* !__APPLE__ */
+ 	DIGEST_Init *Init;
+ 	DIGEST_Update *Update;
+@@ -85,8 +89,9 @@
+ static void MDFilter(Algorithm_t *, int);
+ static void usage(Algorithm_t *);
+ 
++
+ #ifdef __APPLE__
+-typedef CCDigestCtx DIGEST_CTX;
++typedef ios_CCDigestCtx DIGEST_CTX;
+ #else /* !__APPLE__ */
+ typedef union {
+ 	MD5_CTX md5;
+@@ -107,7 +112,7 @@
+ 	{ "md5", "MD5", &MD5TestOutput, kCCDigestMD5, },
+ 	{ "sha1", "SHA1", &SHA1_TestOutput, kCCDigestSHA1 },
+ 	{ "sha256", "SHA256", &SHA256_TestOutput, kCCDigestSHA256 },
+-	{ "rmd160", "RMD160", &RIPEMD160_TestOutput, kCCDigestRMD160 },
++//  { "rmd160", "RMD160", &RIPEMD160_TestOutput, kCCDigestRMD160 },
+ #else
+ 	{ "md5", "MD5", &MD5TestOutput, (DIGEST_Init*)&MD5Init,
+ 		(DIGEST_Update*)&MD5_Update, (DIGEST_End*)&MD5End,
+@@ -142,7 +147,7 @@
+   (none)   - digests standard input
+  */
+ int
+-main(int argc, char *argv[])
++md5_main(int argc, char *argv[])
+ {
+ 	int     ch;
+ 	char   *p;
+@@ -171,13 +176,16 @@
+ 			MDFilter(&Algorithm[digest], 1);
+ 			break;
+ 		case 'q':
+-			qflag = 1;
++			//qflag = 1;
++      md5_qflag = 1;
+ 			break;
+ 		case 'r':
+-			rflag = 1;
++			//rflag = 1;
++      md5_rflag = 1;
+ 			break;
+ 		case 's':
+-			sflag = 1;
++      //sflag = 1;
++      md5_sflag = 1;
+ 			MDString(&Algorithm[digest], optarg);
+ 			break;
+ 		case 't':
+@@ -203,15 +211,18 @@
+ 				warn("%s", *argv);
+ 				failed++;
+ 			} else {
+-				if (qflag)
++				//if (qflag)
++        if (md5_qflag)
+ 					printf("%s\n", p);
+-				else if (rflag)
++        //else if (rflag)
++        else if (md5_rflag)
+ 					printf("%s %s\n", p, *argv);
+ 				else
+ 					printf("%s (%s) = %s\n", Algorithm[digest].name, *argv, p);
+ 			}
+ 		} while (*++argv);
+-	} else if (!sflag && (optind == 1 || qflag || rflag))
++	//} else if (!sflag && (optind == 1 || qflag || rflag))
++  } else if (!md5_sflag && (optind == 1 || md5_qflag || md5_rflag))
+ 		MDFilter(&Algorithm[digest], 0);
+ 
+ 	if (failed != 0)
+@@ -228,10 +239,12 @@
+ 	size_t len = strlen(string);
+ 	char buf[HEX_DIGEST_LENGTH];
+ 
+-	if (qflag)
++	//if (qflag)
++  if (md5_qflag)
+ #ifdef __APPLE__
+ 		printf("%s\n", Digest_Data(alg->algorithm, string, len, buf));
+-	else if (rflag)
++	//else if (rflag)
++  else if (md5_rflag)
+ 		printf("%s \"%s\"\n", Digest_Data(alg->algorithm, string, len, buf), string);
+ 	else
+ 		printf("%s (\"%s\") = %s\n", alg->name, string, Digest_Data(alg->algorithm, string, len, buf));
+@@ -260,7 +273,7 @@
+ 	printf
+ 	    ("%s time trial. Digesting %d %d-byte blocks ...",
+ 	    alg->name, TEST_BLOCK_COUNT, TEST_BLOCK_LEN);
+-	fflush(stdout);
++	fflush(thread_stdout);
+ 
+ 	/* Initialize block */
+ 	for (i = 0; i < TEST_BLOCK_LEN; i++)
+@@ -271,9 +284,9 @@
+ 
+ 	/* Digest blocks */
+ #ifdef __APPLE__
+-	CCDigestInit(alg->algorithm, &context);
++	ios_CCDigestInit(alg->algorithm, &context);
+ 	for (i = 0; i < TEST_BLOCK_COUNT; i++)
+-		CCDigestUpdate(&context, block, TEST_BLOCK_LEN);
++		ios_CCDigestUpdate(&context, block, TEST_BLOCK_LEN);
+ 	p = Digest_End(&context, buf);
+ #else
+ 	alg->Init(&context);
+@@ -387,20 +400,20 @@
+ 	char buf[HEX_DIGEST_LENGTH];
+ 
+ #ifdef __APPLE__
+-	CCDigestInit(alg->algorithm, &context);
++	ios_CCDigestInit(alg->algorithm, &context);
+ #else
+ 	alg->Init(&context);
+ #endif
+-	while ((len = fread(buffer, 1, BUFSIZ, stdin))) {
+-		if (tee && len != fwrite(buffer, 1, len, stdout))
++	while ((len = fread(buffer, 1, BUFSIZ, thread_stdin))) {
++		if (tee && len != fwrite(buffer, 1, len, thread_stdout))
+ 			err(1, "stdout");
+ #ifdef __APPLE__
+-		CCDigestUpdate(&context, buffer, len);
++		ios_CCDigestUpdate(&context, buffer, len);
+ #else
+ 		alg->Update(&context, buffer, len);
+ #endif
+ 	}
+-	if (ferror(stdin)) {
++	if (ferror(thread_stdin)) {
+ 		errx(EX_IOERR, NULL);
+ 	}
+ #ifdef __APPLE__
+@@ -414,6 +427,6 @@
+ usage(Algorithm_t *alg)
+ {
+ 
+-	fprintf(stderr, "usage: %s [-pqrtx] [-s string] [files ...]\n", alg->progname);
++	fprintf(thread_stderr, "usage: %s [-pqrtx] [-s string] [files ...]\n", alg->progname);
+ 	exit(1);
+ }
 diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 --- text_cmds-99/sed/compile.c	2006-12-05 23:29:30.000000000 +0100
-+++ text_cmds/sed/compile.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/sed/compile.c	2018-04-30 22:33:16.000000000 +0200
 @@ -54,12 +54,13 @@
  
  #include "defs.h"
@@ -1878,104 +2487,90 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	else if ((appends = malloc(sizeof(struct s_appends) * appendnum)) ==
  	    NULL)
 -		err(1, "malloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	if ((match = malloc((maxnsub + 1) * sizeof(regmatch_t))) == NULL)
 -		err(1, "malloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  }
  
  #define EATSPACE() do {							\
-@@ -169,8 +170,12 @@
+@@ -169,8 +170,9 @@
  	for (;;) {
  		if ((p = cu_fgets(lbuf, sizeof(lbuf), NULL)) == NULL) {
  			if (stack != 0)
 -				errx(1, "%lu: %s: unexpected EOF (pending }'s)",
-+            { fprintf(thread_stderr, "sed: %lu: %s: unexpected EOF (pending }'s)\n",
-+				// errx(1, "%lu: %s: unexpected EOF (pending }'s)",
++            { errx(1, "%lu: %s: unexpected EOF (pending }'s)",
  							linenum, fname);
-+                global_errno = 1;
-+                pthread_exit(NULL);
 +            }
  			return (link);
  		}
  
-@@ -184,7 +189,7 @@
+@@ -184,7 +186,7 @@
  			}
  		}
  		if ((*link = cmd = malloc(sizeof(struct s_command))) == NULL)
 -			err(1, "malloc");
-+        { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++            err(1, "malloc");
  		link = &cmd->next;
  		cmd->nonsel = cmd->inrange = 0;
  		/* First parse the addresses */
-@@ -195,7 +200,7 @@
+@@ -195,7 +197,7 @@
  		if (addrchar(*p)) {
  			naddr++;
  			if ((cmd->a1 = malloc(sizeof(struct s_addr))) == NULL)
 -				err(1, "malloc");
-+            { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                err(1, "malloc");
  			p = compile_addr(p, cmd->a1);
  			EATSPACE();				/* EXTENSION */
  			if (*p == ',') {
-@@ -204,7 +209,7 @@
+@@ -204,7 +206,7 @@
  				naddr++;
  				if ((cmd->a2 = malloc(sizeof(struct s_addr)))
  				    == NULL)
 -					err(1, "malloc");
-+                { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                    err(1, "malloc");
  				p = compile_addr(p, cmd->a2);
  				EATSPACE();
  			} else
-@@ -214,17 +219,25 @@
+@@ -214,17 +216,17 @@
  
  nonsel:		/* Now parse the command */
  		if (!*p)
 -			errx(1, "%lu: %s: command expected", linenum, fname);
-+        { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: command expected\n", linenum, fname); pthread_exit(NULL); }
-+            // errx(1, "%lu: %s: command expected", linenum, fname);
++            errx(1, "%lu: %s: command expected", linenum, fname);
  		cmd->code = *p;
  		for (fp = cmd_fmts; fp->code; fp++)
  			if (fp->code == *p)
  				break;
  		if (!fp->code)
 -			errx(1, "%lu: %s: invalid command code %c", linenum, fname, *p);
-+        { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: invalid command code %c\n", linenum, fname, *p); pthread_exit(NULL); }
-+			// errx(1, "%lu: %s: invalid command code %c", linenum, fname, *p);
++            errx(1, "%lu: %s: invalid command code %c", linenum, fname, *p);
  		if (naddr > fp->naddr)
 -			errx(1,
 -				"%lu: %s: command %c expects up to %d address(es), found %d",
 -				linenum, fname, *p, fp->naddr, naddr);
-+        { global_errno = 1;
-+            fprintf(thread_stderr,
-+                  "sed: %lu: %s: command %c expects up to %d address(es), found %d\n",
++            errx(1,
++                 "%lu: %s: command %c expects up to %d address(es), found %d",
 +                 linenum, fname, *p, fp->naddr, naddr);
-+            pthread_exit(NULL);
-+        }
-+			// errx(1,
-+			//	"%lu: %s: command %c expects up to %d address(es), found %d",
-+			//	linenum, fname, *p, fp->naddr, naddr);
  		switch (fp->args) {
  		case NONSEL:			/* ! */
  			p++;
-@@ -247,7 +260,8 @@
+@@ -247,7 +249,7 @@
  			 */
  			cmd->nonsel = 1;
  			if (stack == 0)
 -				errx(1, "%lu: %s: unexpected }", linenum, fname);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: unexpected }\n", linenum, fname); pthread_exit(NULL); }
-+                // errx(1, "%lu: %s: unexpected }", linenum, fname);
++                errx(1, "%lu: %s: unexpected }", linenum, fname);
  			cmd2 = stack;
  			stack = cmd2->next;
  			cmd2->next = cmd;
-@@ -261,21 +275,31 @@
+@@ -261,22 +263,22 @@
  				goto semicolon;
  			}
  			if (*p)
 -				errx(1, "%lu: %s: extra characters at the end of %c command",
--						linenum, fname, cmd->code);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: extra characters at the end of %c command\n", linenum, fname, cmd->code); pthread_exit(NULL); }
-+				// errx(1, "%lu: %s: extra characters at the end of %c command",
-+						// linenum, fname, cmd->code);
++                errx(1, "%lu: %s: extra characters at the end of %c command",
+ 						linenum, fname, cmd->code);
  			break;
  		case TEXT:			/* a c i */
  			p++;
@@ -1983,38 +2578,28 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			if (*p != '\\')
 -				errx(1,
 -"%lu: %s: command %c expects \\ followed by text", linenum, fname, cmd->code);
-+            { global_errno = 1; fprintf(thread_stderr,
-+                      "sed: %lu: %s: command %c expects \\ followed by text\n", linenum, fname, cmd->code);
-+                pthread_exit(NULL);
-+            }
-+				// errx(1,
-+// "%lu: %s: command %c expects \\ followed by text", linenum, fname, cmd->code);
++                errx(1,
++                     "%lu: %s: command %c expects \\ followed by text", linenum, fname, cmd->code);
  			p++;
  			EATSPACE();
  			if (*p)
 -				errx(1,
 -				"%lu: %s: extra characters after \\ at the end of %c command",
 -				linenum, fname, cmd->code);
-+            { global_errno = 1; fprintf(thread_stderr,
-+                      "sed: %lu: %s: extra characters after \\ at the end of %c command\n",
+-			cmd->t = compile_text();
++                errx(1,
++                     "%lu: %s: extra characters after \\ at the end of %c command",
 +                     linenum, fname, cmd->code);
-+                pthread_exit(NULL);
-+            }
-+				// errx(1,
-+				// "%lu: %s: extra characters after \\ at the end of %c command",
-+				//linenum, fname, cmd->code);
- 			cmd->t = compile_text();
++            cmd->t = compile_text();
  			break;
  		case COMMENT:			/* \0 # */
-@@ -284,20 +308,26 @@
+ 			break;
+@@ -284,20 +286,20 @@
  			p++;
  			EATSPACE();
  			if (*p == '\0')
 -				errx(1, "%lu: %s: filename expected", linenum, fname);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: filename expected\n", linenum, fname);
-+                pthread_exit(NULL);
-+            }
-+             //   errx(1, "%lu: %s: filename expected", linenum, fname);
++               errx(1, "%lu: %s: filename expected", linenum, fname);
  			cmd->t = duptoeol(p, "w command");
  			if (aflag)
  				cmd->u.fd = -1;
@@ -2022,29 +2607,23 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
  			    DEFFILEMODE)) == -1)
 -				err(1, "%s", p);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %s: %s\n", p, strerror(errno)); pthread_exit(NULL); }  // err(1, "%s", p);
++                err(1, "%s", p);
  			break;
  		case RFILE:			/* r */
  			p++;
  			EATSPACE();
  			if (*p == '\0')
 -				errx(1, "%lu: %s: filename expected", linenum, fname);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: filename expected\n", linenum, fname);
-+                pthread_exit(NULL);
-+            }
-+				// errx(1, "%lu: %s: filename expected", linenum, fname);
++                errx(1, "%lu: %s: filename expected", linenum, fname);
  			else
  				cmd->t = duptoeol(p, "read command");
  			break;
-@@ -314,21 +344,30 @@
+@@ -314,21 +316,21 @@
  			EATSPACE();
  			cmd->t = duptoeol(p, "label");
  			if (strlen(p) == 0)
 -				errx(1, "%lu: %s: empty label", linenum, fname);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: empty label\n", linenum, fname);
-+                pthread_exit(NULL);
-+            }
-+			//	errx(1, "%lu: %s: empty label", linenum, fname);
++            	errx(1, "%lu: %s: empty label", linenum, fname);
  			enterlabel(cmd);
  			break;
  		case SUBST:			/* s */
@@ -2053,174 +2632,140 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 -				errx(1,
 -"%lu: %s: substitute pattern can not be delimited by newline or backslash",
 -					linenum, fname);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: substitute pattern can not be delimited by newline or backslash\n", linenum, fname);
-+                pthread_exit(NULL);
-+            }
-+				// errx(1,
-+//"%lu: %s: substitute pattern can not be delimited by newline or backslash",
-+	//				linenum, fname);
- 			if ((cmd->u.s = malloc(sizeof(struct s_subst))) == NULL)
+-			if ((cmd->u.s = malloc(sizeof(struct s_subst))) == NULL)
 -				err(1, "malloc");
-+            { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                errx(1,
++                     "%lu: %s: substitute pattern can not be delimited by newline or backslash",
++                     linenum, fname);
++            if ((cmd->u.s = malloc(sizeof(struct s_subst))) == NULL)
++                err(1, "malloc");
  			p = compile_re(p, &cmd->u.s->re);
  			if (p == NULL)
 -				errx(1,
 -				"%lu: %s: unterminated substitute pattern", linenum, fname);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: unterminated substitute pattern\n", linenum, fname);
-+                pthread_exit(NULL);
-+            }
-+				//errx(1,
-+				// "%lu: %s: unterminated substitute pattern", linenum, fname);
++                errx(1,
++                     "%lu: %s: unterminated substitute pattern", linenum, fname);
  			--p;
  			p = compile_subst(p, cmd->u.s);
  			p = compile_flags(p, cmd->u.s);
-@@ -349,8 +388,12 @@
+@@ -349,8 +351,8 @@
  				goto semicolon;
  			}
  			if (*p)
 -				errx(1,
 -"%lu: %s: extra text at the end of a transform command", linenum, fname);
-+            { global_errno = 1; fprintf(thread_stderr,
-+                      "sed: %lu: %s: extra text at the end of a transform command\n", linenum, fname);
-+                pthread_exit(NULL);
-+            }
-+				//errx(1,
-+//"%lu: %s: extra text at the end of a transform command", linenum, fname);
++            errx(1,
++                 "%lu: %s: extra text at the end of a transform command", linenum, fname);
  			break;
  		}
  	}
-@@ -374,15 +417,27 @@
+@@ -374,15 +376,18 @@
  	if (c == '\0')
  		return (NULL);
  	else if (c == '\\')
 -		errx(1, "%lu: %s: \\ can not be used as a string delimiter",
-+    { global_errno = 1;
-+        fprintf(thread_stderr, "sed: %lu: %s: \\ can not be used as a string delimiter\n",
-+             //errx(1, "%lu: %s: \\ can not be used as a string delimiter",
++    { errx(1, "%lu: %s: \\ can not be used as a string delimiter",
  				linenum, fname);
-+        pthread_exit(NULL);
 +    }
  	else if (c == '\n')
 -		errx(1, "%lu: %s: newline can not be used as a string delimiter",
-+    { global_errno = 1;
-+        fprintf(thread_stderr, "sed: %lu: %s: newline can not be used as a string delimiter\n",
-+              // errx(1, "%lu: %s: newline can not be used as a string delimiter",
++    {  errx(1, "%lu: %s: newline can not be used as a string delimiter",
  				linenum, fname);
-+        pthread_exit(NULL);
 +    }
  	while (*p) {
  		if (*p == '[' && c != *p) {
  			if ((d = compile_ccl(&p, d)) == NULL)
 -				errx(1, "%lu: %s: unbalanced brackets ([])", linenum, fname);
-+            { global_errno = 1;
-+                fprintf(thread_stderr, "sed: %lu: %s: unbalanced brackets ([])", linenum, fname);
-+				//errx(1, "%lu: %s: unbalanced brackets ([])", linenum, fname);
-+                pthread_exit(NULL);
++            {  errx(1, "%lu: %s: unbalanced brackets ([])", linenum, fname);
 +            }
  			continue;
  		} else if (*p == '\\' && p[1] == '[') {
  			*d++ = *p++;
-@@ -451,10 +506,14 @@
+@@ -451,10 +456,11 @@
  		return (p);
  	}
  	if ((*repp = malloc(sizeof(regex_t))) == NULL)
 -		err(1, "malloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	if (p && (eval = regcomp(*repp, re, rflags)) != 0)
 -		errx(1, "%lu: %s: RE error: %s",
-+    { global_errno = 1;
-+        fprintf(thread_stderr, "sed: %lu: %s: RE error: %s\n",
-+		// errx(1, "%lu: %s: RE error: %s",
++    { errx(1, "%lu: %s: RE error: %s",
  				linenum, fname, strregerror(eval, *repp));
-+        pthread_exit(NULL);
 +    }
  	if (maxnsub < (*repp)->re_nsub)
  		maxnsub = (*repp)->re_nsub;
  	return (p);
-@@ -482,7 +541,7 @@
+@@ -482,7 +488,7 @@
  	s->linenum = linenum;
  	asize = 2 * _POSIX2_LINE_MAX + 1;
  	if ((text = malloc(asize)) == NULL)
 -		err(1, "malloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	size = 0;
  	do {
  		op = sp = text + size;
-@@ -514,8 +573,11 @@
+@@ -514,8 +520,9 @@
  					ref = *p - '0';
  					if (s->re != NULL &&
  					    ref > s->re->re_nsub)
 -						errx(1, "%lu: %s: \\%c not defined in the RE",
-+                    { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: \\%c not defined in the RE\n",
-+						// errx(1, "%lu: %s: \\%c not defined in the RE",
++                    { errx(1, "%lu: %s: \\%c not defined in the RE",
  								linenum, fname, *p);
-+                        pthread_exit(NULL);
 +                    }
  					if (s->maxbref < ref)
  						s->maxbref = ref;
  				} else if (*p == '&' || *p == '\\')
-@@ -528,11 +590,14 @@
+@@ -528,11 +535,11 @@
  				*sp++ = '\0';
  				size += sp - op;
  				if ((s->new = realloc(text, size)) == NULL)
 -					err(1, "realloc");
-+                { global_errno = 1; fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                    err(1, "malloc");
  				return (p);
  			} else if (*p == '\n') {
--				errx(1,
+ 				errx(1,
 -"%lu: %s: unescaped newline inside substitute pattern", linenum, fname);
-+                global_errno = 1;
-+				fprintf(thread_stderr,
-+                    // errx(1,
 +                        "sed: %lu: %s: unescaped newline inside substitute pattern\n", linenum, fname);
-+                pthread_exit(NULL);
  				/* NOTREACHED */
  			}
  			*sp++ = *p;
-@@ -541,11 +606,14 @@
+@@ -541,12 +548,12 @@
  		if (asize - size < _POSIX2_LINE_MAX + 1) {
  			asize *= 2;
  			if ((text = realloc(text, asize)) == NULL)
 -				err(1, "realloc");
-+            { global_errno = 1; fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                err(1, "malloc");
  		}
  	} while (cu_fgets(p = lbuf, sizeof(lbuf), &more));
 -	errx(1, "%lu: %s: unterminated substitute in regular expression",
-+    global_errno = 1;
-+    fprintf(thread_stderr, "sed: %lu: %s: unterminated substitute in regular expression\n",
-+         // errx(1, "%lu: %s: unterminated substitute in regular expression",
++    errx(1, "%lu: %s: unterminated substitute in regular expression",
  			linenum, fname);
-+    pthread_exit(NULL);
- 	/* NOTREACHED */
+-	/* NOTREACHED */
++    /* NOTREACHED */
  }
  
-@@ -568,8 +636,12 @@
+ /*
+@@ -568,8 +575,9 @@
  		switch (*p) {
  		case 'g':
  			if (gn)
 -				errx(1,
 -"%lu: %s: more than one number or 'g' in substitute flags", linenum, fname);
-+            { global_errno = 1;
-+                fprintf(thread_stderr,
-+                     //errx(1,
++            { errx(1,
 +                      "sed: %lu: %s: more than one number or 'g' in substitute flags\n", linenum, fname);
-+                pthread_exit(NULL);
 +            }
  			gn = 1;
  			s->n = 0;
  			break;
-@@ -584,14 +656,24 @@
+@@ -584,14 +592,18 @@
  		case '4': case '5': case '6':
  		case '7': case '8': case '9':
  			if (gn)
 -				errx(1,
 -"%lu: %s: more than one number or 'g' in substitute flags", linenum, fname);
 +            {
-+                global_errno = 1;
-+                fprintf(thread_stderr,
-+				// errx(1,
++                errx(1,
 +                      "sed: %lu: %s: more than one number or 'g' in substitute flags\n", linenum, fname);
-+                pthread_exit(NULL);
 +            }
  			gn = 1;
  			errno = 0;
@@ -2229,16 +2774,13 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 -				errx(1,
 -"%lu: %s: overflow in the 'N' substitute flag", linenum, fname);
 +            {
-+                global_errno = 1;
-+                fprintf(thread_stderr,
-+				//errx(1,
++                errx(1,
 +                      "sed: %lu: %s: overflow in the 'N' substitute flag\n", linenum, fname);
-+                pthread_exit(NULL);
 +            }
  			s->n = nval;
  			p--;
  			break;
-@@ -599,7 +681,8 @@
+@@ -599,7 +611,8 @@
  			p++;
  #ifdef HISTORIC_PRACTICE
  			if (*p != ' ') {
@@ -2248,207 +2790,175 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  				return (p);
  			}
  #endif
-@@ -612,16 +695,24 @@
+@@ -612,16 +625,16 @@
  			}
  			*q = '\0';
  			if (q == wfile)
 -				errx(1, "%lu: %s: no wfile specified", linenum, fname);
-+            {
-+                global_errno = 1;
-+                fprintf(thread_stderr, "sed: %lu: %s: no wfile specified\n", linenum, fname);
-+                pthread_exit(NULL);
-+            }
-+                // errx(1, "%lu: %s: no wfile specified", linenum, fname);
++                errx(1, "%lu: %s: no wfile specified", linenum, fname);
  			s->wfile = strdup(wfile);
  			if (!aflag && (s->wfd = open(wfile,
  			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
  			    DEFFILEMODE)) == -1)
 -				err(1, "%s", wfile);
-+            { global_errno = 1; fprintf(thread_stderr, "sed: %s: %s\n", wfile, strerror(errno)); pthread_exit(NULL); } // err(1, "%s", wfile);
++                err(1, "%s", wfile);
  			return (p);
  		default:
 -			errx(1, "%lu: %s: bad flag in substitute command: '%c'",
-+                global_errno = 1;
-+                fprintf(thread_stderr, "sed: %lu: %s: bad flag in substitute command: '%c'\n",
-+			// errx(1, "%lu: %s: bad flag in substitute command: '%c'",
- 					linenum, fname, *p);
-+                pthread_exit(NULL);
+-					linenum, fname, *p);
++                errx(1, "%lu: %s: bad flag in substitute command: '%c'",
++                     linenum, fname, *p);
  			break;
  		}
  		p++;
-@@ -643,34 +734,49 @@
+@@ -643,34 +656,38 @@
  	mbstate_t mbs1, mbs2;
  
  	if ((*py = y = malloc(sizeof(*y))) == NULL)
 -		err(1, NULL);
-+    { fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	y->multis = NULL;
  	y->nmultis = 0;
  
  	if (*p == '\0' || *p == '\\')
 -		errx(1,
 -	"%lu: %s: transform pattern can not be delimited by newline or backslash",
-+    { global_errno = 1;
-+        fprintf(thread_stderr,
-+             // errx(1,
++    { errx(1,
 +              "sed: %lu: %s: transform pattern can not be delimited by newline or backslash\n",
  			linenum, fname);
-+        pthread_exit(NULL);
 +    }
  	p = compile_delimited(p, old, 1);
  	if (p == NULL)
 -		errx(1, "%lu: %s: unterminated transform source string",
-+    { global_errno = 1;
-+        fprintf(thread_stderr, "sed: %lu: %s: unterminated transform source string\n",
-+		// errx(1, "%lu: %s: unterminated transform source string",
++    { errx(1, "%lu: %s: unterminated transform source string",
  				linenum, fname);
-+        pthread_exit(NULL);
 +    }
  	p = compile_delimited(p - 1, new, 1);
  	if (p == NULL)
 -		errx(1, "%lu: %s: unterminated transform target string",
-+    { global_errno = 1;
-+        fprintf(thread_stderr, "sed: %lu: %s: unterminated transform target string\n",
-+		// errx(1, "%lu: %s: unterminated transform target string",
++    { errx(1, "%lu: %s: unterminated transform target string",
  				linenum, fname);
-+        pthread_exit(NULL);
 +    }
  	EATSPACE();
  	op = old;
  	oldlen = mbsrtowcs(NULL, &op, 0, NULL);
  	if (oldlen == (size_t)-1)
 -		err(1, NULL);
-+    { global_errno = 1; fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	np = new;
  	newlen = mbsrtowcs(NULL, &np, 0, NULL);
  	if (newlen == (size_t)-1)
 -		err(1, NULL);
-+    { global_errno = 1; fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	if (newlen != oldlen)
 -		errx(1, "%lu: %s: transform strings are not the same length",
-+    { global_errno = 1; fprintf(thread_stderr, "sed: %lu: %s: transform strings are not the same length\n",
-+		// errx(1, "%lu: %s: transform strings are not the same length",
++    { errx(1, "%lu: %s: transform strings are not the same length",
  				linenum, fname);
-+        pthread_exit(NULL);
 +    }
  	if (MB_CUR_MAX == 1) {
  		/*
  		 * The single-byte encoding case is easy: generate a
-@@ -706,7 +812,7 @@
+@@ -706,7 +723,7 @@
  				y->multis = realloc(y->multis,
  				    (y->nmultis + 1) * sizeof(*y->multis));
  				if (y->multis == NULL)
 -					err(1, NULL);
-+                { global_errno = 1; fprintf(thread_stderr, "sed: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                    err(1, "malloc");
  				i = y->nmultis++;
  				y->multis[i].fromlen = oclen;
  				memcpy(y->multis[i].from, op, oclen);
-@@ -732,7 +838,7 @@
+@@ -732,7 +749,7 @@
  
  	asize = 2 * _POSIX2_LINE_MAX + 1;
  	if ((text = malloc(asize)) == NULL)
 -		err(1, "malloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	size = 0;
  	while (cu_fgets(lbuf, sizeof(lbuf), NULL)) {
  		op = s = text + size;
-@@ -751,12 +857,12 @@
+@@ -751,12 +768,12 @@
  		if (asize - size < _POSIX2_LINE_MAX + 1) {
  			asize *= 2;
  			if ((text = realloc(text, asize)) == NULL)
 -				err(1, "realloc");
-+            { global_errno = 1; fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++                err(1, "malloc");
  		}
  	}
  	text[size] = '\0';
  	if ((p = realloc(text, size + 1)) == NULL)
 -		err(1, "realloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	return (p);
  }
  
-@@ -776,7 +882,11 @@
+@@ -776,7 +793,8 @@
  	case '/':				/* Context address */
  		p = compile_re(p, &a->u.r);
  		if (p == NULL)
 -			errx(1, "%lu: %s: unterminated regular expression", linenum, fname);
-+        { global_errno = 1;
-+            fprintf(thread_stderr, "sed: %lu: %s: unterminated regular expression\n", linenum, fname);
-+            pthread_exit(NULL);
-+         //   errx(1, "%lu: %s: unterminated regular expression", linenum, fname);
++        { errx(1, "%lu: %s: unterminated regular expression", linenum, fname);
 +        }
  		a->type = AT_RE;
  		return (p);
  
-@@ -790,7 +900,10 @@
+@@ -790,7 +808,7 @@
  		a->u.l = strtol(p, &end, 10);
  		return (end);
  	default:
 -		errx(1, "%lu: %s: expected context address", linenum, fname);
-+            global_errno = 1;
-+            fprintf(thread_stderr, "sed: %lu: %s: expected context address\n", linenum, fname);
-+            pthread_exit(NULL);
-+		// errx(1, "%lu: %s: expected context address", linenum, fname);
++            errx(1, "%lu: %s: expected context address", linenum, fname);
  		return (NULL);
  	}
  }
-@@ -811,10 +924,11 @@
+@@ -811,10 +829,10 @@
  		ws = isspace((unsigned char)*s);
  	*s = '\0';
  	if (ws)
 -		warnx("%lu: %s: whitespace after %s", linenum, fname, ctype);
-+        fprintf(thread_stderr, "sed: %lu: %s: whitespace after %s\n", linenum, fname, ctype);
-+		// warnx("%lu: %s: whitespace after %s", linenum, fname, ctype);
++        warnx("%lu: %s: whitespace after %s", linenum, fname, ctype);
  	len = s - start + 1;
  	if ((p = malloc(len)) == NULL)
 -		err(1, "malloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	return (memmove(p, start, len));
  }
  
-@@ -843,7 +957,11 @@
+@@ -843,7 +861,8 @@
  				break;
  			}
  			if ((cp->u.c = findlabel(cp->t)) == NULL)
 -				errx(1, "%lu: %s: undefined label '%s'", linenum, fname, cp->t);
-+            { global_errno = 1;
-+                fprintf(thread_stderr, "sed: %lu: %s: undefined label '%s'\n", linenum, fname, cp->t);
-+                pthread_exit(NULL);
-+                // errx(1, "%lu: %s: undefined label '%s'", linenum, fname, cp->t);
++            { errx(1, "%lu: %s: undefined label '%s'", linenum, fname, cp->t);
 +            }
  			free(cp->t);
  			break;
  		case '{':
-@@ -868,9 +986,13 @@
+@@ -868,9 +887,10 @@
  	lhp = &labels[h & LHMASK];
  	for (lh = *lhp; lh != NULL; lh = lh->lh_next)
  		if (lh->lh_hash == h && strcmp(cp->t, lh->lh_cmd->t) == 0)
 -			errx(1, "%lu: %s: duplicate label '%s'", linenum, fname, cp->t);
-+        { global_errno = 1;
-+            fprintf(thread_stderr, "sed: %lu: %s: duplicate label '%s'\n", linenum, fname, cp->t);
-+            pthread_exit(NULL);
-+    // errx(1, "%lu: %s: duplicate label '%s'", linenum, fname, cp->t);
++        { errx(1, "%lu: %s: duplicate label '%s'", linenum, fname, cp->t);
 +        }
  	if ((lh = malloc(sizeof *lh)) == NULL)
 -		err(1, "malloc");
-+    { global_errno = 1; fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, "malloc");
++        err(1, "malloc");
  	lh->lh_next = *lhp;
  	lh->lh_hash = h;
  	lh->lh_cmd = cp;
-@@ -925,8 +1047,8 @@
+@@ -925,8 +945,7 @@
  				continue;
  			}
  			if (!lh->lh_ref)
 -				warnx("%lu: %s: unused label '%s'",
 -				    linenum, fname, lh->lh_cmd->t);
-+                fprintf(thread_stderr, "sed: %lu: %s: unused label '%s'\n", linenum, fname, lh->lh_cmd->t);
-+            // warnx("%lu: %s: unused label '%s'", linenum, fname, lh->lh_cmd->t);
++                warnx("%lu: %s: unused label '%s'", linenum, fname, lh->lh_cmd->t);
  			free(lh);
  		}
  	}
 diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
 --- text_cmds-99/sed/extern.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/extern.h	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/sed/extern.h	2018-04-23 20:32:31.000000000 +0200
 @@ -34,16 +34,16 @@
   * $FreeBSD: src/usr.bin/sed/extern.h,v 1.13 2004/08/09 15:29:41 dds Exp $
   */
@@ -2478,7 +2988,7 @@ diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
  void	 compile(void);
 diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 --- text_cmds-99/sed/main.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/main.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/sed/main.c	2018-05-01 11:57:40.000000000 +0200
 @@ -64,6 +64,9 @@
  
  #include "defs.h"
@@ -2551,28 +3061,26 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  	(void) setlocale(LC_ALL, "");
  
  	fflag = 0;
-@@ -138,8 +155,11 @@
+@@ -138,8 +155,9 @@
  			break;
  		case 'e':
  			eflag = 1;
 -			if ((temp_arg = malloc(strlen(optarg) + 2)) == NULL)
 -				err(1, "malloc");
 +            if ((temp_arg = malloc(strlen(optarg) + 2)) == NULL) {
-+                global_errno = 1;
-+                fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
-+                pthread_exit(NULL);
++                err(1, "malloc");
 +            }
  			strcpy(temp_arg, optarg);
  			strcat(temp_arg, "\n");
  			add_compunit(CU_STRING, temp_arg);
-@@ -152,11 +172,11 @@
+@@ -152,11 +170,11 @@
  			inplace = optarg;
  			break;
  		case 'l':
 -			if(setlinebuf(stdout) != 0)
 -				warnx("setlinebuf() failed");
 +			if(setlinebuf(thread_stdout) != 0)
-+                fprintf(thread_stderr, "sed: setlinebuf() failed\n"); // warnx("setlinebuf() failed");
++                warnx("setlinebuf() failed");
  			break;
  		case 'n':
 -			nflag = 1;
@@ -2580,7 +3088,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  			break;
  		default:
  		case '?':
-@@ -181,18 +201,20 @@
+@@ -181,18 +199,20 @@
  		add_file(NULL);
  	process();
  	cfclose(prog, NULL);
@@ -2606,21 +3114,19 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  }
  
  /*
-@@ -219,8 +241,11 @@
+@@ -219,8 +239,9 @@
  		linenum = 0;
  		switch (script->type) {
  		case CU_FILE:
 -			if ((f = fopen(script->s, "r")) == NULL)
 -				err(1, "%s", script->s);
 +            if ((f = fopen(script->s, "r")) == NULL) {
-+                global_errno = 1;
-+                fprintf(thread_stderr, "sed: %s: %s\n", script->s, strerror(errno)); // err(1, "%s", script->s);
-+                pthread_exit(NULL);
++                err(1, "%s", script->s);
 +            }
  			fname = script->s;
  			state = ST_FILE;
  			goto again;
-@@ -239,7 +264,7 @@
+@@ -239,7 +260,7 @@
  		if ((p = fgets(buf, n, f)) != NULL) {
  			linenum++;
  			if (linenum == 1 && buf[0] == '#' && buf[1] == 'n')
@@ -2629,7 +3135,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  			if (more != NULL)
  				*more = !feof(f);
  			return (p);
-@@ -250,7 +275,7 @@
+@@ -250,7 +271,7 @@
  		goto again;
  	case ST_STRING:
  		if (linenum == 0 && s[0] == '#' && s[1] == 'n')
@@ -2638,7 +3144,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  		p = buf;
  		for (;;) {
  			if (n-- <= 1) {
-@@ -307,11 +332,14 @@
+@@ -307,11 +328,12 @@
  	if (infile == NULL) {
  		/* stdin? */
  		if (files->fname == NULL) {
@@ -2646,9 +3152,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 -				errx(1, "-i may not be used with stdin");
 -			infile = stdin;
 +            if (inplace != NULL) {
-+                fprintf(thread_stderr, "sed: -i may not be used with stdin\n"); //errx(1, "-i may not be used with stdin");
-+                global_errno = 1;
-+                pthread_exit(NULL);
++                errx(1, "-i may not be used with stdin");
 +            }
 +			infile = thread_stdin;
  			fname = "stdin";
@@ -2657,7 +3161,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  			outfname = "stdout";
  		}
  		firstfile = 1;
-@@ -323,22 +351,22 @@
+@@ -323,22 +345,22 @@
  			break;
  		}
  		/* If we are here then either eof or no files are open yet */
@@ -2672,7 +3176,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  			if (*oldfname != '\0') {
  				if (rename(fname, oldfname) != 0) {
 -					warn("rename()");
-+                    fprintf(thread_stderr, "sed: rename(): %s\n", strerror(errno)); // warn("rename()");
++                    warn("rename()");
  					unlink(tmpfname);
 -					exit(1);
 +                    exit(1);
@@ -2685,7 +3189,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  					fclose(outfile);
  				outfile = NULL;
  				rename(tmpfname, fname);
-@@ -356,37 +384,57 @@
+@@ -356,37 +378,42 @@
  		}
  		fname = files->fname;
  		if (inplace != NULL) {
@@ -2696,19 +3200,12 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 -				    "in-place editing only",
 -				    "works for regular files");
 +            if (lstat(fname, &sb) != 0) {
-+                global_errno = 1;
-+                fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno)); // err(1, "%s", fname);
-+                pthread_exit(NULL);
++                err(1, "%s", fname);
 +            }
 +            if (!(sb.st_mode & S_IFREG)) {
-+                fprintf(thread_stderr, "sed: %s: %s %s\n", fname,
++                errx(1, "%s: %s %s", fname,
 +                     "in-place editing only",
 +                     "works for regular files");
-+				//errx(1, "%s: %s %s", fname,
-+				//    "in-place editing only",
-+				//    "works for regular files");
-+                global_errno = 1;
-+                pthread_exit(NULL);
 +            }
  			if (*inplace != '\0') {
  				strlcpy(oldfname, fname,
@@ -2718,10 +3215,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 -				if (len > sizeof(oldfname))
 -					errx(1, "%s: name too long", fname);
 +                if (len > sizeof(oldfname)) {
-+                    global_errno = 1;
-+                    fprintf(thread_stderr, "sed: %s: name too long\n", fname);
-+                    pthread_exit(NULL);
-+                    // errx(1, "%s: name too long", fname);
++                    errx(1, "%s: name too long", fname);
 +                }
  			}
  			len = snprintf(tmpfname, sizeof(tmpfname),
@@ -2730,18 +3224,13 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 -			if (len >= sizeof(tmpfname))
 -				errx(1, "%s: name too long", fname);
 +            if (len >= sizeof(tmpfname)) {
-+                fprintf(thread_stderr, "sed: %s: name too long\n", fname);
-+				// errx(1, "%s: name too long", fname);
-+                global_errno = 1;
-+                pthread_exit(NULL);
++                errx(1, "%s: name too long", fname);
 +            }
  			unlink(tmpfname);
 -			if ((outfile = fopen(tmpfname, "w")) == NULL)
 -				err(1, "%s", fname);
 +            if ((outfile = fopen(tmpfname, "w")) == NULL) {
-+                fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno)); // err(1, "%s", fname);
-+                global_errno = 1;
-+                pthread_exit(NULL);
++                err(1, "%s", fname);
 +            }
  			fchown(fileno(outfile), sb.st_uid, sb.st_gid);
  			fchmod(fileno(outfile), sb.st_mode & ALLPERMS);
@@ -2753,49 +3242,42 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  		}
  		if ((infile = fopen(fname, "r")) == NULL) {
 -			warn("%s", fname);
-+            fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno)); // warn("%s", fname);
++            warn("%s", fname);
  			rval = 1;
  			continue;
  		}
-@@ -400,8 +448,12 @@
+@@ -400,8 +427,9 @@
  	 * because the ungetc() can cause it to move.
  	 */
  	p = fgetln(infile, &len);
 -	if (ferror(infile))
 -		errx(1, "%s: %s", fname, strerror(errno ? errno : EIO));
 +    if (ferror(infile)) {
-+        fprintf(thread_stderr, "sed: %s: %s\n", fname, strerror(errno ? errno : EIO));
-+        // errx(1, "%s: %s", fname, strerror(errno ? errno : EIO));
-+        global_errno = 1;
-+        pthread_exit(NULL);
++        errx(1, "%s: %s", fname, strerror(errno ? errno : EIO));
 +    }
  	if (len != 0 && p[len - 1] == '\n')
  		len--;
  	cspace(sp, p, len, spflag);
-@@ -419,8 +471,11 @@
+@@ -419,8 +447,9 @@
  {
  	struct s_compunit *cu;
  
 -	if ((cu = malloc(sizeof(struct s_compunit))) == NULL)
 -		err(1, "malloc");
 +    if ((cu = malloc(sizeof(struct s_compunit))) == NULL) {
-+        fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
-+        global_errno = 1;
-+        pthread_exit(NULL);
++        err(1, "malloc");
 +    }
  	cu->type = type;
  	cu->s = s;
  	cu->next = NULL;
-@@ -436,9 +491,13 @@
+@@ -436,9 +465,11 @@
  {
  	struct s_flist *fp;
  
 -	if ((fp = malloc(sizeof(struct s_flist))) == NULL)
 -		err(1, "malloc");
 +    if ((fp = malloc(sizeof(struct s_flist))) == NULL) {
-+        fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
-+        global_errno = 1;
-+        pthread_exit(NULL);
++        err(1, "malloc");
 +    }
  	fp->next = NULL;
 +    // That's the stuff:
@@ -2804,7 +3286,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  	fl_nextp = &fp->next;
 diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
 --- text_cmds-99/sed/misc.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/misc.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/sed/misc.c	2018-05-01 11:47:54.000000000 +0200
 @@ -49,6 +49,9 @@
  
  #include "defs.h"
@@ -2815,23 +3297,21 @@ diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
  
  /*
   * Return a string for a regular expression error passed.  This is overkill,
-@@ -64,8 +67,11 @@
+@@ -64,8 +67,9 @@
  	if (oe != NULL)
  		free(oe);
  	s = regerror(errcode, preg, NULL, 0);
 -	if ((oe = malloc(s)) == NULL)
 -		err(1, "malloc");
 +    if ((oe = malloc(s)) == NULL) {
-+        fprintf(thread_stderr, "sed: malloc: %s\n", strerror(errno)); // err(1, "malloc");
-+        global_errno = 1;
-+        pthread_exit(NULL);
++        err(1, "malloc");
 +    }
  	(void)regerror(errcode, preg, oe, s);
  	return (oe);
  }
 diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 --- text_cmds-99/sed/process.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/process.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/sed/process.c	2018-05-01 11:57:40.000000000 +0200
 @@ -58,6 +58,7 @@
  
  #include "defs.h"
@@ -2861,7 +3341,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  
  #define OUT(s) { fwrite(s, sizeof(u_char), psl, outfile); fputc('\n', outfile); }
  
-@@ -113,10 +114,12 @@
+@@ -113,10 +114,10 @@
  				goto redirect;
  			case 'a':
  				if (appendx >= appendnum)
@@ -2871,14 +3351,12 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 -						err(1, "realloc");
 +                if ((appends = realloc(appends,
 +					    sizeof(struct s_appends) * (appendnum *= 2))) == NULL) {
-+                        fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
-+                        global_errno = 1;
-+                        pthread_exit(NULL);
++                    err(1, "realloc");
 +                }
  				appends[appendx].type = AP_STRING;
  				appends[appendx].s = cp->t;
  				appends[appendx].len = strlen(cp->t);
-@@ -167,7 +170,7 @@
+@@ -167,7 +168,7 @@
  				lputs(ps, psl);
  				break;
  			case 'n':
@@ -2887,7 +3365,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  					OUT(ps)
  				flush_appends();
  				if (!mf_fgets(&PS, REPLACE))
-@@ -198,17 +201,19 @@
+@@ -198,17 +199,17 @@
  					psl = oldpsl;
  				break;
  			case 'q':
@@ -2905,38 +3383,32 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 -					    (appendnum *= 2))) == NULL)
 -						err(1, "realloc");
 +					    sizeof(struct s_appends) * (appendnum *= 2))) == NULL) {
-+						        fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
-+                        global_errno = 1;
-+                        pthread_exit(NULL);
++                        err(1, "realloc");
 +                }
  				appends[appendx].type = AP_FILE;
  				appends[appendx].s = cp->t;
  				appends[appendx].len = strlen(cp->t);
-@@ -229,12 +234,18 @@
+@@ -229,12 +230,14 @@
  					break;
  				if (cp->u.fd == -1 && (cp->u.fd = open(cp->t,
  				    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 -				    DEFFILEMODE)) == -1)
 -					err(1, "%s", cp->t);
 +                    DEFFILEMODE)) == -1) {
-+                    fprintf(thread_stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
-+                    global_errno = 1;
-+                    pthread_exit(NULL);
++                    err(1, "%s", cp->t);
 +                }
  				if (write(cp->u.fd, ps, psl) != psl ||
 -				    write(cp->u.fd, "\n", 1) != 1)
 -					err(1, "%s", cp->t);
 -				break;
 +                    write(cp->u.fd, "\n", 1) != 1) {
-+                    fprintf(thread_stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
-+                    global_errno = 1;
-+                    pthread_exit(NULL);
++                    err(1, "%s", cp->t);
 +                }
 +                break;
  			case 'x':
  				if (hs == NULL)
  					cspace(&HS, "", 0, REPLACE);
-@@ -256,7 +267,7 @@
+@@ -256,7 +259,7 @@
  			cp = cp->next;
  		} /* for all cp */
  
@@ -2945,61 +3417,51 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  			OUT(ps)
  		flush_appends();
  	} /* for all lines */
-@@ -329,9 +340,12 @@
+@@ -329,9 +332,9 @@
  	if (re == NULL) {
  		if (defpreg != NULL && cp->u.s->maxbref > defpreg->re_nsub) {
  			linenum = cp->u.s->linenum;
 -			errx(1, "%lu: %s: \\%d not defined in the RE",
-+            fprintf(thread_stderr, "sed: %lu: %s: \\%d not defined in the RE\n",
-+			// errx(1, "%lu: %s: \\%d not defined in the RE",
++            errx(1, "%lu: %s: \\%d not defined in the RE",
  					linenum, fname, cp->u.s->maxbref);
 -		}
-+            global_errno = 1;
-+            pthread_exit(NULL);
 +        }
  	}
  	if (!regexec_e(re, s, 0, 0, psl))
  		return (0);
-@@ -413,12 +427,18 @@
+@@ -413,12 +416,14 @@
  	/* Handle the 'w' flag. */
  	if (cp->u.s->wfile && !pd) {
  		if (cp->u.s->wfd == -1 && (cp->u.s->wfd = open(cp->u.s->wfile,
 -		    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1)
 -			err(1, "%s", cp->u.s->wfile);
 +            O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1) {
-+            fprintf(thread_stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
-+            global_errno = 1;
-+            pthread_exit(NULL);
++            err(1, "%s", cp->u.s->wfile);
 +        }
  		if (write(cp->u.s->wfd, ps, psl) != psl ||
 -		    write(cp->u.s->wfd, "\n", 1) != 1)
 -			err(1, "%s", cp->u.s->wfile);
 -	}
 +            write(cp->u.s->wfd, "\n", 1) != 1) {
-+            fprintf(thread_stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
-+            global_errno = 1;
-+            pthread_exit(NULL);
++            err(1, "%s", cp->u.s->wfile);
 +        }
 +    }
  	return (1);
  }
  
-@@ -510,8 +530,12 @@
+@@ -510,8 +515,9 @@
  			(void)fclose(f);
  			break;
  		}
 -	if (ferror(outfile))
 -		errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
 +	if (ferror(outfile)) {
-+        global_errno = 1;
-+        fprintf(thread_stderr, "sed: %s: %s\n", outfname, strerror(errno ? errno : EIO));
-+        pthread_exit(NULL);
-+    // errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
++        errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
 +    }
  	appendx = sdone = 0;
  }
  
-@@ -527,12 +551,12 @@
+@@ -527,12 +533,12 @@
  	wchar_t wc;
  	mbstate_t mbs;
  
@@ -3014,48 +3476,39 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  		    win.ws_col > 0)
  			termwidth = win.ws_col;
  		else
-@@ -589,8 +613,12 @@
+@@ -589,8 +595,9 @@
  		fprintf(outfile, "\\\n");
  	(void)fputc('$', outfile);
  	(void)fputc('\n', outfile);
 -	if (ferror(outfile))
 -		errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
 +    if (ferror(outfile)) {
-+        global_errno = 1;
-+        fprintf(thread_stderr, "sed: %s: %s\n", outfname, strerror(errno ? errno : EIO));
-+        // errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
-+        pthread_exit(NULL);
++        errx(1, "%s: %s", outfname, strerror(errno ? errno : EIO));
 +    }
  }
  
  static __inline int
-@@ -601,7 +629,12 @@
+@@ -601,7 +608,9 @@
  
  	if (preg == NULL) {
  		if (defpreg == NULL)
 -			errx(1, "first RE may not be empty");
 +        {
-+            global_errno = 1;
-+            fprintf(thread_stderr, "sed: first RE may not be empty\n");
-+            // errx(1, "first RE may not be empty");
-+            pthread_exit(NULL);
++            errx(1, "first RE may not be empty");
 +        }
  	} else
  		defpreg = preg;
  
-@@ -617,7 +650,10 @@
+@@ -617,7 +626,7 @@
  	case REG_NOMATCH:
  		return (0);
  	}
 -	errx(1, "RE error: %s", strregerror(eval, defpreg));
-+    fprintf(thread_stderr, "sed: RE error: %s\n", strregerror(eval, defpreg));
-+    global_errno = 1;
-+    pthread_exit(NULL);
-+    // errx(1, "RE error: %s", strregerror(eval, defpreg));
++    errx(1, "RE error: %s", strregerror(eval, defpreg));
  	/* NOTREACHED */
  }
  
-@@ -637,9 +673,10 @@
+@@ -637,9 +646,10 @@
  		sp->blen += (reqlen) + 1024;				\
  		if ((sp->space = sp->back = realloc(sp->back, sp->blen)) \
  		    == NULL)						\
@@ -3067,7 +3520,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  
  	dst = sp->space + sp->len;
  	while ((c = *src++) != '\0') {
-@@ -682,9 +719,12 @@
+@@ -682,9 +692,10 @@
  	if (tlen > sp->blen) {
  		sp->blen = tlen + 1024;
  		if ((sp->space = sp->back = realloc(sp->back, sp->blen)) ==
@@ -3075,15 +3528,13 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 -			err(1, "realloc");
 -	}
 +            NULL) {
-+			        fprintf(thread_stderr, "sed: realloc: %s\n", strerror(errno)); // err(1, "realloc");
-+            global_errno = 1;
-+            pthread_exit(NULL);
++            err(1, "realloc");
 +        }
 +    }
  
  	if (spflag == REPLACE)
  		sp->len = 0;
-@@ -704,15 +744,21 @@
+@@ -704,15 +715,17 @@
  	for (; cp != end; cp = cp->next)
  		switch(cp->code) {
  		case 's':
@@ -3097,26 +3548,524 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 -			cp->u.fd = -1;
 -			break;
 +            if (cp->u.s->wfd != -1 && close(cp->u.s->wfd)) {
-+                fprintf(thread_stderr, "sed: %s: %s\n", cp->u.s->wfile, strerror(errno)); // err(1, "%s", cp->u.s->wfile);
-+                global_errno = 1;
-+                pthread_exit(NULL);
++                err(1, "%s", cp->u.s->wfile);
 +            }
 +            cp->u.s->wfd = -1;
 +        break;
 +        case 'w':
 +            if (cp->u.fd != -1 && close(cp->u.fd)) {
-+                fprintf(thread_stderr, "sed: %s: %s\n", cp->t, strerror(errno)); // err(1, "%s", cp->t);
-+                global_errno = 1;
-+                pthread_exit(NULL);
++                err(1, "%s", cp->t);
 +            }
 +            cp->u.fd = -1;
 +        break;
  		case '{':
  			cfclose(cp->u.c, cp->next);
  			break;
+diff -Naur text_cmds-99/sort/bwstring.c text_cmds/sort/bwstring.c
+--- text_cmds-99/sort/bwstring.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/bwstring.c	2018-04-30 16:59:52.000000000 +0200
+@@ -40,6 +40,7 @@
+ 
+ #include "bwstring.h"
+ #include "sort.h"
++#include "ios_error.h"
+ 
+ bool byte_sort;
+ 
+diff -Naur text_cmds-99/sort/coll.c text_cmds/sort/coll.c
+--- text_cmds-99/sort/coll.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/coll.c	2018-04-30 16:59:58.000000000 +0200
+@@ -45,6 +45,7 @@
+ 
+ #include "coll.h"
+ #include "vsort.h"
++#include "ios_error.h"
+ 
+ struct key_specs *keys;
+ size_t keys_num = 0;
+diff -Naur text_cmds-99/sort/commoncrypto.c text_cmds/sort/commoncrypto.c
+--- text_cmds-99/sort/commoncrypto.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/commoncrypto.c	2018-04-30 16:59:58.000000000 +0200
+@@ -20,6 +20,7 @@
+ #include <stdlib.h>
+ 
+ #include "commoncrypto.h"
++#include "ios_error.h"
+ 
+ #define LENGTH CC_MD5_DIGEST_LENGTH
+ 
+diff -Naur text_cmds-99/sort/file.c text_cmds/sort/file.c
+--- text_cmds-99/sort/file.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/file.c	2018-04-30 17:14:10.000000000 +0200
+@@ -49,6 +49,7 @@
+ #include "coll.h"
+ #include "file.h"
+ #include "radixsort.h"
++#include "ios_error.h"
+ 
+ unsigned long long free_memory = 1000000;
+ unsigned long long available_free_memory = 1000000;
+@@ -540,7 +541,7 @@
+ 	FILE *file;
+ 
+ 	if (strcmp(fn, "-") == 0) {
+-		return ((mode && mode[0] == 'r') ? stdin : stdout);
++		return ((mode && mode[0] == 'r') ? thread_stdin : thread_stdout);
+ 	} else {
+ 		mode_t orig_file_mask = 0;
+ 		int is_tmp = file_is_tmp(fn);
+@@ -591,9 +592,9 @@
+ {
+ 	if (f == NULL) {
+ 		;
+-	} else if (f == stdin) {
++	} else if (f == thread_stdin) {
+ 		;
+-	} else if (f == stdout) {
++	} else if (f == thread_stdout) {
+ 		fflush(f);
+ 	} else {
+ 		if (file_is_tmp(fn) && compress_program != NULL) {
+@@ -718,7 +719,7 @@
+ 			}
+ 		}
+ 
+-	} else if (fr->file != stdin) {
++	} else if (fr->file != thread_stdin) {
+ 		unsigned char *strend;
+ 		size_t bsz1, remsz, search_start;
+ 
+@@ -815,7 +816,7 @@
+ 			sort_free(fr->buffer);
+ 
+ 		if (fr->file)
+-			if (fr->file != stdin)
++			if (fr->file != thread_stdin)
+ 				closefile(fr->file, fr->fname);
+ 
+ 		if(fr->fname)
+@@ -836,7 +837,7 @@
+ }
+ 
+ int
+-procfile(const char *fsrc, struct sort_list *list, struct file_list *fl)
++sort_procfile(const char *fsrc, struct sort_list *list, struct file_list *fl)
+ {
+ 	struct file_reader *fr;
+ 
+diff -Naur text_cmds-99/sort/file.h text_cmds/sort/file.h
+--- text_cmds-99/sort/file.h	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/file.h	2018-04-30 17:04:29.000000000 +0200
+@@ -114,7 +114,7 @@
+ void merge_files(struct file_list *fl, const char *fn_out);
+ FILE *openfile(const char *, const char *);
+ void closefile(FILE *, const char *);
+-int procfile(const char *fn, struct sort_list *list, struct file_list *fl);
++int sort_procfile(const char *fn, struct sort_list *list, struct file_list *fl);
+ 
+ void sort_list_init(struct sort_list *l);
+ void sort_list_add(struct sort_list *l, struct bwstring *str);
+diff -Naur text_cmds-99/sort/mem.c text_cmds/sort/mem.c
+--- text_cmds-99/sort/mem.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/mem.c	2018-04-30 16:59:58.000000000 +0200
+@@ -33,6 +33,7 @@
+ #include <string.h>
+ 
+ #include "mem.h"
++#include "ios_error.h"
+ 
+ /*
+  * malloc() wrapper.
+diff -Naur text_cmds-99/sort/radixsort.c text_cmds/sort/radixsort.c
+--- text_cmds-99/sort/radixsort.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/radixsort.c	2018-04-30 16:59:58.000000000 +0200
+@@ -44,6 +44,7 @@
+ 
+ #include "coll.h"
+ #include "radixsort.h"
++#include "ios_error.h"
+ 
+ #define DEFAULT_SORT_FUNC_RADIXSORT mergesort
+ 
+diff -Naur text_cmds-99/sort/sort.c text_cmds/sort/sort.c
+--- text_cmds-99/sort/sort.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/sort.c	2018-04-30 18:01:54.000000000 +0200
+@@ -53,10 +53,11 @@
+ #include "coll.h"
+ #include "file.h"
+ #include "sort.h"
++#include "ios_error.h"
+ 
+ #ifndef WITHOUT_NLS
+ #include <nl_types.h>
+-nl_catd catalog;
++nl_catd sort_catalog;
+ #endif
+ 
+ #define	OPTIONS	"bcCdfghik:Mmno:RrsS:t:T:uVz"
+@@ -219,7 +220,7 @@
+ 
+ 	if (opt_err)
+ 		out = stderr;
+-	fprintf(out, getstr(12), getprogname());
++	fprintf(out, getstr(12), ios_progname());
+ 	if (opt_err)
+ 		exit(2);
+ 	exit(0);
+@@ -557,7 +558,6 @@
+ static void
+ set_sort_opts(void)
+ {
+-
+ 	memset(&default_sort_mods_object, 0,
+ 	    sizeof(default_sort_mods_object));
+ 	memset(&sort_opts_vals, 0, sizeof(sort_opts_vals));
+@@ -970,19 +970,21 @@
+  * Main function.
+  */
+ int
+-main(int argc, char **argv)
++sort_main(int argc, char **argv)
+ {
+ 	char *outfile, *real_outfile;
+ 	int c, result;
+-	bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS] =
+-	    { false, false, false, false, false, false };
++    bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS];
++    
++    for (int i = 0; i < NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS; i++) mef_flags[i] = false;
+ 
+ 	result = 0;
++    keys_num = 0;
+ 	outfile = sort_strdup("-");
+ 	real_outfile = NULL;
+ 
+ 	struct sort_mods *sm = &default_sort_mods_object;
+-
++    
+ 	init_tmp_files();
+ 
+ 	set_signal_handler();
+@@ -1149,11 +1151,11 @@
+ 			}
+ 				break;
+ 			case VERSION_OPT:
+-#ifdef __APPLE__
+-				printf("%s (%s)\n", VERSION, strlen(SORT_VERSION) ? SORT_VERSION : "0");
+-#else
++//#ifdef __APPLE__
++//				printf("%s (%s)\n", VERSION, strlen(SORT_VERSION) ? SORT_VERSION : "0");
++//#else
+ 				printf("%s\n", VERSION);
+-#endif
++//#endif
+ 				exit(EXIT_SUCCESS);
+ 				/* NOTREACHED */
+ 				break;
+@@ -1180,14 +1182,14 @@
+ 	}
+ 
+ #ifndef WITHOUT_NLS
+-	catalog = catopen("sort", NL_CAT_LOCALE);
++	sort_catalog = catopen("sort", NL_CAT_LOCALE);
+ #endif
+ 
+ 	if (sort_opts_vals.cflag && sort_opts_vals.mflag)
+ 		errx(1, "%c:%c: %s", 'm', 'c', getstr(1));
+ 
+ #ifndef WITHOUT_NLS
+-	catclose(catalog);
++	catclose(sort_catalog);
+ #endif
+ 
+ 	if (keys_num == 0) {
+@@ -1273,10 +1275,10 @@
+ 		file_list_init(&fl, true);
+ 
+ 		if (argc < 1)
+-			procfile("-", &list, &fl);
++			sort_procfile("-", &list, &fl);
+ 		else {
+ 			while (argc > 0) {
+-				procfile(*argv, &list, &fl);
++				sort_procfile(*argv, &list, &fl);
+ 				--argc;
+ 				++argv;
+ 			}
+@@ -1299,9 +1301,10 @@
+ 		/*
+ 		 * We are about to exit the program, so we can ignore
+ 		 * the clean-up for speed
+-		 *
+-		 * sort_list_clean(&list);
++         * NH: Not with ios_system, we don't
+ 		 */
++		 sort_list_clean(&list);
++		 
+ 
+ 	} else if (sort_opts_vals.cflag) {
+ 		result = (argc == 0) ? (check("-")) : (check(*argv));
+diff -Naur text_cmds-99/sort/sort.h text_cmds/sort/sort.h
+--- text_cmds-99/sort/sort.h	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/sort.h	2018-04-30 17:05:51.000000000 +0200
+@@ -54,8 +54,8 @@
+ #else
+ #include <nl_types.h>
+ 
+-extern nl_catd catalog;
+-#define	getstr(n)	 catgets(catalog, 1, n, nlsstr[n])
++extern nl_catd sort_catalog;
++#define	getstr(n)	 catgets(sort_catalog, 1, n, nlsstr[n])
+ #endif
+ 
+ extern const char *nlsstr[];
+diff -Naur text_cmds-99/sort/vsort.c text_cmds/sort/vsort.c
+--- text_cmds-99/sort/vsort.c	2016-10-13 02:45:31.000000000 +0200
++++ text_cmds/sort/vsort.c	2018-04-30 16:59:58.000000000 +0200
+@@ -36,6 +36,7 @@
+ 
+ #include "sort.h"
+ #include "vsort.h"
++#include "ios_error.h"
+ 
+ static inline bool
+ isdigit_clocale(wchar_t c)
+diff -Naur text_cmds-99/tail/extern.h text_cmds/tail/extern.h
+--- text_cmds-99/tail/extern.h	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/extern.h	2018-04-30 16:43:42.000000000 +0200
+@@ -72,5 +72,5 @@
+ int mapprint(struct mapinfo *, off_t, off_t);
+ int maparound(struct mapinfo *, off_t);
+ 
+-extern int Fflag, fflag, qflag, rflag, rval, no_files;
+-extern const char *fname;
++extern int Fflag, fflag, tail_qflag, rflag, rval, no_files;
++extern const char *tail_fname;
+diff -Naur text_cmds-99/tail/forward.c text_cmds/tail/forward.c
+--- text_cmds-99/tail/forward.c	2011-05-04 00:42:05.000000000 +0200
++++ text_cmds/tail/forward.c	2018-04-30 16:54:20.000000000 +0200
+@@ -60,6 +60,7 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ static void rlines(FILE *, off_t, struct stat *);
+ static void show(file_info_t *);
+@@ -297,15 +298,15 @@
+ 				goto done;
+ 			}
+ 
+-			flockfile(stdout);
++			flockfile(thread_stdout);
+ 			while(EOF != (ch = getc_unlocked(fp))) {
+-				if (EOF == putchar_unlocked(ch)) {
+-					funlockfile(stdout);
++				if (EOF == putc_unlocked(ch, thread_stdout)) {
++					funlockfile(thread_stdout);
+ 					oerr();
+ 					goto done;
+ 				}
+ 			}
+-			funlockfile(stdout);
++			funlockfile(thread_stdout);
+ 			goto done;
+ 		}
+ 	}
+@@ -368,7 +369,7 @@
+ 
+     while ((ch = getc(file->fp)) != EOF) {
+ 	if (last != file && no_files > 1) {
+-		if (!qflag)
++		if (!tail_qflag)
+ 			(void)printf("\n==> %s <==\n", file->file_name);
+ 		last = file;
+ 	}
+@@ -378,9 +379,9 @@
+     (void)fflush(stdout);
+     if (ferror(file->fp)) {
+ 	    file->fp = NULL;
+-	    fname = file->file_name;
++	    tail_fname = file->file_name;
+ 	    ierr();
+-	    fname = NULL;
++	    tail_fname = NULL;
+     } else
+ 	    clearerr(file->fp);
+ }
+@@ -444,11 +445,11 @@
+ 		if (file->fp) {
+ 			active = 1;
+ 			n++;
+-			if (no_files > 1 && !qflag)
++			if (no_files > 1 && !tail_qflag)
+ 				(void)printf("\n==> %s <==\n", file->file_name);
+-			fname = file->file_name;
++			tail_fname = file->file_name;
+ 			forward(file->fp, style, off, &file->st);
+-			fname = NULL;
++			tail_fname = NULL;
+ 			if (Fflag && fileno(file->fp) != STDIN_FILENO)
+ 			    n++;
+ 		}
+diff -Naur text_cmds-99/tail/misc.c text_cmds/tail/misc.c
+--- text_cmds-99/tail/misc.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/misc.c	2018-04-30 16:42:58.000000000 +0200
+@@ -54,11 +54,12 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ void
+ ierr()
+ {
+-	warn("%s", fname);
++	warn("%s", tail_fname);
+ 	rval = 1;
+ }
+ 
+diff -Naur text_cmds-99/tail/read.c text_cmds/tail/read.c
+--- text_cmds-99/tail/read.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/read.c	2018-04-30 16:40:10.000000000 +0200
+@@ -54,6 +54,7 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ /*
+  * bytes -- read bytes to an offset from the end and display.
+diff -Naur text_cmds-99/tail/reverse.c text_cmds/tail/reverse.c
+--- text_cmds-99/tail/reverse.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/reverse.c	2018-04-30 16:40:10.000000000 +0200
+@@ -57,6 +57,7 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+ static void r_buf(FILE *);
+ static void r_reg(FILE *, enum STYLE, off_t, struct stat *);
+diff -Naur text_cmds-99/tail/tail.c text_cmds/tail/tail.c
+--- text_cmds-99/tail/tail.c	2009-12-10 01:02:16.000000000 +0100
++++ text_cmds/tail/tail.c	2018-04-30 17:14:44.000000000 +0200
+@@ -59,9 +59,10 @@
+ #include <unistd.h>
+ 
+ #include "extern.h"
++#include "ios_error.h"
+ 
+-int Fflag, fflag, qflag, rflag, rval, no_files;
+-const char *fname;
++int Fflag, fflag, tail_qflag, rflag, rval, no_files;
++const char *tail_fname;
+ 
+ file_info_t *files;
+ 
+@@ -69,7 +70,7 @@
+ static void usage(void);
+ 
+ int
+-main(int argc, char *argv[])
++tail_main(int argc, char *argv[])
+ {
+ 	struct stat sb;
+ 	FILE *fp;
+@@ -79,6 +80,13 @@
+ 	file_info_t *file;
+ 	char *p;
+ 
++    Fflag = 0;
++    fflag = 0;
++    tail_qflag = 0;
++    rflag = 0;
++    rval = 0;
++    no_files = 0;
++    
+ 	/*
+ 	 * Tail's options are weird.  First, -n10 is the same as -n-10, not
+ 	 * -n+10.  Second, the number options are 1 based and not offsets,
+@@ -132,7 +140,7 @@
+ 			ARG(1, FLINES, RLINES);
+ 			break;
+ 		case 'q':
+-			qflag = 1;
++			tail_qflag = 1;
+ 			break;
+ 		case 'r':
+ 			rflag = 1;
+@@ -178,7 +186,7 @@
+ 		 * Determine if input is a pipe.  4.4BSD will set the SOCKET
+ 		 * bit in the st_mode field for pipes.  Fix this then.
+ 		 */
+-		if (lseek(fileno(stdin), (off_t)0, SEEK_CUR) == -1 &&
++		if (lseek(fileno(thread_stdin), (off_t)0, SEEK_CUR) == -1 &&
+ 		    errno == ESPIPE) {
+ 			errno = 0;
+ 			fflag = 0;		/* POSIX.2 requires this. */
+@@ -190,12 +198,12 @@
+ 		if (! files)
+ 			err(1, "Couldn't malloc space for file descriptors.");
+ 
+-		for (file = files; (fname = argc ? *argv++ : "stdin"); file++) {
+-			file->file_name = malloc(strlen(fname)+1);
++		for (file = files; (tail_fname = argc ? *argv++ : "stdin"); file++) {
++			file->file_name = malloc(strlen(tail_fname)+1);
+ 			if (! file->file_name)
+ 				errx(1, "Couldn't malloc space for file name.");
+-			strncpy(file->file_name, fname, strlen(fname)+1);
+-			file->fp = argc ? fopen(file->file_name, "r") : stdin;
++			strncpy(file->file_name, tail_fname, strlen(tail_fname)+1);
++			file->fp = argc ? fopen(file->file_name, "r") : thread_stdin;
+ 			if (file->fp == NULL ||
+ 			    fstat(fileno(file->fp), &file->st)) {
+ 				file->fp = NULL;
+@@ -211,15 +219,15 @@
+ 		}
+ 		free(files);
+ 	} else if (*argv) {
+-		for (first = 1; (fname = *argv++);) {
+-			if ((fp = fopen(fname, "r")) == NULL ||
++		for (first = 1; (tail_fname = *argv++);) {
++			if ((fp = fopen(tail_fname, "r")) == NULL ||
+ 			    fstat(fileno(fp), &sb)) {
+ 				ierr();
+ 				continue;
+ 			}
+-			if (argc > 1 && !qflag) {
++			if (argc > 1 && !tail_qflag) {
+ 				(void)printf("%s==> %s <==\n",
+-				    first ? "" : "\n", fname);
++				    first ? "" : "\n", tail_fname);
+ 				first = 0;
+ 				(void)fflush(stdout);
+ 			}
+@@ -236,17 +244,17 @@
+ 				forward(fp, style, off, &sb);
+ 		}
+ 	} else {
+-		fname = "stdin";
++		tail_fname = "stdin";
+ 
+-		if (fstat(fileno(stdin), &sb)) {
++		if (fstat(fileno(thread_stdin), &sb)) {
+ 			ierr();
+ 			exit(1);
+ 		}
+ 
+ 		if (rflag)
+-			reverse(stdin, style, off, &sb);
++			reverse(thread_stdin, style, off, &sb);
+ 		else
+-			forward(stdin, style, off, &sb);
++			forward(thread_stdin, style, off, &sb);
+ 	}
+ 	exit(rval);
+ }
 diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 --- text_cmds-99/tr/str.c	2005-08-18 23:20:18.000000000 +0200
-+++ text_cmds/tr/str.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/tr/str.c	2018-05-01 11:57:40.000000000 +0200
 @@ -53,6 +53,10 @@
  #include <wctype.h>
  
@@ -3128,30 +4077,24 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
  
  static int      backslash(STR *, int *);
  static int	bracket(STR *);
-@@ -193,8 +197,11 @@
+@@ -193,8 +197,9 @@
  	STR *s;
  {
  
 -	if ((s->cclass = wctype(s->str)) == 0)
--		errx(1, "unknown class %s", s->str);
 +    if ((s->cclass = wctype(s->str)) == 0) {
-+        global_errno = 1;
-+		fprintf(thread_stderr, "tr: unknown class %s\n", s->str); // errx
-+        pthread_exit(NULL);
+ 		errx(1, "unknown class %s", s->str);
 +    }
  	s->cnt = 0;
  	s->lastch = -1;		/* incremented before check in next() */
  	if (strcmp(s->str, "upper") == 0)
-@@ -216,17 +223,23 @@
+@@ -216,17 +221,19 @@
  
  	if (*s->str == '\\') {
  		s->equiv[0] = backslash(s, NULL);
 -		if (*s->str != '=')
--			errx(1, "misplaced equivalence equals sign");
 +        if (*s->str != '=') {
-+            global_errno = 1;
-+			fprintf(thread_stderr, "tr: misplaced equivalence equals sign\n"); // errx
-+            pthread_exit(NULL);
+ 			errx(1, "misplaced equivalence equals sign");
 +        }
  		s->str += 2;
  	} else {
@@ -3160,75 +4103,51 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
  			errc(1, EILSEQ, NULL);
  		s->equiv[0] = wc;
 -		if (s->str[clen] != '=')
--			errx(1, "misplaced equivalence equals sign");
--		s->str += clen + 2;
 +        if (s->str[clen] != '=') {
-+			fprintf(thread_stderr, "tr: misplaced equivalence equals sign\n"); // errx
-+            global_errno = 1;
-+            pthread_exit(NULL);
+ 			errx(1, "misplaced equivalence equals sign");
+-		s->str += clen + 2;
 +        }
 +        s->str += clen + 2;
  	}
  
  	/*
-@@ -294,8 +307,12 @@
+@@ -294,8 +301,9 @@
  		s->str = savestart;
  		return (0);
  	}
 -	if ((s->set = p = malloc((NCHARS_SB + 1) * sizeof(int))) == NULL)
--		err(1, "genrange() malloc");
 +    if ((s->set = p = malloc((NCHARS_SB + 1) * sizeof(int))) == NULL) {
-+		// err(1, "genrange() malloc");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "tr: genrange() malloc: %s", strerror(errno));
-+        pthread_exit(NULL);
+ 		err(1, "genrange() malloc");
 +    }
  	for (cnt = 0; cnt < NCHARS_SB; cnt++)
  		if (charcoll((const void *)&cnt, (const void *)&(s->lastch)) >= 0 &&
  		    charcoll((const void *)&cnt, (const void *)&stopval) <= 0)
-@@ -319,8 +336,12 @@
+@@ -319,8 +327,10 @@
  	size_t clen;
  
  #ifndef __APPLE__
 -	if (s->which == STRING1)
--		errx(1, "sequences only valid in string2");
 +    if (s->which == STRING1) {
-+		fprintf(thread_stderr, "tr: sequences only valid in string2\n"); // errx
-+        global_errno = 1;
-+        pthread_exit(NULL);
+ 		errx(1, "sequences only valid in string2");
 +    }
 +        
  #endif /* !__APPLE__ */
  
  	if (*s->str == '\\')
-@@ -332,8 +353,11 @@
+@@ -332,8 +342,9 @@
  		s->lastch = wc;
  		s->str += clen;
  	}
 -	if (*s->str != '*')
--		errx(1, "misplaced sequence asterisk");
 +    if (*s->str != '*') {
-+		fprintf(thread_stderr, "tr: misplaced sequence asterisk\n"); // errx
-+        global_errno = 1;
-+        pthread_exit(NULL);
+ 		errx(1, "misplaced sequence asterisk");
 +    }
  
  	switch (*++s->str) {
  	case '\\':
-@@ -351,7 +375,9 @@
- 				break;
- 			}
- 		}
--		errx(1, "illegal sequence count");
-+		fprintf(thread_stderr, "tr: illegal sequence count\n"); // errx
-+        global_errno = 1;
-+        pthread_exit(NULL);
- 		/* NOTREACHED */
- 	}
- 
 diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 --- text_cmds-99/tr/tr.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/tr/tr.c	2018-03-29 20:29:32.000000000 +0200
++++ text_cmds/tr/tr.c	2018-05-01 11:53:50.000000000 +0200
 @@ -61,6 +61,9 @@
  #include "cmap.h"
  #include "cset.h"
@@ -3322,7 +4241,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  			break;
  		case '?':
  		default:
-@@ -138,11 +197,15 @@
+@@ -138,11 +197,16 @@
  			if (!cset_in(delete, ch) &&
  			    (lastch != ch || !cset_in(squeeze, ch))) {
  				lastch = ch;
@@ -3333,8 +4252,9 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -			err(1, NULL);
 -		exit(0);
 +        if (ferror(thread_stdin)) {
-+            fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
-+            global_errno = 1;
++            cset_free(delete);
++            cset_free(squeeze);
++            err(1, NULL);
 +        }
 +        cset_free(delete);
 +        cset_free(squeeze);
@@ -3342,7 +4262,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  	}
  
  	/*
-@@ -157,9 +220,12 @@
+@@ -157,9 +221,12 @@
  
  		while ((ch = getwchar()) != WEOF)
  			if (!cset_in(delete, ch))
@@ -3351,14 +4271,14 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -			err(1, NULL);
 +				(void)putwc(ch, thread_stdout); // (void)putwchar(ch);
 +        if (ferror(thread_stdin)) {
-+            global_errno = 1;
-+            fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
++            cset_free(delete);
++            err(1, NULL);
 +        }
 +        cset_free(delete);
  		exit(0);
  	}
  
-@@ -173,10 +239,13 @@
+@@ -173,10 +240,13 @@
  		for (lastch = OOBCH; (ch = getwchar()) != WEOF;)
  			if (lastch != ch || !cset_in(squeeze, ch)) {
  				lastch = ch;
@@ -3366,25 +4286,24 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 +				(void)putwc(ch, thread_stdout); // (void)putwchar(ch);
  			}
 -		if (ferror(stdin))
--			err(1, NULL);
 +        if (ferror(thread_stdin)) {
-+            global_errno = 1;
-+			fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
++            cset_free(squeeze);
+ 			err(1, NULL);
 +        }
 +        cset_free(squeeze);
  		exit(0);
  	}
  
-@@ -191,22 +260,32 @@
+@@ -191,22 +261,28 @@
  
  	map = cmap_alloc();
  	if (map == NULL)
 -		err(1, NULL);
-+    { global_errno = 1; fprintf(thread_stderr, "tr: %s\n", strerror(errno)); pthread_exit(NULL); }// err(1, NULL);
++        err(1, NULL);
  	squeeze = cset_alloc();
  	if (squeeze == NULL)
 -		err(1, NULL);
-+    { global_errno = 1; fprintf(thread_stderr, "tr: %s\n", strerror(errno)); cmap_free(map); pthread_exit(NULL); } // err(1, NULL);
++        err(1, NULL);
  
  	s1.str = argv[0];
  
@@ -3393,11 +4312,9 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -		if ((s2.str = strdup(argv[1])) == NULL)
 -			errx(1, "strdup(argv[1])");
 +        if ((s2.str = strdup(argv[1])) == NULL) { // potential memory leak
-+            global_errno = 1;
-+			fprintf(thread_stderr, "tr: %s\n", "strdup(argv[1])"); // errx
 +            cset_free(squeeze);
 +            cmap_free(map);
-+            pthread_exit(NULL);
++            errx(1, "strdup(argv[1])");
 +        }
  	} else
  		s2.str = argv[1];
@@ -3405,16 +4322,14 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -	if (!next(&s2))
 -		errx(1, "empty string2");
 +    if (!next(&s2)) {
-+        fprintf(thread_stderr, "tr: %s\n", "empty string2"); // errx
 +        cset_free(squeeze);
 +        cmap_free(map);
-+        global_errno = 1;
-+        pthread_exit(NULL);
++        errx(1, "empty string2");
 +    }
  
  	/*
  	 * For -s result will contain only those characters defined
-@@ -323,18 +402,23 @@
+@@ -323,18 +399,22 @@
  				ch = cmap_lookup(map, ch);
  			if (lastch != ch || !cset_in(squeeze, ch)) {
  				lastch = ch;
@@ -3433,8 +4348,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -		err(1, NULL);
 -	exit (0);
 +    if (ferror(thread_stdin)) {
-+        global_errno = 1;
-+        fprintf(thread_stderr, "tr: %s\n", strerror(errno)); // err(1, NULL);
++        err(1, NULL);
 +    }
 +    cset_free(squeeze);
 +    cmap_free(map);
@@ -3443,16 +4357,16 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  }
  
  static struct cset *
-@@ -344,7 +428,7 @@
+@@ -344,7 +424,7 @@
  
  	cs = cset_alloc();
  	if (cs == NULL)
 -		err(1, NULL);
-+    { global_errno = 1; fprintf(thread_stderr, "tr: %s\n", strerror(errno)); pthread_exit(NULL); } // err(1, NULL);
++        err(1, NULL);
  	str->str = arg;
  	while (next(str))
  		cset_add(cs, str->lastch);
-@@ -369,10 +453,10 @@
+@@ -369,10 +449,10 @@
  static void
  usage(void)
  {
@@ -3465,18 +4379,56 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 -	exit(1);
 +    exit(1);
  }
+diff -Naur text_cmds-99/uniq/uniq.c text_cmds/uniq/uniq.c
+--- text_cmds-99/uniq/uniq.c	2016-11-10 22:25:56.000000000 +0100
++++ text_cmds/uniq/uniq.c	2018-04-30 20:40:22.000000000 +0200
+@@ -62,6 +62,7 @@
+ #include <unistd.h>
+ #include <wchar.h>
+ #include <wctype.h>
++#include "ios_error.h"
+ 
+ static int cflag, dflag, uflag, iflag;
+ static long numchars, numfields;
+@@ -87,7 +88,7 @@
+ }
+ 
+ int
+-main (int argc, char *argv[])
++uniq_main (int argc, char *argv[])
+ {
+ 	wchar_t *tprev, *tthis;
+ 	FILE *ifp, *ofp;
+@@ -99,6 +100,14 @@
+ 	cap_rights_t rights;
+ #endif
+ 
++    cflag = 0;
++    dflag = 0;
++    uflag = 0;
++    iflag = 0;
++    numchars = 0;
++    numfields = 0;
++    repeats = 0;
++    
+ 	(void) setlocale(LC_ALL, "");
+ 
+ 	obsolete(argv);
+@@ -144,9 +153,9 @@
+ 	if (argc > 2)
+ 		usage();
+ 
+-	ifp = stdin;
++	ifp = thread_stdin;
+ 	ifn = "stdin";
+-	ofp = stdout;
++	ofp = thread_stdout;
+ 	if (argc > 0 && strcmp(argv[0], "-") != 0)
+ 		ifp = file(ifn = argv[0], "r");
+ #ifndef __APPLE__
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2018-03-29 20:29:32.000000000 +0200
-@@ -51,7 +51,7 @@
- #include <sys/stat.h>
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #include <locale.h>
++++ text_cmds/wc/wc.c	2018-04-30 16:19:45.000000000 +0200
 @@ -62,24 +62,29 @@
  #include <unistd.h>
  #include <wchar.h>
@@ -3543,7 +4495,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	exit(errors == 0 ? 0 : 1);
  }
  
-@@ -156,10 +162,11 @@
+@@ -156,10 +162,10 @@
  	linect = wordct = charct = 0;
  	if (file == NULL) {
  		file = "stdin";
@@ -3552,12 +4504,11 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	} else {
  		if ((fd = open(file, O_RDONLY, 0)) < 0) {
 -			warn("%s: open", file);
-+            fprintf(thread_stderr, "wc: %s: open: %s\n", file, strerror(errno));
-+			// warn("%s: open", file);
++            warn("%s: open", file);
  			return (1);
  		}
  	}
-@@ -187,22 +194,23 @@
+@@ -187,22 +193,22 @@
  	 * logic.
  	 */
  	if (doline) {
@@ -3565,8 +4516,7 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 +        while ((len = read(fd, buf, buf_size))) {
  			if (len == -1) {
 -				warn("%s: read", file);
-+                fprintf(thread_stderr, "wc: %s: read: %s\n", file, strerror(errno));
-+                // warn("%s: read", file);
++                warn("%s: read", file);
  				(void)close(fd);
  				return (1);
  			}
@@ -3586,13 +4536,12 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  		}
  		(void)close(fd);
  		return (0);
-@@ -213,12 +221,13 @@
+@@ -213,12 +219,12 @@
  	 */
  	if (dochar || domulti) {
  		if (fstat(fd, &sb)) {
 -			warn("%s: fstat", file);
-+            fprintf(thread_stderr, "wc: %s: fstat: %s\n", file, strerror(errno));
-+            // warn("%s: fstat", file);
++            warn("%s: fstat", file);
  			(void)close(fd);
  			return (1);
  		}
@@ -3602,33 +4551,30 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  			tcharct += sb.st_size;
  			(void)close(fd);
  			return (0);
-@@ -231,7 +240,8 @@
+@@ -231,7 +237,7 @@
  	memset(&mbs, 0, sizeof(mbs));
  	while ((len = read(fd, buf, buf_size)) != 0) {
  		if (len == -1) {
 -			warn("%s: read", file);
-+            fprintf(thread_stderr, "wc: %s: read: %s\n", file, strerror(errno));
-+            // warn("%s: read", file);
++            warn("%s: read", file);
  			(void)close(fd);
  			return (1);
  		}
-@@ -244,7 +254,8 @@
+@@ -244,7 +250,7 @@
  			    (size_t)-1) {
  				if (!warned) {
  					errno = EILSEQ;
 -					warn("%s", file);
-+                    fprintf(thread_stderr, "wc: %s: %s\n", file, strerror(errno));
-+                    // warn("%s", file);
++                    warn("%s", file);
  					warned = 1;
  				}
  				memset(&mbs, 0, sizeof(mbs));
-@@ -269,18 +280,19 @@
+@@ -269,18 +275,18 @@
  	}
  	if (domulti && MB_CUR_MAX > 1)
  		if (mbrtowc(NULL, NULL, 0, &mbs) == (size_t)-1 && !warned)
 -			warn("%s", file);
-+            fprintf(thread_stderr, "wc: %s: %s\n", file, strerror(errno));
-+            // warn("%s", file);
++            warn("%s", file);
  	if (doline) {
  		tlinect += linect;
 -		(void)printf(" %7ju", linect);
@@ -3646,11 +4592,3 @@ diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
  	}
  	(void)close(fd);
  	return (0);
-@@ -289,6 +301,6 @@
- static void
- usage()
- {
--	(void)fprintf(stderr, "usage: wc [-clmw] [file ...]\n");
-+	(void)fprintf(thread_stderr, "usage: wc [-clmw] [file ...]\n");
- 	exit(1);
- }

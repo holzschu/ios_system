@@ -115,6 +115,7 @@ static int ssh_verify_host(char* addr, LIBSSH2_SESSION* _session, char* hostname
             fprintf(thread_stderr, "Error writing known host: %s\n", errmsg);
         } else {
             fprintf(thread_stderr, "Permanently added key for %s to list of known hosts.\n", hostname);
+            succ = 1;
         }
     }
     libssh2_knownhost_free(kh);

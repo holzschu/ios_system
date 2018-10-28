@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <libgen.h> // for basename()
 #include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
+#include <glob.h>   // for wildcard expansion
 // is executable, looking at "x" bit. Other methods fails on iOS:
 #define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH))
 // Sideloading: when you compile yourself, as opposed to uploading on the app store
@@ -36,6 +37,7 @@ extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
 __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
+__thread void* thread_context;
 
 #import "sessionParameters.h"
 
@@ -48,12 +50,24 @@ void ios_exit(int n) {
     pthread_exit(NULL);
 }
 
+int ios_getCommandStatus() {
+    if (currentSession != NULL) return currentSession.global_errno;
+    else return 0;
+}
+
+extern const char* ios_progname(void) {
+    if (currentSession != NULL) return [currentSession.commandName UTF8String];
+    else return getprogname();
+}
+
+
 typedef struct _functionParameters {
     int argc;
     char** argv;
     char** argv_ref;
     int (*function)(int ac, char** av);
     FILE *stdin, *stdout, *stderr;
+    void* context;
     void* dlHandle;
     bool isPipeOut;
     bool isPipeErr;
@@ -95,6 +109,7 @@ static void* run_function(void* parameters) {
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
+    thread_context = p->context;
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
@@ -105,6 +120,7 @@ static void* run_function(void* parameters) {
 }
 
 static NSString* miniRoot = nil; // limit operations to below a certain directory (~, usually).
+static NSArray<NSString*> *allowedPaths = nil;
 static NSDictionary *commandList = nil;
 // do recompute directoriesInPath only if $PATH has changed
 static NSString* fullCommandPath = @"";
@@ -131,6 +147,8 @@ void initializeEnvironment() {
         setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     }
     setenv("APPDIR", [[NSBundle mainBundle] resourcePath].UTF8String, 1);
+    setenv("PATH_LOCALE", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
+
     setenv("TERM", "xterm", 1); // 1 = override existing value
     setenv("TMPDIR", NSTemporaryDirectory().UTF8String, 0); // tmp directory
     setenv("CLICOLOR", "1", 1);
@@ -227,7 +245,7 @@ static char* parseArgument(char* argument, char* command) {
             }
         }
     }
-    char* newArgument = [argumentString UTF8String];
+    const char* newArgument = [argumentString UTF8String];
     if (strcmp(argument, newArgument) == 0) return argument; // nothing changed
     // Make sure the argument is reallocated, so it can be free-ed
     char* returnValue = realloc(argument, strlen(newArgument));
@@ -288,30 +306,113 @@ int ios_setMiniRoot(NSString* mRoot) {
     BOOL isDir;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
 
-    if ([fileManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
-        if (isDir) {
-            // fileManager has different ways of expressing the same directory.
-            // We need to actually change to the directory to get its "real name".
-            NSString* currentDir = [fileManager currentDirectoryPath];
-            if ([fileManager changeCurrentDirectoryPath:mRoot]) {
-                // also don't set the miniRoot if we can't go in there
-                // get the real name for miniRoot:
-                miniRoot = [fileManager currentDirectoryPath];
-                // Back to where we we before:
-                [fileManager changeCurrentDirectoryPath:currentDir];
-                if (currentSession != nil) {
-                    currentSession.currentDir = miniRoot;
-                    currentSession.previousDirectory = miniRoot;
-                }
-                return 1; // mission accomplished
-            }
-        }
+    if (![fileManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
+      return 0;
     }
-    return 0;
+
+    if (!isDir) {
+      return 0;
+    }
+
+    // fileManager has different ways of expressing the same directory.
+    // We need to actually change to the directory to get its "real name".
+    NSString* currentDir = [fileManager currentDirectoryPath];
+
+    if (![fileManager changeCurrentDirectoryPath:mRoot]) {
+      return 0;
+    }
+    // also don't set the miniRoot if we can't go in there
+    // get the real name for miniRoot:
+    miniRoot = [fileManager currentDirectoryPath];
+    // Back to where we we before:
+    [fileManager changeCurrentDirectoryPath:currentDir];
+    if (currentSession != nil) {
+        currentSession.currentDir = miniRoot;
+        currentSession.previousDirectory = miniRoot;
+    }
+    return 1; // mission accomplished
+}
+
+// Called when 
+int ios_setMiniRootURL(NSURL* mRoot) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    if (currentSession == NULL) {
+      currentSession = [[sessionParameters alloc] init];
+    }
+    currentSession.localMiniRoot = mRoot;
+    currentSession.previousDirectory = currentSession.currentDir;
+    currentSession.currentDir = [mRoot path];
+    [fileManager changeCurrentDirectoryPath:[mRoot path]];
+    return 1; // mission accomplished
+}
+
+int ios_setAllowedPaths(NSArray<NSString *> *paths) {
+  allowedPaths = paths;
+  return 1;
+}
+
+BOOL __allowed_cd_to_path(NSString *path) {
+  if (miniRoot == nil || [path hasPrefix:miniRoot]) {
+    return YES;
+  }
+  
+  NSString *localMiniRootPath = currentSession.localMiniRoot.path;
+  if (localMiniRootPath && [path hasPrefix:localMiniRootPath]) {
+    return YES;
+  }
+  
+  for (NSString *dir in allowedPaths) {
+    if ([path hasPrefix:dir]) {
+      return YES;
+    }
+  }
+  
+  return NO;
+}
+
+void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
+  BOOL isDir;
+  // Check for permission and existence:
+  if (![fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
+    fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
+    return;
+  }
+  if (!isDir) {
+    fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
+    return;
+  }
+  if (![fileManager isReadableFileAtPath:newDir] ||
+      ![fileManager changeCurrentDirectoryPath:newDir]) {
+    fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
+    return;
+  }
+
+  // We managed to change the directory.
+  // Was that allowed?
+  // Allowed "cd" = below miniRoot *or* below localMiniRoot
+  NSString* resultDir = [fileManager currentDirectoryPath];
+  
+  if (__allowed_cd_to_path(resultDir)) {
+    currentSession.previousDirectory = currentSession.currentDir;
+    return;
+  }
+  
+  fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
+  // If the user tried to go above the miniRoot, set it to miniRoot
+  if ([miniRoot hasPrefix:resultDir]) {
+    [fileManager changeCurrentDirectoryPath:miniRoot];
+    currentSession.currentDir = miniRoot;
+    currentSession.previousDirectory = currentSession.currentDir;
+  } else {
+    // go back to where we were before:
+    [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+  }
 }
 
 int cd_main(int argc, char** argv) {
-    if (currentSession == NULL) return 1;
+    if (currentSession == NULL) {
+      return 1;
+    }
     NSFileManager *fileManager = [[NSFileManager alloc] init];
 
     if (argc > 1) {
@@ -320,25 +421,7 @@ int cd_main(int argc, char** argv) {
             // "cd -" option to pop back to previous directory
             newDir = currentSession.previousDirectory;
         }
-        BOOL isDir;
-        if ([fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
-            if (isDir) {
-                if ([fileManager changeCurrentDirectoryPath:newDir]) {
-                    // We managed to change the directory.
-                    // Was that allowed?
-                    NSString* resultDir = [fileManager currentDirectoryPath];
-                    if ((miniRoot != nil) && (![resultDir hasPrefix:miniRoot])) {
-                        fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
-                        [fileManager changeCurrentDirectoryPath:miniRoot];
-                        currentSession.currentDir = miniRoot;
-                    }
-                    currentSession.previousDirectory = currentSession.currentDir;
-                } else fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
-            }
-            else  fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
-        } else {
-            fprintf(thread_stderr, "cd: %s: no such file or directory\n", [newDir UTF8String]);
-        }
+        __cd_to_dir(newDir, fileManager);
     } else { // [cd] Help, I'm lost, bring me back home
         currentSession.previousDirectory = [fileManager currentDirectoryPath];
 
@@ -410,8 +493,7 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     return NULL;
 }
 
-int ios_execv(const char *path, char* const argv[]) {
-    // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
+static char* concatenateArgv(char* const argv[]) {
     int argc = 0;
     int cmdLength = 0;
     // concatenate all arguments into a big command.
@@ -446,18 +528,78 @@ int ios_execv(const char *path, char* const argv[]) {
         strcat(cmd, argv[argc]);
         argc++;
     }
+    return cmd;
+}
+
+int pbpaste(int argc, char** argv) {
+    if (currentSession == NULL) {
+        currentSession = [[sessionParameters alloc] init];
+    }
+    // We can paste strings and URLs.
+    if ([UIPasteboard generalPasteboard].hasStrings) {
+        fprintf(currentSession.stdout, "%s", [[UIPasteboard generalPasteboard].string UTF8String]);
+        if (![[UIPasteboard generalPasteboard].string hasSuffix:@"\n"]) fprintf(currentSession.stdout, "\n");
+        return 0;
+    }
+    if ([UIPasteboard generalPasteboard].hasURLs) {
+        fprintf(currentSession.stdout, "%s\n", [[[UIPasteboard generalPasteboard].URL absoluteString] UTF8String]);
+        return 0;
+    }
+    return 1;
+}
+
+
+int pbcopy(int argc, char** argv) {
+    if (argc == 1) {
+        // no arguments, listen to stdin
+        if (currentSession == NULL) {
+            currentSession = [[sessionParameters alloc] init];
+        }
+        const int bufsize = 1024;
+        char buffer[bufsize];
+        NSMutableData* data = [[NSMutableData alloc] init];
+        
+        ssize_t count = 0;
+        while ((count = read(fileno(thread_stdin), buffer, bufsize-1))) {
+            [data appendBytes:buffer length:count];
+        }
+        
+        NSString* result = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        
+        if (!result) {
+            return 1;
+        }
+        
+        [UIPasteboard generalPasteboard].string = result;
+    } else {
+        // threre are arguments, concatenate and paste:
+        char* cmd = concatenateArgv(argv + 1);
+        [UIPasteboard generalPasteboard].string = @(cmd);
+        free(cmd);
+    }
+    return 0;
+}
+
+int ios_execv(const char *path, char* const argv[]) {
+    // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
     // start "child" with the child streams:
+    char* cmd = concatenateArgv(argv);
     int returnValue = ios_system(cmd);
     free(cmd);
     return returnValue;
 }
 
-int ios_execve(const char *path, char* const argv[], char *const envp[]) {
+int ios_execve(const char *path, char* const argv[], char* envp[]) {
     // TODO: save the environment (HOW?) and current dir
     // TODO: replace environment with envp. envp looks a lot like current environment, though.
     int returnValue = ios_execv(path, argv);
     // TODO: restore the environment (HOW?)
     return returnValue;
+}
+
+const pthread_t ios_getLastThreadId() {
+    if (!currentSession) return nil;
+    return (currentSession.lastThreadId);
 }
 
 /*
@@ -521,8 +663,11 @@ int ios_kill()
 
 void ios_switchSession(void* sessionId) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    if (sessionList == nil) sessionList = [NSMutableDictionary new];
     id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    if (sessionList == nil) {
+        sessionList = [NSMutableDictionary new];
+        if (currentSession != NULL) [sessionList setObject: currentSession forKey: sessionKey];
+    }
     currentSession = [sessionList objectForKey: sessionKey];
     if (currentSession == NULL) {
         currentSession = [[sessionParameters alloc] init];
@@ -533,6 +678,16 @@ void ios_switchSession(void* sessionId) {
         currentSession.stdin = stdin;
         currentSession.stdout = stdout;
         currentSession.stderr = stderr;
+    }
+}
+
+void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL path]];
+    if (currentSession != NULL) {
+        if ([currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]]) return;
+        currentSession.previousDirectory = currentSession.currentDir;
+        currentSession.currentDir = [workingDirectoryURL path];
     }
 }
 
@@ -556,20 +711,16 @@ int ios_isatty(int fd) {
     return 0;
 }
 
-void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL absoluteString]];
-    if (currentSession != NULL) {
-        currentSession.previousDirectory = currentSession.currentDir;
-        currentSession.currentDir = [workingDirectoryURL absoluteString];
-    }
-}
-
 void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     if (currentSession == NULL) return;
     currentSession.stdin = _stdin;
     currentSession.stdout = _stdout;
     currentSession.stderr = _stderr;
+}
+
+void ios_setContext(void *context) {
+    if (currentSession == NULL) return;
+    currentSession.context = context;
 }
 
 
@@ -582,6 +733,10 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
 // you just happen to have a very fast uncompress, different from compress).
 // We work with function names, not function pointers.
 void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences) {
+    // Does that function exist / is reachable? We've had problems with stripping.
+    int (*function)(int ac, char** av) = NULL;
+    function = dlsym(RTLD_MAIN_ONLY, functionName.UTF8String);
+    if (!function) return; // if not, we don't replace.
     if (commandList == nil) initializeCommandList();
     NSArray* oldValues = [commandList objectForKey: commandName];
     NSString* oldFunctionName = nil;
@@ -716,6 +871,75 @@ static char* unquoteArgument(char* argument) {
     return argument;
 }
 
+char *strstrquoted(char* str1, char* str2) {
+  
+  if (str1 == NULL || str2 == NULL) {
+    return NULL;
+  }
+  size_t len1 = strlen(str1);
+  size_t len2 = strlen(str2);
+  
+  if (len1 < len2) {
+    return NULL;
+  }
+  
+  if (strcmp(str1, str2) == 0) {
+    return str1;
+  }
+  
+  char quotechar = 0;
+  int esclen = 0;
+  int matchlen = 0;
+  
+  for (int i = 0; i < len1; i++) {
+    char ch = str1[i];
+    if (quotechar) {
+      if (ch == '\\') {
+        esclen++;
+        continue;
+      }
+      
+      if (ch == quotechar) {
+        if (esclen % 2 == 1) {
+          esclen = 0;
+          continue;
+        }
+        quotechar = 0;
+        esclen = 0;
+        continue;
+      }
+      
+      esclen = 0;
+      continue;
+    }
+    
+    if (ch == '"' || ch == '\'') {
+      if (esclen % 2 == 0) {
+        quotechar = ch;
+      }
+      matchlen = 0;
+      esclen = 0;
+      continue;
+    }
+    
+    if (ch == '\\') {
+      esclen++;
+    }
+    
+    if (str2[matchlen] == ch) {
+      matchlen++;
+      if (matchlen == len2) {
+        return str1 + i - matchlen + 1;
+      }
+      continue;
+    }
+    
+    matchlen = 0;
+  }
+  return NULL;
+}
+
+
 int ios_system(const char* inputCmd) {
     char* command;
     // The names of the files for stdin, stdout, stderr
@@ -739,6 +963,7 @@ int ios_system(const char* inputCmd) {
     if (thread_stdin == 0) thread_stdin = currentSession.stdin;
     if (thread_stdout == 0) thread_stdout = currentSession.stdout;
     if (thread_stderr == 0) thread_stderr = currentSession.stderr;
+    if (thread_context == 0) thread_context = currentSession.context;
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -777,11 +1002,13 @@ int ios_system(const char* inputCmd) {
     params->stdin = child_stdin;
     params->stdout = child_stdout;
     params->stderr = child_stderr;
+    params->context = thread_context;
+  
     child_stdin = child_stdout = child_stderr = NULL;
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
     params->function = NULL; params->isPipeOut = false; params->isPipeErr = false;
     // scan until first "<" (input file)
-    inputFileMarker = strstr(inputFileMarker, "<");
+    inputFileMarker = strstrquoted(inputFileMarker, "<");
     // scan until first non-space character:
     if (inputFileMarker) {
         inputFileName = inputFileMarker + 1; // skip past '<'
@@ -792,8 +1019,8 @@ int ios_system(const char* inputCmd) {
     // We assume here a logical command order: < before pipe, pipe before >.
     // TODO: check what happens for unlogical commands. Refuse them, but gently.
     // TODO: implement tee, because that has been removed
-    char* pipeMarker = strstr (outputFileMarker,"&|");
-    if (!pipeMarker) pipeMarker = strstr (outputFileMarker,"|&"); // both seem to work
+    char* pipeMarker = strstrquoted(outputFileMarker,"&|");
+    if (!pipeMarker) pipeMarker = strstrquoted(outputFileMarker,"|&"); // both seem to work
     if (pipeMarker) {
         bool pushMainThread = currentSession.isMainThread;
         currentSession.isMainThread = false;
@@ -802,7 +1029,7 @@ int ios_system(const char* inputCmd) {
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
     } else {
-        pipeMarker = strstr (outputFileMarker,"|");
+        pipeMarker = strstrquoted(outputFileMarker,"|");
         if (pipeMarker) {
             bool pushMainThread = currentSession.isMainThread;
             currentSession.isMainThread = false;
@@ -813,24 +1040,24 @@ int ios_system(const char* inputCmd) {
     }
     // We have removed the pipe part. Still need to parse the rest of the command
     // Must scan in strstr by reverse order of inclusion. So "2>&1" before "2>" before ">"
-    errorFileMarker = strstr (outputFileMarker,"&>"); // both stderr/stdout sent to same file
+    errorFileMarker = strstrquoted(outputFileMarker,"&>"); // both stderr/stdout sent to same file
     // output file name will be after "&>"
     if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
     if (!errorFileMarker) {
         // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
         // ...except with a pipe.
         // Currently, we don't check for that.
-        errorFileMarker = strstr (outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
+        errorFileMarker = strstrquoted(outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
         if (errorFileMarker) {
             if (params->stdout) params->stderr = params->stdout;
-            outputFileMarker = strstr(outputFileMarker, ">");
+            outputFileMarker = strstrquoted(outputFileMarker, ">");
             if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
         }
     }
     if (errorFileMarker) { sharedErrorOutput = true; }
     else {
         // specific name for error file?
-        errorFileMarker = strstr(outputFileMarker,"2>");
+        errorFileMarker = strstrquoted(outputFileMarker,"2>");
         if (errorFileMarker) {
             errorFileName = errorFileMarker + 2; // skip past "2>"
             // skip past all spaces:
@@ -839,7 +1066,7 @@ int ios_system(const char* inputCmd) {
     }
     // scan until first ">"
     if (!sharedErrorOutput) {
-        outputFileMarker = strstr(outputFileMarker, ">");
+        outputFileMarker = strstrquoted(outputFileMarker, ">");
         if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
     }
     if (outputFileName) {
@@ -848,7 +1075,7 @@ int ios_system(const char* inputCmd) {
     if (errorFileName && (outputFileName == errorFileName)) {
         // we got the same ">" twice, pick the next one ("2>" was before ">")
         outputFileMarker = errorFileName;
-        outputFileMarker = strstr(outputFileMarker, ">");
+        outputFileMarker = strstrquoted(outputFileMarker, ">");
         if (outputFileMarker) {
             outputFileName = outputFileMarker + 1; // skip past '>'
             while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
@@ -941,6 +1168,35 @@ int ios_system(const char* inputCmd) {
         argv = argv_copy;
         // We have the arguments. Parse them for environment variables, ~, etc.
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) {  argv[i] = parseArgument(argv[i], argv[0]); }
+        // wildcard expansion (*, ?, []...) Has to be after $ and ~ expansion, results in larger arguments
+        for (int i = 1; i < argc; i++) if (!dontExpand[i]) {
+            if (strstr (argv[i],"*") || strstr (argv[i],"?") || strstr (argv[i],"[")) {
+                glob_t gt;
+                if (glob(argv[i], 0, NULL, &gt) == 0) {
+                    argc += gt.gl_matchc - 1;
+                    argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
+                    dontExpand = (bool *)realloc(dontExpand, sizeof(bool) * (argc + 1));
+                    // Move everything after i by gt.gl_matchc - 1 steps up:
+                    for (int j = argc; j - gt.gl_matchc + 1 > i; j--) {
+                        argv[j] = argv[j - gt.gl_matchc + 1];
+                        dontExpand[j] = dontExpand[j - gt.gl_matchc + 1];
+                    }   
+                    for (int j = 0; j < gt.gl_matchc; j++) {
+                        argv[i + j] = strdup(gt.gl_pathv[j]);
+                    }
+                    i += gt.gl_matchc - 1;
+                    globfree(&gt);
+                } else {
+                    fprintf(thread_stderr, "%s: %s: No match\n", argv[0], argv[i]);
+                    fflush(thread_stderr);
+                    globfree(&gt);
+                    free(dontExpand);
+                    free(argv);
+                    free(originalCommand);
+                    return 127;
+                }
+            }
+        }
         free(dontExpand);
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
@@ -956,8 +1212,10 @@ int ios_system(const char* inputCmd) {
             memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {
             NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
+            currentSession.commandName = commandName;
             BOOL isDir = false;
             BOOL cmdIsAFile = false;
+            bool cmdIsAPath = false;
             if ([commandName hasPrefix:@"~/"]) {
                 NSString* replacement_string = [NSString stringWithCString:(getenv("HOME")) encoding:NSUTF8StringEncoding];
                 NSString* test_string = @"~";
@@ -971,62 +1229,89 @@ int ios_system(const char* inputCmd) {
                     cmdIsAFile = true;
                 }
             }
-            // We go through the path, because that command may be a file in the path
-            // i.e. user called /usr/local/bin/hg and it's ~/Library/bin/hg
-            NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSUTF8StringEncoding];
-            if (! [fullCommandPath isEqualToString:checkingPath]) {
-                fullCommandPath = checkingPath;
-                directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
-            }
-            for (NSString* path in directoriesInPath) {
-                // If we don't have access to the path component, there's no point in continuing:
-                if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
-                if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
-                NSString* locationName;
-                if (!cmdIsAFile) {
-                    locationName = [path stringByAppendingPathComponent:commandName];
-                    if (![fileManager fileExistsAtPath:locationName isDirectory:&isDir]) continue;
-                    if (isDir) continue;
-                    // isExecutableFileAtPath replies "NO" even if file has x-bit set.
-                    // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
-                    struct stat sb;
-                    if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
-                    // File exists, is executable, not a directory.
-                } else
-                    // if (cmdIsAFile) we are now ready to execute this file:
-                    locationName = commandName;
-                NSData *data = [NSData dataWithContentsOfFile:locationName];
-                NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
-                NSRange firstLineRange = [fileContent rangeOfString:@"\n"];
-                if (firstLineRange.location == NSNotFound) firstLineRange.location = 0;
-                firstLineRange.length = firstLineRange.location;
-                firstLineRange.location = 0;
-                NSString* firstLine = [fileContent substringWithRange:firstLineRange];
-                if ([firstLine hasPrefix:@"#!"]) {
-                    // So long as the 1st line begins with "#!" and contains "python" we accept it as a python script
-                    // "#! /usr/bin/python", "#! /usr/local/bin/python" and "#! /usr/bin/myStrangePath/python" are all OK.
-                    // We also accept "#! /usr/bin/env python" because it is used.
-                    // TODO: only accept "python" or "python2" at the end of the line
-                    // executable scripts files. Python and lua:
-                    // 1) get script language name
-                    if ([firstLine containsString:@"python"]) {
-                        scriptName = "python";
-                    } else if ([firstLine containsString:@"lua"]) {
-                        scriptName = "lua";
-                    }
-                    if (scriptName) {
-                        // 2) insert script language at beginning of argument list
+            // if commandName contains "/", then it's a path, and we don't search for it in PATH.
+            cmdIsAPath = ([commandName rangeOfString:@"/"].location != NSNotFound) && !cmdIsAFile;
+            if (!cmdIsAPath) {
+                // We go through the path, because that command may be a file in the path
+                NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSUTF8StringEncoding];
+                if (! [fullCommandPath isEqualToString:checkingPath]) {
+                    fullCommandPath = checkingPath;
+                    directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
+                }
+                for (NSString* path in directoriesInPath) {
+                    // If we don't have access to the path component, there's no point in continuing:
+                    if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
+                    if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
+                    NSString* locationName;
+                    if (!cmdIsAFile) {
+                        // search for 3 possibilities: name, name.bc and name.ll
+                        locationName = [path stringByAppendingPathComponent:commandName];
+                        bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                        if (fileFound && isDir) continue; // file exists, but is a directory
+                        if (!fileFound) {
+                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".bc"];
+                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            if (fileFound && isDir) continue; // file exists, but is a directory
+                        }
+                        if (!fileFound) {
+                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".ll"];
+                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            if (fileFound && isDir) continue; // file exists, but is a directory
+                        }
+                        if (!fileFound) continue;
+                        // isExecutableFileAtPath replies "NO" even if file has x-bit set.
+                        // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
+                        struct stat sb;
+                        if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
+                        // File exists, is executable, not a directory.
+                    } else
+                        // if (cmdIsAFile) we are now ready to execute this file:
+                        locationName = commandName;
+                    if (([locationName hasSuffix:@".bc"]) || ([locationName hasSuffix:@".ll"])) {
+                        // insert lli in front of argument list:
                         argc += 1;
                         argv = (char **)realloc(argv, sizeof(char*) * argc);
                         // Move everything one step up
                         for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
                         argv[1] = realloc(argv[1], strlen(locationName.UTF8String));
                         strcpy(argv[1], locationName.UTF8String);
-                        argv[0] = strdup(scriptName); // this one is new
+                        argv[0] = strdup("lli"); // this one is new
                         break;
+                    } else {
+                        NSData *data = [NSData dataWithContentsOfFile:locationName];
+                        NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+                        NSRange firstLineRange = [fileContent rangeOfString:@"\n"];
+                        if (firstLineRange.location == NSNotFound) firstLineRange.location = 0;
+                        firstLineRange.length = firstLineRange.location;
+                        firstLineRange.location = 0;
+                        NSString* firstLine = [fileContent substringWithRange:firstLineRange];
+                        if ([firstLine hasPrefix:@"#!"]) {
+                            // So long as the 1st line begins with "#!" and contains "python" we accept it as a python script
+                            // "#! /usr/bin/python", "#! /usr/local/bin/python" and "#! /usr/bin/myStrangePath/python" are all OK.
+                            // We also accept "#! /usr/bin/env python" because it is used.
+                            // TODO: only accept "python" or "python2" at the end of the line
+                            // executable scripts files. Python and lua:
+                            // 1) get script language name
+                            if ([firstLine containsString:@"python"]) {
+                                scriptName = "python";
+                            } else if ([firstLine containsString:@"lua"]) {
+                                scriptName = "lua";
+                            }
+                            if (scriptName) {
+                                // 2) insert script language at beginning of argument list
+                                argc += 1;
+                                argv = (char **)realloc(argv, sizeof(char*) * argc);
+                                // Move everything one step up
+                                for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
+                                argv[1] = realloc(argv[1], strlen(locationName.UTF8String));
+                                strcpy(argv[1], locationName.UTF8String);
+                                argv[0] = strdup(scriptName); // this one is new
+                                break;
+                            }
+                        }
                     }
+                    if (cmdIsAFile) break; // else keep going through the path elements.
                 }
-                if (cmdIsAFile) break; // else keep going through the path elements.
             }
         }
         // fprintf(thread_stderr, "Command after parsing: ");
@@ -1064,7 +1349,7 @@ int ios_system(const char* inputCmd) {
             if (currentSession.isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
-                                               params->isPipeOut || params->isPipeErr);
+                                               params->isPipeOut || params->isPipeErr);
                 NSString* currentPath = [fileManager currentDirectoryPath];
                 commandOperatesOnFiles &= (currentPath != nil); 
                 if (commandOperatesOnFiles) {
@@ -1100,15 +1385,26 @@ int ios_system(const char* inputCmd) {
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
                 pthread_create(&_tid, NULL, run_function, params);
+                pthread_detach(_tid); // a thread must be either joined or detached.
                 // The last command on the command line (with multiple pipes) will be created first
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid;
             }
         } else {
+            fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            free(argv);
+            // If command output was redirected to a pipe, we still need to close it.
+            // (to warn the other command that it can stop waiting)
+            if (params->stdout != thread_stdout) {
+                fclose(params->stdout);
+            }
+            if ((params->stderr != thread_stderr) && (params->stderr != params->stdout)) {
+                fclose(params->stderr);
+            }
             if ((handle != NULL) && (handle != RTLD_SELF)
                 && (handle != RTLD_MAIN_ONLY)
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
-            fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            free(params); // This was malloc'ed in ios_system
             currentSession.global_errno = 127;
             // TODO: this should also raise an exception, for python scripts
         } // if (function)

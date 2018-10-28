@@ -18,10 +18,14 @@
     self.lastThreadId = 0;
     self.currentDir = [fileManager currentDirectoryPath];
     self.previousDirectory = [fileManager currentDirectoryPath];
+    self.localMiniRoot = nil;
     self.global_errno = 0;
     self.stdin = stdin;
     self.stdout = stdout;
     self.stderr = stderr;
+    self.context = nil; 
+    self.commandName = nil;
+  
     return self;
 }
 

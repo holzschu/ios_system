@@ -62,7 +62,7 @@ static char *argv0;
 static log_handler_fn *log_handler;
 static void *log_handler_ctx;
 
-extern char *__progname;
+extern char *ssh_progname;
 
 #define LOG_SYSLOG_VIS	(VIS_CSTYLE|VIS_NL|VIS_TAB|VIS_OCTAL)
 #define LOG_STDERR_VIS	(VIS_SAFE|VIS_OCTAL)
@@ -337,10 +337,10 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 	 * facility, so we force an open/close of syslog here.
 	 */
 #if defined(HAVE_OPENLOG_R) && defined(SYSLOG_DATA_INIT)
-	openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
+	openlog_r(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility, &sdata);
 	closelog_r(&sdata);
 #else
-	openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
+	openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
 	closelog();
 #endif
 }
@@ -465,11 +465,11 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		(void)write(log_stderr_fd, msgbuf, strlen(msgbuf));
 	} else {
 #if defined(HAVE_OPENLOG_R) && defined(SYSLOG_DATA_INIT)
-		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
+		openlog_r(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility, &sdata);
 		syslog_r(pri, &sdata, "%.500s", fmtbuf);
 		closelog_r(&sdata);
 #else
-		openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
+		openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
 		syslog(pri, "%.500s", fmtbuf);
 		closelog();
 #endif

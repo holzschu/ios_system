@@ -32,20 +32,20 @@
 #include <unistd.h>
 
 #ifndef HAVE___PROGNAME
-char *__progname;
+char *ssh_progname;
 #endif
 
 /*
- * NB. duplicate __progname in case it is an alias for argv[0]
+ * NB. duplicate ssh_progname in case it is an alias for argv[0]
  * Otherwise it may get clobbered by setproctitle()
  */
 char *ssh_get_progname(char *argv0)
 {
 	char *p, *q;
 #ifdef HAVE___PROGNAME
-	extern char *__progname;
+	extern char *ssh_progname;
 
-	p = __progname;
+	p = ssh_progname;
 #else
 	if (argv0 == NULL)
 		return ("unknown");	/* XXX */

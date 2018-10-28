@@ -1,6 +1,34 @@
+diff -Naur curl-105/Info.plist curl/Info.plist
+--- curl-105/Info.plist	1970-01-01 03:00:00.000000000 +0300
++++ curl/Info.plist	2018-10-02 15:43:52.000000000 +0300
+@@ -0,0 +1,24 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++	<key>CFBundleDevelopmentRegion</key>
++	<string>$(DEVELOPMENT_LANGUAGE)</string>
++	<key>CFBundleExecutable</key>
++	<string>$(EXECUTABLE_NAME)</string>
++	<key>CFBundleIdentifier</key>
++	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
++	<key>CFBundleInfoDictionaryVersion</key>
++	<string>6.0</string>
++	<key>CFBundleName</key>
++	<string>$(PRODUCT_NAME)</string>
++	<key>CFBundlePackageType</key>
++	<string>FMWK</string>
++	<key>CFBundleShortVersionString</key>
++	<string>1.0</string>
++	<key>CFBundleVersion</key>
++	<string>$(CURRENT_PROJECT_VERSION)</string>
++	<key>NSPrincipalClass</key>
++	<string></string>
++</dict>
++</plist>
 diff -Naur curl-105/config_iphone/curl_config.h curl/config_iphone/curl_config.h
---- curl-105/config_iphone/curl_config.h	2017-05-24 02:47:37.000000000 +0200
-+++ curl/config_iphone/curl_config.h	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/config_iphone/curl_config.h	2017-05-24 03:47:37.000000000 +0300
++++ curl/config_iphone/curl_config.h	2018-10-02 15:43:52.000000000 +0300
 @@ -410,6 +410,7 @@
  
  /* Define to 1 if you have the <libssh2.h> header file. */
@@ -35,8 +63,8 @@ diff -Naur curl-105/config_iphone/curl_config.h curl/config_iphone/curl_config.h
  /* if NSS is enabled */
  /* #undef USE_NSS */
 diff -Naur curl-105/curl/include/curl/curl.h curl/curl/include/curl/curl.h
---- curl-105/curl/include/curl/curl.h	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/include/curl/curl.h	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/include/curl/curl.h	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/include/curl/curl.h	2018-10-02 15:43:52.000000000 +0300
 @@ -2391,7 +2391,7 @@
                             callback functions */
    CURLSHOPT_LAST  /* never use */
@@ -47,8 +75,8 @@ diff -Naur curl-105/curl/include/curl/curl.h curl/curl/include/curl/curl.h
  CURL_EXTERN CURLSHcode curl_share_setopt(CURLSH *, CURLSHoption option, ...);
  CURL_EXTERN CURLSHcode curl_share_cleanup(CURLSH *);
 diff -Naur curl-105/curl/lib/conncache.c curl/curl/lib/conncache.c
---- curl-105/curl/lib/conncache.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/conncache.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/conncache.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/conncache.c	2018-10-02 15:43:52.000000000 +0300
 @@ -335,7 +335,7 @@
    if(!connc)
      return;
@@ -78,8 +106,8 @@ diff -Naur curl-105/curl/lib/conncache.c curl/curl/lib/conncache.c
      he = Curl_hash_next_element(&iter);
    }
 diff -Naur curl-105/curl/lib/cookie.c curl/curl/lib/cookie.c
---- curl-105/curl/lib/cookie.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/cookie.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/cookie.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/cookie.c	2018-10-02 15:43:52.000000000 +0300
 @@ -81,6 +81,7 @@
  
  
@@ -107,8 +135,8 @@ diff -Naur curl-105/curl/lib/cookie.c curl/curl/lib/cookie.c
    }
    else {
 diff -Naur curl-105/curl/lib/curl_ntlm_wb.c curl/curl/lib/curl_ntlm_wb.c
---- curl-105/curl/lib/curl_ntlm_wb.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/curl_ntlm_wb.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/curl_ntlm_wb.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/curl_ntlm_wb.c	2018-10-02 15:43:52.000000000 +0300
 @@ -52,6 +52,7 @@
  #include "url.h"
  #include "strerror.h"
@@ -153,8 +181,8 @@ diff -Naur curl-105/curl/lib/curl_ntlm_wb.c curl/curl/lib/curl_ntlm_wb.c
      authp->done = TRUE;
      Curl_ntlm_wb_cleanup(conn);
 diff -Naur curl-105/curl/lib/easy.c curl/curl/lib/easy.c
---- curl-105/curl/lib/easy.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/easy.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/easy.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/easy.c	2018-10-02 15:43:52.000000000 +0300
 @@ -216,31 +216,31 @@
  
    if(flags & CURL_GLOBAL_SSL)
@@ -247,8 +275,8 @@ diff -Naur curl-105/curl/lib/easy.c curl/curl/lib/easy.c
                                         &ev->running_handles);
      }
 diff -Naur curl-105/curl/lib/formdata.c curl/curl/lib/formdata.c
---- curl-105/curl/lib/formdata.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/formdata.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/formdata.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/formdata.c	2018-10-02 15:43:52.000000000 +0300
 @@ -37,6 +37,8 @@
  #include "sendf.h"
  #include "strdup.h"
@@ -277,8 +305,8 @@ diff -Naur curl-105/curl/lib/formdata.c curl/curl/lib/formdata.c
              fclose(fileread);
              /* add the file name only - for later reading from this */
 diff -Naur curl-105/curl/lib/hash.c curl/curl/lib/hash.c
---- curl-105/curl/lib/hash.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/hash.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/hash.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/hash.c	2018-10-02 15:43:52.000000000 +0300
 @@ -336,16 +336,16 @@
    if(!h)
      return;
@@ -313,8 +341,8 @@ diff -Naur curl-105/curl/lib/hash.c curl/curl/lib/hash.c
  }
  #endif
 diff -Naur curl-105/curl/lib/hostip6.c curl/curl/lib/hostip6.c
---- curl-105/curl/lib/hostip6.c	2016-11-04 22:42:50.000000000 +0100
-+++ curl/curl/lib/hostip6.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/hostip6.c	2016-11-05 00:42:50.000000000 +0300
++++ curl/curl/lib/hostip6.c	2018-10-02 15:43:52.000000000 +0300
 @@ -132,16 +132,16 @@
  #ifdef DEBUG_ADDRINFO
  static void dump_addrinfo(struct connectdata *conn, const Curl_addrinfo *ai)
@@ -337,8 +365,8 @@ diff -Naur curl-105/curl/lib/hostip6.c curl/curl/lib/hostip6.c
  }
  #else
 diff -Naur curl-105/curl/lib/http_ntlm.c curl/curl/lib/http_ntlm.c
---- curl-105/curl/lib/http_ntlm.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/http_ntlm.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/http_ntlm.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/http_ntlm.c	2018-10-02 15:43:52.000000000 +0300
 @@ -184,7 +184,7 @@
        if(!*allocuserpwd)
          return CURLE_OUT_OF_MEMORY;
@@ -358,8 +386,8 @@ diff -Naur curl-105/curl/lib/http_ntlm.c curl/curl/lib/http_ntlm.c
        ntlm->state = NTLMSTATE_TYPE3; /* we send a type-3 */
        authp->done = TRUE;
 diff -Naur curl-105/curl/lib/ldap.c curl/curl/lib/ldap.c
---- curl-105/curl/lib/ldap.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/ldap.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/ldap.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/ldap.c	2018-10-02 15:43:52.000000000 +0300
 @@ -702,7 +702,7 @@
      return;
  
@@ -370,8 +398,8 @@ diff -Naur curl-105/curl/lib/ldap.c curl/curl/lib/ldap.c
  }
  #endif
 diff -Naur curl-105/curl/lib/memdebug.c curl/curl/lib/memdebug.c
---- curl-105/curl/lib/memdebug.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/memdebug.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/memdebug.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/memdebug.c	2018-10-02 15:43:52.000000000 +0300
 @@ -116,7 +116,7 @@
      if(logname && *logname)
        logfile = fopen(logname, FOPEN_WRITETEXT);
@@ -391,8 +419,8 @@ diff -Naur curl-105/curl/lib/memdebug.c curl/curl/lib/memdebug.c
          fflush(logfile); /* because it might crash now */
        }
 diff -Naur curl-105/curl/lib/mprintf.c curl/curl/lib/mprintf.c
---- curl-105/curl/lib/mprintf.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/mprintf.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/mprintf.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/mprintf.c	2018-10-02 15:43:52.000000000 +0300
 @@ -39,6 +39,7 @@
  #include <curl/mprintf.h>
  
@@ -420,8 +448,8 @@ diff -Naur curl-105/curl/lib/mprintf.c curl/curl/lib/mprintf.c
  
  int curl_mvfprintf(FILE *whereto, const char *format, va_list ap_save)
 diff -Naur curl-105/curl/lib/multi.c curl/curl/lib/multi.c
---- curl-105/curl/lib/multi.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/multi.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/multi.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/multi.c	2018-10-02 15:43:52.000000000 +0300
 @@ -474,7 +474,7 @@
  {
    struct Curl_sh_entry *sh = (struct Curl_sh_entry *)p;
@@ -468,8 +496,8 @@ diff -Naur curl-105/curl/lib/multi.c curl/curl/lib/multi.c
    }
  }
 diff -Naur curl-105/curl/lib/netrc.c curl/curl/lib/netrc.c
---- curl-105/curl/lib/netrc.c	2016-11-04 22:42:50.000000000 +0100
-+++ curl/curl/lib/netrc.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/netrc.c	2016-11-05 00:42:50.000000000 +0300
++++ curl/curl/lib/netrc.c	2018-10-02 15:43:52.000000000 +0300
 @@ -69,7 +69,8 @@
  
    if(!netrcfile) {
@@ -481,8 +509,8 @@ diff -Naur curl-105/curl/lib/netrc.c curl/curl/lib/netrc.c
        home_alloc = TRUE;
  #if defined(HAVE_GETPWUID_R) && defined(HAVE_GETEUID)
 diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
---- curl-105/curl/lib/ssh.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/ssh.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/ssh.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/ssh.c	2018-10-02 16:22:42.000000000 +0300
 @@ -26,6 +26,13 @@
  
  #ifdef USE_LIBSSH2
@@ -514,7 +542,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
  #else
    (void)name;
    (void)name_len;
-@@ -714,6 +721,26 @@
+@@ -714,6 +721,16 @@
    int err;
    int seekerr = CURL_SEEKFUNC_OK;
    *block = 0; /* we're not blocking by default */
@@ -526,22 +554,12 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
 +    BKHosts *host;
 +    BKPubKey *pk;
 +    
-+    if (host = [BKHosts withHost:[NSString stringWithUTF8String:conn->host.name]]) {
-+        // Extract private key, username, etc associated with this host:
-+        // This won't work, we've used conn->host.name several times before
-+        if (host.hostName) conn->host.name = [host.hostName UTF8String];
-+        if ((!conn->user || (strlen(conn->user) == 0))
-+            && [host.user length]) {
-+            Curl_safefree(conn->user);
-+            conn->user = strdup([host.user UTF8String]);
-+            // fprintf(stderr, "Found user = %s, host = %s\n", conn->user, conn->host.name);
-+        }
-+    }
++    host = [BKHosts withHost:[NSString stringWithUTF8String:conn->host.rawalloc]];
 +#endif
  
    do {
  
-@@ -810,11 +837,59 @@
+@@ -810,13 +827,63 @@
  
          /* To ponder about: should really the lib be messing about with the
             HOME environment variable etc? */
@@ -583,28 +601,33 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
 +                      }
 +                  }
 +              }
-+              if (!(privateKeyMemory && publicKeyMemory)) {
-+                  // Priority 2: key named id_rsa:
-+                  if ((pk = [BKPubKey withID:@"id_rsa"]) != nil) {
-+                      publicKeyMemory = [pk.publicKey UTF8String];
-+                      privateKeyMemory = [pk.privateKey UTF8String];
-+                      sshc->rsa = strdup("id_rsa");
-+                  }
-+              }
-+              if (!(privateKeyMemory && publicKeyMemory)) {
-+                  // Still no luck, try with id_dsa:
-+                  if ((pk = [BKPubKey withID:@"id_dsa"]) != nil) {
-+                      publicKeyMemory = [pk.publicKey UTF8String];
-+                      privateKeyMemory = [pk.privateKey UTF8String];
-+                      sshc->rsa = strdup("id_dsa");
-+                  }
-+              }
++            
 +          } else {
++
++            if (!(privateKeyMemory && publicKeyMemory)) {
++              // Priority 2: key named id_rsa:
++              if ((pk = [BKPubKey withID:@"id_rsa"]) != nil) {
++                publicKeyMemory = [pk.publicKey UTF8String];
++                privateKeyMemory = [pk.privateKey UTF8String];
++                sshc->rsa = strdup("id_rsa");
++              }
++            }
++            if (!(privateKeyMemory && publicKeyMemory)) {
++              // Still no luck, try with id_dsa:
++              if ((pk = [BKPubKey withID:@"id_dsa"]) != nil) {
++                publicKeyMemory = [pk.publicKey UTF8String];
++                privateKeyMemory = [pk.privateKey UTF8String];
++                sshc->rsa = strdup("id_dsa");
++              }
++            }
 +#endif
            /* If no private key file is specified, try some common paths. */
-           if(home) {
+-          if(home) {
++          if(home && !sshc->rsa) {
              /* Try ~/.ssh first. */
-@@ -831,6 +906,9 @@
+             sshc->rsa = aprintf("%s/.ssh/id_rsa", home);
+             if(!sshc->rsa)
+@@ -831,6 +898,9 @@
                }
              }
            }
@@ -614,7 +637,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
            if(!out_of_memory && !sshc->rsa) {
              /* Nothing found; try the current dir. */
              sshc->rsa = strdup("id_rsa");
-@@ -852,6 +930,9 @@
+@@ -852,6 +922,9 @@
           * libssh2 extract the public key from the private key file.
           * This is done by simply passing sshc->rsa_pub = NULL.
           */
@@ -624,7 +647,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
          if(data->set.str[STRING_SSH_PUBLIC_KEY]
              /* treat empty string the same way as NULL */
              && data->set.str[STRING_SSH_PUBLIC_KEY][0]) {
-@@ -859,6 +940,9 @@
+@@ -859,6 +932,9 @@
            if(!sshc->rsa_pub)
              out_of_memory = TRUE;
          }
@@ -634,7 +657,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
  
          if(out_of_memory || sshc->rsa == NULL) {
            free(home);
-@@ -869,15 +953,22 @@
+@@ -869,15 +945,22 @@
            break;
          }
  
@@ -660,7 +683,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
  
          state(conn, SSH_AUTH_PKEY);
        }
-@@ -889,12 +980,25 @@
+@@ -889,12 +972,25 @@
      case SSH_AUTH_PKEY:
        /* The function below checks if the files exists, no need to stat() here.
         */
@@ -689,12 +712,18 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
          break;
        }
 diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
---- curl-105/curl/lib/url.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/url.c	2018-03-29 20:29:40.000000000 +0200
-@@ -119,6 +119,12 @@
+--- curl-105/curl/lib/url.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/url.c	2018-10-03 13:35:04.000000000 +0300
+@@ -119,6 +119,18 @@
  #include "pipeline.h"
  #include "dotdot.h"
  #include "strdup.h"
++
++// If we have Blinkshell, we use their key management:
++#ifdef BLINKSHELL
++#import "BKDefaults.h"
++#import "BKHosts.h"
++#endif
 +
 +// from ios_error.h, but without the compileError:
 +// Thread-local input and output streams
@@ -704,7 +733,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
  /* The last 3 #include files should be in this order */
  #include "curl_printf.h"
  #include "curl_memory.h"
-@@ -491,9 +497,9 @@
+@@ -491,9 +503,9 @@
  {
    CURLcode result = CURLE_OK;
  
@@ -717,7 +746,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
  
    /* use fwrite as default function to store output */
    set->fwrite_func = (curl_write_callback)fwrite;
-@@ -629,7 +635,7 @@
+@@ -629,7 +641,7 @@
    data = calloc(1, sizeof(struct Curl_easy));
    if(!data) {
      /* this is a very serious error */
@@ -726,7 +755,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
      return CURLE_OUT_OF_MEMORY;
    }
  
-@@ -637,7 +643,7 @@
+@@ -637,7 +649,7 @@
  
    result = Curl_resolver_init(&data->state.resolver);
    if(result) {
@@ -735,7 +764,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
      free(data);
      return result;
    }
-@@ -646,13 +652,13 @@
+@@ -646,13 +658,13 @@
  
    data->state.buffer = malloc(BUFSIZE + 1);
    if(!data->state.buffer) {
@@ -751,7 +780,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
      result = CURLE_OUT_OF_MEMORY;
    }
    else {
-@@ -1881,7 +1887,7 @@
+@@ -1881,7 +1893,7 @@
       */
      data->set.err = va_arg(param, FILE *);
      if(!data->set.err)
@@ -760,7 +789,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
      break;
    case CURLOPT_HEADERFUNCTION:
      /*
-@@ -2296,7 +2302,7 @@
+@@ -2296,7 +2308,7 @@
        data->state.buffer = realloc(data->state.buffer,
                                     data->set.buffer_size + 1);
        if(!data->state.buffer) {
@@ -769,7 +798,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
          result = CURLE_OUT_OF_MEMORY;
        }
      }
-@@ -3028,7 +3034,7 @@
+@@ -3028,7 +3040,7 @@
    data = conn->data;
  
    if(!data) {
@@ -778,7 +807,37 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
      return CURLE_OK;
    }
  
-@@ -6875,7 +6881,7 @@
+@@ -4624,12 +4636,28 @@
+ 
+   result = findprotocol(data, conn, protop);
+   if(result)
+-    return result;
++    return
+ 
+   /*
+    * Parse the login details from the URL and strip them out of
+    * the host name
+    */
++#ifdef BLINKSHELL // get user and host from Blinkshell config
++    if ((strcmp(protop, "scp") == 0) || (strcmp(protop, "sftp") == 0)) {
++        BKHosts *host;
++        if (host = [BKHosts withHost:[NSString stringWithUTF8String:conn->host.name]]) {
++            if (host.hostName) conn->host.name = [host.hostName UTF8String];
++            if ([host.user length]) {
++                *userp = strdup([host.user UTF8String]);
++            }
++            // grab remote port from host settings too
++            if (conn->remote_port == -1 && host.port.intValue) {
++                conn->remote_port = host.port.intValue;
++            }
++        }
++    }
++#endif
++
+   result = parse_url_login(data, conn, userp, passwdp, optionsp);
+   if(result)
+     return result;
+@@ -6875,7 +6903,7 @@
     */
  
    if((data->set.out)->_handle == NULL) {
@@ -788,8 +847,8 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
  #endif
  
 diff -Naur curl-105/curl/lib/vauth/ntlm.c curl/curl/lib/vauth/ntlm.c
---- curl-105/curl/lib/vauth/ntlm.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/vauth/ntlm.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/vauth/ntlm.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/vauth/ntlm.c	2018-10-02 15:43:52.000000000 +0300
 @@ -141,9 +141,9 @@
  
    (void) handle;
@@ -883,8 +942,8 @@ diff -Naur curl-105/curl/lib/vauth/ntlm.c curl/curl/lib/vauth/ntlm.c
  
    /* Make sure that the domain, user and host strings fit in the
 diff -Naur curl-105/curl/lib/vtls/gtls.c curl/curl/lib/vtls/gtls.c
---- curl-105/curl/lib/vtls/gtls.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/vtls/gtls.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/vtls/gtls.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/lib/vtls/gtls.c	2018-10-02 15:43:52.000000000 +0300
 @@ -77,7 +77,7 @@
  #ifdef GTLSDEBUG
  static void tls_log_func(int level, const char *str)
@@ -895,8 +954,8 @@ diff -Naur curl-105/curl/lib/vtls/gtls.c curl/curl/lib/vtls/gtls.c
  #endif
  static bool gtls_inited = FALSE;
 diff -Naur curl-105/curl/lib/vtls/polarssl_threadlock.c curl/curl/lib/vtls/polarssl_threadlock.c
---- curl-105/curl/lib/vtls/polarssl_threadlock.c	2016-11-04 22:42:50.000000000 +0100
-+++ curl/curl/lib/vtls/polarssl_threadlock.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/lib/vtls/polarssl_threadlock.c	2016-11-05 00:42:50.000000000 +0300
++++ curl/curl/lib/vtls/polarssl_threadlock.c	2018-10-02 15:43:52.000000000 +0300
 @@ -107,7 +107,7 @@
    if(n < NUMT) {
      ret = pthread_mutex_lock(&mutex_buf[n]);
@@ -934,8 +993,8 @@ diff -Naur curl-105/curl/lib/vtls/polarssl_threadlock.c curl/curl/lib/vtls/polar
        return 0; /* pthread_mutex_lock failed */
      }
 diff -Naur curl-105/curl/src/tool_cb_dbg.c curl/curl/src/tool_cb_dbg.c
---- curl-105/curl/src/tool_cb_dbg.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_cb_dbg.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_cb_dbg.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_cb_dbg.c	2018-10-02 15:43:52.000000000 +0300
 @@ -29,6 +29,7 @@
  #include "tool_msgs.h"
  #include "tool_cb_dbg.h"
@@ -963,8 +1022,8 @@ diff -Naur curl-105/curl/src/tool_cb_dbg.c curl/curl/src/tool_cb_dbg.c
              fprintf(output, "%s%s ", timebuf, s_infotype[type]);
            fprintf(output, "[%zd bytes data]\n", size);
 diff -Naur curl-105/curl/src/tool_easysrc.c curl/curl/src/tool_easysrc.c
---- curl-105/curl/src/tool_easysrc.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_easysrc.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_easysrc.c	2016-07-07 00:44:05.000000000 +0300
++++ curl/curl/src/tool_easysrc.c	2018-10-02 15:43:52.000000000 +0300
 @@ -32,6 +32,7 @@
  #include "tool_cfgable.h"
  #include "tool_easysrc.h"
@@ -983,8 +1042,8 @@ diff -Naur curl-105/curl/src/tool_easysrc.c curl/curl/src/tool_easysrc.c
      warnf(config, "Failed to open %s to write libcurl code!\n", o);
    else {
 diff -Naur curl-105/curl/src/tool_getparam.c curl/curl/src/tool_getparam.c
---- curl-105/curl/src/tool_getparam.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_getparam.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_getparam.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_getparam.c	2018-10-02 15:43:52.000000000 +0300
 @@ -38,6 +38,7 @@
  #include "tool_msgs.h"
  #include "tool_paramhlp.h"
@@ -1061,8 +1120,8 @@ diff -Naur curl-105/curl/src/tool_getparam.c curl/curl/src/tool_getparam.c
          if(err)
            return err;
 diff -Naur curl-105/curl/src/tool_getpass.c curl/curl/src/tool_getpass.c
---- curl-105/curl/src/tool_getpass.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_getpass.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_getpass.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_getpass.c	2018-10-02 15:43:52.000000000 +0300
 @@ -56,6 +56,7 @@
  #include <unistd.h>
  #endif
@@ -1144,8 +1203,8 @@ diff -Naur curl-105/curl/src/tool_getpass.c curl/curl/src/tool_getpass.c
  
    return password; /* return pointer to buffer */
 diff -Naur curl-105/curl/src/tool_help.c curl/curl/src/tool_help.c
---- curl-105/curl/src/tool_help.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_help.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_help.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_help.c	2018-10-02 15:43:52.000000000 +0300
 @@ -25,6 +25,7 @@
  #include "tool_help.h"
  #include "tool_libinfo.h"
@@ -1198,8 +1257,8 @@ diff -Naur curl-105/curl/src/tool_help.c curl/curl/src/tool_help.c
    else {
      puts("  <none>");
 diff -Naur curl-105/curl/src/tool_hugehelp.c curl/curl/src/tool_hugehelp.c
---- curl-105/curl/src/tool_hugehelp.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_hugehelp.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_hugehelp.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_hugehelp.c	2018-10-02 15:43:52.000000000 +0300
 @@ -1,4 +1,5 @@
  #include "tool_setup.h"
 +#include "ios_error.h"
@@ -4843,8 +4902,8 @@ diff -Naur curl-105/curl/src/tool_hugehelp.c curl/curl/src/tool_hugehelp.c
            break;
        }
 diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
---- curl-105/curl/src/tool_main.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_main.c	2016-07-07 00:44:05.000000000 +0300
++++ curl/curl/src/tool_main.c	2018-10-02 15:43:52.000000000 +0300
 @@ -44,6 +44,7 @@
  #include "tool_vms.h"
  #include "tool_main.h"
@@ -5018,8 +5077,8 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
    struct GlobalConfig global;
    memset(&global, 0, sizeof(global));
 diff -Naur curl-105/curl/src/tool_main.h curl/curl/src/tool_main.h
---- curl-105/curl/src/tool_main.h	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.h	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_main.h	2016-07-07 00:44:05.000000000 +0300
++++ curl/curl/src/tool_main.h	2018-10-02 15:43:52.000000000 +0300
 @@ -29,15 +29,15 @@
  #define RETRY_SLEEP_MAX     600000L /* ms == 10 minutes */
  
@@ -5040,8 +5099,8 @@ diff -Naur curl-105/curl/src/tool_main.h curl/curl/src/tool_main.h
  
  #endif /* HEADER_CURL_TOOL_MAIN_H */
 diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
---- curl-105/curl/src/tool_operate.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_operate.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_operate.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_operate.c	2018-10-02 15:43:52.000000000 +0300
 @@ -40,6 +40,10 @@
  #endif
  
@@ -5098,6 +5157,15 @@ diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
            if(!strcmp(uploadfile, ".")) {
              if(curlx_nonblock((curl_socket_t)infd, TRUE) < 0)
                warnf(config->global,
+@@ -784,7 +788,7 @@
+           config->resume_from = -1; /* -1 will then force get-it-yourself */
+ 
+         if(output_expected(this_url, uploadfile) && outs.stream &&
+-           isatty(fileno(outs.stream)))
++           ios_isatty(fileno(outs.stream)))
+           /* we send the output to a tty, therefore we switch off the progress
+              meter */
+           global->noprogress = global->isatty = TRUE;
 @@ -842,12 +846,12 @@
          }
  
@@ -5140,8 +5208,8 @@ diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
            /* if retry-max-time is non-zero, make sure we haven't exceeded the
               time */
 diff -Naur curl-105/curl/src/tool_parsecfg.c curl/curl/src/tool_parsecfg.c
---- curl-105/curl/src/tool_parsecfg.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_parsecfg.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_parsecfg.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_parsecfg.c	2018-10-02 15:43:52.000000000 +0300
 @@ -31,6 +31,7 @@
  #include "tool_homedir.h"
  #include "tool_msgs.h"
@@ -5187,8 +5255,8 @@ diff -Naur curl-105/curl/src/tool_parsecfg.c curl/curl/src/tool_parsecfg.c
    }
    else
 diff -Naur curl-105/curl/src/tool_urlglob.c curl/curl/src/tool_urlglob.c
---- curl-105/curl/src/tool_urlglob.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_urlglob.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_urlglob.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_urlglob.c	2018-10-02 15:43:52.000000000 +0300
 @@ -28,6 +28,7 @@
  #include "tool_doswin.h"
  #include "tool_urlglob.h"
@@ -5225,8 +5293,8 @@ diff -Naur curl-105/curl/src/tool_urlglob.c curl/curl/src/tool_urlglob.c
            Curl_safefree(target);
            return CURLE_FAILED_INIT;
 diff -Naur curl-105/curl/src/tool_vms.c curl/curl/src/tool_vms.c
---- curl-105/curl/src/tool_vms.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_vms.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_vms.c	2016-07-07 00:44:05.000000000 +0300
++++ curl/curl/src/tool_vms.c	2018-10-02 15:43:52.000000000 +0300
 @@ -178,14 +178,14 @@
        }
        else {
@@ -5245,8 +5313,8 @@ diff -Naur curl-105/curl/src/tool_vms.c curl/curl/src/tool_vms.c
  
    }
 diff -Naur curl-105/curl/src/tool_writeout.c curl/curl/src/tool_writeout.c
---- curl-105/curl/src/tool_writeout.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_writeout.c	2018-03-29 20:29:40.000000000 +0200
+--- curl-105/curl/src/tool_writeout.c	2017-05-17 22:04:33.000000000 +0300
++++ curl/curl/src/tool_writeout.c	2018-10-02 15:43:52.000000000 +0300
 @@ -25,6 +25,7 @@
  #include "curlx.h"
  #include "tool_cfgable.h"
@@ -5273,3 +5341,26 @@ diff -Naur curl-105/curl/src/tool_writeout.c curl/curl/src/tool_writeout.c
            }
            ptr = end + 1; /* pass the end */
            *end = keepit;
+diff -Naur curl-105/curl.h curl/curl.h
+--- curl-105/curl.h	1970-01-01 03:00:00.000000000 +0300
++++ curl/curl.h	2018-10-02 15:43:52.000000000 +0300
+@@ -0,0 +1,19 @@
++//
++//  curl.h
++//  curl
++//
++//  Created by Nicolas Holzschuch on 25/03/2018.
++//  Copyright © 2018 Nicolas Holzschuch. All rights reserved.
++//
++
++#import <UIKit/UIKit.h>
++
++//! Project version number for curl.
++FOUNDATION_EXPORT double curlVersionNumber;
++
++//! Project version string for curl.
++FOUNDATION_EXPORT const unsigned char curlVersionString[];
++
++// In this header, you should import all the public headers of your framework using statements like #import <curl/PublicHeader.h>
++
++

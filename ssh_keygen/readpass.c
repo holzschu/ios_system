@@ -26,19 +26,24 @@
 #include "includes.h"
 #include "xmalloc.h"
 /* #include "misc.h"
-#include "pathnames.h"
-#include "log.h"
-#include "ssh.h"
-#include "uidswap.h" */
+ #include "pathnames.h"
+ #include "log.h"
+ #include "ssh.h"
+ #include "uidswap.h" */
 #include "ios_error.h"
 #import <UIKit/UIKit.h>
 
-static char* ret;
-static bool done = false;
-
-static void setPassword(const char* password) {
-    ret = xstrdup(password);
-    done = true;
+UIViewController *
+__topViewController(void)
+{
+  // Get root controller of first window (First window on UIScreen.mainScreen)
+  UIViewController *ctrl = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
+  
+  while (ctrl.presentedViewController) {
+    ctrl = ctrl.presentedViewController;
+  }
+  
+  return ctrl;
 }
 
 /*
@@ -48,50 +53,67 @@ static void setPassword(const char* password) {
 char *
 read_passphrase(const char *prompt, int flags)
 {
-    // Need to get the root controller without having access to "self".
-    UIViewController *topViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
-    if (!topViewController) return xstrdup("");
-    while (topViewController.presentedViewController) topViewController = topViewController.presentedViewController;
-    // alerts have to go to the main queue:
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
-        UIAlertController* alertController = [UIAlertController alertControllerWithTitle:[NSString stringWithUTF8String:prompt]
-            message:nil
-            preferredStyle:UIAlertControllerStyleAlert];
-        [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-         textField.placeholder = @"passphrase";
-         textField.textColor = [UIColor blueColor];
-         textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-         textField.borderStyle = UITextBorderStyleRoundedRect;
-         textField.secureTextEntry = YES;
-         }];
-        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                                    NSArray * textfields = alertController.textFields;
-                                    UITextField * passwordfiled = textfields[0];
-                                    setPassword([passwordfiled.text UTF8String]);
-                                    // TODO: explicit_bzero of passwordfiled -- impossible?
-                                    }]];
-        [topViewController presentViewController:alertController animated:YES completion:nil];
-    });
-    while (!done) {};
-    done = false;
-    return ret;
+  dispatch_semaphore_t dsema = dispatch_semaphore_create(0);
+  
+  __block NSString *result = @"";
+  
+  // alerts have to go to the main queue:
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    UIViewController *topViewController = __topViewController();
+    
+    if (!topViewController) {
+      dispatch_semaphore_signal(dsema);
+      return;
+    }
+    
+    NSString *title = [NSString stringWithUTF8String:prompt];
+    UIAlertController* alertController = [UIAlertController
+                                          alertControllerWithTitle: title
+                                          message:nil
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+     textField.placeholder = @"passphrase";
+     textField.textColor = [UIColor blueColor];
+     textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+     textField.borderStyle = UITextBorderStyleRoundedRect;
+     textField.secureTextEntry = YES;
+     }];
+    
+    [alertController addAction:[UIAlertAction actionWithTitle:@"OK"
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:^(UIAlertAction *action) {
+                                UITextField *passwordField = alertController.textFields.firstObject;
+                                result = passwordField.text ?: @"";
+                                dispatch_semaphore_signal(dsema);
+                                // TODO: explicit_bzero of passwordField -- impossible?
+                                }]];
+    
+    [topViewController presentViewController:alertController animated:YES completion:nil];
+  });
+  
+  dispatch_semaphore_wait(dsema, DISPATCH_TIME_FOREVER);
+  return xstrdup(result.UTF8String);
 }
 
-
 void systemAlert(char* prompt) {
-    // Need to get the root controller without having access to "self".
-    UIViewController *topViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
-    while (topViewController.presentedViewController) topViewController = topViewController.presentedViewController;
-    // alerts have to go to the main queue:
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
-        UIAlertController* alertController = [UIAlertController alertControllerWithTitle:[NSString stringWithUTF8String:prompt]
-            message:nil
-            preferredStyle:UIAlertControllerStyleAlert];
-        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                                    done = true;
-                                    }]];
-        [topViewController presentViewController:alertController animated:YES completion:nil];
-    });
-    while (!done) {};
-    done = false;
+  dispatch_semaphore_t dsema = dispatch_semaphore_create(0);
+  
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    UIViewController *topViewController = __topViewController();
+    
+    NSString *title = [NSString stringWithUTF8String:prompt];
+    UIAlertController* alertController = [UIAlertController alertControllerWithTitle:title
+                                                                             message:nil preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alertController addAction:[UIAlertAction actionWithTitle:@"OK"
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:^(UIAlertAction *action) {
+                                dispatch_semaphore_signal(dsema);
+                                }]];
+    
+    [topViewController presentViewController:alertController animated:YES completion:nil];
+  });
+  
+  dispatch_semaphore_wait(dsema, DISPATCH_TIME_FOREVER);
 }

@@ -7,9 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		220E720920944900008E7FAF /* vis.c in Sources */ = {isa = PBXBuildFile; fileRef = 228E399620615B0C0055B5EF /* vis.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		222446342065642E0018D400 /* sessionParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = 222446322065642E0018D400 /* sessionParameters.h */; };
 		222446352065642E0018D400 /* sessionParameters.m in Sources */ = {isa = PBXBuildFile; fileRef = 222446332065642E0018D400 /* sessionParameters.m */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
+		22327A9F209E3ADD0026B98C /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 22327A9E209E3ADD0026B98C /* md5.c */; };
+		22327AA1209E3AE30026B98C /* commoncrypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 22327AA0209E3AE30026B98C /* commoncrypto.c */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
 		225782911FDB4D390050F312 /* curl_config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257811A1FDB4D380050F312 /* curl_config.h */; };
@@ -145,7 +148,36 @@
 		22AFD0792067F88500881B2A /* pathmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4C1FDB47A90050F312 /* pathmatch.c */; };
 		22B753052068DF8400F2B025 /* shell.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B753042068DF8400F2B025 /* shell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22B7530B2069801700F2B025 /* curl_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B7530A2069801700F2B025 /* curl_ios.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		22C1D2E920A842460093127F /* ios_error.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27661FDB3FDA0087DDAD /* ios_error.h */; };
+		22C505852098ADD800FDDFA9 /* y.tab.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057D2098ADD700FDDFA9 /* y.tab.c */; };
+		22C505862098ADD800FDDFA9 /* find.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057E2098ADD700FDDFA9 /* find.c */; };
+		22C505872098ADD800FDDFA9 /* ls.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057F2098ADD700FDDFA9 /* ls.c */; };
+		22C505882098ADD800FDDFA9 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505802098ADD700FDDFA9 /* misc.c */; };
+		22C505892098ADD800FDDFA9 /* option.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505812098ADD800FDDFA9 /* option.c */; };
+		22C5058A2098ADD800FDDFA9 /* function.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505822098ADD800FDDFA9 /* function.c */; };
+		22C5058B2098ADD800FDDFA9 /* operator.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505832098ADD800FDDFA9 /* operator.c */; };
+		22C5058C2098ADD800FDDFA9 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505842098ADD800FDDFA9 /* main.c */; };
+		22C505922098B56400FDDFA9 /* diffdir.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5058E2098B56400FDDFA9 /* diffdir.c */; };
+		22C505932098B56400FDDFA9 /* xmalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5058F2098B56400FDDFA9 /* xmalloc.c */; };
+		22C505942098B56400FDDFA9 /* diff.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505902098B56400FDDFA9 /* diff.c */; };
+		22C505952098B56400FDDFA9 /* diffreg.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505912098B56400FDDFA9 /* diffreg.c */; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
+		22F0803820973712003C3BF0 /* libc_replacement.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803620973712003C3BF0 /* libc_replacement.c */; };
+		22F0803B20975779003C3BF0 /* head.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803A20975779003C3BF0 /* head.c */; };
+		22F08041209761EA003C3BF0 /* forward.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803D209761EA003C3BF0 /* forward.c */; };
+		22F08042209761EA003C3BF0 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803E209761EA003C3BF0 /* misc.c */; };
+		22F08043209761EA003C3BF0 /* reverse.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803F209761EA003C3BF0 /* reverse.c */; };
+		22F08044209761EA003C3BF0 /* read.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08040209761EA003C3BF0 /* read.c */; };
+		22F08046209761F4003C3BF0 /* tail.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08045209761F4003C3BF0 /* tail.c */; };
+		22F08050209766BD003C3BF0 /* mem.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08048209766BC003C3BF0 /* mem.c */; };
+		22F08051209766BD003C3BF0 /* sort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F08049209766BD003C3BF0 /* sort.c */; };
+		22F08052209766BD003C3BF0 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804A209766BD003C3BF0 /* file.c */; };
+		22F08053209766BD003C3BF0 /* commoncrypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804B209766BD003C3BF0 /* commoncrypto.c */; };
+		22F08054209766BD003C3BF0 /* bwstring.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804C209766BD003C3BF0 /* bwstring.c */; };
+		22F08055209766BD003C3BF0 /* vsort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804D209766BD003C3BF0 /* vsort.c */; };
+		22F08056209766BD003C3BF0 /* coll.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804E209766BD003C3BF0 /* coll.c */; };
+		22F08057209766BD003C3BF0 /* radixsort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804F209766BD003C3BF0 /* radixsort.c */; };
+		22F0805A20979939003C3BF0 /* uniq.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0805920979938003C3BF0 /* uniq.c */; };
 		22F6A1142068393900E618F9 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		22F6A1152068393E00E618F9 /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
 		22F6A1162068394200E618F9 /* date.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27711FDB3FDA0087DDAD /* date.c */; };
@@ -435,6 +467,8 @@
 		222446322065642E0018D400 /* sessionParameters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sessionParameters.h; sourceTree = "<group>"; };
 		222446332065642E0018D400 /* sessionParameters.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = sessionParameters.m; sourceTree = "<group>"; };
 		22319F9E1FDC2332004D875A /* getopt.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = getopt.c; sourceTree = "<group>"; };
+		22327A9E209E3ADD0026B98C /* md5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = md5.c; path = text_cmds/md5/md5.c; sourceTree = SOURCE_ROOT; };
+		22327AA0209E3AE30026B98C /* commoncrypto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = commoncrypto.c; path = text_cmds/md5/commoncrypto.c; sourceTree = SOURCE_ROOT; };
 		223496AB1FD5FC71007ED1A9 /* ios_system.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ios_system.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		223496AE1FD5FC71007ED1A9 /* ios_system.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_system.h; sourceTree = "<group>"; };
 		223496AF1FD5FC71007ED1A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -844,6 +878,18 @@
 		22AC09E520209C57006F7D8B /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = Frameworks/libssh2.framework; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
 		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
+		22C5057D2098ADD700FDDFA9 /* y.tab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = y.tab.c; path = bsd_find/y.tab.c; sourceTree = SOURCE_ROOT; };
+		22C5057E2098ADD700FDDFA9 /* find.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = find.c; path = bsd_find/find.c; sourceTree = SOURCE_ROOT; };
+		22C5057F2098ADD700FDDFA9 /* ls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ls.c; path = bsd_find/ls.c; sourceTree = SOURCE_ROOT; };
+		22C505802098ADD700FDDFA9 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = bsd_find/misc.c; sourceTree = SOURCE_ROOT; };
+		22C505812098ADD800FDDFA9 /* option.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = option.c; path = bsd_find/option.c; sourceTree = SOURCE_ROOT; };
+		22C505822098ADD800FDDFA9 /* function.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = function.c; path = bsd_find/function.c; sourceTree = SOURCE_ROOT; };
+		22C505832098ADD800FDDFA9 /* operator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = operator.c; path = bsd_find/operator.c; sourceTree = SOURCE_ROOT; };
+		22C505842098ADD800FDDFA9 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = bsd_find/main.c; sourceTree = SOURCE_ROOT; };
+		22C5058E2098B56400FDDFA9 /* diffdir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = diffdir.c; path = bsd_diff/diffdir.c; sourceTree = SOURCE_ROOT; };
+		22C5058F2098B56400FDDFA9 /* xmalloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xmalloc.c; path = bsd_diff/xmalloc.c; sourceTree = SOURCE_ROOT; };
+		22C505902098B56400FDDFA9 /* diff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = diff.c; path = bsd_diff/diff.c; sourceTree = SOURCE_ROOT; };
+		22C505912098B56400FDDFA9 /* diffreg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = diffreg.c; path = bsd_diff/diffreg.c; sourceTree = SOURCE_ROOT; };
 		22CF27601FDB3FDA0087DDAD /* libutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libutil.h; path = libutil/libutil.h; sourceTree = SOURCE_ROOT; };
 		22CF27661FDB3FDA0087DDAD /* ios_error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_error.h; sourceTree = SOURCE_ROOT; };
 		22CF27691FDB3FDA0087DDAD /* printenv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = printenv.c; sourceTree = "<group>"; };
@@ -870,6 +916,22 @@
 		22D8DEB920079E4C00FAADB7 /* cmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmap.c; path = text_cmds/tr/cmap.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBA20079E4C00FAADB7 /* tr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tr.c; path = text_cmds/tr/tr.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBB20079E4C00FAADB7 /* str.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = str.c; path = text_cmds/tr/str.c; sourceTree = SOURCE_ROOT; };
+		22F0803620973712003C3BF0 /* libc_replacement.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = libc_replacement.c; sourceTree = "<group>"; };
+		22F0803A20975779003C3BF0 /* head.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = head.c; path = text_cmds/head/head.c; sourceTree = SOURCE_ROOT; };
+		22F0803D209761EA003C3BF0 /* forward.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = forward.c; path = text_cmds/tail/forward.c; sourceTree = SOURCE_ROOT; };
+		22F0803E209761EA003C3BF0 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = text_cmds/tail/misc.c; sourceTree = SOURCE_ROOT; };
+		22F0803F209761EA003C3BF0 /* reverse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = reverse.c; path = text_cmds/tail/reverse.c; sourceTree = SOURCE_ROOT; };
+		22F08040209761EA003C3BF0 /* read.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = read.c; path = text_cmds/tail/read.c; sourceTree = SOURCE_ROOT; };
+		22F08045209761F4003C3BF0 /* tail.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tail.c; path = text_cmds/tail/tail.c; sourceTree = SOURCE_ROOT; };
+		22F08048209766BC003C3BF0 /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mem.c; path = text_cmds/sort/mem.c; sourceTree = SOURCE_ROOT; };
+		22F08049209766BD003C3BF0 /* sort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sort.c; path = text_cmds/sort/sort.c; sourceTree = SOURCE_ROOT; };
+		22F0804A209766BD003C3BF0 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file.c; path = text_cmds/sort/file.c; sourceTree = SOURCE_ROOT; };
+		22F0804B209766BD003C3BF0 /* commoncrypto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = commoncrypto.c; path = text_cmds/sort/commoncrypto.c; sourceTree = SOURCE_ROOT; };
+		22F0804C209766BD003C3BF0 /* bwstring.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bwstring.c; path = text_cmds/sort/bwstring.c; sourceTree = SOURCE_ROOT; };
+		22F0804D209766BD003C3BF0 /* vsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vsort.c; path = text_cmds/sort/vsort.c; sourceTree = SOURCE_ROOT; };
+		22F0804E209766BD003C3BF0 /* coll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = coll.c; path = text_cmds/sort/coll.c; sourceTree = SOURCE_ROOT; };
+		22F0804F209766BD003C3BF0 /* radixsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = radixsort.c; path = text_cmds/sort/radixsort.c; sourceTree = SOURCE_ROOT; };
+		22F0805920979938003C3BF0 /* uniq.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uniq.c; path = text_cmds/uniq/uniq.c; sourceTree = SOURCE_ROOT; };
 		22F567C72020B807009850FD /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = Frameworks/openssl.framework; sourceTree = "<group>"; };
 		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		22F568222020C42F009850FD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
@@ -968,12 +1030,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		22327A9D209E3AB20026B98C /* md5 */ = {
+			isa = PBXGroup;
+			children = (
+				22327A9E209E3ADD0026B98C /* md5.c */,
+				22327AA0209E3AE30026B98C /* commoncrypto.c */,
+			);
+			name = md5;
+			sourceTree = "<group>";
+		};
 		223496A11FD5FC71007ED1A9 = {
 			isa = PBXGroup;
 			children = (
 				22878D4B2036212E00286AF1 /* ssh */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
 				225F060F2016751800466685 /* getopt_long.c */,
+				22F0803620973712003C3BF0 /* libc_replacement.c */,
 				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				22B7530A2069801700F2B025 /* curl_ios.h */,
 				22B753042068DF8400F2B025 /* shell.h */,
@@ -1650,6 +1722,7 @@
 		226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
+				22C5057C209875E200FDDFA9 /* find */,
 				225F060920163BFC00466685 /* tee */,
 				22D8DEB4200791A500FAADB7 /* echo */,
 				22CF276F1FDB3FDA0087DDAD /* date */,
@@ -1736,6 +1809,33 @@
 			name = ssh;
 			sourceTree = "<group>";
 		};
+		22C5057C209875E200FDDFA9 /* find */ = {
+			isa = PBXGroup;
+			children = (
+				22C5057E2098ADD700FDDFA9 /* find.c */,
+				22C505822098ADD800FDDFA9 /* function.c */,
+				22C5057F2098ADD700FDDFA9 /* ls.c */,
+				22C505842098ADD800FDDFA9 /* main.c */,
+				22C505802098ADD700FDDFA9 /* misc.c */,
+				22C505832098ADD800FDDFA9 /* operator.c */,
+				22C505812098ADD800FDDFA9 /* option.c */,
+				22C5057D2098ADD700FDDFA9 /* y.tab.c */,
+			);
+			name = find;
+			path = ios_system;
+			sourceTree = "<group>";
+		};
+		22C5058D2098B51A00FDDFA9 /* diff */ = {
+			isa = PBXGroup;
+			children = (
+				22C505902098B56400FDDFA9 /* diff.c */,
+				22C5058E2098B56400FDDFA9 /* diffdir.c */,
+				22C505912098B56400FDDFA9 /* diffreg.c */,
+				22C5058F2098B56400FDDFA9 /* xmalloc.c */,
+			);
+			name = diff;
+			sourceTree = "<group>";
+		};
 		22CF27671FDB3FDA0087DDAD /* printenv */ = {
 			isa = PBXGroup;
 			children = (
@@ -1807,6 +1907,12 @@
 		22CF27B01FDB42F50087DDAD /* text_cmds_grp */ = {
 			isa = PBXGroup;
 			children = (
+				22327A9D209E3AB20026B98C /* md5 */,
+				22C5058D2098B51A00FDDFA9 /* diff */,
+				22F0805820976B25003C3BF0 /* uniq */,
+				22F0804720976687003C3BF0 /* sort */,
+				22F0803C209761CC003C3BF0 /* tail */,
+				22F0803920975764003C3BF0 /* head */,
 				22D8DEB720079E4100FAADB7 /* tr */,
 				2248DB102004C5C500F2944C /* sed */,
 				2248DAFF2004A58600F2944C /* ed */,
@@ -1864,6 +1970,49 @@
 				22D8DEBA20079E4C00FAADB7 /* tr.c */,
 			);
 			path = tr;
+			sourceTree = "<group>";
+		};
+		22F0803920975764003C3BF0 /* head */ = {
+			isa = PBXGroup;
+			children = (
+				22F0803A20975779003C3BF0 /* head.c */,
+			);
+			name = head;
+			sourceTree = "<group>";
+		};
+		22F0803C209761CC003C3BF0 /* tail */ = {
+			isa = PBXGroup;
+			children = (
+				22F0803D209761EA003C3BF0 /* forward.c */,
+				22F0803E209761EA003C3BF0 /* misc.c */,
+				22F08040209761EA003C3BF0 /* read.c */,
+				22F0803F209761EA003C3BF0 /* reverse.c */,
+				22F08045209761F4003C3BF0 /* tail.c */,
+			);
+			name = tail;
+			sourceTree = "<group>";
+		};
+		22F0804720976687003C3BF0 /* sort */ = {
+			isa = PBXGroup;
+			children = (
+				22F0804C209766BD003C3BF0 /* bwstring.c */,
+				22F0804E209766BD003C3BF0 /* coll.c */,
+				22F0804B209766BD003C3BF0 /* commoncrypto.c */,
+				22F0804A209766BD003C3BF0 /* file.c */,
+				22F08048209766BC003C3BF0 /* mem.c */,
+				22F0804F209766BD003C3BF0 /* radixsort.c */,
+				22F08049209766BD003C3BF0 /* sort.c */,
+				22F0804D209766BD003C3BF0 /* vsort.c */,
+			);
+			name = sort;
+			sourceTree = "<group>";
+		};
+		22F0805820976B25003C3BF0 /* uniq */ = {
+			isa = PBXGroup;
+			children = (
+				22F0805920979938003C3BF0 /* uniq.c */,
+			);
+			name = uniq;
 			sourceTree = "<group>";
 		};
 		22F6A10D2068390800E618F9 /* text */ = {
@@ -1927,6 +2076,7 @@
 				22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */,
 				226378B21FDB3EE400AE8827 /* zopen.h in Headers */,
 				226378811FDB3EE400AE8827 /* ncurses_dll.h in Headers */,
+				22C1D2E920A842460093127F /* ios_error.h in Headers */,
 				222446342065642E0018D400 /* sessionParameters.h in Headers */,
 				226378A81FDB3EE400AE8827 /* chmod_acl.h in Headers */,
 			);
@@ -2270,6 +2420,7 @@
 			files = (
 				22319FA01FDC2332004D875A /* getopt.c in Sources */,
 				222446352065642E0018D400 /* sessionParameters.m in Sources */,
+				22F0803820973712003C3BF0 /* libc_replacement.c in Sources */,
 				225F06102016751900466685 /* getopt_long.c in Sources */,
 				223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */,
 			);
@@ -2404,20 +2555,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22C505872098ADD800FDDFA9 /* ls.c in Sources */,
 				22F6A11E2068395B00E618F9 /* fmt.c in Sources */,
 				22F6A1212068395B00E618F9 /* w.c in Sources */,
+				22C505882098ADD800FDDFA9 /* misc.c in Sources */,
 				22F6A11A2068394B00E618F9 /* id.c in Sources */,
+				22C5058A2098ADD800FDDFA9 /* function.c in Sources */,
 				22F6A11F2068395B00E618F9 /* pr_time.c in Sources */,
+				22C5058B2098ADD800FDDFA9 /* operator.c in Sources */,
+				22C5058C2098ADD800FDDFA9 /* main.c in Sources */,
 				22F6A1202068395B00E618F9 /* proc_compare.c in Sources */,
 				22F6A11B2068394E00E618F9 /* printenv.c in Sources */,
 				22F6A1152068393E00E618F9 /* echo.c in Sources */,
 				22F6A11C2068395200E618F9 /* pwd.c in Sources */,
+				22C505862098ADD800FDDFA9 /* find.c in Sources */,
 				22F6A1172068394200E618F9 /* vary.c in Sources */,
+				22C505852098ADD800FDDFA9 /* y.tab.c in Sources */,
 				22F6A1182068394700E618F9 /* env.c in Sources */,
 				22F6A1162068394200E618F9 /* date.c in Sources */,
 				22F6A1142068393900E618F9 /* tee.c in Sources */,
 				22F6A11D2068395600E618F9 /* uname.c in Sources */,
 				22F6A1192068394700E618F9 /* envopts.c in Sources */,
+				22C505892098ADD800FDDFA9 /* option.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2425,27 +2584,48 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22327A9F209E3ADD0026B98C /* md5.c in Sources */,
+				22C505942098B56400FDDFA9 /* diff.c in Sources */,
+				22F08050209766BD003C3BF0 /* mem.c in Sources */,
+				22F08042209761EA003C3BF0 /* misc.c in Sources */,
 				22F6A14020683A2800E618F9 /* main.c in Sources */,
+				22F08052209766BD003C3BF0 /* file.c in Sources */,
 				22F6A13D20683A2800E618F9 /* cbc.c in Sources */,
+				22C505932098B56400FDDFA9 /* xmalloc.c in Sources */,
 				22F6A14820683A3000E618F9 /* util.c in Sources */,
+				22C505952098B56400FDDFA9 /* diffreg.c in Sources */,
 				22F6A13F20683A2800E618F9 /* io.c in Sources */,
+				22F08054209766BD003C3BF0 /* bwstring.c in Sources */,
 				22F6A13A20683A2200E618F9 /* misc.c in Sources */,
 				22F6A13B20683A2200E618F9 /* process.c in Sources */,
+				22F08053209766BD003C3BF0 /* commoncrypto.c in Sources */,
 				22F6A13820683A2200E618F9 /* compile.c in Sources */,
 				22F6A14120683A2800E618F9 /* re.c in Sources */,
 				22F6A13620683A1D00E618F9 /* str.c in Sources */,
+				22F0803B20975779003C3BF0 /* head.c in Sources */,
+				22F08056209766BD003C3BF0 /* coll.c in Sources */,
 				22F6A13920683A2200E618F9 /* main.c in Sources */,
 				22F6A13520683A1D00E618F9 /* cset.c in Sources */,
 				22F6A13C20683A2800E618F9 /* buf.c in Sources */,
+				22F08051209766BD003C3BF0 /* sort.c in Sources */,
 				22F6A14620683A3000E618F9 /* grep.c in Sources */,
 				22F6A13320683A1800E618F9 /* cmap.c in Sources */,
+				22F08041209761EA003C3BF0 /* forward.c in Sources */,
 				22F6A14220683A2800E618F9 /* sub.c in Sources */,
 				22F6A14920683A3400E618F9 /* wc.c in Sources */,
 				22F6A14320683A2800E618F9 /* undo.c in Sources */,
+				22C505922098B56400FDDFA9 /* diffdir.c in Sources */,
 				22F6A14420683A2B00E618F9 /* cat.c in Sources */,
+				22F0805A20979939003C3BF0 /* uniq.c in Sources */,
 				22F6A13720683A1D00E618F9 /* tr.c in Sources */,
 				22F6A14720683A3000E618F9 /* queue.c in Sources */,
+				22327AA1209E3AE30026B98C /* commoncrypto.c in Sources */,
+				22F08055209766BD003C3BF0 /* vsort.c in Sources */,
+				22F08044209761EA003C3BF0 /* read.c in Sources */,
 				22F6A13E20683A2800E618F9 /* glbl.c in Sources */,
+				22F08057209766BD003C3BF0 /* radixsort.c in Sources */,
+				22F08046209761F4003C3BF0 /* tail.c in Sources */,
+				22F08043209761EA003C3BF0 /* reverse.c in Sources */,
 				22F6A14520683A3000E618F9 /* file.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2494,6 +2674,7 @@
 				22F6A19C20683E1200E618F9 /* xmalloc.c in Sources */,
 				22F6A18520683E1200E618F9 /* digest-openssl.c in Sources */,
 				22F6A17F20683E1200E618F9 /* poly1305.c in Sources */,
+				220E720920944900008E7FAF /* vis.c in Sources */,
 				22F6A1A020683E1200E618F9 /* sshbuf-getput-basic.c in Sources */,
 				22F6A1A620683E1200E618F9 /* ssh-keygen.c in Sources */,
 				22F6A17820683E1200E618F9 /* fe25519.c in Sources */,
@@ -2754,9 +2935,9 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -2764,6 +2945,7 @@
 					"-Wincompatible-pointer-types-discards-qualifiers",
 				);
 				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -2812,7 +2994,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -2821,6 +3003,7 @@
 					"-Wincompatible-pointer-types-discards-qualifiers",
 				);
 				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -2844,8 +3027,9 @@
 				);
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -2860,7 +3044,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -2881,7 +3064,7 @@
 				);
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -2897,7 +3080,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -2916,8 +3098,8 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = tar/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -2928,7 +3110,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.tar";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -2947,7 +3128,6 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = tar/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -2959,7 +3139,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.tar";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -2978,12 +3157,11 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = files/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.files";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -3002,12 +3180,10 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = files/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.files";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -3026,12 +3202,11 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = shell/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.shell";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -3050,12 +3225,10 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = shell/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.shell";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -3074,12 +3247,11 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = text/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.text";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -3098,12 +3270,10 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = text/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.text";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -3122,8 +3292,8 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = awk/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3135,7 +3305,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.awk";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -3154,7 +3323,6 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = awk/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -3167,7 +3335,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.awk";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -3190,12 +3357,12 @@
 				);
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.ssh-cmd";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -3218,12 +3385,11 @@
 				);
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.ssh-cmd";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -3246,8 +3412,9 @@
 				);
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-F",
@@ -3256,7 +3423,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.curl";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -3279,7 +3445,7 @@
 				);
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -3289,7 +3455,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.curl";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

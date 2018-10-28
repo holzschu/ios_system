@@ -1,0 +1,558 @@
+diff -Naur Libinfo-517/lookup.subproj/cache_module.c libinfo/lookup.subproj/cache_module.c
+--- Libinfo-517/lookup.subproj/cache_module.c	2012-10-03 22:52:28.000000000 +0200
++++ libinfo/lookup.subproj/cache_module.c	2018-05-22 20:43:38.000000000 +0200
+@@ -21,7 +21,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
+-#include <si_module.h>
++#include "si_module.h"
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <string.h>
+@@ -29,7 +29,7 @@
+ #include <errno.h>
+ #include <arpa/inet.h>
+ #include <sys/stat.h>
+-#include <ils.h>
++#include "ils.h"
+ #include <pthread.h>
+ #include <libkern/OSAtomic.h>
+ #include <dispatch/dispatch.h>
+diff -Naur Libinfo-517/lookup.subproj/file_module.c libinfo/lookup.subproj/file_module.c
+--- Libinfo-517/lookup.subproj/file_module.c	2017-02-21 23:13:49.000000000 +0100
++++ libinfo/lookup.subproj/file_module.c	2018-05-22 20:52:54.000000000 +0200
+@@ -21,7 +21,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
+-#include <si_module.h>
++#include "si_module.h"
+ #include <paths.h>
+ #include <stdio.h>
+ #include <unistd.h>
+@@ -35,7 +35,7 @@
+ #include <sys/param.h>
+ #include <sys/mount.h>
+ #include <sys/stat.h>
+-#include <ils.h>
++#include "ils.h"
+ #include <dispatch/dispatch.h>
+ #include <TargetConditionals.h>
+ 
+diff -Naur Libinfo-517/lookup.subproj/ils.c libinfo/lookup.subproj/ils.c
+--- Libinfo-517/lookup.subproj/ils.c	2015-10-06 23:45:28.000000000 +0200
++++ libinfo/lookup.subproj/ils.c	2018-05-22 20:43:10.000000000 +0200
+@@ -25,7 +25,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <mach/mach.h>
+-#include <servers/bootstrap.h>
++// #include <servers/bootstrap.h>
+ #include <pthread.h>
+ #include <errno.h>
+ #include <notify.h>
+@@ -34,7 +34,7 @@
+ #ifdef DEBUG
+ #include <asl.h>
+ #endif
+-#include <ils.h>
++#include "ils.h"
+ 
+ #define ILS_MAGIC_SIZE 8
+ #define ILS_MAGIC "ILSMAGIC"
+diff -Naur Libinfo-517/lookup.subproj/kvbuf.c libinfo/lookup.subproj/kvbuf.c
+--- Libinfo-517/lookup.subproj/kvbuf.c	2010-11-13 01:54:36.000000000 +0100
++++ libinfo/lookup.subproj/kvbuf.c	2018-05-22 20:43:16.000000000 +0200
+@@ -25,7 +25,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <kvbuf.h>
++#include "kvbuf.h"
+ 
+ #define KVBUF_CHUNK 256
+ 
+diff -Naur Libinfo-517/lookup.subproj/libinfo.c libinfo/lookup.subproj/libinfo.c
+--- Libinfo-517/lookup.subproj/libinfo.c	2017-06-02 21:00:18.000000000 +0200
++++ libinfo/lookup.subproj/libinfo.c	2018-05-23 11:31:09.000000000 +0200
+@@ -28,19 +28,19 @@
+ #include <errno.h>
+ #include <netdb.h>
+ #include <asl.h>
+-#include <printerdb.h>
++#include "printerdb.h"
+ #include <sys/param.h>
+ #include <sys/syscall.h>
+ #include <pthread.h>
+ #include <arpa/inet.h>
+-#include <netinet/if_ether.h>
++// #include <netinet/if_ether.h>
+ #include "si_module.h"
+ #include "libinfo.h"
+-#include <thread_data.h>
++#include "thread_data.h"
+ #include <sys/kauth.h>
+ #include "netdb_async.h"
+ #include <dispatch/dispatch.h>
+-#include <mach-o/dyld_priv.h>
++// #include <mach-o/dyld_priv.h>
+ #include <sys/stat.h>
+ 
+ #define SOCK_UNSPEC 0
+@@ -782,7 +782,7 @@
+ }
+ 
+ int32_t
+-getgrouplist_2(const char *name, gid_t basegid, gid_t **groups)
++ios_getgrouplist_2(const char *name, gid_t basegid, gid_t **groups)
+ {
+ 	/*
+ 	 * Passes back a gid_t list containing all the users groups (and basegid).
+@@ -1564,28 +1564,6 @@
+ int
+ ether_hostton(const char *name, struct ether_addr *e)
+ {
+-	si_item_t *item;
+-	si_mac_t *mac;
+-	uint32_t t[6];
+-	int i;
+-
+-#ifdef CALL_TRACE
+-	fprintf(stderr, "-> %s %s\n", __func__, name);
+-#endif
+-
+-	if (name == NULL) return -1;
+-	if (e == NULL) return -1;
+-
+-	item = si_mac_byname(si_search(), name);
+-	LI_set_thread_item(CATEGORY_MAC + 100, item);
+-	if (item == NULL) return -1;
+-
+-	mac = (si_mac_t *)((uintptr_t)item + sizeof(si_item_t));
+-
+-	i = sscanf(mac->mac, " %x:%x:%x:%x:%x:%x", &t[0], &t[1], &t[2], &t[3], &t[4], &t[5]);
+-	if (i != 6) return -1;
+-
+-	for (i = 0; i < 6; i++) e->ether_addr_octet[i] = t[i];
+ 	return 0;
+ }
+ 
+@@ -1594,28 +1572,6 @@
+ int
+ ether_ntohost(char *name, const struct ether_addr *e)
+ {
+-	si_item_t *item;
+-	si_mac_t *mac;
+-	uint32_t i, x[6];
+-	char str[256];
+-
+-	if (name == NULL) return -1;
+-	if (e == NULL) return -1;
+-
+-	for (i = 0; i < 6; i++) x[i] = e->ether_addr_octet[i];
+-	snprintf(str, sizeof(str), "%x:%x:%x:%x:%x:%x", x[0], x[1], x[2], x[3], x[4], x[5]);
+-
+-#ifdef CALL_TRACE
+-	fprintf(stderr, "-> %s %s\n", __func__, str);
+-#endif
+-
+-	item = si_mac_bymac(si_search(), str);
+-	LI_set_thread_item(CATEGORY_MAC + 200, item);
+-	if (item == NULL) return -1;
+-
+-	mac = (si_mac_t *)((uintptr_t)item + sizeof(si_item_t));
+-
+-	memcpy(name, mac->host, strlen(mac->host) + 1);
+ 	return 0;
+ }
+ 
+diff -Naur Libinfo-517/lookup.subproj/libinfo.h libinfo/lookup.subproj/libinfo.h
+--- Libinfo-517/lookup.subproj/libinfo.h	2010-12-01 02:34:46.000000000 +0100
++++ libinfo/lookup.subproj/libinfo.h	2018-05-22 20:52:44.000000000 +0200
+@@ -21,7 +21,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
+-#include <si_module.h>
++#include "si_module.h"
+ 
+ /*
+  * SPI to disable / enable modules during Libinfo search.
+diff -Naur Libinfo-517/lookup.subproj/mdns_module.c libinfo/lookup.subproj/mdns_module.c
+--- Libinfo-517/lookup.subproj/mdns_module.c	2016-09-28 18:48:13.000000000 +0200
++++ libinfo/lookup.subproj/mdns_module.c	2018-05-22 20:54:50.000000000 +0200
+@@ -85,7 +85,7 @@
+  */
+ 
+ #include "ils.h"
+-#include "netdb.h"
++// #include "netdb.h"
+ #include "si_module.h"
+ 
+ #include <assert.h>
+@@ -96,7 +96,7 @@
+ #include <netinet/in.h>
+ #include <ctype.h>
+ #include <dns_sd.h>
+-#include <dnsinfo.h>
++// #include <dnsinfo.h>
+ #include <errno.h>
+ #include <nameser.h>
+ #include <notify.h>
+diff -Naur Libinfo-517/lookup.subproj/si_getaddrinfo.c libinfo/lookup.subproj/si_getaddrinfo.c
+--- Libinfo-517/lookup.subproj/si_getaddrinfo.c	2017-01-18 20:13:55.000000000 +0100
++++ libinfo/lookup.subproj/si_getaddrinfo.c	2018-05-22 20:52:00.000000000 +0200
+@@ -29,9 +29,9 @@
+ #include <sys/socket.h>
+ #include <net/if.h>
+ #include <netinet/in.h>
+-#include <network/sa_compare.h>
+-#include <network/nat64.h>
+-#include <network/path_evaluation.h>
++// #include <network/sa_compare.h>
++// #include <network/nat64.h>
++// #include <network/path_evaluation.h>
+ #include <arpa/inet.h>
+ #include <ifaddrs.h>
+ #include <net/if.h>
+@@ -765,25 +765,7 @@
+ int
+ _gai_addr_sort(const void *a, const void *b)
+ {
+-	si_item_t **item_a, **item_b;
+-	si_addrinfo_t *p, *q;
+-	struct sockaddr *sp, *sq;
+-	
+-	item_a = (si_item_t **)a;
+-	item_b = (si_item_t **)b;
+-
+-	p = (si_addrinfo_t *)((uintptr_t)*item_a + sizeof(si_item_t));
+-	q = (si_addrinfo_t *)((uintptr_t)*item_b + sizeof(si_item_t));
+-
+-	sp = (struct sockaddr *)p->ai_addr.x;
+-	sq = (struct sockaddr *)q->ai_addr.x;
+-
+-	/*
+-	 * sa_dst_compare(A,B) returns -1 if A is less desirable than B,
+-	 * 0 if they are equally desirable, and 1 if A is more desirable.
+-	 * qsort() expects the inverse, so we swap sp and sq.
+-	 */
+-	return sa_dst_compare(sq, sp, 0);
++    return 0;
+ }
+ 
+ static si_list_t *
+@@ -1034,246 +1016,14 @@
+ _gai_nat64_synthesis(si_mod_t *si, const char *node, const void *servptr, int numericserv,
+ 					 uint32_t family, uint32_t socktype, uint32_t proto, uint32_t flags, const char *interface)
+ {
+-	if (NULL == node)
+-	{
+-		return NULL;
+-	}
+-
+-	/* validate AI_NUMERICHOST */
+-	if ((flags & AI_NUMERICHOST) != 0)
+-	{
+-		return NULL;
+-	}
+-
+-	/* validate family */
+-	if ((AF_UNSPEC != family) && (AF_INET6 != family))
+-	{
+-		return NULL;
+-	}
+-
+-	/* validate that node is an IPv4 address */
+-	struct in_addr a4;
+-	if (1 != inet_pton(AF_INET, node, &a4))
+-	{
+-		return NULL;
+-	}
+-
+-	/* validate that IPv4 address is eligible for NAT64 synthesis */
+-#if defined(NW_NAT64_API_VERSION) && NW_NAT64_API_VERSION >= 2
+-	if (!nw_nat64_can_v4_address_be_synthesized(&a4)) {
+-		return NULL;
+-	}
+-#endif // NW_NAT64_API_VERSION
+-
+-	/* validate that there is at least an IPv6 address configured */
+-	uint32_t num_inet6 = 0;
+-	if ((si_inet_config(NULL, &num_inet6) < 0) || (0 == num_inet6))
+-	{
+-		return NULL;
+-	}
+-
+-	/* validate interface name and convert to index */
+-	uint32_t ifindex = 0;
+-	if (NULL != interface)
+-	{
+-		ifindex = if_nametoindex(interface);
+-		if (0 == ifindex)
+-		{
+-			return NULL;
+-		}
+-	}
+-
+-	/* validate serv and convert to port */
+-	uint16_t port = 0;
+-	if (0 == numericserv)
+-	{
+-		if (_gai_serv_to_port((const char *)servptr, proto, &port) != 0)
+-		{
+-			return NULL;
+-		}
+-		else
+-		{
+-			flags |= AI_NUMERICSERV;
+-		}
+-	}
+-	else if (NULL != servptr)
+-	{
+-		port = *((const uint16_t *)servptr);
+-	}
+-
+-	/* query NAT64 prefixes */
+-	nw_nat64_prefix_t *prefixes = NULL;
+-	const int32_t num_prefixes = nw_nat64_copy_prefixes(&ifindex, &prefixes);
+-	if ((num_prefixes <= 0) || (NULL == prefixes))
+-	{
+-		return NULL;
+-	}
+-
+-	/* add every address to results */
+-	si_list_t *out_list = NULL;
+-	for (int32_t i = 0; i < num_prefixes; i++)
+-	{
+-		struct in6_addr a6;
+-		if (!nw_nat64_synthesize_v6(&prefixes[i], &a4, &a6))
+-		{
+-			continue;
+-		}
+-		si_list_t *temp_list = si_addrinfo_list(si, flags, socktype, proto, NULL, &a6, port, 0, NULL, NULL);
+-		if (NULL == temp_list)
+-		{
+-			continue;
+-		}
+-		if (NULL != out_list)
+-		{
+-			out_list = si_list_concat(out_list, temp_list);
+-			si_list_release(temp_list);
+-		}
+-		else
+-		{
+-			out_list = temp_list;
+-		}
+-	}
+-
+-	free(prefixes);
+-
+-	/* return to standard code path if no NAT64 addresses could be synthesized */
+-	if (NULL == out_list)
+-	{
+-		return NULL;
+-	}
+-
+-	/* add IPv4 addresses and IPv4-mapped IPv6 addresses if appropriate */
+-	if (((AF_UNSPEC == family) && ((flags & AI_ADDRCONFIG) == 0)) ||
+-		((AF_INET6 == family) && ((flags & AI_ALL) != 0) && ((flags & AI_V4MAPPED) != 0)))
+-	{
+-		si_list_t *list4 = si_addrinfo_list(si, flags, socktype, proto, &a4, NULL, port, 0, NULL, NULL);
+-		if (NULL != list4)
+-		{
+-			out_list = si_list_concat(out_list, list4);
+-			si_list_release(list4);
+-		}
+-	}
+-
+-	return _gai_sort_list(out_list, flags);
++    return NULL;
+ }
+ 
+ static si_list_t *
+ _gai_nat64_second_pass(si_list_t *out, si_mod_t *si, const char *serv, uint32_t family, uint32_t socktype,
+ 					   uint32_t proto, uint32_t flags, const char *interface)
+ {
+-	if (out == NULL || out->count == 0)
+-	{
+-		return NULL;
+-	}
+-
+-	/* validate AI_NUMERICHOST */
+-	if ((flags & AI_NUMERICHOST) != 0)
+-	{
+-		return NULL;
+-	}
+-
+-	/* validate family */
+-	if ((AF_UNSPEC != family) && (AF_INET6 != family))
+-	{
+-		return NULL;
+-	}
+-
+-	/* skip if we already have an IPv6 address (unless it is v4-mapped) */
+-	for (uint32_t i = 0; i < out->count; i++)
+-	{
+-		si_addrinfo_t *a = (si_addrinfo_t *)((uintptr_t)out->entry[i] + sizeof(si_item_t));
+-		if (a->ai_family == AF_INET6)
+-		{
+-			struct sockaddr_in6 *s6 = (struct sockaddr_in6 *)a->ai_addr.x;
+-			if (!IN6_IS_ADDR_V4MAPPED(&s6->sin6_addr))
+-			{
+-				return NULL;
+-			}
+-		}
+-	}
+-
+-	si_list_t *out_list = NULL;
+-	const uint32_t flags2 = flags & (~(AI_V4MAPPED | AI_V4MAPPED_CFG));
+-
+-	for (uint32_t i = 0; i < out->count; i++)
+-	{
+-		si_addrinfo_t *a = (si_addrinfo_t *)((uintptr_t)out->entry[i] + sizeof(si_item_t));
+-		struct in_addr *addr4 = NULL;
+-		if (a->ai_family == AF_INET)
+-		{
+-			addr4 = &((struct sockaddr_in *)a->ai_addr.x)->sin_addr;
+-		}
+-		else if (a->ai_family == AF_INET6)
+-		{
+-			struct sockaddr_in6 *s6 = (struct sockaddr_in6 *)a->ai_addr.x;
+-			addr4 = (struct in_addr *)&(s6->sin6_addr.__u6_addr.__u6_addr32[3]);
+-		}
+-		else
+-		{
+-			continue;
+-		}
+-
+-		/* validate that IPv4 address is eligible for NAT64 synthesis */
+-#if defined(NW_NAT64_API_VERSION) && NW_NAT64_API_VERSION >= 2
+-		if (!nw_nat64_can_v4_address_be_synthesized(addr4))
+-		{
+-			continue;
+-		}
+-#endif // NW_NAT64_API_VERSION
+-
+-		char v4_str[INET_ADDRSTRLEN] = {0};
+-		if (NULL == inet_ntop(AF_INET, addr4, v4_str, sizeof(v4_str)))
+-		{
+-			continue;
+-		}
+-
+-		/* skip if we have a path (route) to this address as it might go through a VPN */
+-		nw_endpoint_t endpoint = nw_endpoint_create_address((struct sockaddr *)a->ai_addr.x);
+-		if (endpoint == NULL)
+-		{
+-			continue;
+-		}
+-		nw_path_evaluator_t evaluator = nw_path_create_evaluator_for_endpoint(endpoint, NULL);
+-		network_release(endpoint);
+-		if (evaluator == NULL)
+-		{
+-			continue;
+-		}
+-		nw_path_t path = nw_path_evaluator_copy_path(evaluator);
+-		network_release(evaluator);
+-		if (path == NULL)
+-		{
+-			continue;
+-		}
+-		const nw_path_status_t status = nw_path_get_status(path);
+-		network_release(path);
+-		if (status != nw_path_status_unsatisfied)
+-		{
+-			continue;
+-		}
+-
+-		uint32_t err = SI_STATUS_NO_ERROR;
+-		si_list_t *temp_list = si_addrinfo(si, v4_str, serv, AF_INET6, socktype, proto, flags2, interface, &err);
+-		if (NULL == temp_list)
+-		{
+-			continue;
+-		}
+-		if (err != SI_STATUS_NO_ERROR)
+-		{
+-			si_list_release(temp_list);
+-			continue;
+-		}
+-		if (NULL != out_list)
+-		{
+-			out_list = si_list_concat(out_list, temp_list);
+-			si_list_release(temp_list);
+-		}
+-		else
+-		{
+-			out_list = temp_list;
+-		}
+-	}
+-	return out_list;
++    return NULL;
+ }
+ 
+ si_list_t *
+diff -Naur Libinfo-517/lookup.subproj/si_module.c libinfo/lookup.subproj/si_module.c
+--- Libinfo-517/lookup.subproj/si_module.c	2015-09-15 22:20:28.000000000 +0200
++++ libinfo/lookup.subproj/si_module.c	2018-05-22 20:48:53.000000000 +0200
+@@ -32,7 +32,17 @@
+ #include <pthread.h>
+ #include <mach/mach.h>
+ #include <dispatch/dispatch.h>
+-#include <dispatch/private.h>
++// #include <dispatch/private.h>
++/*!
++ * @enum dispatch_queue_flags_t
++ *
++ * @constant DISPATCH_QUEUE_OVERCOMMIT
++ * The queue will create a new thread for invoking blocks, regardless of how
++ * busy the computer is.
++ */
++enum {
++    DISPATCH_QUEUE_OVERCOMMIT = 0x2ull,
++};
+ #include "si_module.h"
+ 
+ #define PLUGIN_DIR_PATH "/usr/lib/info"
+diff -Naur Libinfo-517/lookup.subproj/si_module.h libinfo/lookup.subproj/si_module.h
+--- Libinfo-517/lookup.subproj/si_module.h	2011-12-22 02:36:35.000000000 +0100
++++ libinfo/lookup.subproj/si_module.h	2018-05-22 20:43:47.000000000 +0200
+@@ -32,11 +32,11 @@
+ #include <grp.h>
+ #include <uuid/uuid.h>
+ #include <netdb.h>
+-#include <aliasdb.h>
++#include "aliasdb.h"
+ #include <fstab.h>
+ #include <mach/mach.h>
+-#include <si_data.h>
+-#include <ils.h>
++#include "si_data.h"
++#include "ils.h"
+ 
+ #define forever for(;;)
+ #define string_equal(A,B) (strcmp(A,B)==0)
+diff -Naur Libinfo-517/lookup.subproj/thread_data.c libinfo/lookup.subproj/thread_data.c
+--- Libinfo-517/lookup.subproj/thread_data.c	2010-03-12 03:01:30.000000000 +0100
++++ libinfo/lookup.subproj/thread_data.c	2018-05-22 20:41:24.000000000 +0200
+@@ -21,7 +21,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
+-#include <thread_data.h>
++#include "thread_data.h"
+ #include <pthread.h>
+ #include <string.h>
+ #include <stdlib.h>
+diff -Naur Libinfo-517/lookup.subproj/thread_data.h libinfo/lookup.subproj/thread_data.h
+--- Libinfo-517/lookup.subproj/thread_data.h	2010-03-12 03:01:30.000000000 +0100
++++ libinfo/lookup.subproj/thread_data.h	2018-05-22 20:41:30.000000000 +0200
+@@ -24,7 +24,7 @@
+ #ifndef __THREAD_DATA_H__
+ #define __THREAD_DATA_H__
+ 
+-#include <si_data.h>
++#include "si_data.h"
+ 
+ si_item_t *LI_get_thread_item(uint32_t key);
+ si_list_t *LI_get_thread_list(uint32_t key);

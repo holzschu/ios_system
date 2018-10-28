@@ -1,15 +1,6 @@
 diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
 --- shell_cmds-203/date/date.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/date.c	2018-03-29 20:29:30.000000000 +0200
-@@ -47,7 +47,7 @@
- #include <sys/stat.h>
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <locale.h>
- #include <stdio.h>
- #include <stdlib.h>
++++ shell_cmds/date/date.c	2018-04-30 22:15:11.000000000 +0200
 @@ -57,13 +57,15 @@
  #include <utmpx.h>
  
@@ -54,44 +45,23 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  	set_timezone = 0;
  	while ((ch = getopt(argc, argv, "d:f:jnRr:t:uv:")) != -1)
  		switch((char)ch) {
-@@ -161,11 +164,19 @@
+@@ -161,11 +164,13 @@
  	 * If -d or -t, set the timezone or daylight savings time; this
  	 * doesn't belong here; the kernel should not know about either.
  	 */
 -	if (set_timezone && settimeofday(NULL, &tz) != 0)
--		err(1, "settimeofday (timezone)");
--
--	if (!rflag && time(&tval) == -1)
--		err(1, "time");
 +    if (set_timezone && settimeofday(NULL, &tz) != 0) {
-+		// err(1, "settimeofday (timezone)");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "date: settimeofday (timezone): %s\n", strerror(errno));
-+        pthread_exit(NULL);
+ 		err(1, "settimeofday (timezone)");
 +    }
-+
+ 
+-	if (!rflag && time(&tval) == -1)
 +    if (!rflag && time(&tval) == -1) {
-+		// err(1, "time");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "date: time: %s\n", strerror(errno));
-+        pthread_exit(NULL);
+ 		err(1, "time");
 +    }
  
  	format = "%+";
  
-@@ -191,7 +202,10 @@
- 	/* 7999711 */
- 	struct tm *ltp = localtime(&tval);
- 	if (ltp == NULL) {
--		err(1, "localtime");
-+		// err(1, "localtime");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "date: localtime: %s\n", strerror(errno));
-+        pthread_exit(NULL);
- 	}
- 	lt = *ltp;
- #else
-@@ -199,7 +213,7 @@
+@@ -199,7 +204,7 @@
  #endif
  	badv = vary_apply(v, &lt);
  	if (badv) {
@@ -100,24 +70,20 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  			badv->arg);
  		vary_destroy(v);
  		usage();
-@@ -214,9 +228,13 @@
+@@ -214,9 +219,10 @@
  		setlocale(LC_TIME, "C");
  
  	(void)strftime(buf, sizeof(buf), format, &lt);
 -	(void)printf("%s\n", buf);
 -	if (fflush(stdout))
--		err(1, "stdout");
 +	(void)fprintf(thread_stdout, "%s\n", buf);
 +    if (fflush(thread_stdout)) {
-+		// err(1, "stdout");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "date: stdout: %s\n", strerror(errno));
-+        pthread_exit(NULL);
+ 		err(1, "stdout");
 +    }
  	/*
  	 * If date/time could not be set/notified in the other hosts as
  	 * determined by netsetval(), a return value 2 is set, which is
-@@ -246,11 +264,11 @@
+@@ -246,11 +252,11 @@
  	if (fmt != NULL) {
  		t = strptime(p, fmt, lt);
  		if (t == NULL) {
@@ -131,17 +97,13 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  				" characters in date string (%s)\n",
  				(long) strlen(t), t);
  	} else {
-@@ -319,19 +337,27 @@
+@@ -319,19 +325,21 @@
  	}
  
  	/* convert broken-down time to GMT clock time */
 -	if ((tval = mktime(lt)) == -1)
--		errx(1, "nonexistent time");
 +    if ((tval = mktime(lt)) == -1) {
-+		// errx(1, "nonexistent time");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "date: nonexistent time\n");
-+        pthread_exit(NULL);
+ 		errx(1, "nonexistent time");
 +    }
  
  	if (!jflag) {
@@ -154,23 +116,18 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  			tv.tv_sec = tval;
  			tv.tv_usec = 0;
 -			if (settimeofday(&tv, NULL) != 0)
--				err(1, "settimeofday (timeval)");
 +            if (settimeofday(&tv, NULL) != 0) {
-+				// err(1, "settimeofday (timeval)");
-+                global_errno = 1;
-+                fprintf(thread_stderr, "date: settimeofday (timeval): %s\n", strerror(errno));
-+                pthread_exit(NULL);
+ 				err(1, "settimeofday (timeval)");
 +            }
  			utx.ut_type = NEW_TIME;
  			(void)gettimeofday(&utx.ut_tv, NULL);
  			pututxline(&utx);
-@@ -346,14 +372,15 @@
+@@ -346,14 +354,14 @@
  static void
  badformat(void)
  {
 -	warnx("illegal time format");
-+    fprintf(thread_stderr, "date: illegal time format\n");
-+    // warnx("illegal time format");
++    warnx("illegal time format");
  	usage();
  }
  
@@ -184,7 +141,7 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  	    unix2003_std ?
 diff -Naur shell_cmds-203/date/extern.h shell_cmds/date/extern.h
 --- shell_cmds-203/date/extern.h	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/extern.h	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/date/extern.h	2018-04-23 20:32:30.000000000 +0200
 @@ -30,6 +30,6 @@
   * $FreeBSD$
   */
@@ -195,13 +152,8 @@ diff -Naur shell_cmds-203/date/extern.h shell_cmds/date/extern.h
  int	netsettime(time_t);
 diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
 --- shell_cmds-203/date/vary.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/vary.c	2018-03-29 20:29:30.000000000 +0200
-@@ -27,11 +27,14 @@
- #include <sys/cdefs.h>
- __FBSDID("$FreeBSD$");
- 
--#include <err.h>
-+// #include <err.h>
++++ shell_cmds/date/vary.c	2018-04-30 22:13:42.000000000 +0200
+@@ -31,7 +31,10 @@
  #include <time.h>
  #include <string.h>
  #include <stdlib.h>
@@ -212,24 +164,21 @@ diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
  
  struct trans {
    int val;
-@@ -92,8 +95,12 @@
+@@ -92,8 +95,9 @@
    } else
      nextp = &result;
  
 -  if ((*nextp = (struct vary *)malloc(sizeof(struct vary))) == NULL)
 -    err(1, "malloc");
 +    if ((*nextp = (struct vary *)malloc(sizeof(struct vary))) == NULL) {
-+        // err(1, "malloc");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "date: malloc: %s\n", strerror(errno));
-+        pthread_exit(NULL);
++        err(1, "malloc");
 +    }
    (*nextp)->arg = arg;
    (*nextp)->next = NULL;
    return result;
 diff -Naur shell_cmds-203/echo/echo.c shell_cmds/echo/echo.c
 --- shell_cmds-203/echo/echo.c	2006-12-21 02:07:57.000000000 +0100
-+++ shell_cmds/echo/echo.c	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/echo/echo.c	2018-04-23 20:32:30.000000000 +0200
 @@ -50,6 +50,10 @@
  #include <stdlib.h>
  #include <string.h>
@@ -287,16 +236,7 @@ diff -Naur shell_cmds-203/echo/echo.c shell_cmds/echo/echo.c
  	}
 diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 --- shell_cmds-203/env/env.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/env.c	2018-03-29 20:29:30.000000000 +0200
-@@ -42,7 +42,7 @@
- #include <sys/cdefs.h>
- __FBSDID("$FreeBSD$");
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <stdio.h>
- #include <string.h>
++++ shell_cmds/env/env.c	2018-04-30 22:15:11.000000000 +0200
 @@ -50,15 +50,18 @@
  #include <unistd.h>
  
@@ -326,7 +266,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  	while ((ch = getopt(argc, argv, "-iP:S:u:v")) != -1)
  		switch(ch) {
  		case '-':
-@@ -85,15 +89,19 @@
+@@ -85,15 +89,16 @@
  			break;
  		case 'u':
  			if (env_verbosity)
@@ -334,12 +274,8 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 +				fprintf(thread_stderr, "#env unset:\t%s\n", optarg);
  			rtrn = unsetenv(optarg);
 -			if (rtrn == -1)
--				err(EXIT_FAILURE, "unsetenv %s", optarg);
 +            if (rtrn == -1) {
-+				// err(EXIT_FAILURE, "unsetenv %s", optarg);
-+                global_errno = EXIT_FAILURE;
-+                fprintf(thread_stderr, "unsetenv %s: %s\n", optarg, strerror(errno));
-+                pthread_exit(NULL);
+ 				err(EXIT_FAILURE, "unsetenv %s", optarg);
 +            }
  			break;
  		case 'v':
@@ -350,7 +286,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  				    env_verbosity);
  			break;
  		case '?':
-@@ -104,41 +112,73 @@
+@@ -104,41 +109,67 @@
  		environ = cleanenv;
  		cleanenv[0] = NULL;
  		if (env_verbosity)
@@ -365,12 +301,8 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
  		rtrn = setenv(*argv, p + 1, 1);
  		*p = '=';
 -		if (rtrn == -1)
--			err(EXIT_FAILURE, "setenv %s", *argv);
 +        if (rtrn == -1) {
-+			// err(EXIT_FAILURE, "setenv %s", *argv);
-+            global_errno = EXIT_FAILURE;
-+            fprintf(thread_stderr, "setenv %s: %s\n", *argv, strerror(errno));
-+            pthread_exit(NULL);
+ 			err(EXIT_FAILURE, "setenv %s", *argv);
 +        }
  	}
  	if (*argv) {
@@ -389,10 +321,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 -		execvp(*argv, argv);
 -		err(errno == ENOENT ? 127 : 126, "%s", *argv);
 +        execvp(*argv, argv);
-+        global_errno = errno == ENOENT ? 127 : 126;
-+        fprintf(thread_stderr, "env: %s: %s\n", *argv, strerror(errno));
-+        pthread_exit(NULL);
-+		// err(errno == ENOENT ? 127 : 126, "%s", *argv);
++        err(errno == ENOENT ? 127 : 126, "%s", *argv);
  	}
  	for (ep = environ; *ep; ep++)
 -		(void)printf("%s\n", *ep);
@@ -436,16 +365,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 +
 diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
 --- shell_cmds-203/env/envopts.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/envopts.c	2018-03-29 20:29:30.000000000 +0200
-@@ -33,7 +33,7 @@
- 
- #include <sys/stat.h>
- #include <sys/param.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <ctype.h>
- #include <stdio.h>
++++ shell_cmds/env/envopts.c	2018-04-30 22:22:55.000000000 +0200
 @@ -42,6 +42,7 @@
  #include <unistd.h>
  
@@ -474,19 +394,7 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  	}
  
  	fqname = NULL;
-@@ -125,7 +126,10 @@
- 
- 	if (fqname == NULL) {
- 		errno = ENOENT;
--		err(127, "%s", filename);
-+		// err(127, "%s", filename);
-+        global_errno = 127;
-+        fprintf(thread_stderr, "env: %s: %s\n", filename, strerror(errno));
-+        pthread_exit(NULL);
- 	}
- 	*argv = strdup(candidate);
- }
-@@ -285,9 +289,13 @@
+@@ -285,9 +286,10 @@
  				 * This would not make sense if found in the
  				 * middle of a quoted string.
  				 */
@@ -494,42 +402,35 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
 -					errx(1, "Sequence '\\%c' is not allowed"
 -					    " in quoted strings", *src);
 +                if (in_dq) {
-+                    // errx(1, "Sequence '\\%c' is not allowed"
-+                    global_errno = 1;
-+                    fprintf(thread_stderr, "env: Sequence '\\%c' is not allowed"
++                    errx(1, "Sequence '\\%c' is not allowed"
 +					    " in quoted strings\n", *src);
-+                    pthread_exit(NULL);
 +                }
  				goto str_done;
  			case 'f':
  				copychar = '\f';
-@@ -307,9 +315,13 @@
+@@ -307,9 +309,10 @@
  			default:
  				if (isspacech(*src))
  					copychar = *src;
 -				else
 -					errx(1, "Invalid sequence '\\%c' in -S",
 +                else {
-+                    // errx(1, "Invalid sequence '\\%c' in -S",
-+                    global_errno = 1;
-+                    fprintf(thread_stderr, "env: Invalid sequence '\\%c' in -S\n",
++                    errx(1, "Invalid sequence '\\%c' in -S",
  					    *src);
-+                    pthread_exit(NULL);
 +                }
  			}
  			break;
  		default:
-@@ -355,15 +367,18 @@
+@@ -355,15 +358,15 @@
  	*dest = '\0';
  	*nextarg = NULL;
  	if (in_dq || in_sq) {
 -		errx(1, "No terminating quote for string: %.*s%s",
-+        // errx(1, "No terminating quote for string: %.*s%s",
-+        global_errno = 1;
-+        fprintf(thread_stderr, "env: No terminating quote for string: %.*s%s\n",
- 		    bq_destlen, *(nextarg - 1), bq_src);
-+        pthread_exit(NULL);
- 	}
+-		    bq_destlen, *(nextarg - 1), bq_src);
+-	}
++        errx(1, "No terminating quote for string: %.*s%s",
++            bq_destlen, *(nextarg - 1), bq_src);
++        }
  	if (env_verbosity > 1) {
 -		fprintf(stderr, "#env  split -S:\t'%s'\n", str);
 +		fprintf(thread_stderr, "#env  split -S:\t'%s'\n", str);
@@ -542,23 +443,21 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  	}
  
  	/* Copy the unprocessed arg-pointers from the original array */
-@@ -403,9 +418,13 @@
+@@ -403,9 +406,10 @@
  			if (*vend == '}')
  				bad_reference = 0;
  		}
 -	if (bad_reference)
 -		errx(1, "Only ${VARNAME} expansion is supported, error at: %s",
+-		    *src_p);
 +    if (bad_reference) {
-+        // errx(1, "Only ${VARNAME} expansion is supported, error at: %s",
-+        global_errno = 1;
-+        fprintf(thread_stderr, "env: Only ${VARNAME} expansion is supported, error at: %s\n",
- 		    *src_p);
-+        pthread_exit(NULL);
++        errx(1, "Only ${VARNAME} expansion is supported, error at: %s",
++            *src_p);
 +    }
  
  	/*
  	 * We now know we have a valid environment variable name, so update
-@@ -420,7 +439,7 @@
+@@ -420,7 +424,7 @@
  	vvalue = getenv(vname);
  	if (vvalue == NULL || *vvalue == '\0') {
  		if (env_verbosity > 2)
@@ -567,7 +466,7 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  			    "#env  replacing ${%s} with null string\n",
  			    vname);
  		free(vname);
-@@ -428,7 +447,7 @@
+@@ -428,7 +432,7 @@
  	}
  
  	if (env_verbosity > 2)
@@ -578,7 +477,7 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  	/*
 diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 --- shell_cmds-203/env/envopts.h	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/envopts.h	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/env/envopts.h	2018-04-23 20:32:30.000000000 +0200
 @@ -34,4 +34,4 @@
  void		 split_spaces(const char *str, int *origind, int *origc,
  		    char ***origv);
@@ -587,17 +486,8 @@ diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 +extern __thread int	 env_verbosity;
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2018-03-29 20:29:30.000000000 +0200
-@@ -54,7 +54,7 @@
- #include <bsm/audit.h>
- #endif
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <grp.h>
- #include <pwd.h>
-@@ -62,18 +62,19 @@
++++ shell_cmds/id/id.c	2018-05-23 11:34:48.000000000 +0200
+@@ -62,26 +62,27 @@
  #include <stdlib.h>
  #include <string.h>
  #include <unistd.h>
@@ -626,7 +516,8 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  
  #ifdef __APPLE__
  // SPI for 5235093
-@@ -81,7 +82,7 @@
+-int32_t getgrouplist_2(const char *, gid_t, gid_t **);
++// int32_t getgrouplist_2(const char *, gid_t, gid_t **);
  #endif
  
  int
@@ -669,7 +560,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		exit(0);
  	}
  
-@@ -237,34 +242,38 @@
+@@ -237,34 +242,35 @@
  	char *login;
  
  	if (pw) {
@@ -680,12 +571,8 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		group(pw, 1);
  	} else {
 -		if ((login = getlogin()) == NULL)
--			err(1, "getlogin");
 +        if ((login = getlogin()) == NULL) {
-+			// err(1, "getlogin");
-+            global_errno = 1;
-+            fprintf(thread_stderr, "id: getlogin: %s\n", strerror(errno));
-+            pthread_exit(NULL);
+ 			err(1, "getlogin");
 +        }
  
  		pw = getpwuid(rid = getuid());
@@ -720,13 +607,21 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		group(NULL, 1);
  	}
  }
-@@ -318,37 +327,38 @@
+@@ -303,7 +309,7 @@
+ 	if (use_ggl && pw != NULL) {
+ #ifdef __APPLE__
+ 		// 5235093
+-		ngroups = getgrouplist_2(pw->pw_name, gid, &groups);
++		// ngroups = getgrouplist_2(pw->pw_name, gid, &groups);
+ #else
+ 		ngroups = NGROUPS + 1;
+ 		getgrouplist(pw->pw_name, gid, groups, &ngroups);
+@@ -318,37 +324,37 @@
  
  #ifdef __APPLE__
  	if (ngroups < 0)
 -		warn("failed to retrieve group list");
-+        fprintf(thread_stderr, "id: failed to retrieve group list: %s\n", strerror(errno));
-+        // warn("failed to retrieve group list");
++        warn("failed to retrieve group list");
  #endif
  
  	if (pw != NULL)
@@ -771,22 +666,18 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  #ifdef __APPLE__
  	free(groups);
  #endif
-@@ -360,13 +370,17 @@
+@@ -360,13 +366,14 @@
  {
  	auditinfo_addr_t auditinfo;
  
 -	if (getaudit_addr(&auditinfo, sizeof(auditinfo)) < 0)
--		err(1, "getaudit");
++    if (getaudit_addr(&auditinfo, sizeof(auditinfo)) < 0) {
+ 		err(1, "getaudit");
 -	printf("auid=%d\n", auditinfo.ai_auid);
 -	printf("mask.success=0x%08x\n", auditinfo.ai_mask.am_success);
 -	printf("mask.failure=0x%08x\n", auditinfo.ai_mask.am_failure);
 -	printf("termid.port=0x%08x\n", auditinfo.ai_termid.at_port);
 -	printf("asid=%d\n", auditinfo.ai_asid);
-+    if (getaudit_addr(&auditinfo, sizeof(auditinfo)) < 0) {
-+		// err(1, "getaudit");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "id: getaudit: %s\n", strerror(errno));
-+        pthread_exit(NULL);
 +    }
 +	fprintf(thread_stdout, "auid=%d\n", auditinfo.ai_auid);
 +	fprintf(thread_stdout, "mask.success=0x%08x\n", auditinfo.ai_mask.am_success);
@@ -796,17 +687,13 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  }
  #endif
  
-@@ -375,11 +389,15 @@
+@@ -375,11 +382,12 @@
  {
  
  	if (!pw) {
 -		if ((pw = getpwuid(getuid())) == NULL)
--			err(1, "getpwuid");
 +        if ((pw = getpwuid(getuid())) == NULL) {
-+			// err(1, "getpwuid");
-+            global_errno = 1;
-+            fprintf(thread_stderr, "id: getpwuid: %s\n", strerror(errno));
-+            pthread_exit(NULL);
+ 			err(1, "getpwuid");
 +        }
  	}
  
@@ -815,7 +702,16 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  }
  
  void
-@@ -421,18 +439,18 @@
+@@ -403,7 +411,7 @@
+ 	if (pw) {
+ #ifdef __APPLE__
+ 		// 5235093
+-		ngroups = getgrouplist_2(pw->pw_name, pw->pw_gid, &groups);
++		// ngroups = getgrouplist_2(pw->pw_name, pw->pw_gid, &groups);
+ #else
+ 		ngroups = NGROUPS + 1;
+ 		(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
+@@ -421,18 +429,18 @@
  			continue;
  		if (nflag) {
  			if ((gr = getgrgid(id)))
@@ -838,18 +734,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  #ifdef __APPLE__
  	free(groups);
  #endif
-@@ -442,14 +460,17 @@
- maclabel(void)
- {
- #ifdef __APPLE__
--	errx(1, "-M unsupported");
-+	// errx(1, "-M unsupported");
-+    global_errno = 1;
-+    fprintf(thread_stderr, "id: -M unsupported\n");
-+    pthread_exit(NULL);
- #else /* !__APPLE__ */
- 	char *string;
- 	mac_t label;
+@@ -449,7 +457,7 @@
  	int error;
  
  	error = mac_prepare_process_label(&label);
@@ -858,7 +743,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		errx(1, "mac_prepare_type: %s", strerror(errno));
  
  	error = mac_get_proc(label);
-@@ -460,7 +481,7 @@
+@@ -460,7 +468,7 @@
  	if (error == -1)
  		errx(1, "mac_to_text: %s", strerror(errno));
  
@@ -867,30 +752,21 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  	mac_free(label);
  	free(string);
  #endif /* __APPLE__ */
-@@ -482,7 +503,11 @@
- 	id = strtol(u, &ep, 10);
+@@ -483,6 +491,7 @@
  	if (*u && !*ep && (pw = getpwuid(id)))
  		return(pw);
--	errx(1, "%s: no such user", u);
-+	// errx(1, "%s: no such user", u);
-+    global_errno = 1;
-+    fprintf(thread_stderr, "id: %s: no such user\n", u);
-+    pthread_exit(NULL);
+ 	errx(1, "%s: no such user", u);
 +    return NULL; // keep compiler happy
  	/* NOTREACHED */
  }
  
-@@ -491,11 +516,15 @@
+@@ -491,11 +500,12 @@
  {
  
  	if (!pw) {
 -		if ((pw = getpwuid(getuid())) == NULL)
--			err(1, "getpwuid");
 +        if ((pw = getpwuid(getuid())) == NULL) {
-+			// err(1, "getpwuid");
-+            global_errno = 1;
-+            fprintf(thread_stderr, "id: getpwuid: %s\n", strerror(errno));
-+            pthread_exit(NULL);
+ 			err(1, "getpwuid");
 +        }
  	}
  
@@ -899,7 +775,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  			pw->pw_passwd, pw->pw_uid, pw->pw_gid, pw->pw_class,
  			(long)pw->pw_change, (long)pw->pw_expire, pw->pw_gecos,
  			pw->pw_dir, pw->pw_shell);
-@@ -507,11 +536,11 @@
+@@ -507,11 +517,11 @@
  {
  
  	if (isgroups)
@@ -916,7 +792,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		    "       id -A\n",
 diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
 --- shell_cmds-203/printenv/printenv.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/printenv/printenv.c	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/printenv/printenv.c	2018-04-23 20:32:30.000000000 +0200
 @@ -48,8 +48,9 @@
  #include <stdio.h>
  #include <string.h>
@@ -973,14 +849,8 @@ diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
  }
 diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
 --- shell_cmds-203/pwd/pwd.c	2006-09-12 00:14:13.000000000 +0200
-+++ shell_cmds/pwd/pwd.c	2018-03-29 20:29:30.000000000 +0200
-@@ -45,21 +45,24 @@
- #include <sys/stat.h>
- #include <sys/types.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
++++ shell_cmds/pwd/pwd.c	2018-04-30 22:22:55.000000000 +0200
+@@ -50,16 +50,19 @@
  #include <stdio.h>
  #include <stdlib.h>
  #include <unistd.h>
@@ -1002,21 +872,17 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
  	// 4207130
  	physical = 0;
-@@ -90,18 +93,22 @@
+@@ -90,18 +93,19 @@
  	 */
  	if ((!physical && (p = getcwd_logical()) != NULL) ||
  	    ((physical || errno == ENOENT) && (p = getcwd(NULL, 0)) != NULL))
 -		printf("%s\n", p);
 -	else
--		err(1, ".");
--
--	exit(0);
 +		fprintf(thread_stdout, "%s\n", p);
 +    else {
-+		// err(1, ".");
-+        global_errno = 1;
-+        fprintf(thread_stderr, "pwd: .: %s\n", strerror(errno));
-+        pthread_exit(NULL);
+ 		err(1, ".");
+-
+-	exit(0);
 +    }
 +    
 +    exit(0);
@@ -1034,7 +900,7 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
 diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 --- shell_cmds-203/tee/tee.c	1999-04-23 04:44:50.000000000 +0200
-+++ shell_cmds/tee/tee.c	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/tee/tee.c	2018-04-30 22:15:11.000000000 +0200
 @@ -57,29 +57,37 @@
  #include <string.h>
  #include <locale.h>
@@ -1080,17 +946,21 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  	setlocale(LC_ALL, "");
  
  	append = 0;
-@@ -99,26 +107,31 @@
+@@ -93,32 +101,32 @@
+ 			break;
+ 		case '?':
+ 		default:
+-			(void)fprintf(stderr, "usage: tee [-ai] [file ...]\n");
++			(void)fprintf(thread_stderr, "usage: tee [-ai] [file ...]\n");
+ 			exit(1);
+ 		}
  	argv += optind;
  	argc -= optind;
  
 -	if ((buf = malloc((size_t)BSIZE)) == NULL)
 -		err(1, "malloc");
 +    if ((buf = malloc((size_t)BSIZE)) == NULL) {
-+        fprintf(thread_stderr, "tee: malloc: %s\n", strerror(errno));
-+        global_errno = 1;
-+        pthread_exit(NULL);
-+        // err(1, "malloc");
++        err(1, "malloc");
 +    }
  
 -	add(STDOUT_FILENO, "stdout");
@@ -1101,8 +971,7 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 -		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0) {
 -			warn("%s", *argv);
 +        if ((fd = fopen(*argv, append ? "a" : "w")) < 0) {
-+            fprintf(thread_stderr, "tee: %s: %s\n", *argv, strerror(errno));
-+			// warn("%s", *argv);
++            warn("%s", *argv);
  			exitval = 1;
  		} else
  			add(fd, *argv);
@@ -1116,18 +985,16 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 -				if ((wval = write(p->fd, bp, n)) == -1) {
 -					warn("%s", p->name);
 +				if ((wval = fwrite(bp, 1, n, p->stream)) != n) {
-+                    fprintf(thread_stderr, "tee: %s: %s\n", p->name, strerror(errno));
-+					// warn("%s", p->name);
++                    warn("%s", p->name);
  					exitval = 1;
  					break;
  				}
-@@ -126,30 +139,46 @@
+@@ -126,30 +134,41 @@
  			} while (n -= wval);
  		}
  	if (rval < 0) {
 -		warn("read");
-+        fprintf(thread_stderr, "tee: %s: %s\n", "read", strerror(errno));
-+		// warn("read");
++        warn("read");
  		exitval = 1;
  	}
  
@@ -1139,8 +1006,7 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 +    for (p = head; p; p = p->next) {
 +        if (strcmp(p->name, "stdout") != 0) {
 +            if (fclose(p->stream) == -1) {
-+                fprintf(thread_stderr, "tee: %s: %s\n", p->name, strerror(errno));
-+                // warn("%s", p->name);
++                warn("%s", p->name);
 +                exitval = 1;
 +            }
 +        }
@@ -1171,10 +1037,7 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 -		err(1, "malloc");
 -	p->fd = fd;
 +    if ((p = malloc((size_t)sizeof(LIST))) == NULL) {
-+        fprintf(thread_stderr, "tee: malloc: %s\n", strerror(errno));
-+        global_errno = 1;
-+        pthread_exit(NULL);
-+		// err(1, "malloc");
++        err(1, "malloc");
 +    }
 +	p->stream = stream;
  	p->name = name;
@@ -1182,16 +1045,8 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  	head = p;
 diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
 --- shell_cmds-203/uname/uname.c	2013-09-26 01:55:54.000000000 +0200
-+++ shell_cmds/uname/uname.c	2018-03-29 20:29:30.000000000 +0200
-@@ -42,21 +42,23 @@
- #include <stdio.h>
- #include <stdlib.h>
- #include <unistd.h>
--#include <err.h>
-+// #include <err.h>
- #ifdef __APPLE__
- #include <string.h>
- #endif /* __APPLE__ */
++++ shell_cmds/uname/uname.c	2018-04-30 22:22:55.000000000 +0200
+@@ -49,14 +49,16 @@
  
  #include <sys/sysctl.h>
  #include <sys/utsname.h>
@@ -1230,19 +1085,7 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
  	(void)setlocale(LC_ALL, "");
  
  	while ((c = getopt(argc,argv,"amnprsv")) != -1) {
-@@ -128,7 +131,10 @@
- 	}
- 
- 	if (uname(&u) != 0) {
--		err(EXIT_FAILURE, "uname");
-+		// err(EXIT_FAILURE, "uname");
-+        global_errno = EXIT_FAILURE;
-+        fprintf(thread_stderr, "uname: %s\n", strerror(errno));
-+        pthread_exit(NULL);
- 		/* NOTREACHED */
- 	}
- #ifndef __APPLE__
-@@ -160,37 +166,37 @@
+@@ -160,37 +163,37 @@
  
  	if (print_mask & PRINT_SYSNAME) {
  		space++;
@@ -1290,7 +1133,7 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
  #endif
  #endif /* __APPLE__ */
  	}
-@@ -203,6 +209,6 @@
+@@ -203,6 +206,6 @@
  static void
  usage()
  {
@@ -1300,7 +1143,7 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
  }
 diff -Naur shell_cmds-203/w/extern.h shell_cmds/w/extern.h
 --- shell_cmds-203/w/extern.h	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/extern.h	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/w/extern.h	2018-04-23 20:32:30.000000000 +0200
 @@ -31,7 +31,7 @@
   */
  
@@ -1312,15 +1155,8 @@ diff -Naur shell_cmds-203/w/extern.h shell_cmds/w/extern.h
  
 diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
 --- shell_cmds-203/w/fmt.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/fmt.c	2018-03-29 20:29:30.000000000 +0200
-@@ -39,13 +39,13 @@
- #include <sys/time.h>
- #include <sys/resource.h>
- 
--#include <err.h>
-+// #include <err.h>
- #include <stdio.h>
- #include <stdlib.h>
++++ shell_cmds/w/fmt.c	2018-04-30 22:22:55.000000000 +0200
+@@ -45,7 +45,7 @@
  #include <string.h>
  #include <unistd.h>
  #include <vis.h>
@@ -1329,32 +1165,24 @@ diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
  //#include "ps.h"
  
  static char *cmdpart(char *);
-@@ -64,10 +64,18 @@
+@@ -64,10 +64,12 @@
  	static char *buf = NULL;
  
  	if (buf == NULL) {
 -		if ((arg_max = sysconf(_SC_ARG_MAX)) == -1)
--			errx(1, "sysconf _SC_ARG_MAX failed");
--		if ((buf = malloc((u_int)(4 * arg_max)  +  1)) == NULL)
--			errx(1, "malloc failed");
 +        if ((arg_max = sysconf(_SC_ARG_MAX)) == -1) {
-+			// errx(1, "sysconf _SC_ARG_MAX failed");
-+            global_errno = 1;
-+            fprintf(thread_stderr, "w: sysconf _SC_ARG_MAX failed\n");
-+            pthread_exit(NULL);
+ 			errx(1, "sysconf _SC_ARG_MAX failed");
+-		if ((buf = malloc((u_int)(4 * arg_max)  +  1)) == NULL)
 +        }
 +        if ((buf = malloc((u_int)(4 * arg_max)  +  1)) == NULL) {
-+			// errx(1, "malloc failed");
-+            global_errno = 1;
-+            fprintf(thread_stderr, "w: malloc failed\n");
-+            pthread_exit(NULL);
+ 			errx(1, "malloc failed");
 +        }
  	}
  
  	if (*argv == 0) {
 diff -Naur shell_cmds-203/w/pr_time.c shell_cmds/w/pr_time.c
 --- shell_cmds-203/w/pr_time.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/pr_time.c	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/w/pr_time.c	2018-04-23 20:32:30.000000000 +0200
 @@ -44,6 +44,7 @@
  #include <string.h>
  
@@ -1402,7 +1230,7 @@ diff -Naur shell_cmds-203/w/pr_time.c shell_cmds/w/pr_time.c
  }
 diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
 --- shell_cmds-203/w/proc_compare.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/proc_compare.c	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/w/proc_compare.c	2018-04-23 20:32:30.000000000 +0200
 @@ -38,13 +38,15 @@
  __FBSDID("$FreeBSD: src/usr.bin/w/proc_compare.c,v 1.9 2004/04/14 09:34:17 bde Exp $");
  #endif
@@ -1422,7 +1250,7 @@ diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
  
 diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
 --- shell_cmds-203/w/w.c	2007-10-03 11:55:12.000000000 +0200
-+++ shell_cmds/w/w.c	2018-03-29 20:29:30.000000000 +0200
++++ shell_cmds/w/w.c	2018-04-30 22:22:55.000000000 +0200
 @@ -50,15 +50,16 @@
   * This program is similar to the systat command on Tenex/Tops 10/20
   *
@@ -1442,15 +1270,7 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  
  #ifndef __APPLE__
  #include <machine/cpu.h>
-@@ -68,24 +69,24 @@
- #include <arpa/nameser.h>
- 
- #include <ctype.h>
--#include <err.h>
-+// #include <err.h>
- #include <errno.h>
- #include <fcntl.h>
- #if HAVE_KVM
+@@ -75,17 +76,17 @@
  #include <kvm.h>
  #endif
  #include <langinfo.h>
@@ -1541,27 +1361,22 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  
  	/* Are we w(1) or uptime(1)? */
  	if (this_is_uptime(argv[0]) == 0) {
-@@ -251,7 +254,8 @@
+@@ -251,7 +254,7 @@
  #endif
  #ifdef __APPLE__
  		case 'd':
 -			warnx("[-MNdflnsuw] no longer supported");
-+            fprintf(thread_stderr, "w: [-MNdflnsuw] no longer supported\n");
-+            // warnx("[-MNdflnsuw] no longer supported");
++            warnx("[-MNdflnsuw] no longer supported");
  #else
  			warnx("[-flsuw] no longer supported");
  #endif
-@@ -278,16 +282,24 @@
+@@ -278,16 +281,18 @@
  	if (dropgid)
  		setgid(getgid());
  
 -	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
--		errx(1, "%s", errbuf);
 +    if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL) {
-+		// errx(1, "%s", errbuf);
-+        global_errno = 1;
-+        fprintf(thread_stderr, "w: %s\n", errbuf);
-+        pthread_exit(NULL);
+ 		errx(1, "%s", errbuf);
 +    }
  #endif
  
@@ -1570,32 +1385,24 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  	setutxent();
  #else
 -	if ((ut = fopen(_PATH_UTMP, "r")) == NULL)
--		err(1, "%s", _PATH_UTMP);
 +    if ((ut = fopen(_PATH_UTMP, "r")) == NULL) {
-+		// err(1, "%s", _PATH_UTMP);
-+        global_errno = 1;
-+        fprintf(thread_stderr, "w: %s: %s\n", _PATH_UTMP, strerror(errno));
-+        pthread_exit(NULL);
+ 		err(1, "%s", _PATH_UTMP);
 +    }
  #endif
  
  	if (*argv)
-@@ -324,8 +336,12 @@
+@@ -324,8 +329,9 @@
  			if (!usermatch)
  				continue;
  		}
 -		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
--			errx(1, "calloc");
 +        if ((ep = calloc(1, sizeof(struct utmp_entry))) == NULL) {
-+			// errx(1, "calloc");
-+            global_errno = 1;
-+            fprintf(thread_stderr, "w: calloc\n");
-+            pthread_exit(NULL);
+ 			errx(1, "calloc");
 +        }
  		*nextp = ep;
  		nextp = &ep->next;
  #if HAVE_UTMPX
-@@ -386,7 +402,7 @@
+@@ -386,7 +392,7 @@
  #define HEADER_WHAT		"WHAT\n"
  #define WUSED  (UT_NAMESIZE + UT_LINESIZE + W_DISPHOSTSIZE + \
  		sizeof(HEADER_LOGIN_IDLE) + 3)	/* header width incl. spaces */ 
@@ -1604,22 +1411,18 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  				UT_NAMESIZE, UT_NAMESIZE, HEADER_USER,
  				UT_LINESIZE, UT_LINESIZE, HEADER_TTY,
  				W_DISPHOSTSIZE, W_DISPHOSTSIZE, HEADER_FROM,
-@@ -394,8 +410,12 @@
+@@ -394,8 +400,9 @@
  	}
  
  #if HAVE_KVM
 -	if ((kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nentries)) == NULL)
--		err(1, "%s", kvm_geterr(kd));
 +    if ((kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nentries)) == NULL) {
-+		// err(1, "%s", kvm_geterr(kd));
-+        global_errno = 1;
-+        fprintf(thread_stderr, "w: %s: %s\n", kvm_geterr(kd), strerror(errno));
-+        pthread_exit(NULL);
+ 		err(1, "%s", kvm_geterr(kd));
 +    }
  #else
  	mib[0] = CTL_KERN;
  	mib[1] = KERN_PROC;
-@@ -464,9 +484,9 @@
+@@ -464,9 +471,9 @@
  			}
  		}
  	}
@@ -1632,17 +1435,14 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  	       ttywidth = 79;
          else
  	       ttywidth = ws.ws_col - 1;
-@@ -484,12 +504,16 @@
+@@ -484,12 +491,13 @@
  #else
  		w_getargv();
  #endif /* HAVE_KVM */
 -		if (ep->args == NULL)
 -			err(1, NULL);
 +        if (ep->args == NULL) {
-+            fprintf(thread_stderr, "w: %s\n", strerror(errno));
-+            global_errno = 1;
-+            pthread_exit(NULL);
-+			// err(1, NULL);
++            err(1, NULL);
 +        }
  	}
  	/* sort by idle time */
@@ -1652,7 +1452,7 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  
  		from = ehead;
  		ehead = NULL;
-@@ -561,12 +585,12 @@
+@@ -561,12 +569,12 @@
  				    dkp->ki_comm, MAXCOMLEN);
  				if (ptr == NULL)
  					ptr = "-";
@@ -1667,7 +1467,7 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  #if HAVE_UTMPX
  		    UT_NAMESIZE, (int)sizeof(ep->utmp.ut_user), ep->utmp.ut_user,
  		    UT_LINESIZE, (int)sizeof(ep->utmp.ut_line),
-@@ -585,7 +609,7 @@
+@@ -585,7 +593,7 @@
  		pr_attime(&t, &now);
  #endif
  		longidle = pr_idle(ep->idle);
@@ -1676,7 +1476,7 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  #ifdef __APPLE__
  		free(ep->args);
  #endif
-@@ -613,7 +637,7 @@
+@@ -613,7 +621,7 @@
  	 */
  	if (strftime(buf, sizeof(buf),
  	    use_ampm ? "%l:%M%p" : "%k:%M", localtime(nowp)) != 0)
@@ -1685,7 +1485,7 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  	/*
  	 * Print how long system has been up.
  	 * (Found by looking getting "boottime" from the kernel)
-@@ -632,35 +656,35 @@
+@@ -632,35 +640,35 @@
  		uptime %= 3600;
  		mins = uptime / 60;
  		secs = uptime % 60;
@@ -1733,17 +1533,16 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  	}
  }
  
-@@ -674,7 +698,8 @@
+@@ -674,7 +682,7 @@
  	if (stat(ttybuf, &sb) == 0) {
  		return (&sb);
  	} else {
 -		warn("%s", ttybuf);
-+        fprintf(thread_stderr, "w: %s: %s\n", ttybuf, strerror(errno));
-+        // warn("%s", ttybuf);
++        warn("%s", ttybuf);
  		return (NULL);
  	}
  }
-@@ -683,10 +708,10 @@
+@@ -683,10 +691,10 @@
  usage(int wcmd)
  {
  	if (wcmd)
