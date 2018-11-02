@@ -494,6 +494,75 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     return NULL;
 }
 
+// small function, behaves like strstr but skips quotes (Yury Korolev)
+char *strstrquoted(char* str1, char* str2) {
+    
+    if (str1 == NULL || str2 == NULL) {
+        return NULL;
+    }
+    size_t len1 = strlen(str1);
+    size_t len2 = strlen(str2);
+    
+    if (len1 < len2) {
+        return NULL;
+    }
+    
+    if (strcmp(str1, str2) == 0) {
+        return str1;
+    }
+    
+    char quotechar = 0;
+    int esclen = 0;
+    int matchlen = 0;
+    
+    for (int i = 0; i < len1; i++) {
+        char ch = str1[i];
+        if (quotechar) {
+            if (ch == '\\') {
+                esclen++;
+                continue;
+            }
+            
+            if (ch == quotechar) {
+                if (esclen % 2 == 1) {
+                    esclen = 0;
+                    continue;
+                }
+                quotechar = 0;
+                esclen = 0;
+                continue;
+            }
+            
+            esclen = 0;
+            continue;
+        }
+        
+        if (ch == '"' || ch == '\'') {
+            if (esclen % 2 == 0) {
+                quotechar = ch;
+            }
+            matchlen = 0;
+            esclen = 0;
+            continue;
+        }
+        
+        if (ch == '\\') {
+            esclen++;
+        }
+        
+        if (str2[matchlen] == ch) {
+            matchlen++;
+            if (matchlen == len2) {
+                return str1 + i - matchlen + 1;
+            }
+            continue;
+        }
+        
+        matchlen = 0;
+    }
+    return NULL;
+}
+
 static char* concatenateArgv(char* const argv[]) {
     int argc = 0;
     int cmdLength = 0;
@@ -505,9 +574,9 @@ static char* concatenateArgv(char* const argv[]) {
     strcpy(cmd, argv[0]);
     argc = 1;
     while (argv[argc] != NULL) {
-        if (strstr(argv[argc], " ")) {
+        if (strstrquoted(argv[argc], " ")) {
             // argument contains spaces. Enclose it into quotes:
-            if (strstr(argv[argc], "\"") == NULL) {
+            if (strstrquoted(argv[argc], "\"") == NULL) {
                 // argument does not contain ". Enclose with "
                 strcat(cmd, " \"");
                 strcat(cmd, argv[argc]);
@@ -515,8 +584,8 @@ static char* concatenateArgv(char* const argv[]) {
                 argc++;
                 continue;
             }
-            if (strstr(argv[argc], "'") == NULL) {
-                // Enclose with '
+            if (strstrquoted(argv[argc], "'") == NULL) {
+                // argument does not contain '. Enclose with '
                 strcat(cmd, " '");
                 strcat(cmd, argv[argc]);
                 strcat(cmd, "'");
@@ -872,74 +941,6 @@ static char* unquoteArgument(char* argument) {
     return argument;
 }
 
-char *strstrquoted(char* str1, char* str2) {
-  
-  if (str1 == NULL || str2 == NULL) {
-    return NULL;
-  }
-  size_t len1 = strlen(str1);
-  size_t len2 = strlen(str2);
-  
-  if (len1 < len2) {
-    return NULL;
-  }
-  
-  if (strcmp(str1, str2) == 0) {
-    return str1;
-  }
-  
-  char quotechar = 0;
-  int esclen = 0;
-  int matchlen = 0;
-  
-  for (int i = 0; i < len1; i++) {
-    char ch = str1[i];
-    if (quotechar) {
-      if (ch == '\\') {
-        esclen++;
-        continue;
-      }
-      
-      if (ch == quotechar) {
-        if (esclen % 2 == 1) {
-          esclen = 0;
-          continue;
-        }
-        quotechar = 0;
-        esclen = 0;
-        continue;
-      }
-      
-      esclen = 0;
-      continue;
-    }
-    
-    if (ch == '"' || ch == '\'') {
-      if (esclen % 2 == 0) {
-        quotechar = ch;
-      }
-      matchlen = 0;
-      esclen = 0;
-      continue;
-    }
-    
-    if (ch == '\\') {
-      esclen++;
-    }
-    
-    if (str2[matchlen] == ch) {
-      matchlen++;
-      if (matchlen == len2) {
-        return str1 + i - matchlen + 1;
-      }
-      continue;
-    }
-    
-    matchlen = 0;
-  }
-  return NULL;
-}
-
 
 int ios_system(const char* inputCmd) {
     char* command;
@@ -972,7 +973,7 @@ int ios_system(const char* inputCmd) {
     // fprintf(thread_stderr, "Command sent: %s \n", cmd); fflush(stderr);
     if (cmd[0] == '"') {
         // Command was enclosed in quotes (almost always with Vim)
-        char* endCmd = strstr(cmd + 1, "\""); // find closing quote
+        char* endCmd = strstrquoted(cmd + 1, "\""); // find closing quote
         if (endCmd) {
             cmd = cmd + 1; // remove starting quote
             endCmd[0] = 0x0;
@@ -983,7 +984,7 @@ int ios_system(const char* inputCmd) {
     if (cmd[0] == '(') {
         // Standard vim encoding: command between parentheses
         command = cmd + 1;
-        char* endCmd = strstr(command, ")"); // remove closing parenthesis
+        char* endCmd = strstrquoted(command, ")"); // remove closing parenthesis
         if (endCmd) {
             endCmd[0] = 0x0;
             assert(endCmd < maxPointer);
@@ -1171,7 +1172,7 @@ int ios_system(const char* inputCmd) {
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) {  argv[i] = parseArgument(argv[i], argv[0]); }
         // wildcard expansion (*, ?, []...) Has to be after $ and ~ expansion, results in larger arguments
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) {
-            if (strstr (argv[i],"*") || strstr (argv[i],"?") || strstr (argv[i],"[")) {
+            if (strstrquoted (argv[i],"*") || strstrquoted (argv[i],"?") || strstrquoted (argv[i],"[")) {
                 glob_t gt;
                 if (glob(argv[i], 0, NULL, &gt) == 0) {
                     argc += gt.gl_matchc - 1;
