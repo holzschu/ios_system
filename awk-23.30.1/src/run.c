@@ -36,7 +36,7 @@ THIS SOFTWARE.
 
 #include "ios_error.h"
 
-#define tempfree(x)	if (istemp(x)) tfree(x); else
+#define tempfree(x)	if (istemp(x)) tfree(x); /* else */
 
 /*
 #undef tempfree
@@ -66,7 +66,7 @@ void tempfree(Cell *p) {
 /* #define RAND_MAX	32767 */	/* all that ansi guarantees */
 /* #endif */
 
-static jmp_buf env;
+static __thread jmp_buf env;
 extern	__thread int	pairstack[];
 
 __thread Node	*winner = NULL;	/* root of parse tree */
@@ -92,7 +92,7 @@ static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE };
 
 __thread Node	*curnode = NULL;	/* the node being executed, for debugging */
 
-static Awkfloat prev_srand, tmp_srand;
+static __thread Awkfloat prev_srand, tmp_srand;
 
 /* buffer memory management */
 int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
@@ -153,7 +153,7 @@ void freeTree(Node *u, int eraseSelf)    /* scan the entire tree, and frees the 
     Node *anext;
     
     if (u == NULL) return;
-    if (u == 0x1) return; // safeguard
+    if ((int)u == 0x1) return; // safeguard
     
     // If it's a tree, freetr will do the job:
     if ((u->nobj == CCL) || (u->nobj == NCCL) || (u->nobj == CHAR) || (u->nobj == DOT) || (u->nobj == FINAL)
@@ -171,13 +171,16 @@ void freeTree(Node *u, int eraseSelf)    /* scan the entire tree, and frees the 
         }
         // Erase all values, all pointers.
         anext = a->nnext;
+        if ((int)anext % 8 != 0) anext = NULL; // Enforce 8-bit alignment
         a->ntype = 0;
         a->nnext = NULL;
         a->lineno = 0;
         a->nobj = 0;
         a->nnarg = 0;
         a->narg[0] = NULL;
-        if (eraseSelf) free(a);
+        if (eraseSelf) {
+            free(a);
+        }
         eraseSelf = 1; // but free node->next
         a = NULL;
     }
@@ -271,7 +274,7 @@ struct Frame *fp = NULL;	/* frame pointer. bottom level unused */
 
 Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 {
-	static Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE };
+	static __thread Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE };
 	int i, ncall, ndef;
 	int freed = 0; /* handles potential double freeing when fcn & param share a tempcell */
 	Node *x;

@@ -60,36 +60,36 @@ THIS SOFTWARE.
 
 __thread int	*setvec;
 __thread int	*tmpset;
-static int	maxsetvec = 0;
+static __thread int	maxsetvec = 0;
 
-static int	rtok;		/* next token in current re */
-static int	rlxval;
-static uschar	*rlxstr;
-static uschar	*prestr;	/* current position in current re */
-static uschar	*lastre;	/* origin of last re */
-static uschar	*lastatom;	/* origin of last Atom */
-static uschar	*starttok;
-static char 	*basestr;	/* starts with original, replaced during
+static __thread int	rtok;		/* next token in current re */
+static __thread int	rlxval;
+static __thread uschar	*rlxstr;
+static __thread uschar	*prestr;	/* current position in current re */
+static __thread uschar	*lastre;	/* origin of last re */
+static __thread uschar	*lastatom;	/* origin of last Atom */
+static __thread uschar	*starttok;
+static __thread char 	*basestr;	/* starts with original, replaced during
 				   repetition processing */
-static char 	*firstbasestr;
+static __thread char 	*firstbasestr;
 
-static FILE * replogfile = 0;
+static __thread FILE * replogfile = 0;
 
-static	int setcnt;
-static	int poscnt;
+static	__thread int setcnt;
+static	__thread int poscnt;
 
 __thread char	*patbeg;
 __thread int	patlen;
 
 #define	NFA	20	/* cache this many dynamic fa's */
-static fa	*fatab[NFA];
-static int	nfatab	= 0;	/* entries in fatab */
+static __thread fa	*fatab[NFA];
+static __thread int	nfatab	= 0;	/* entries in fatab */
 
 fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 {
 	int i, use, nuse;
 	fa *pfa;
-	static int now = 1;
+	static __thread int now = 1;
 
 	if (setvec == 0) {	/* first time through any RE */
 		maxsetvec = MAXLIN;
@@ -234,16 +234,19 @@ void freetr(Node *p)	/* free parse tree */
 	switch (type(p)) {
 	ELEAF
 	LEAF
+        fprintf(stderr, "Freeing leaf %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
 	UNARY
 		freetr(left(p));
+        fprintf(stderr, "Freeing unary %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
 	case CAT:
 	case OR:
 		freetr(left(p));
 		freetr(right(p));
+        fprintf(stderr, "Freeing tree %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
 	default:	/* can't happen */
@@ -314,8 +317,8 @@ char *cclenter(const char *argp)	/* add a character class */
 	int i, c, c2;
 	uschar *p = (uschar *) argp;
 	uschar *op, *bp;
-	static uschar *buf = 0;
-	static int bufsz = 100;
+	static __thread uschar *buf = 0;
+	static __thread int bufsz = 100;
 
 	op = p;
 	if (buf == 0 && (buf = (uschar *) malloc(bufsz)) == NULL)
@@ -952,8 +955,8 @@ int relex(void)		/* lexical analyzer for reparse */
 {
 	int c, n;
 	int cflag;
-	static uschar *buf = 0;
-	static int bufsz = 100;
+	static __thread uschar *buf = 0;
+	static __thread int bufsz = 100;
 	uschar *bp;
 	struct charclass *cc;
 	int i;

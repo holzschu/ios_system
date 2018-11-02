@@ -42,7 +42,7 @@ __thread char	**RS;		/* initial record sep */
 __thread char	**OFS;		/* output field sep */
 __thread char	**ORS;		/* output record sep */
 __thread char	**OFMT;		/* output format for numbers */
-static char	**CONVFMT;	/* format for conversions in getsval */
+static __thread char	**CONVFMT;	/* format for conversions in getsval */
 __thread Awkfloat *NF;		/* number of fields in current record */
 __thread Awkfloat *NR;		/* number of current record */
 __thread Awkfloat *FNR;		/* number of current record in current file */
@@ -52,17 +52,17 @@ __thread char	**SUBSEP;	/* subscript separator for a[i,j,k]; default \034 */
 __thread Awkfloat *RSTART;	/* start of re matched with ~; origin 1 (!) */
 __thread Awkfloat *RLENGTH;	/* length of same */
 
-static Cell	*fsloc;		/* FS */
+static __thread Cell	*fsloc;		/* FS */
 __thread Cell	*nrloc;		/* NR */
 __thread Cell	*nfloc;		/* NF */
 __thread Cell	*fnrloc;	/* FNR */
 __thread Array	*ARGVtab;	/* symbol table containing ARGV[...] */
-static Array	*ENVtab;	/* symbol table containing ENVIRON[...] */
+static __thread Array	*ENVtab;	/* symbol table containing ENVIRON[...] */
 __thread Cell	*rstartloc;	/* RSTART */
 __thread Cell	*rlengthloc;	/* RLENGTH */
-static Cell	*symtabloc;	/* SYMTAB */
+static __thread Cell	*symtabloc;	/* SYMTAB */
 
-static Cell	*nullloc;	/* a guaranteed empty cell */
+static __thread Cell	*nullloc;	/* a guaranteed empty cell */
 __thread Node	*nullnode;	/* zero&null, converted into a node for comparisons */
 __thread Cell	*literal0;
 

@@ -33,8 +33,8 @@ THIS SOFTWARE.
 #include "ytab.h"
 #include "ios_error.h"
 
-static FILE	*infile	= NULL;
-static char	*file	= "";
+static __thread FILE	*infile	= NULL;
+static __thread char	*file	= "";
 __thread char	*record;
 __thread int	recsize	= RECSIZE;
 __thread char	*fields;
@@ -53,8 +53,8 @@ __thread int	lastfld	= 0;	/* last used field */
 __thread int	argno	= 1;	/* current input argument number */
 extern	__thread Awkfloat *ARGC;
 
-static Cell dollar0 = { OCELL, CFLD, NULL, "", 0.0, REC|STR|DONTFREE };
-static Cell dollar1 = { OCELL, CFLD, NULL, "", 0.0, FLD|STR|DONTFREE };
+static __thread Cell dollar0 = { OCELL, CFLD, NULL, "", 0.0, REC|STR|DONTFREE };
+static __thread Cell dollar1 = { OCELL, CFLD, NULL, "", 0.0, FLD|STR|DONTFREE };
 
 void recinit(unsigned int n)
 {
@@ -165,6 +165,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 		/* EOF arrived on this file; set up next */
 		if (infile != thread_stdin)
 			fclose(infile);
+        else getc(infile); // OpenTerm issue: EOF is followed by \n, we need to clear the queue.
 		infile = NULL;
 		argno++;
 	}
@@ -500,7 +501,7 @@ void yyerror(const char *s)
 void SYNTAX(const char *fmt, ...)
 {
 	extern __thread char *cmdname, *curfname;
-	static int been_here = 0;
+	static __thread int been_here = 0;
 	va_list varg;
 
 	if (been_here++ > 2)
@@ -529,7 +530,7 @@ extern __thread int bracecnt, brackcnt, parencnt;
 void bracecheck(void)
 {
 	int c;
-	static int beenhere = 0;
+	static __thread int beenhere = 0;
 
 	if (beenhere++)
 		return;
@@ -606,7 +607,7 @@ void eprint(void)	/* try to print context around error */
 {
 	char *p, *q;
 	int c;
-	static int been_here = 0;
+	static __thread int been_here = 0;
 	extern char ebuf[], *ep;
 
 	if (compile_time == 2 || compile_time == 0 || been_here++ > 0)

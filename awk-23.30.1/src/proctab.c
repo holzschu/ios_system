@@ -202,7 +202,7 @@ Cell *(*proctab[95])(Node **, int) = {
 
 char *tokname(int n)
 {
-	static char buf[100];
+	static __thread char buf[100];
 
 	if (n < FIRSTTOKEN || n > LASTTOKEN) {
 		sprintf(buf, "token %d", n);

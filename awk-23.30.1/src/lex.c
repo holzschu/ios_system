@@ -172,8 +172,8 @@ int	reg	= 0;	/* 1 => return a REGEXPR now */
 int yylex(void)
 {
 	int c;
-	static char *buf = 0;
-	static int bufsize = 5; /* BUG: setting this small causes core dump! */
+	static __thread char *buf = 0;
+	static __thread int bufsize = 5; /* BUG: setting this small causes core dump! */
 
 	if (buf == 0 && (buf = (char *) malloc(bufsize)) == NULL)
 		FATAL( "out of space in yylex" );
@@ -360,8 +360,8 @@ int string(void)
 {
 	int c, n;
 	char *s, *bp;
-	static char *buf = 0;
-	static int bufsz = 500;
+	static __thread char *buf = 0;
+	static __thread int bufsz = 500;
 
 	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
 		FATAL("out of space for strings");
@@ -456,13 +456,15 @@ int binsearch(char *w, Keyword *kp, int n)
 
 int word(char *w) 
 {
-	Keyword *kp;
+	Keyword *kp = NULL;
 	int c, n;
 
 	n = binsearch(w, keywords, sizeof(keywords)/sizeof(keywords[0]));
 /* BUG: this ought to be inside the if; in theory could fault (daniel barrett) */
-	kp = keywords + n;
+    // kp = keywords + n;
+    // Indeed, it did fail with LLVM + Clang. I moved it inside the if. NH.
 	if (n != -1) {	/* found in table */
+        kp = keywords + n;
 		yylval.i = kp->sub;
 		switch (kp->type) {	/* special handling */
 		case BLTIN:
@@ -506,8 +508,8 @@ void startreg(void)	/* next call to yylex will return a regular expression */
 int regexpr(void)
 {
 	int c;
-	static char *buf = 0;
-	static int bufsz = 500;
+	static __thread char *buf = 0;
+	static __thread int bufsz = 500;
 	char *bp;
 
 	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)

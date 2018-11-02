@@ -54,9 +54,9 @@ __thread int	compile_time = 2;	/* for error printing: */
 
 #define	MAX_PFILE	20	/* max number of -f's */
 
-static char	*pfile[MAX_PFILE];	/* program filenames from -f's */
-static int	npfile = 0;	/* number of filenames */
-static int	curpfile = 0;	/* current filename */
+static __thread char	*pfile[MAX_PFILE];	/* program filenames from -f's */
+static __thread int	npfile = 0;	/* number of filenames */
+static __thread int	curpfile = 0;	/* current filename */
 
 __thread int	safe	= 0;	/* 1 => "safe" mode */
 __thread int	Unix2003_compat;
