@@ -76,6 +76,7 @@ typedef struct _functionParameters {
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     functionParameters *p = (functionParameters *) parameters;
+    fflush(thread_stdin);
     fflush(thread_stdout);
     fflush(thread_stderr);
     // release parameters:
@@ -654,7 +655,7 @@ int ios_kill()
 {
     if (currentSession == NULL) return ESRCH;
     if (currentSession.current_command_root_thread > 0) {
-        // Send pthread_kill with the given signal to the current main thread, if there is one.
+        // Send pthread_cancel with the given signal to the current main thread, if there is one.
         return pthread_cancel(currentSession.current_command_root_thread);
     }
     // No process running
@@ -1412,6 +1413,7 @@ int ios_system(const char* inputCmd) {
         free(argv); // argv is otherwise freed in cleanup_function
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
+    fflush(thread_stdin);
     fflush(thread_stdout);
     fflush(thread_stderr);
     return currentSession.global_errno;
