@@ -10,6 +10,9 @@
 		220E720920944900008E7FAF /* vis.c in Sources */ = {isa = PBXBuildFile; fileRef = 228E399620615B0C0055B5EF /* vis.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		222446342065642E0018D400 /* sessionParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = 222446322065642E0018D400 /* sessionParameters.h */; };
 		222446352065642E0018D400 /* sessionParameters.m in Sources */ = {isa = PBXBuildFile; fileRef = 222446332065642E0018D400 /* sessionParameters.m */; };
+		222CC4DC218CBF2300D3A11C /* strnsubst.c in Sources */ = {isa = PBXBuildFile; fileRef = 222CC4DA218CBF2300D3A11C /* strnsubst.c */; };
+		222CC4DD218CBF2300D3A11C /* pathnames.h in Headers */ = {isa = PBXBuildFile; fileRef = 222CC4DB218CBF2300D3A11C /* pathnames.h */; };
+		222CC4DF218CBF2900D3A11C /* xargs.c in Sources */ = {isa = PBXBuildFile; fileRef = 222CC4DE218CBF2900D3A11C /* xargs.c */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
 		22327A9F209E3ADD0026B98C /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 22327A9E209E3ADD0026B98C /* md5.c */; };
 		22327AA1209E3AE30026B98C /* commoncrypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 22327AA0209E3AE30026B98C /* commoncrypto.c */; };
@@ -466,6 +469,9 @@
 /* Begin PBXFileReference section */
 		222446322065642E0018D400 /* sessionParameters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sessionParameters.h; sourceTree = "<group>"; };
 		222446332065642E0018D400 /* sessionParameters.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = sessionParameters.m; sourceTree = "<group>"; };
+		222CC4DA218CBF2300D3A11C /* strnsubst.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strnsubst.c; path = shell_cmds/xargs/strnsubst.c; sourceTree = SOURCE_ROOT; };
+		222CC4DB218CBF2300D3A11C /* pathnames.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pathnames.h; path = shell_cmds/xargs/pathnames.h; sourceTree = SOURCE_ROOT; };
+		222CC4DE218CBF2900D3A11C /* xargs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xargs.c; path = shell_cmds/xargs/xargs.c; sourceTree = SOURCE_ROOT; };
 		22319F9E1FDC2332004D875A /* getopt.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = getopt.c; sourceTree = "<group>"; };
 		22327A9E209E3ADD0026B98C /* md5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = md5.c; path = text_cmds/md5/md5.c; sourceTree = SOURCE_ROOT; };
 		22327AA0209E3AE30026B98C /* commoncrypto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = commoncrypto.c; path = text_cmds/md5/commoncrypto.c; sourceTree = SOURCE_ROOT; };
@@ -1030,6 +1036,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		222CC4D9218CBEED00D3A11C /* xarg */ = {
+			isa = PBXGroup;
+			children = (
+				222CC4DB218CBF2300D3A11C /* pathnames.h */,
+				222CC4DA218CBF2300D3A11C /* strnsubst.c */,
+				222CC4DE218CBF2900D3A11C /* xargs.c */,
+			);
+			name = xarg;
+			sourceTree = "<group>";
+		};
 		22327A9D209E3AB20026B98C /* md5 */ = {
 			isa = PBXGroup;
 			children = (
@@ -1722,6 +1738,7 @@
 		226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
+				222CC4D9218CBEED00D3A11C /* xarg */,
 				22C5057C209875E200FDDFA9 /* find */,
 				225F060920163BFC00466685 /* tee */,
 				22D8DEB4200791A500FAADB7 /* echo */,
@@ -2104,6 +2121,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				222CC4DD218CBF2300D3A11C /* pathnames.h in Headers */,
 				22B753052068DF8400F2B025 /* shell.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2556,6 +2574,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22C505872098ADD800FDDFA9 /* ls.c in Sources */,
+				222CC4DC218CBF2300D3A11C /* strnsubst.c in Sources */,
 				22F6A11E2068395B00E618F9 /* fmt.c in Sources */,
 				22F6A1212068395B00E618F9 /* w.c in Sources */,
 				22C505882098ADD800FDDFA9 /* misc.c in Sources */,
@@ -2575,6 +2594,7 @@
 				22F6A1162068394200E618F9 /* date.c in Sources */,
 				22F6A1142068393900E618F9 /* tee.c in Sources */,
 				22F6A11D2068395600E618F9 /* uname.c in Sources */,
+				222CC4DF218CBF2900D3A11C /* xargs.c in Sources */,
 				22F6A1192068394700E618F9 /* envopts.c in Sources */,
 				22C505892098ADD800FDDFA9 /* option.c in Sources */,
 			);
