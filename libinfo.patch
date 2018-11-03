@@ -1,6 +1,6 @@
 diff -Naur Libinfo-517/lookup.subproj/cache_module.c libinfo/lookup.subproj/cache_module.c
 --- Libinfo-517/lookup.subproj/cache_module.c	2012-10-03 22:52:28.000000000 +0200
-+++ libinfo/lookup.subproj/cache_module.c	2018-05-22 20:43:38.000000000 +0200
++++ libinfo/lookup.subproj/cache_module.c	2018-11-01 13:52:00.000000000 +0100
 @@ -21,7 +21,7 @@
   * @APPLE_LICENSE_HEADER_END@
   */
@@ -21,7 +21,7 @@ diff -Naur Libinfo-517/lookup.subproj/cache_module.c libinfo/lookup.subproj/cach
  #include <dispatch/dispatch.h>
 diff -Naur Libinfo-517/lookup.subproj/file_module.c libinfo/lookup.subproj/file_module.c
 --- Libinfo-517/lookup.subproj/file_module.c	2017-02-21 23:13:49.000000000 +0100
-+++ libinfo/lookup.subproj/file_module.c	2018-05-22 20:52:54.000000000 +0200
++++ libinfo/lookup.subproj/file_module.c	2018-11-01 13:52:00.000000000 +0100
 @@ -21,7 +21,7 @@
   * @APPLE_LICENSE_HEADER_END@
   */
@@ -42,7 +42,7 @@ diff -Naur Libinfo-517/lookup.subproj/file_module.c libinfo/lookup.subproj/file_
  
 diff -Naur Libinfo-517/lookup.subproj/ils.c libinfo/lookup.subproj/ils.c
 --- Libinfo-517/lookup.subproj/ils.c	2015-10-06 23:45:28.000000000 +0200
-+++ libinfo/lookup.subproj/ils.c	2018-05-22 20:43:10.000000000 +0200
++++ libinfo/lookup.subproj/ils.c	2018-11-01 13:52:00.000000000 +0100
 @@ -25,7 +25,7 @@
  #include <stdlib.h>
  #include <string.h>
@@ -63,7 +63,7 @@ diff -Naur Libinfo-517/lookup.subproj/ils.c libinfo/lookup.subproj/ils.c
  #define ILS_MAGIC "ILSMAGIC"
 diff -Naur Libinfo-517/lookup.subproj/kvbuf.c libinfo/lookup.subproj/kvbuf.c
 --- Libinfo-517/lookup.subproj/kvbuf.c	2010-11-13 01:54:36.000000000 +0100
-+++ libinfo/lookup.subproj/kvbuf.c	2018-05-22 20:43:16.000000000 +0200
++++ libinfo/lookup.subproj/kvbuf.c	2018-11-01 13:52:00.000000000 +0100
 @@ -25,7 +25,7 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -75,7 +75,7 @@ diff -Naur Libinfo-517/lookup.subproj/kvbuf.c libinfo/lookup.subproj/kvbuf.c
  
 diff -Naur Libinfo-517/lookup.subproj/libinfo.c libinfo/lookup.subproj/libinfo.c
 --- Libinfo-517/lookup.subproj/libinfo.c	2017-06-02 21:00:18.000000000 +0200
-+++ libinfo/lookup.subproj/libinfo.c	2018-05-23 11:31:09.000000000 +0200
++++ libinfo/lookup.subproj/libinfo.c	2018-11-01 13:52:00.000000000 +0100
 @@ -28,19 +28,19 @@
  #include <errno.h>
  #include <netdb.h>
@@ -169,7 +169,7 @@ diff -Naur Libinfo-517/lookup.subproj/libinfo.c libinfo/lookup.subproj/libinfo.c
  
 diff -Naur Libinfo-517/lookup.subproj/libinfo.h libinfo/lookup.subproj/libinfo.h
 --- Libinfo-517/lookup.subproj/libinfo.h	2010-12-01 02:34:46.000000000 +0100
-+++ libinfo/lookup.subproj/libinfo.h	2018-05-22 20:52:44.000000000 +0200
++++ libinfo/lookup.subproj/libinfo.h	2018-11-01 13:52:00.000000000 +0100
 @@ -21,7 +21,7 @@
   * @APPLE_LICENSE_HEADER_END@
   */
@@ -181,7 +181,7 @@ diff -Naur Libinfo-517/lookup.subproj/libinfo.h libinfo/lookup.subproj/libinfo.h
   * SPI to disable / enable modules during Libinfo search.
 diff -Naur Libinfo-517/lookup.subproj/mdns_module.c libinfo/lookup.subproj/mdns_module.c
 --- Libinfo-517/lookup.subproj/mdns_module.c	2016-09-28 18:48:13.000000000 +0200
-+++ libinfo/lookup.subproj/mdns_module.c	2018-05-22 20:54:50.000000000 +0200
++++ libinfo/lookup.subproj/mdns_module.c	2018-11-01 13:52:00.000000000 +0100
 @@ -85,7 +85,7 @@
   */
  
@@ -202,7 +202,7 @@ diff -Naur Libinfo-517/lookup.subproj/mdns_module.c libinfo/lookup.subproj/mdns_
  #include <notify.h>
 diff -Naur Libinfo-517/lookup.subproj/si_getaddrinfo.c libinfo/lookup.subproj/si_getaddrinfo.c
 --- Libinfo-517/lookup.subproj/si_getaddrinfo.c	2017-01-18 20:13:55.000000000 +0100
-+++ libinfo/lookup.subproj/si_getaddrinfo.c	2018-05-22 20:52:00.000000000 +0200
++++ libinfo/lookup.subproj/si_getaddrinfo.c	2018-11-01 13:52:00.000000000 +0100
 @@ -29,9 +29,9 @@
  #include <sys/socket.h>
  #include <net/if.h>
@@ -494,7 +494,7 @@ diff -Naur Libinfo-517/lookup.subproj/si_getaddrinfo.c libinfo/lookup.subproj/si
  si_list_t *
 diff -Naur Libinfo-517/lookup.subproj/si_module.c libinfo/lookup.subproj/si_module.c
 --- Libinfo-517/lookup.subproj/si_module.c	2015-09-15 22:20:28.000000000 +0200
-+++ libinfo/lookup.subproj/si_module.c	2018-05-22 20:48:53.000000000 +0200
++++ libinfo/lookup.subproj/si_module.c	2018-11-01 13:52:00.000000000 +0100
 @@ -32,7 +32,17 @@
  #include <pthread.h>
  #include <mach/mach.h>
@@ -516,7 +516,7 @@ diff -Naur Libinfo-517/lookup.subproj/si_module.c libinfo/lookup.subproj/si_modu
  #define PLUGIN_DIR_PATH "/usr/lib/info"
 diff -Naur Libinfo-517/lookup.subproj/si_module.h libinfo/lookup.subproj/si_module.h
 --- Libinfo-517/lookup.subproj/si_module.h	2011-12-22 02:36:35.000000000 +0100
-+++ libinfo/lookup.subproj/si_module.h	2018-05-22 20:43:47.000000000 +0200
++++ libinfo/lookup.subproj/si_module.h	2018-11-01 13:52:00.000000000 +0100
 @@ -32,11 +32,11 @@
  #include <grp.h>
  #include <uuid/uuid.h>
@@ -534,7 +534,7 @@ diff -Naur Libinfo-517/lookup.subproj/si_module.h libinfo/lookup.subproj/si_modu
  #define string_equal(A,B) (strcmp(A,B)==0)
 diff -Naur Libinfo-517/lookup.subproj/thread_data.c libinfo/lookup.subproj/thread_data.c
 --- Libinfo-517/lookup.subproj/thread_data.c	2010-03-12 03:01:30.000000000 +0100
-+++ libinfo/lookup.subproj/thread_data.c	2018-05-22 20:41:24.000000000 +0200
++++ libinfo/lookup.subproj/thread_data.c	2018-11-01 13:52:00.000000000 +0100
 @@ -21,7 +21,7 @@
   * @APPLE_LICENSE_HEADER_END@
   */
@@ -546,7 +546,7 @@ diff -Naur Libinfo-517/lookup.subproj/thread_data.c libinfo/lookup.subproj/threa
  #include <stdlib.h>
 diff -Naur Libinfo-517/lookup.subproj/thread_data.h libinfo/lookup.subproj/thread_data.h
 --- Libinfo-517/lookup.subproj/thread_data.h	2010-03-12 03:01:30.000000000 +0100
-+++ libinfo/lookup.subproj/thread_data.h	2018-05-22 20:41:30.000000000 +0200
++++ libinfo/lookup.subproj/thread_data.h	2018-11-01 13:52:00.000000000 +0100
 @@ -24,7 +24,7 @@
  #ifndef __THREAD_DATA_H__
  #define __THREAD_DATA_H__

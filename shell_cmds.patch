@@ -1,6 +1,6 @@
 diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
 --- shell_cmds-203/date/date.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/date.c	2018-04-30 22:15:11.000000000 +0200
++++ shell_cmds/date/date.c	2018-11-01 13:52:03.000000000 +0100
 @@ -57,13 +57,15 @@
  #include <utmpx.h>
  
@@ -141,7 +141,7 @@ diff -Naur shell_cmds-203/date/date.c shell_cmds/date/date.c
  	    unix2003_std ?
 diff -Naur shell_cmds-203/date/extern.h shell_cmds/date/extern.h
 --- shell_cmds-203/date/extern.h	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/extern.h	2018-04-23 20:32:30.000000000 +0200
++++ shell_cmds/date/extern.h	2018-11-01 13:52:03.000000000 +0100
 @@ -30,6 +30,6 @@
   * $FreeBSD$
   */
@@ -152,7 +152,7 @@ diff -Naur shell_cmds-203/date/extern.h shell_cmds/date/extern.h
  int	netsettime(time_t);
 diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
 --- shell_cmds-203/date/vary.c	2015-11-07 23:19:55.000000000 +0100
-+++ shell_cmds/date/vary.c	2018-04-30 22:13:42.000000000 +0200
++++ shell_cmds/date/vary.c	2018-11-01 13:52:03.000000000 +0100
 @@ -31,7 +31,10 @@
  #include <time.h>
  #include <string.h>
@@ -178,7 +178,7 @@ diff -Naur shell_cmds-203/date/vary.c shell_cmds/date/vary.c
    return result;
 diff -Naur shell_cmds-203/echo/echo.c shell_cmds/echo/echo.c
 --- shell_cmds-203/echo/echo.c	2006-12-21 02:07:57.000000000 +0100
-+++ shell_cmds/echo/echo.c	2018-04-23 20:32:30.000000000 +0200
++++ shell_cmds/echo/echo.c	2018-11-01 13:52:03.000000000 +0100
 @@ -50,6 +50,10 @@
  #include <stdlib.h>
  #include <string.h>
@@ -236,7 +236,7 @@ diff -Naur shell_cmds-203/echo/echo.c shell_cmds/echo/echo.c
  	}
 diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 --- shell_cmds-203/env/env.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/env.c	2018-04-30 22:15:11.000000000 +0200
++++ shell_cmds/env/env.c	2018-11-01 13:52:03.000000000 +0100
 @@ -50,15 +50,18 @@
  #include <unistd.h>
  
@@ -365,7 +365,7 @@ diff -Naur shell_cmds-203/env/env.c shell_cmds/env/env.c
 +
 diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
 --- shell_cmds-203/env/envopts.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/envopts.c	2018-04-30 22:22:55.000000000 +0200
++++ shell_cmds/env/envopts.c	2018-11-01 13:52:03.000000000 +0100
 @@ -42,6 +42,7 @@
  #include <unistd.h>
  
@@ -477,7 +477,7 @@ diff -Naur shell_cmds-203/env/envopts.c shell_cmds/env/envopts.c
  	/*
 diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 --- shell_cmds-203/env/envopts.h	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/env/envopts.h	2018-04-23 20:32:30.000000000 +0200
++++ shell_cmds/env/envopts.h	2018-11-01 13:52:03.000000000 +0100
 @@ -34,4 +34,4 @@
  void		 split_spaces(const char *str, int *origind, int *origc,
  		    char ***origv);
@@ -486,7 +486,7 @@ diff -Naur shell_cmds-203/env/envopts.h shell_cmds/env/envopts.h
 +extern __thread int	 env_verbosity;
 diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
 --- shell_cmds-203/id/id.c	2014-02-18 21:44:21.000000000 +0100
-+++ shell_cmds/id/id.c	2018-05-23 11:34:48.000000000 +0200
++++ shell_cmds/id/id.c	2018-11-01 13:52:03.000000000 +0100
 @@ -62,26 +62,27 @@
  #include <stdlib.h>
  #include <string.h>
@@ -792,7 +792,7 @@ diff -Naur shell_cmds-203/id/id.c shell_cmds/id/id.c
  		    "       id -A\n",
 diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
 --- shell_cmds-203/printenv/printenv.c	2014-08-05 00:47:11.000000000 +0200
-+++ shell_cmds/printenv/printenv.c	2018-04-23 20:32:30.000000000 +0200
++++ shell_cmds/printenv/printenv.c	2018-11-01 13:52:03.000000000 +0100
 @@ -48,8 +48,9 @@
  #include <stdio.h>
  #include <string.h>
@@ -849,7 +849,7 @@ diff -Naur shell_cmds-203/printenv/printenv.c shell_cmds/printenv/printenv.c
  }
 diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
 --- shell_cmds-203/pwd/pwd.c	2006-09-12 00:14:13.000000000 +0200
-+++ shell_cmds/pwd/pwd.c	2018-04-30 22:22:55.000000000 +0200
++++ shell_cmds/pwd/pwd.c	2018-11-01 13:52:03.000000000 +0100
 @@ -50,16 +50,19 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -900,7 +900,7 @@ diff -Naur shell_cmds-203/pwd/pwd.c shell_cmds/pwd/pwd.c
  
 diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
 --- shell_cmds-203/tee/tee.c	1999-04-23 04:44:50.000000000 +0200
-+++ shell_cmds/tee/tee.c	2018-04-30 22:15:11.000000000 +0200
++++ shell_cmds/tee/tee.c	2018-11-01 13:52:03.000000000 +0100
 @@ -57,29 +57,37 @@
  #include <string.h>
  #include <locale.h>
@@ -1045,7 +1045,7 @@ diff -Naur shell_cmds-203/tee/tee.c shell_cmds/tee/tee.c
  	head = p;
 diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
 --- shell_cmds-203/uname/uname.c	2013-09-26 01:55:54.000000000 +0200
-+++ shell_cmds/uname/uname.c	2018-04-30 22:22:55.000000000 +0200
++++ shell_cmds/uname/uname.c	2018-11-01 13:52:03.000000000 +0100
 @@ -49,14 +49,16 @@
  
  #include <sys/sysctl.h>
@@ -1143,7 +1143,7 @@ diff -Naur shell_cmds-203/uname/uname.c shell_cmds/uname/uname.c
  }
 diff -Naur shell_cmds-203/w/extern.h shell_cmds/w/extern.h
 --- shell_cmds-203/w/extern.h	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/extern.h	2018-04-23 20:32:30.000000000 +0200
++++ shell_cmds/w/extern.h	2018-11-01 13:52:03.000000000 +0100
 @@ -31,7 +31,7 @@
   */
  
@@ -1155,7 +1155,7 @@ diff -Naur shell_cmds-203/w/extern.h shell_cmds/w/extern.h
  
 diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
 --- shell_cmds-203/w/fmt.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/fmt.c	2018-04-30 22:22:55.000000000 +0200
++++ shell_cmds/w/fmt.c	2018-11-01 13:52:03.000000000 +0100
 @@ -45,7 +45,7 @@
  #include <string.h>
  #include <unistd.h>
@@ -1182,7 +1182,7 @@ diff -Naur shell_cmds-203/w/fmt.c shell_cmds/w/fmt.c
  	if (*argv == 0) {
 diff -Naur shell_cmds-203/w/pr_time.c shell_cmds/w/pr_time.c
 --- shell_cmds-203/w/pr_time.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/pr_time.c	2018-04-23 20:32:30.000000000 +0200
++++ shell_cmds/w/pr_time.c	2018-11-01 13:52:03.000000000 +0100
 @@ -44,6 +44,7 @@
  #include <string.h>
  
@@ -1230,7 +1230,7 @@ diff -Naur shell_cmds-203/w/pr_time.c shell_cmds/w/pr_time.c
  }
 diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
 --- shell_cmds-203/w/proc_compare.c	2007-01-19 02:15:36.000000000 +0100
-+++ shell_cmds/w/proc_compare.c	2018-04-23 20:32:30.000000000 +0200
++++ shell_cmds/w/proc_compare.c	2018-11-01 13:52:03.000000000 +0100
 @@ -38,13 +38,15 @@
  __FBSDID("$FreeBSD: src/usr.bin/w/proc_compare.c,v 1.9 2004/04/14 09:34:17 bde Exp $");
  #endif
@@ -1250,7 +1250,7 @@ diff -Naur shell_cmds-203/w/proc_compare.c shell_cmds/w/proc_compare.c
  
 diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
 --- shell_cmds-203/w/w.c	2007-10-03 11:55:12.000000000 +0200
-+++ shell_cmds/w/w.c	2018-04-30 22:22:55.000000000 +0200
++++ shell_cmds/w/w.c	2018-11-01 13:52:03.000000000 +0100
 @@ -50,15 +50,16 @@
   * This program is similar to the systat command on Tenex/Tops 10/20
   *
@@ -1555,3 +1555,158 @@ diff -Naur shell_cmds-203/w/w.c shell_cmds/w/w.c
  	exit(1);
  }
  
+diff -Naur shell_cmds-203/xargs/pathnames.h shell_cmds/xargs/pathnames.h
+--- shell_cmds-203/xargs/pathnames.h	2005-10-06 23:22:57.000000000 +0200
++++ shell_cmds/xargs/pathnames.h	2018-11-02 22:47:33.000000000 +0100
+@@ -33,4 +33,5 @@
+  *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
+  */
+ 
+-#define	_PATH_ECHO	"/bin/echo"
++// ios_system: change /bin/echo to echo
++#define	_PATH_ECHO	"echo"
+diff -Naur shell_cmds-203/xargs/strnsubst.c shell_cmds/xargs/strnsubst.c
+--- shell_cmds-203/xargs/strnsubst.c	2005-10-06 23:22:57.000000000 +0200
++++ shell_cmds/xargs/strnsubst.c	2018-11-02 22:42:30.000000000 +0100
+@@ -15,6 +15,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include "ios_error.h"
+ 
+ void	strnsubst(char **, const char *, const char *, size_t);
+ 
+diff -Naur shell_cmds-203/xargs/xargs.c shell_cmds/xargs/xargs.c
+--- shell_cmds-203/xargs/xargs.c	2011-05-10 03:08:35.000000000 +0200
++++ shell_cmds/xargs/xargs.c	2018-11-03 14:01:06.000000000 +0100
+@@ -65,11 +65,13 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
++#include <TargetConditionals.h>
++#include "ios_error.h"
+ #include "pathnames.h"
+ 
+ #ifdef __APPLE__
+-#include <get_compat.h>
+-#else
++// #include <get_compat.h>
++// #else
+ #define COMPAT_MODE(a,b) (1)
+ #endif /* __APPLE__ */
+ 
+@@ -81,24 +83,24 @@
+ void		strnsubst(char **, const char *, const char *, size_t);
+ static void	waitchildren(const char *, int);
+ 
+-static int last_was_newline = 1;
+-static int last_was_blank = 0;
++static __thread int last_was_newline = 1;
++static __thread int last_was_blank = 0;
+ 
+ static char echo[] = _PATH_ECHO;
+-static char **av, **bxp, **ep, **endxp, **xp;
+-static char *argp, *bbp, *ebp, *inpline, *p, *replstr;
++static __thread char **av, **bxp, **ep, **endxp, **xp;
++static __thread char *argp, *bbp, *ebp, *inpline, *p, *replstr;
+ static const char *eofstr;
+-static int count, insingle, indouble, oflag, pflag, tflag, Rflag, rval, zflag;
+-static int cnt, Iflag, jfound, Lflag, wasquoted, xflag;
+-static int curprocs, maxprocs;
++static __thread int count, insingle, indouble, oflag, pflag, tflag, Rflag, rval, zflag;
++static __thread int cnt, Iflag, jfound, Lflag, wasquoted, xflag;
++static __thread int curprocs, maxprocs;
+ static size_t pad9314053;
+ 
+-static volatile int childerr;
++static __thread volatile int childerr;
+ 
+ extern char **environ;
+ 
+ int
+-main(int argc, char *argv[])
++xargs_main(int argc, char *argv[])
+ {
+ 	long arg_max;
+ 	int ch, Jflag, nflag, nline;
+@@ -110,7 +112,36 @@
+ 	ep = environ;
+ 	eofstr = "";
+ 	Jflag = nflag = 0;
+-
++    
++    // Init all flags and variables:
++    last_was_newline = 1;
++    last_was_blank = 0;
++    argp = NULL;
++    bbp = NULL;
++    ebp = NULL;
++    inpline = NULL;
++    p = NULL;
++    replstr = NULL;
++    count = 0;
++    insingle = 0;
++    indouble = 0;
++    oflag = 0;
++    pflag = 0;
++    tflag = 0;
++    Rflag = 0;
++    rval = 0;
++    zflag = 0;
++    cnt = 0;
++    Iflag = 0;
++    jfound = 0;
++    Lflag = 0;
++    wasquoted = 0;
++    xflag = 0;
++    curprocs = 0;
++    maxprocs = 0;
++    childerr = 0;
++    // end init
++    
+ 	(void)setlocale(LC_ALL, "");
+ 
+ 	/*
+@@ -127,8 +158,13 @@
+ 	 * probably not worthwhile.
+ 	 */
+ 	nargs = 5000;
+-	if ((arg_max = sysconf(_SC_ARG_MAX)) == -1)
++#ifndef TARGET_OS_IPHONE
++    if ((arg_max = sysconf(_SC_ARG_MAX)) == -1) {
+ 		errx(1, "sysconf(_SC_ARG_MAX) failed");
++    }
++#else
++    arg_max = _POSIX_ARG_MAX;
++#endif
+ 	nline = arg_max - MAXPATHLEN; /* for argv[0] from execvp() */
+ 	pad9314053 = sizeof(char *); /* reserve for string area rounding */
+ 	while (*ep != NULL) {
+@@ -593,11 +629,16 @@
+ 				err(1, "can't dup2 to stdin");
+ 			close(fd);
+ 		}
++#ifndef TARGET_OS_IPHONE
+ 		execvp(argv[0], argv);
+ 		childerr = errno;
+ 		_exit(1);
++#else
++        childerr = execvp(argv[0], argv);
++#endif
+ 	}
+ 	curprocs++;
++    // Now, we need to wait until the child process has finished. 
+ 	waitchildren(*argv, 0);
+ }
+ 
+@@ -624,8 +665,10 @@
+ 		if (WEXITSTATUS(status))
+ 			rval = 1;
+ 	}
++#ifndef TARGET_OS_IPHONE
+ 	if (pid == -1 && errno != ECHILD)
+ 		err(1, "wait3");
++#endif
+ }
+ 
+ /*
