@@ -9,6 +9,13 @@
 		<string>dhiflM:N:nsuw</string>
 		<string>file</string>
 	</array>
+	<key>bc</key>
+	<array>
+		<string>bc_ios.framework/bc_ios</string>
+		<string>bcdc_main</string>
+		<string>efhilqswx</string>
+		<string>no</string>
+	</array>
 	<key>cat</key>
 	<array>
 		<string>text.framework/text</string>
@@ -63,6 +70,13 @@
 		<string>shell.framework/shell</string>
 		<string>date_main</string>
 		<string>d:f:jnRr:t:uv:</string>
+		<string>no</string>
+	</array>
+	<key>dc</key>
+	<array>
+		<string>bc_ios.framework/bc_ios</string>
+		<string>bcdc_main</string>
+		<string>efhilqswx</string>
 		<string>no</string>
 	</array>
 	<key>diff</key>
