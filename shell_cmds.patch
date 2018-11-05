@@ -1578,13 +1578,17 @@ diff -Naur shell_cmds-203/xargs/strnsubst.c shell_cmds/xargs/strnsubst.c
  
 diff -Naur shell_cmds-203/xargs/xargs.c shell_cmds/xargs/xargs.c
 --- shell_cmds-203/xargs/xargs.c	2011-05-10 03:08:35.000000000 +0200
-+++ shell_cmds/xargs/xargs.c	2018-11-03 14:01:06.000000000 +0100
-@@ -65,11 +65,13 @@
++++ shell_cmds/xargs/xargs.c	2018-11-05 14:59:26.000000000 +0100
+@@ -65,11 +65,17 @@
  #include <string.h>
  #include <unistd.h>
  
 +#include <TargetConditionals.h>
++#ifdef TARGET_OS_IPHONE
 +#include "ios_error.h"
++#undef stderr
++#define stderr thread_stderr
++#endif
  #include "pathnames.h"
  
  #ifdef __APPLE__
@@ -1595,7 +1599,7 @@ diff -Naur shell_cmds-203/xargs/xargs.c shell_cmds/xargs/xargs.c
  #define COMPAT_MODE(a,b) (1)
  #endif /* __APPLE__ */
  
-@@ -81,24 +83,24 @@
+@@ -81,24 +87,24 @@
  void		strnsubst(char **, const char *, const char *, size_t);
  static void	waitchildren(const char *, int);
  
@@ -1629,7 +1633,7 @@ diff -Naur shell_cmds-203/xargs/xargs.c shell_cmds/xargs/xargs.c
  {
  	long arg_max;
  	int ch, Jflag, nflag, nline;
-@@ -110,7 +112,36 @@
+@@ -110,7 +116,36 @@
  	ep = environ;
  	eofstr = "";
  	Jflag = nflag = 0;
@@ -1667,7 +1671,7 @@ diff -Naur shell_cmds-203/xargs/xargs.c shell_cmds/xargs/xargs.c
  	(void)setlocale(LC_ALL, "");
  
  	/*
-@@ -127,8 +158,13 @@
+@@ -127,8 +162,13 @@
  	 * probably not worthwhile.
  	 */
  	nargs = 5000;
@@ -1682,7 +1686,7 @@ diff -Naur shell_cmds-203/xargs/xargs.c shell_cmds/xargs/xargs.c
  	nline = arg_max - MAXPATHLEN; /* for argv[0] from execvp() */
  	pad9314053 = sizeof(char *); /* reserve for string area rounding */
  	while (*ep != NULL) {
-@@ -593,11 +629,16 @@
+@@ -593,11 +633,16 @@
  				err(1, "can't dup2 to stdin");
  			close(fd);
  		}
@@ -1699,7 +1703,7 @@ diff -Naur shell_cmds-203/xargs/xargs.c shell_cmds/xargs/xargs.c
  	waitchildren(*argv, 0);
  }
  
-@@ -624,8 +665,10 @@
+@@ -624,8 +669,10 @@
  		if (WEXITSTATUS(status))
  			rval = 1;
  	}
