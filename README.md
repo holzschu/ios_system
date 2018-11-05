@@ -27,7 +27,7 @@ Each command is defined inside a framework. The framework is loaded when the com
 
 Network-based commands (nslookup, dig, host, ping, telnet) are also available as a separate framework, [network_ios](https://github.com/holzschu/network_ios). Place the compiled library with the other libraries and add it to the embedded libraries of your application.
 
-This `ios_system` framework has been successfully ported into two shells, [Blink](https://github.com/holzschu/blink) and [OpenTerm](https://github.com/louisdh/terminal) and into an editor, [iVim](https://github.com/holzschu/iVim). Each time, it provides a Unix look-and-feel (well, mostly feel). 
+This `ios_system` framework has been successfully integrated into four shells, [Blink](https://github.com/blinksh/blink/), [OpenTerm](https://github.com/louisdh/terminal), [Pisth](https://github.com/ColdGrub1384/Pisth) and [LibTerm](https://github.com/ColdGrub1384/LibTerm) as well as an editor, [iVim](https://github.com/holzschu/iVim). Each time, it provides a Unix look-and-feel (well, mostly feel). 
 
 **Issues:** In iOS, you cannot write in the `~` directory, only in `~/Documents/`, `~/Library/` and `~/tmp`. Most Unix programs assume the configuration files are in `$HOME`. 
 So either you redefine `$HOME` to `~/Documents/` or you set configuration variables (using `setenv`) to some other place. This is done in the `initializeEnvironment()` function. 
@@ -149,15 +149,13 @@ To add a command:
 
 ### Licensing:
 
-As much as possible, I used the BSD version of the tools. More precisely:
+`ios_system` itself is released under the  <a href='https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")'>Revised BSD License</a> (3-clause BSD license). Foe the other tools, I've used the BSD version as often as possible: 
 - awk: <a href="https://github.com/onetrueawk/awk/blob/master/LICENSE">OpenSource license</a>.
 - curl, scp, sftp: <a href="https://curl.haxx.se/docs/copyright.html">MIT/X derivate license</a>.
 - lua: <a href="https://www.lua.org/license.html">MIT License</a>.
 - python: <a href="https://docs.python.org/2.7/license.html">Python license</a>.
 - libssh2: <a href='https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")'>Revised BSD License</a> (a.k.a. 3-clause BSD license).
-- egrep, fgrep, grep, gzip, gunzip: <a href='https://en.wikipedia.org/wiki/BSD_licenses#2-clause_license_("Simplified_BSD_License"_or_"FreeBSD_License")'>Simplified BSD License</a> (2-clause BSD license).
-- cat, chflag, compress, cp, date, echo, env, link, ln, printenv, pwd, sed, tar, uncompress, uptime, <a href='https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")'>Revised BSD License</a> (a.k.a. 3-clause BSD license).
-- chgrp, chksum, chmod, chown, df, du, groups, id, ls, mkdir, mv, readlink, rm, rmdir, stat, sum, touch, tr, uname, wc, whoami: <a href='https://en.wikipedia.org/wiki/BSD_licenses#4-clause_license_(original_"BSD_License")'>Original BSD License</a> (4-clause BSD license)
+- egrep, fgrep, grep, gzip, gunzip, cat, chflag, compress, cp, date, echo, env, link, ln, printenv, pwd, sed, tar, uncompress, uptime, chgrp, chksum, chmod, chown, df, du, groups, id, ls, mkdir, mv, readlink, rm, rmdir, stat, sum, touch, tr, uname, wc, whoami: <a href='https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")'>Revised BSD License</a> (a.k.a. 3-clause BSD license).
 - pdftex, luatex and all TeX-based programs: <a href="https://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.
 
 Using BSD versions has consequences on the flags and how they work. For example, there are two versions of `sed`, the BSD version and the GNU version. They have roughly the same behaviour, but differ on `-i` (in place): the GNU version overwrites the file if you don't provide an extension, the BSD version won't work unless you provide the extension to use on the backup file (and will backup the input file with that extension). 
