@@ -44,7 +44,7 @@ const char	*version = "version 20070501";
 extern	char	**environ;
 extern	__thread int	nfields;
 
-__thread int	dbg	= 0;
+__thread int	dbg	= 0;    // Set to 1 for serious debugging
 __thread char	*cmdname;	/* gets argv[0] for error messages */
 extern	__thread FILE	*yyin;	/* lex input file */
 __thread char	*lexprog;	/* points to program argument if it exists */

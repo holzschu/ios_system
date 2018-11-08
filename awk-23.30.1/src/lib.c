@@ -58,11 +58,16 @@ static __thread Cell dollar1 = { OCELL, CFLD, NULL, "", 0.0, FLD|STR|DONTFREE };
 
 void recinit(unsigned int n)
 {
-	if ( (record = (char *) malloc(n)) == NULL
+    if ( (record = (char*)calloc(n, sizeof(char*))) == NULL
+        || (fields = (char*)calloc(n+1, sizeof(char *))) == NULL
+        || (fldtab = (Cell **)calloc(nfields+1, sizeof(Cell*))) == NULL
+        || (fldtab[0] = (Cell *) calloc(1, sizeof(Cell))) == NULL )
+        FATAL("out of space for $0 and fields");
+/*	if ( (record = (char *) malloc(n)) == NULL
 	  || (fields = (char *) malloc(n+1)) == NULL
 	  || (fldtab = (Cell **) malloc((nfields+1) * sizeof(Cell *))) == NULL
 	  || (fldtab[0] = (Cell *) malloc(sizeof(Cell))) == NULL )
-		FATAL("out of space for $0 and fields");
+		FATAL("out of space for $0 and fields"); */
 	*fldtab[0] = dollar0;
 	fldtab[0]->sval = record;
 	fldtab[0]->nval = tostring("0");

@@ -145,10 +145,11 @@ Array *makesymtab(int n)	/* make a new symbol table */
 	Array *ap;
 	Cell **tp;
 
-	ap = (Array *) malloc(sizeof(Array));
+	ap = (Array *) calloc(1, sizeof(Array));
 	tp = (Cell **) calloc(n, sizeof(Cell *));
 	if (ap == NULL || tp == NULL)
 		FATAL("out of space in makesymtab");
+
 	ap->nelem = 0;
 	ap->size = n;
 	ap->tab = tp;
