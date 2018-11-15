@@ -713,7 +713,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
        }
 diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
 --- curl-105/curl/lib/url.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/url.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/url.c	2018-11-15 15:18:54.000000000 +0100
 @@ -119,6 +119,18 @@
  #include "pipeline.h"
  #include "dotdot.h"
@@ -812,7 +812,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
    result = findprotocol(data, conn, protop);
    if(result)
 -    return result;
-+    return
++      return result;
  
    /*
     * Parse the login details from the URL and strip them out of
