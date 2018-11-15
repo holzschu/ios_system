@@ -299,7 +299,7 @@ static void initializeCommandList()
         // merge the two dictionaries:
         NSMutableDictionary *mutableDict = [commandList mutableCopy];
         [mutableDict addEntriesFromDictionary:extraCommandList];
-        commandList = [mutableDict mutableCopy];
+        commandList = [mutableDict copy];
     }
 }
 
@@ -822,7 +822,7 @@ void replaceCommand(NSString* commandName, NSString* functionName, bool allOccur
                 [mutableDict setValue: [NSArray arrayWithObjects: @"MAIN", functionName, @"", @"file", nil] forKey: existingCommand];
         }
     }
-    commandList = [mutableDict mutableCopy];
+    commandList = [mutableDict copy]; // back to non-mutable version
 }
 
 // For customization:
@@ -856,7 +856,7 @@ NSError* addCommandList(NSString* fileLocation) {
     // merge the two dictionaries:
     NSMutableDictionary *mutableDict = [commandList mutableCopy];
     [mutableDict addEntriesFromDictionary:newCommandList];
-    commandList = [mutableDict mutableCopy];
+    commandList = [mutableDict copy];
     return NULL;
 }
 
