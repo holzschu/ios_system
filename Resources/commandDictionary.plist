@@ -289,6 +289,13 @@
 		<string>p</string>
 		<string>directory</string>
 	</array>
+	<key>say</key>
+	<array>
+		<string>text.framework/text</string>
+		<string>say_main</string>
+		<string>v:f:r:</string>
+		<string>no</string>
+	</array>
 	<key>scp</key>
 	<array>
 		<string>curl_ios.framework/curl_ios</string>
@@ -322,7 +329,7 @@
 		<string>ssh_cmd.framework/ssh_cmd</string>
 		<string>ssh_main</string>
 		<string>q</string>
-		<string></string>
+		<string>no</string>
 	</array>
 	<key>ssh-keygen</key>
 	<array>
@@ -463,6 +470,6 @@
 		<string>xargs_main</string>
 		<string>0E:I:J:L:n:oP:pR:s:tx</string>
 		<string>no</string>
-	</array>	
+	</array>
 </dict>
 </plist>
