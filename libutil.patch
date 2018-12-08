@@ -1,6 +1,6 @@
 diff -Naur libutil-51/humanize_number.c libutil/humanize_number.c
 --- libutil-51/humanize_number.c	2016-03-04 06:57:33.000000000 +0100
-+++ libutil/humanize_number.c	2018-11-01 13:51:58.000000000 +0100
++++ libutil/humanize_number.c	2018-12-08 15:35:51.000000000 +0100
 @@ -41,7 +41,7 @@
  #include <stdlib.h>
  #include <string.h>

@@ -1,6 +1,6 @@
 diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
 --- text_cmds-99/cat/cat.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/cat/cat.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/cat/cat.c	2018-12-08 15:40:04.000000000 +0100
 @@ -63,10 +63,11 @@
  #include <string.h>
  #include <unistd.h>
@@ -133,11 +133,15 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  }
  
  static void
-@@ -241,24 +246,33 @@
+@@ -239,26 +244,35 @@
+ {
+ 	int off, wfd;
  	ssize_t nr, nw;
- 	static size_t bsize;
- 	static char *buf = NULL;
+-	static size_t bsize;
+-	static char *buf = NULL;
 -	struct stat sbuf;
++	static __thread size_t bsize;
++	static __thread char *buf = NULL;
 +	// struct stat sbuf;
  
 -	wfd = fileno(stdout);
@@ -194,7 +198,7 @@ diff -Naur text_cmds-99/cat/cat.c text_cmds/cat/cat.c
  			break;
 diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
 --- text_cmds-99/ed/buf.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/buf.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/buf.c	2018-12-08 15:35:54.000000000 +0100
 @@ -33,6 +33,10 @@
  #include <sys/stat.h>
  
@@ -300,7 +304,7 @@ diff -Naur text_cmds-99/ed/buf.c text_cmds/ed/buf.c
  	REQUE(&buffer_head, &buffer_head);
 diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 --- text_cmds-99/ed/ed.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/ed.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/ed.h	2018-12-08 15:35:54.000000000 +0100
 @@ -258,25 +258,25 @@
  long write_stream(FILE *, long, long);
  
@@ -347,7 +351,7 @@ diff -Naur text_cmds-99/ed/ed.h text_cmds/ed/ed.h
 +extern __thread int posixly_correct;
 diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
 --- text_cmds-99/ed/glbl.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/glbl.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/glbl.c	2018-12-08 15:35:54.000000000 +0100
 @@ -34,6 +34,7 @@
  #include <sys/wait.h>
  
@@ -385,7 +389,7 @@ diff -Naur text_cmds-99/ed/glbl.c text_cmds/ed/glbl.c
  				return ERR;
 diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
 --- text_cmds-99/ed/io.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/io.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/io.c	2018-12-08 15:35:54.000000000 +0100
 @@ -29,9 +29,10 @@
  __FBSDID("$FreeBSD: src/bin/ed/io.c,v 1.14 2003/01/01 18:48:39 schweikh Exp $");
  
@@ -534,7 +538,7 @@ diff -Naur text_cmds-99/ed/io.c text_cmds/ed/io.c
  		if (gflag & GLS) {
 diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
 --- text_cmds-99/ed/main.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/ed/main.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/main.c	2018-12-08 15:35:54.000000000 +0100
 @@ -59,14 +59,16 @@
  #include <pwd.h>
  #include <setjmp.h>
@@ -940,7 +944,7 @@ diff -Naur text_cmds-99/ed/main.c text_cmds/ed/main.c
  handle_winch(int signo)
 diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
 --- text_cmds-99/ed/re.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/re.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/re.c	2018-12-08 15:35:54.000000000 +0100
 @@ -30,11 +30,12 @@
  __FBSDID("$FreeBSD: src/bin/ed/re.c,v 1.20 2003/07/20 10:24:09 ru Exp $");
  
@@ -967,7 +971,7 @@ diff -Naur text_cmds-99/ed/re.c text_cmds/ed/re.c
  	}
 diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
 --- text_cmds-99/ed/sub.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/sub.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/sub.c	2018-12-08 15:35:54.000000000 +0100
 @@ -30,6 +30,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/sub.c,v 1.15 2002/06/30 05:13:53 obrien Exp $");
  
@@ -987,7 +991,7 @@ diff -Naur text_cmds-99/ed/sub.c text_cmds/ed/sub.c
  		}
 diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
 --- text_cmds-99/ed/undo.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/ed/undo.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/ed/undo.c	2018-12-08 15:35:54.000000000 +0100
 @@ -29,6 +29,7 @@
  __FBSDID("$FreeBSD: src/bin/ed/undo.c,v 1.12 2002/06/30 05:13:53 obrien Exp $");
  
@@ -1027,7 +1031,7 @@ diff -Naur text_cmds-99/ed/undo.c text_cmds/ed/undo.c
  int
 diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
 --- text_cmds-99/grep/file.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/file.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/grep/file.c	2018-12-08 15:35:54.000000000 +0100
 @@ -57,6 +57,7 @@
  #endif
  
@@ -1055,7 +1059,7 @@ diff -Naur text_cmds-99/grep/file.c text_cmds/grep/file.c
  			else {
 diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
 --- text_cmds-99/grep/grep.c	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/grep/grep.c	2018-12-08 15:35:54.000000000 +0100
 @@ -53,10 +53,11 @@
  #include "fastmatch.h"
  #endif
@@ -1417,7 +1421,7 @@ diff -Naur text_cmds-99/grep/grep.c text_cmds/grep/grep.c
  		c = grep_tree(aargv);
 diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
 --- text_cmds-99/grep/grep.h	2015-08-18 22:29:43.000000000 +0200
-+++ text_cmds/grep/grep.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/grep/grep.h	2018-12-08 15:35:54.000000000 +0100
 @@ -45,7 +45,7 @@
  #else
  #include <nl_types.h>
@@ -1473,7 +1477,7 @@ diff -Naur text_cmds-99/grep/grep.h text_cmds/grep/grep.h
  /* For regex errors  */
 diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
 --- text_cmds-99/grep/util.c	2015-09-10 22:25:31.000000000 +0200
-+++ text_cmds/grep/util.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/grep/util.c	2018-12-08 15:35:54.000000000 +0100
 @@ -59,6 +59,7 @@
  #include "fastmatch.h"
  #endif
@@ -1680,7 +1684,7 @@ diff -Naur text_cmds-99/grep/util.c text_cmds/grep/util.c
  }
 diff -Naur text_cmds-99/head/head.c text_cmds/head/head.c
 --- text_cmds-99/head/head.c	2010-05-13 03:07:37.000000000 +0200
-+++ text_cmds/head/head.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/head/head.c	2018-12-08 15:35:54.000000000 +0100
 @@ -54,6 +54,7 @@
  #include <stdlib.h>
  #include <string.h>
@@ -1726,7 +1730,7 @@ diff -Naur text_cmds-99/head/head.c text_cmds/head/head.c
  		}
 diff -Naur text_cmds-99/md5/CommonDigestSPI.h text_cmds/md5/CommonDigestSPI.h
 --- text_cmds-99/md5/CommonDigestSPI.h	1970-01-01 01:00:00.000000000 +0100
-+++ text_cmds/md5/CommonDigestSPI.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/md5/CommonDigestSPI.h	2018-12-08 15:35:54.000000000 +0100
 @@ -0,0 +1,333 @@
 +/*
 + * Copyright (c) 2010 Apple Inc. All Rights Reserved.
@@ -2063,7 +2067,7 @@ diff -Naur text_cmds-99/md5/CommonDigestSPI.h text_cmds/md5/CommonDigestSPI.h
 +#endif /* _CC_DigestSPI_H_ */
 diff -Naur text_cmds-99/md5/commoncrypto.c text_cmds/md5/commoncrypto.c
 --- text_cmds-99/md5/commoncrypto.c	2016-03-08 08:31:57.000000000 +0100
-+++ text_cmds/md5/commoncrypto.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/md5/commoncrypto.c	2018-12-08 15:35:54.000000000 +0100
 @@ -1,24 +1,81 @@
  /* Generic CommonDigest wrappers to match the semantics of libmd. */
  
@@ -2218,7 +2222,7 @@ diff -Naur text_cmds-99/md5/commoncrypto.c text_cmds/md5/commoncrypto.c
  			}
 diff -Naur text_cmds-99/md5/commoncrypto.h text_cmds/md5/commoncrypto.h
 --- text_cmds-99/md5/commoncrypto.h	2011-10-05 00:53:29.000000000 +0200
-+++ text_cmds/md5/commoncrypto.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/md5/commoncrypto.h	2018-12-08 15:35:54.000000000 +0100
 @@ -1,8 +1,51 @@
  #include <CommonCrypto/CommonDigest.h>
 -#include <CommonCrypto/CommonDigestSPI.h>
@@ -2277,7 +2281,7 @@ diff -Naur text_cmds-99/md5/commoncrypto.h text_cmds/md5/commoncrypto.h
 +char *Digest_File(ios_CCDigestAlg, const char *, char *);
 diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
 --- text_cmds-99/md5/md5.c	2011-10-05 00:53:29.000000000 +0200
-+++ text_cmds/md5/md5.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/md5/md5.c	2018-12-08 15:35:54.000000000 +0100
 @@ -36,6 +36,7 @@
  #include <time.h>
  #include <unistd.h>
@@ -2454,7 +2458,7 @@ diff -Naur text_cmds-99/md5/md5.c text_cmds/md5/md5.c
  }
 diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
 --- text_cmds-99/sed/compile.c	2006-12-05 23:29:30.000000000 +0100
-+++ text_cmds/sed/compile.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sed/compile.c	2018-12-08 15:35:54.000000000 +0100
 @@ -54,12 +54,13 @@
  
  #include "defs.h"
@@ -2958,7 +2962,7 @@ diff -Naur text_cmds-99/sed/compile.c text_cmds/sed/compile.c
  	}
 diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
 --- text_cmds-99/sed/extern.h	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/extern.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sed/extern.h	2018-12-08 15:35:54.000000000 +0100
 @@ -34,16 +34,16 @@
   * $FreeBSD: src/usr.bin/sed/extern.h,v 1.13 2004/08/09 15:29:41 dds Exp $
   */
@@ -2988,7 +2992,7 @@ diff -Naur text_cmds-99/sed/extern.h text_cmds/sed/extern.h
  void	 compile(void);
 diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
 --- text_cmds-99/sed/main.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/main.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sed/main.c	2018-12-08 15:35:54.000000000 +0100
 @@ -64,6 +64,9 @@
  
  #include "defs.h"
@@ -3286,7 +3290,7 @@ diff -Naur text_cmds-99/sed/main.c text_cmds/sed/main.c
  	fl_nextp = &fp->next;
 diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
 --- text_cmds-99/sed/misc.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/misc.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sed/misc.c	2018-12-08 15:35:54.000000000 +0100
 @@ -49,6 +49,9 @@
  
  #include "defs.h"
@@ -3311,7 +3315,7 @@ diff -Naur text_cmds-99/sed/misc.c text_cmds/sed/misc.c
  }
 diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
 --- text_cmds-99/sed/process.c	2005-09-20 23:36:44.000000000 +0200
-+++ text_cmds/sed/process.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sed/process.c	2018-12-08 15:35:54.000000000 +0100
 @@ -58,6 +58,7 @@
  
  #include "defs.h"
@@ -3563,7 +3567,7 @@ diff -Naur text_cmds-99/sed/process.c text_cmds/sed/process.c
  			break;
 diff -Naur text_cmds-99/sort/bwstring.c text_cmds/sort/bwstring.c
 --- text_cmds-99/sort/bwstring.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/bwstring.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/bwstring.c	2018-12-08 15:35:54.000000000 +0100
 @@ -40,6 +40,7 @@
  
  #include "bwstring.h"
@@ -3574,7 +3578,7 @@ diff -Naur text_cmds-99/sort/bwstring.c text_cmds/sort/bwstring.c
  
 diff -Naur text_cmds-99/sort/coll.c text_cmds/sort/coll.c
 --- text_cmds-99/sort/coll.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/coll.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/coll.c	2018-12-08 15:35:54.000000000 +0100
 @@ -45,6 +45,7 @@
  
  #include "coll.h"
@@ -3585,7 +3589,7 @@ diff -Naur text_cmds-99/sort/coll.c text_cmds/sort/coll.c
  size_t keys_num = 0;
 diff -Naur text_cmds-99/sort/commoncrypto.c text_cmds/sort/commoncrypto.c
 --- text_cmds-99/sort/commoncrypto.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/commoncrypto.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/commoncrypto.c	2018-12-08 15:35:54.000000000 +0100
 @@ -20,6 +20,7 @@
  #include <stdlib.h>
  
@@ -3596,7 +3600,7 @@ diff -Naur text_cmds-99/sort/commoncrypto.c text_cmds/sort/commoncrypto.c
  
 diff -Naur text_cmds-99/sort/file.c text_cmds/sort/file.c
 --- text_cmds-99/sort/file.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/file.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/file.c	2018-12-08 15:35:54.000000000 +0100
 @@ -49,6 +49,7 @@
  #include "coll.h"
  #include "file.h"
@@ -3655,7 +3659,7 @@ diff -Naur text_cmds-99/sort/file.c text_cmds/sort/file.c
  
 diff -Naur text_cmds-99/sort/file.h text_cmds/sort/file.h
 --- text_cmds-99/sort/file.h	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/file.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/file.h	2018-12-08 15:35:54.000000000 +0100
 @@ -114,7 +114,7 @@
  void merge_files(struct file_list *fl, const char *fn_out);
  FILE *openfile(const char *, const char *);
@@ -3667,7 +3671,7 @@ diff -Naur text_cmds-99/sort/file.h text_cmds/sort/file.h
  void sort_list_add(struct sort_list *l, struct bwstring *str);
 diff -Naur text_cmds-99/sort/mem.c text_cmds/sort/mem.c
 --- text_cmds-99/sort/mem.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/mem.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/mem.c	2018-12-08 15:35:54.000000000 +0100
 @@ -33,6 +33,7 @@
  #include <string.h>
  
@@ -3678,7 +3682,7 @@ diff -Naur text_cmds-99/sort/mem.c text_cmds/sort/mem.c
   * malloc() wrapper.
 diff -Naur text_cmds-99/sort/radixsort.c text_cmds/sort/radixsort.c
 --- text_cmds-99/sort/radixsort.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/radixsort.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/radixsort.c	2018-12-08 15:35:54.000000000 +0100
 @@ -44,6 +44,7 @@
  
  #include "coll.h"
@@ -3689,7 +3693,7 @@ diff -Naur text_cmds-99/sort/radixsort.c text_cmds/sort/radixsort.c
  
 diff -Naur text_cmds-99/sort/sort.c text_cmds/sort/sort.c
 --- text_cmds-99/sort/sort.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/sort.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/sort.c	2018-12-08 15:35:54.000000000 +0100
 @@ -53,10 +53,11 @@
  #include "coll.h"
  #include "file.h"
@@ -3807,7 +3811,7 @@ diff -Naur text_cmds-99/sort/sort.c text_cmds/sort/sort.c
  		result = (argc == 0) ? (check("-")) : (check(*argv));
 diff -Naur text_cmds-99/sort/sort.h text_cmds/sort/sort.h
 --- text_cmds-99/sort/sort.h	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/sort.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/sort.h	2018-12-08 15:35:54.000000000 +0100
 @@ -54,8 +54,8 @@
  #else
  #include <nl_types.h>
@@ -3821,7 +3825,7 @@ diff -Naur text_cmds-99/sort/sort.h text_cmds/sort/sort.h
  extern const char *nlsstr[];
 diff -Naur text_cmds-99/sort/vsort.c text_cmds/sort/vsort.c
 --- text_cmds-99/sort/vsort.c	2016-10-13 02:45:31.000000000 +0200
-+++ text_cmds/sort/vsort.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/sort/vsort.c	2018-12-08 15:35:54.000000000 +0100
 @@ -36,6 +36,7 @@
  
  #include "sort.h"
@@ -3832,7 +3836,7 @@ diff -Naur text_cmds-99/sort/vsort.c text_cmds/sort/vsort.c
  isdigit_clocale(wchar_t c)
 diff -Naur text_cmds-99/tail/extern.h text_cmds/tail/extern.h
 --- text_cmds-99/tail/extern.h	2009-12-10 01:02:16.000000000 +0100
-+++ text_cmds/tail/extern.h	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tail/extern.h	2018-12-08 15:35:54.000000000 +0100
 @@ -72,5 +72,5 @@
  int mapprint(struct mapinfo *, off_t, off_t);
  int maparound(struct mapinfo *, off_t);
@@ -3843,7 +3847,7 @@ diff -Naur text_cmds-99/tail/extern.h text_cmds/tail/extern.h
 +extern const char *tail_fname;
 diff -Naur text_cmds-99/tail/forward.c text_cmds/tail/forward.c
 --- text_cmds-99/tail/forward.c	2011-05-04 00:42:05.000000000 +0200
-+++ text_cmds/tail/forward.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tail/forward.c	2018-12-08 15:35:54.000000000 +0100
 @@ -60,6 +60,7 @@
  #include <unistd.h>
  
@@ -3910,7 +3914,7 @@ diff -Naur text_cmds-99/tail/forward.c text_cmds/tail/forward.c
  		}
 diff -Naur text_cmds-99/tail/misc.c text_cmds/tail/misc.c
 --- text_cmds-99/tail/misc.c	2009-12-10 01:02:16.000000000 +0100
-+++ text_cmds/tail/misc.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tail/misc.c	2018-12-08 15:35:54.000000000 +0100
 @@ -54,11 +54,12 @@
  #include <unistd.h>
  
@@ -3927,7 +3931,7 @@ diff -Naur text_cmds-99/tail/misc.c text_cmds/tail/misc.c
  
 diff -Naur text_cmds-99/tail/read.c text_cmds/tail/read.c
 --- text_cmds-99/tail/read.c	2009-12-10 01:02:16.000000000 +0100
-+++ text_cmds/tail/read.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tail/read.c	2018-12-08 15:35:54.000000000 +0100
 @@ -54,6 +54,7 @@
  #include <unistd.h>
  
@@ -3938,7 +3942,7 @@ diff -Naur text_cmds-99/tail/read.c text_cmds/tail/read.c
   * bytes -- read bytes to an offset from the end and display.
 diff -Naur text_cmds-99/tail/reverse.c text_cmds/tail/reverse.c
 --- text_cmds-99/tail/reverse.c	2009-12-10 01:02:16.000000000 +0100
-+++ text_cmds/tail/reverse.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tail/reverse.c	2018-12-08 15:35:54.000000000 +0100
 @@ -57,6 +57,7 @@
  #include <unistd.h>
  
@@ -3949,7 +3953,7 @@ diff -Naur text_cmds-99/tail/reverse.c text_cmds/tail/reverse.c
  static void r_reg(FILE *, enum STYLE, off_t, struct stat *);
 diff -Naur text_cmds-99/tail/tail.c text_cmds/tail/tail.c
 --- text_cmds-99/tail/tail.c	2009-12-10 01:02:16.000000000 +0100
-+++ text_cmds/tail/tail.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tail/tail.c	2018-12-08 15:35:54.000000000 +0100
 @@ -59,9 +59,10 @@
  #include <unistd.h>
  
@@ -4065,7 +4069,7 @@ diff -Naur text_cmds-99/tail/tail.c text_cmds/tail/tail.c
  }
 diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
 --- text_cmds-99/tr/str.c	2005-08-18 23:20:18.000000000 +0200
-+++ text_cmds/tr/str.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tr/str.c	2018-12-08 15:35:54.000000000 +0100
 @@ -53,6 +53,10 @@
  #include <wctype.h>
  
@@ -4147,7 +4151,7 @@ diff -Naur text_cmds-99/tr/str.c text_cmds/tr/str.c
  	case '\\':
 diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
 --- text_cmds-99/tr/tr.c	2006-04-21 01:51:01.000000000 +0200
-+++ text_cmds/tr/tr.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/tr/tr.c	2018-12-08 15:35:54.000000000 +0100
 @@ -61,6 +61,9 @@
  #include "cmap.h"
  #include "cset.h"
@@ -4381,7 +4385,7 @@ diff -Naur text_cmds-99/tr/tr.c text_cmds/tr/tr.c
  }
 diff -Naur text_cmds-99/uniq/uniq.c text_cmds/uniq/uniq.c
 --- text_cmds-99/uniq/uniq.c	2016-11-10 22:25:56.000000000 +0100
-+++ text_cmds/uniq/uniq.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/uniq/uniq.c	2018-12-08 15:35:54.000000000 +0100
 @@ -62,6 +62,7 @@
  #include <unistd.h>
  #include <wchar.h>
@@ -4428,7 +4432,7 @@ diff -Naur text_cmds-99/uniq/uniq.c text_cmds/uniq/uniq.c
  #ifndef __APPLE__
 diff -Naur text_cmds-99/wc/wc.c text_cmds/wc/wc.c
 --- text_cmds-99/wc/wc.c	2008-02-26 02:39:32.000000000 +0100
-+++ text_cmds/wc/wc.c	2018-11-01 13:52:06.000000000 +0100
++++ text_cmds/wc/wc.c	2018-12-08 15:35:54.000000000 +0100
 @@ -62,24 +62,29 @@
  #include <unistd.h>
  #include <wchar.h>

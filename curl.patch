@@ -1,6 +1,6 @@
 diff -Naur curl-105/Info.plist curl/Info.plist
 --- curl-105/Info.plist	1970-01-01 01:00:00.000000000 +0100
-+++ curl/Info.plist	2018-11-01 13:52:44.000000000 +0100
++++ curl/Info.plist	2018-12-08 15:36:01.000000000 +0100
 @@ -0,0 +1,24 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -28,7 +28,7 @@ diff -Naur curl-105/Info.plist curl/Info.plist
 +</plist>
 diff -Naur curl-105/config_iphone/curl_config.h curl/config_iphone/curl_config.h
 --- curl-105/config_iphone/curl_config.h	2017-05-24 02:47:37.000000000 +0200
-+++ curl/config_iphone/curl_config.h	2018-11-01 13:52:44.000000000 +0100
++++ curl/config_iphone/curl_config.h	2018-12-08 15:36:01.000000000 +0100
 @@ -410,6 +410,7 @@
  
  /* Define to 1 if you have the <libssh2.h> header file. */
@@ -64,7 +64,7 @@ diff -Naur curl-105/config_iphone/curl_config.h curl/config_iphone/curl_config.h
  /* #undef USE_NSS */
 diff -Naur curl-105/curl/include/curl/curl.h curl/curl/include/curl/curl.h
 --- curl-105/curl/include/curl/curl.h	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/include/curl/curl.h	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/include/curl/curl.h	2018-12-08 15:36:01.000000000 +0100
 @@ -2391,7 +2391,7 @@
                             callback functions */
    CURLSHOPT_LAST  /* never use */
@@ -76,7 +76,7 @@ diff -Naur curl-105/curl/include/curl/curl.h curl/curl/include/curl/curl.h
  CURL_EXTERN CURLSHcode curl_share_cleanup(CURLSH *);
 diff -Naur curl-105/curl/lib/conncache.c curl/curl/lib/conncache.c
 --- curl-105/curl/lib/conncache.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/conncache.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/conncache.c	2018-12-08 15:36:01.000000000 +0100
 @@ -335,7 +335,7 @@
    if(!connc)
      return;
@@ -107,7 +107,7 @@ diff -Naur curl-105/curl/lib/conncache.c curl/curl/lib/conncache.c
    }
 diff -Naur curl-105/curl/lib/cookie.c curl/curl/lib/cookie.c
 --- curl-105/curl/lib/cookie.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/cookie.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/cookie.c	2018-12-08 15:36:01.000000000 +0100
 @@ -81,6 +81,7 @@
  
  
@@ -136,7 +136,7 @@ diff -Naur curl-105/curl/lib/cookie.c curl/curl/lib/cookie.c
    else {
 diff -Naur curl-105/curl/lib/curl_ntlm_wb.c curl/curl/lib/curl_ntlm_wb.c
 --- curl-105/curl/lib/curl_ntlm_wb.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/curl_ntlm_wb.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/curl_ntlm_wb.c	2018-12-08 15:36:01.000000000 +0100
 @@ -52,6 +52,7 @@
  #include "url.h"
  #include "strerror.h"
@@ -182,7 +182,7 @@ diff -Naur curl-105/curl/lib/curl_ntlm_wb.c curl/curl/lib/curl_ntlm_wb.c
      Curl_ntlm_wb_cleanup(conn);
 diff -Naur curl-105/curl/lib/easy.c curl/curl/lib/easy.c
 --- curl-105/curl/lib/easy.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/easy.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/easy.c	2018-12-08 15:36:01.000000000 +0100
 @@ -216,31 +216,31 @@
  
    if(flags & CURL_GLOBAL_SSL)
@@ -276,7 +276,7 @@ diff -Naur curl-105/curl/lib/easy.c curl/curl/lib/easy.c
      }
 diff -Naur curl-105/curl/lib/formdata.c curl/curl/lib/formdata.c
 --- curl-105/curl/lib/formdata.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/formdata.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/formdata.c	2018-12-08 15:36:01.000000000 +0100
 @@ -37,6 +37,8 @@
  #include "sendf.h"
  #include "strdup.h"
@@ -306,7 +306,7 @@ diff -Naur curl-105/curl/lib/formdata.c curl/curl/lib/formdata.c
              /* add the file name only - for later reading from this */
 diff -Naur curl-105/curl/lib/hash.c curl/curl/lib/hash.c
 --- curl-105/curl/lib/hash.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/hash.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/hash.c	2018-12-08 15:36:01.000000000 +0100
 @@ -336,16 +336,16 @@
    if(!h)
      return;
@@ -342,7 +342,7 @@ diff -Naur curl-105/curl/lib/hash.c curl/curl/lib/hash.c
  #endif
 diff -Naur curl-105/curl/lib/hostip6.c curl/curl/lib/hostip6.c
 --- curl-105/curl/lib/hostip6.c	2016-11-04 22:42:50.000000000 +0100
-+++ curl/curl/lib/hostip6.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/hostip6.c	2018-12-08 15:36:01.000000000 +0100
 @@ -132,16 +132,16 @@
  #ifdef DEBUG_ADDRINFO
  static void dump_addrinfo(struct connectdata *conn, const Curl_addrinfo *ai)
@@ -366,7 +366,7 @@ diff -Naur curl-105/curl/lib/hostip6.c curl/curl/lib/hostip6.c
  #else
 diff -Naur curl-105/curl/lib/http_ntlm.c curl/curl/lib/http_ntlm.c
 --- curl-105/curl/lib/http_ntlm.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/http_ntlm.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/http_ntlm.c	2018-12-08 15:36:01.000000000 +0100
 @@ -184,7 +184,7 @@
        if(!*allocuserpwd)
          return CURLE_OUT_OF_MEMORY;
@@ -387,7 +387,7 @@ diff -Naur curl-105/curl/lib/http_ntlm.c curl/curl/lib/http_ntlm.c
        authp->done = TRUE;
 diff -Naur curl-105/curl/lib/ldap.c curl/curl/lib/ldap.c
 --- curl-105/curl/lib/ldap.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/ldap.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/ldap.c	2018-12-08 15:36:01.000000000 +0100
 @@ -702,7 +702,7 @@
      return;
  
@@ -399,7 +399,7 @@ diff -Naur curl-105/curl/lib/ldap.c curl/curl/lib/ldap.c
  #endif
 diff -Naur curl-105/curl/lib/memdebug.c curl/curl/lib/memdebug.c
 --- curl-105/curl/lib/memdebug.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/memdebug.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/memdebug.c	2018-12-08 15:36:01.000000000 +0100
 @@ -116,7 +116,7 @@
      if(logname && *logname)
        logfile = fopen(logname, FOPEN_WRITETEXT);
@@ -420,7 +420,7 @@ diff -Naur curl-105/curl/lib/memdebug.c curl/curl/lib/memdebug.c
        }
 diff -Naur curl-105/curl/lib/mprintf.c curl/curl/lib/mprintf.c
 --- curl-105/curl/lib/mprintf.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/mprintf.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/mprintf.c	2018-12-08 15:36:01.000000000 +0100
 @@ -39,6 +39,7 @@
  #include <curl/mprintf.h>
  
@@ -449,7 +449,7 @@ diff -Naur curl-105/curl/lib/mprintf.c curl/curl/lib/mprintf.c
  int curl_mvfprintf(FILE *whereto, const char *format, va_list ap_save)
 diff -Naur curl-105/curl/lib/multi.c curl/curl/lib/multi.c
 --- curl-105/curl/lib/multi.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/multi.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/multi.c	2018-12-08 15:36:01.000000000 +0100
 @@ -474,7 +474,7 @@
  {
    struct Curl_sh_entry *sh = (struct Curl_sh_entry *)p;
@@ -497,7 +497,7 @@ diff -Naur curl-105/curl/lib/multi.c curl/curl/lib/multi.c
  }
 diff -Naur curl-105/curl/lib/netrc.c curl/curl/lib/netrc.c
 --- curl-105/curl/lib/netrc.c	2016-11-04 22:42:50.000000000 +0100
-+++ curl/curl/lib/netrc.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/netrc.c	2018-12-08 15:36:01.000000000 +0100
 @@ -69,7 +69,8 @@
  
    if(!netrcfile) {
@@ -510,7 +510,7 @@ diff -Naur curl-105/curl/lib/netrc.c curl/curl/lib/netrc.c
  #if defined(HAVE_GETPWUID_R) && defined(HAVE_GETEUID)
 diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
 --- curl-105/curl/lib/ssh.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/ssh.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/ssh.c	2018-12-08 15:36:01.000000000 +0100
 @@ -26,6 +26,13 @@
  
  #ifdef USE_LIBSSH2
@@ -713,7 +713,7 @@ diff -Naur curl-105/curl/lib/ssh.c curl/curl/lib/ssh.c
        }
 diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
 --- curl-105/curl/lib/url.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/url.c	2018-11-15 15:18:54.000000000 +0100
++++ curl/curl/lib/url.c	2018-12-08 15:36:01.000000000 +0100
 @@ -119,6 +119,18 @@
  #include "pipeline.h"
  #include "dotdot.h"
@@ -848,7 +848,7 @@ diff -Naur curl-105/curl/lib/url.c curl/curl/lib/url.c
  
 diff -Naur curl-105/curl/lib/vauth/ntlm.c curl/curl/lib/vauth/ntlm.c
 --- curl-105/curl/lib/vauth/ntlm.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/vauth/ntlm.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/vauth/ntlm.c	2018-12-08 15:36:01.000000000 +0100
 @@ -141,9 +141,9 @@
  
    (void) handle;
@@ -943,7 +943,7 @@ diff -Naur curl-105/curl/lib/vauth/ntlm.c curl/curl/lib/vauth/ntlm.c
    /* Make sure that the domain, user and host strings fit in the
 diff -Naur curl-105/curl/lib/vtls/gtls.c curl/curl/lib/vtls/gtls.c
 --- curl-105/curl/lib/vtls/gtls.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/lib/vtls/gtls.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/vtls/gtls.c	2018-12-08 15:36:01.000000000 +0100
 @@ -77,7 +77,7 @@
  #ifdef GTLSDEBUG
  static void tls_log_func(int level, const char *str)
@@ -955,7 +955,7 @@ diff -Naur curl-105/curl/lib/vtls/gtls.c curl/curl/lib/vtls/gtls.c
  static bool gtls_inited = FALSE;
 diff -Naur curl-105/curl/lib/vtls/polarssl_threadlock.c curl/curl/lib/vtls/polarssl_threadlock.c
 --- curl-105/curl/lib/vtls/polarssl_threadlock.c	2016-11-04 22:42:50.000000000 +0100
-+++ curl/curl/lib/vtls/polarssl_threadlock.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/lib/vtls/polarssl_threadlock.c	2018-12-08 15:36:01.000000000 +0100
 @@ -107,7 +107,7 @@
    if(n < NUMT) {
      ret = pthread_mutex_lock(&mutex_buf[n]);
@@ -994,7 +994,7 @@ diff -Naur curl-105/curl/lib/vtls/polarssl_threadlock.c curl/curl/lib/vtls/polar
      }
 diff -Naur curl-105/curl/src/tool_cb_dbg.c curl/curl/src/tool_cb_dbg.c
 --- curl-105/curl/src/tool_cb_dbg.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_cb_dbg.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_cb_dbg.c	2018-12-08 15:36:01.000000000 +0100
 @@ -29,6 +29,7 @@
  #include "tool_msgs.h"
  #include "tool_cb_dbg.h"
@@ -1023,7 +1023,7 @@ diff -Naur curl-105/curl/src/tool_cb_dbg.c curl/curl/src/tool_cb_dbg.c
            fprintf(output, "[%zd bytes data]\n", size);
 diff -Naur curl-105/curl/src/tool_easysrc.c curl/curl/src/tool_easysrc.c
 --- curl-105/curl/src/tool_easysrc.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_easysrc.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_easysrc.c	2018-12-08 15:36:01.000000000 +0100
 @@ -32,6 +32,7 @@
  #include "tool_cfgable.h"
  #include "tool_easysrc.h"
@@ -1043,7 +1043,7 @@ diff -Naur curl-105/curl/src/tool_easysrc.c curl/curl/src/tool_easysrc.c
    else {
 diff -Naur curl-105/curl/src/tool_getparam.c curl/curl/src/tool_getparam.c
 --- curl-105/curl/src/tool_getparam.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_getparam.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_getparam.c	2018-12-08 15:36:01.000000000 +0100
 @@ -38,6 +38,7 @@
  #include "tool_msgs.h"
  #include "tool_paramhlp.h"
@@ -1121,7 +1121,7 @@ diff -Naur curl-105/curl/src/tool_getparam.c curl/curl/src/tool_getparam.c
            return err;
 diff -Naur curl-105/curl/src/tool_getpass.c curl/curl/src/tool_getpass.c
 --- curl-105/curl/src/tool_getpass.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_getpass.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_getpass.c	2018-12-08 15:36:01.000000000 +0100
 @@ -56,6 +56,7 @@
  #include <unistd.h>
  #endif
@@ -1204,7 +1204,7 @@ diff -Naur curl-105/curl/src/tool_getpass.c curl/curl/src/tool_getpass.c
    return password; /* return pointer to buffer */
 diff -Naur curl-105/curl/src/tool_help.c curl/curl/src/tool_help.c
 --- curl-105/curl/src/tool_help.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_help.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_help.c	2018-12-08 15:36:01.000000000 +0100
 @@ -25,6 +25,7 @@
  #include "tool_help.h"
  #include "tool_libinfo.h"
@@ -1258,7 +1258,7 @@ diff -Naur curl-105/curl/src/tool_help.c curl/curl/src/tool_help.c
      puts("  <none>");
 diff -Naur curl-105/curl/src/tool_hugehelp.c curl/curl/src/tool_hugehelp.c
 --- curl-105/curl/src/tool_hugehelp.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_hugehelp.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_hugehelp.c	2018-12-08 15:36:01.000000000 +0100
 @@ -1,4 +1,5 @@
  #include "tool_setup.h"
 +#include "ios_error.h"
@@ -4903,7 +4903,7 @@ diff -Naur curl-105/curl/src/tool_hugehelp.c curl/curl/src/tool_hugehelp.c
        }
 diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
 --- curl-105/curl/src/tool_main.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_main.c	2018-12-08 15:36:01.000000000 +0100
 @@ -44,6 +44,7 @@
  #include "tool_vms.h"
  #include "tool_main.h"
@@ -5078,7 +5078,7 @@ diff -Naur curl-105/curl/src/tool_main.c curl/curl/src/tool_main.c
    memset(&global, 0, sizeof(global));
 diff -Naur curl-105/curl/src/tool_main.h curl/curl/src/tool_main.h
 --- curl-105/curl/src/tool_main.h	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_main.h	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_main.h	2018-12-08 15:36:01.000000000 +0100
 @@ -29,15 +29,15 @@
  #define RETRY_SLEEP_MAX     600000L /* ms == 10 minutes */
  
@@ -5100,7 +5100,7 @@ diff -Naur curl-105/curl/src/tool_main.h curl/curl/src/tool_main.h
  #endif /* HEADER_CURL_TOOL_MAIN_H */
 diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
 --- curl-105/curl/src/tool_operate.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_operate.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_operate.c	2018-12-08 15:36:01.000000000 +0100
 @@ -40,6 +40,10 @@
  #endif
  
@@ -5209,7 +5209,7 @@ diff -Naur curl-105/curl/src/tool_operate.c curl/curl/src/tool_operate.c
               time */
 diff -Naur curl-105/curl/src/tool_parsecfg.c curl/curl/src/tool_parsecfg.c
 --- curl-105/curl/src/tool_parsecfg.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_parsecfg.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_parsecfg.c	2018-12-08 15:36:01.000000000 +0100
 @@ -31,6 +31,7 @@
  #include "tool_homedir.h"
  #include "tool_msgs.h"
@@ -5256,7 +5256,7 @@ diff -Naur curl-105/curl/src/tool_parsecfg.c curl/curl/src/tool_parsecfg.c
    else
 diff -Naur curl-105/curl/src/tool_urlglob.c curl/curl/src/tool_urlglob.c
 --- curl-105/curl/src/tool_urlglob.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_urlglob.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_urlglob.c	2018-12-08 15:36:01.000000000 +0100
 @@ -28,6 +28,7 @@
  #include "tool_doswin.h"
  #include "tool_urlglob.h"
@@ -5294,7 +5294,7 @@ diff -Naur curl-105/curl/src/tool_urlglob.c curl/curl/src/tool_urlglob.c
            return CURLE_FAILED_INIT;
 diff -Naur curl-105/curl/src/tool_vms.c curl/curl/src/tool_vms.c
 --- curl-105/curl/src/tool_vms.c	2016-07-06 23:44:05.000000000 +0200
-+++ curl/curl/src/tool_vms.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_vms.c	2018-12-08 15:36:01.000000000 +0100
 @@ -178,14 +178,14 @@
        }
        else {
@@ -5314,7 +5314,7 @@ diff -Naur curl-105/curl/src/tool_vms.c curl/curl/src/tool_vms.c
    }
 diff -Naur curl-105/curl/src/tool_writeout.c curl/curl/src/tool_writeout.c
 --- curl-105/curl/src/tool_writeout.c	2017-05-17 21:04:33.000000000 +0200
-+++ curl/curl/src/tool_writeout.c	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl/src/tool_writeout.c	2018-12-08 15:36:01.000000000 +0100
 @@ -25,6 +25,7 @@
  #include "curlx.h"
  #include "tool_cfgable.h"
@@ -5343,7 +5343,7 @@ diff -Naur curl-105/curl/src/tool_writeout.c curl/curl/src/tool_writeout.c
            *end = keepit;
 diff -Naur curl-105/curl.h curl/curl.h
 --- curl-105/curl.h	1970-01-01 01:00:00.000000000 +0100
-+++ curl/curl.h	2018-11-01 13:52:44.000000000 +0100
++++ curl/curl.h	2018-12-08 15:36:01.000000000 +0100
 @@ -0,0 +1,19 @@
 +//
 +//  curl.h
