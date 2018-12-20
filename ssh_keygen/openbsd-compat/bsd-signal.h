@@ -1,7 +1,5 @@
-/*	$OpenBSD: strnlen.c,v 1.3 2010/06/02 12:58:12 millert Exp $	*/
-
 /*
- * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2004 Damien Miller <djm@mindrot.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,22 +14,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* OPENBSD ORIGINAL: lib/libc/string/strnlen.c */
+#ifndef _BSD_SIGNAL_H
+#define _BSD_SIGNAL_H
 
 #include "includes.h"
-#if !defined(HAVE_STRNLEN) || defined(BROKEN_STRNLEN)
-#include <sys/types.h>
 
-#include <string.h>
-
-size_t
-strnlen(const char *str, size_t maxlen)
-{
-	const char *cp;
-
-	for (cp = str; maxlen != 0 && *cp != '\0'; cp++, maxlen--)
-		;
-
-	return (size_t)(cp - str);
-}
+#ifndef _NSIG
+# ifdef NSIG
+#  define _NSIG NSIG
+# else
+#  define _NSIG 128
+# endif
 #endif
+
+/* wrapper for signal interface */
+typedef void (*mysig_t)(int);
+mysig_t mysignal(int sig, mysig_t act);
+#define signal(a,b) mysignal(a,b)
+
+#if !defined(HAVE_STRSIGNAL)
+char *strsignal(int);
+#endif
+
+#endif /* _BSD_SIGNAL_H */

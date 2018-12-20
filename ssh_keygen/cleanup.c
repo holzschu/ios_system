@@ -1,6 +1,6 @@
-/* $OpenBSD: ssh-sandbox.h,v 1.1 2011/06/23 09:34:13 djm Exp $ */
+/* $OpenBSD: cleanup.c,v 1.5 2006/08/03 03:34:42 deraadt Exp $ */
 /*
- * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
+ * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct monitor;
-struct ssh_sandbox;
+#include "includes.h"
 
-struct ssh_sandbox *ssh_sandbox_init(struct monitor *);
-void ssh_sandbox_child(struct ssh_sandbox *);
-void ssh_sandbox_parent_finish(struct ssh_sandbox *);
-void ssh_sandbox_parent_preauth(struct ssh_sandbox *, pid_t);
+#include <sys/types.h>
+
+#include <unistd.h>
+#include <stdarg.h>
+
+#include "log.h"
+
+/* default implementation */
+void
+cleanup_exit(int i)
+{
+	_exit(i);
+}

@@ -93,6 +93,9 @@
 #ifdef HAVE_SYS_SYSMACROS_H
 # include <sys/sysmacros.h> /* For MIN, MAX, etc */
 #endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h> /* for timespeccmp if present */
+#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h> /* for MAP_ANONYMOUS */
 #endif
@@ -172,5 +175,9 @@
 #include "openbsd-compat/bsd-nextstep.h"
 
 #include "entropy.h"
+
+// iOS specific additions:
+extern void sshkeygen_cleanup();
+#include "ios_error.h"
 
 #endif /* INCLUDES_H */

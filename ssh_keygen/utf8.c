@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.5 2017/02/19 00:10:57 djm Exp $ */
+/* $OpenBSD: utf8.c,v 1.8 2018/08/21 13:56:27 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -40,7 +40,6 @@
 #endif
 
 #include "utf8.h"
-#include "ios_error.h"
 
 static int	 dangerous_locale(void);
 static int	 grow_dst(char **, size_t *, size_t, char **, size_t);
@@ -54,6 +53,8 @@ static int	 vasnmprintf(char **, size_t, int *, const char *, va_list);
  * For state-dependent encodings, recovery is impossible.
  * For arbitrary encodings, replacement of non-printable
  * characters would be non-trivial and too fragile.
+ * The comments indicate what nl_langinfo(CODESET)
+ * returns for US-ASCII on various operating systems.
  */
 
 static int
@@ -61,8 +62,12 @@ dangerous_locale(void) {
 	char	*loc;
 
 	loc = nl_langinfo(CODESET);
-	return strcmp(loc, "US-ASCII") != 0 && strcmp(loc, "UTF-8") != 0 &&
-	    strcmp(loc, "ANSI_X3.4-1968") != 0 && strcmp(loc, "646") != 0;
+	return strcmp(loc, "UTF-8") != 0 &&
+	    strcmp(loc, "US-ASCII") != 0 &&		/* OpenBSD */
+	    strcmp(loc, "ANSI_X3.4-1968") != 0 &&	/* Linux */
+	    strcmp(loc, "ISO8859-1") != 0 &&		/* AIX */
+	    strcmp(loc, "646") != 0 &&			/* Solaris, NetBSD */
+	    strcmp(loc, "") != 0;			/* Solaris 6 */
 }
 
 static int
@@ -76,7 +81,7 @@ grow_dst(char **dst, size_t *sz, size_t maxsz, char **dp, size_t need)
 	tsz = *sz + 128;
 	if (tsz > maxsz)
 		tsz = maxsz;
-	if ((tp = realloc(*dst, tsz)) == NULL)
+	if ((tp = recallocarray(*dst, *sz, tsz, 1)) == NULL)
 		return -1;
 	*dp = tp + (*dp - *dst);
 	*dst = tp;
@@ -288,7 +293,7 @@ mprintf(const char *fmt, ...)
 	int	 ret;
 
 	va_start(ap, fmt);
-	ret = vfmprintf(thread_stdout, fmt, ap);
+	ret = vfmprintf(stdout, fmt, ap);
 	va_end(ap);
 	return ret;
 }

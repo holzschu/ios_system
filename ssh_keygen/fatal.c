@@ -1,7 +1,6 @@
-/* $OpenBSD: groupaccess.h,v 1.8 2008/07/04 03:44:59 djm Exp $ */
-
+/* $OpenBSD: fatal.c,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
 /*
- * Copyright (c) 2001 Kevin Steves.  All rights reserved.
+ * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,12 +23,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef GROUPACCESS_H
-#define GROUPACCESS_H
+#include "includes.h"
 
-int	 ga_init(const char *, gid_t);
-int	 ga_match(char * const *, int);
-int	 ga_match_pattern_list(const char *);
-void	 ga_free(void);
+#include <sys/types.h>
 
-#endif
+#include <stdarg.h>
+
+#include "log.h"
+
+/* Fatal messages.  This function never returns. */
+
+void
+fatal(const char *fmt,...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
+	va_end(args);
+    sshkeygen_cleanup();
+	cleanup_exit(255);
+}

@@ -145,19 +145,19 @@ hmac_test(void *key, size_t klen, void *m, size_t mlen, u_char *e, size_t elen)
 	u_char			 digest[16];
 
 	if ((ctx = ssh_hmac_start(SSH_DIGEST_MD5)) == NULL)
-		fprintf(thread_stdout, "ssh_hmac_start failed");
+		printf("ssh_hmac_start failed");
 	if (ssh_hmac_init(ctx, key, klen) < 0 ||
 	    ssh_hmac_update(ctx, m, mlen) < 0 ||
 	    ssh_hmac_final(ctx, digest, sizeof(digest)) < 0)
-		fprintf(thread_stdout, "ssh_hmac_xxx failed");
+		printf("ssh_hmac_xxx failed");
 	ssh_hmac_free(ctx);
 
 	if (memcmp(e, digest, elen)) {
 		for (i = 0; i < elen; i++)
-			fprintf(thread_stdout, "[%zu] %2.2x %2.2x\n", i, e[i], digest[i]);
-		fprintf(thread_stdout, "mismatch\n");
+			printf("[%zu] %2.2x %2.2x\n", i, e[i], digest[i]);
+		printf("mismatch\n");
 	} else
-		fprintf(thread_stdout, "ok\n");
+		printf("ok\n");
 }
 
 int

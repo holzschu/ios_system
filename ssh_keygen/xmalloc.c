@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.33 2016/02/15 09:47:49 dtucker Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.34 2017/05/31 09:15:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -25,7 +25,6 @@
 
 #include "xmalloc.h"
 #include "log.h"
-#include "ios_error.h"
 
 void
 ssh_malloc_init(void)
@@ -40,18 +39,14 @@ ssh_malloc_init(void)
 void *
 xmalloc(size_t size)
 {
-    void *ptr;
-    
-    if (size == 0) {
-        fprintf(thread_stderr, "xmalloc: zero size");
-        pthread_exit(NULL);
-    }
-    ptr = malloc(size);
-    if (ptr == NULL) {
-        fprintf(thread_stderr, "xmalloc: out of memory (allocating %zu bytes)", size);
-        pthread_exit(NULL);
-    }
-    return ptr;
+	void *ptr;
+
+	if (size == 0)
+		fatal("xmalloc: zero size");
+	ptr = malloc(size);
+	if (ptr == NULL)
+		fatal("xmalloc: out of memory (allocating %zu bytes)", size);
+	return ptr;
 }
 
 void *
@@ -59,21 +54,15 @@ xcalloc(size_t nmemb, size_t size)
 {
 	void *ptr;
 
-    if (size == 0 || nmemb == 0) {
-		fprintf(thread_stderr, "xcalloc: zero size");
-        pthread_exit(NULL);
-    }
-    if (SIZE_MAX / nmemb < size) {
-        fprintf(thread_stderr, "xcalloc: nmemb * size > SIZE_MAX");
-        pthread_exit(NULL);
-    }
-    ptr = calloc(nmemb, size);
-    if (ptr == NULL) {
-        fprintf(thread_stderr, "xcalloc: out of memory (allocating %zu bytes)",
-                size * nmemb);
-        pthread_exit(NULL);
-    }
-    return ptr;
+	if (size == 0 || nmemb == 0)
+		fatal("xcalloc: zero size");
+	if (SIZE_MAX / nmemb < size)
+		fatal("xcalloc: nmemb * size > SIZE_MAX");
+	ptr = calloc(nmemb, size);
+	if (ptr == NULL)
+		fatal("xcalloc: out of memory (allocating %zu bytes)",
+		    size * nmemb);
+	return ptr;
 }
 
 void *
@@ -82,12 +71,22 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 	void *new_ptr;
 
 	new_ptr = reallocarray(ptr, nmemb, size);
-    if (new_ptr == NULL) {
-		fprintf(thread_stderr, "xreallocarray: out of memory (%zu elements of %zu bytes)",
+	if (new_ptr == NULL)
+		fatal("xreallocarray: out of memory (%zu elements of %zu bytes)",
 		    nmemb, size);
-        pthread_exit(NULL);
-    }
-    return new_ptr;
+	return new_ptr;
+}
+
+void *
+xrecallocarray(void *ptr, size_t onmemb, size_t nmemb, size_t size)
+{
+	void *new_ptr;
+
+	new_ptr = recallocarray(ptr, onmemb, nmemb, size);
+	if (new_ptr == NULL)
+		fatal("xrecallocarray: out of memory (%zu elements of %zu bytes)",
+		    nmemb, size);
+	return new_ptr;
 }
 
 char *
@@ -112,9 +111,8 @@ xasprintf(char **ret, const char *fmt, ...)
 	i = vasprintf(ret, fmt, ap);
 	va_end(ap);
 
-    if (i < 0 || *ret == NULL) {
-        fprintf(thread_stderr, "xasprintf: could not allocate memory");
-        pthread_exit(NULL);
-    }
+	if (i < 0 || *ret == NULL)
+		fatal("xasprintf: could not allocate memory");
+
 	return (i);
 }

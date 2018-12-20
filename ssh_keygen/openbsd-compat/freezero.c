@@ -1,7 +1,5 @@
-/*	$OpenBSD: strnlen.c,v 1.3 2010/06/02 12:58:12 millert Exp $	*/
-
 /*
- * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,22 +14,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* OPENBSD ORIGINAL: lib/libc/string/strnlen.c */
-
 #include "includes.h"
-#if !defined(HAVE_STRNLEN) || defined(BROKEN_STRNLEN)
-#include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
-size_t
-strnlen(const char *str, size_t maxlen)
+#ifndef HAVE_FREEZERO
+
+void
+freezero(void *ptr, size_t sz)
 {
-	const char *cp;
-
-	for (cp = str; maxlen != 0 && *cp != '\0'; cp++, maxlen--)
-		;
-
-	return (size_t)(cp - str);
+	if (ptr == NULL)
+		return;
+	explicit_bzero(ptr, sz);
+	free(ptr);
 }
-#endif
+
+#endif /* HAVE_FREEZERO */
+

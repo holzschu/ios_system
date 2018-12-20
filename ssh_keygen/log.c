@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.49 2017/03/10 03:15:58 djm Exp $ */
+/* $OpenBSD: log.c,v 1.51 2018/07/27 12:03:17 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -46,23 +46,21 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <errno.h>
-
 #if defined(HAVE_STRNVIS) && defined(HAVE_VIS_H) && !defined(BROKEN_STRNVIS)
 # include <vis.h>
 #endif
 
 #include "log.h"
-#include "ios_error.h"
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
-static int log_stderr_fd; 
+static int log_stderr_fd = STDERR_FILENO;
 static int log_facility = LOG_AUTH;
 static char *argv0;
 static log_handler_fn *log_handler;
 static void *log_handler_ctx;
 
-extern char *ssh_progname;
+extern char *__progname;
 
 #define LOG_SYSLOG_VIS	(VIS_CSTYLE|VIS_NL|VIS_TAB|VIS_OCTAL)
 #define LOG_STDERR_VIS	(VIS_SAFE|VIS_OCTAL)
@@ -106,6 +104,12 @@ static struct {
 	{ "DEBUG3",	SYSLOG_LEVEL_DEBUG3 },
 	{ NULL,		SYSLOG_LEVEL_NOT_SET }
 };
+
+LogLevel
+log_level_get(void)
+{
+	return log_level;
+}
 
 SyslogFacility
 log_facility_number(char *name)
@@ -175,10 +179,11 @@ sigdie(const char *fmt,...)
 	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
 	va_end(args);
 #endif
+    sshkeygen_cleanup();
 	_exit(1);
 }
 
-/* void
+void
 logdie(const char *fmt,...)
 {
 	va_list args;
@@ -186,8 +191,9 @@ logdie(const char *fmt,...)
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_INFO, fmt, args);
 	va_end(args);
+    sshkeygen_cleanup();
 	cleanup_exit(255);
-} */
+}
 
 /* Log this message (information that usually should go to the log). */
 
@@ -256,23 +262,12 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 #endif
 
-    log_stderr_fd = fileno(thread_stderr);
 	argv0 = av0;
 
-	switch (level) {
-	case SYSLOG_LEVEL_QUIET:
-	case SYSLOG_LEVEL_FATAL:
-	case SYSLOG_LEVEL_ERROR:
-	case SYSLOG_LEVEL_INFO:
-	case SYSLOG_LEVEL_VERBOSE:
-	case SYSLOG_LEVEL_DEBUG1:
-	case SYSLOG_LEVEL_DEBUG2:
-	case SYSLOG_LEVEL_DEBUG3:
-		log_level = level;
-		break;
-	default:
-		fprintf(thread_stderr, "Unrecognized internal syslog level code %d\n",
+	if (log_change_level(level) != 0) {
+		fprintf(stderr, "Unrecognized internal syslog level code %d\n",
 		    (int) level);
+        sshkeygen_cleanup();
 		exit(1);
 	}
 
@@ -280,10 +275,8 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 	log_handler_ctx = NULL;
 
 	log_on_stderr = on_stderr;
-    if (on_stderr) {
-        log_stderr_fd = fileno(thread_stderr);
+	if (on_stderr)
 		return;
-    }
 
 	switch (facility) {
 	case SYSLOG_FACILITY_DAEMON:
@@ -325,9 +318,10 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 		log_facility = LOG_LOCAL7;
 		break;
 	default:
-		fprintf(thread_stderr,
+		fprintf(stderr,
 		    "Unrecognized internal syslog facility code %d\n",
 		    (int) facility);
+        sshkeygen_cleanup();
 		exit(1);
 	}
 
@@ -337,38 +331,53 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 	 * facility, so we force an open/close of syslog here.
 	 */
 #if defined(HAVE_OPENLOG_R) && defined(SYSLOG_DATA_INIT)
-	openlog_r(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility, &sdata);
+	openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
 	closelog_r(&sdata);
 #else
-	openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
+	openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
 	closelog();
 #endif
 }
 
-void
+int
 log_change_level(LogLevel new_log_level)
 {
 	/* no-op if log_init has not been called */
 	if (argv0 == NULL)
-		return;
-	log_init(argv0, new_log_level, log_facility, log_on_stderr);
+		return 0;
+
+	switch (new_log_level) {
+	case SYSLOG_LEVEL_QUIET:
+	case SYSLOG_LEVEL_FATAL:
+	case SYSLOG_LEVEL_ERROR:
+	case SYSLOG_LEVEL_INFO:
+	case SYSLOG_LEVEL_VERBOSE:
+	case SYSLOG_LEVEL_DEBUG1:
+	case SYSLOG_LEVEL_DEBUG2:
+	case SYSLOG_LEVEL_DEBUG3:
+		log_level = new_log_level;
+		return 0;
+	default:
+		return -1;
+	}
 }
 
 int
 log_is_on_stderr(void)
 {
-	return log_on_stderr && log_stderr_fd == fileno(thread_stderr);
+	return log_on_stderr && log_stderr_fd == STDERR_FILENO;
 }
 
-/* redirect what would usually get written to thread_stderr to specified file */
+/* redirect what would usually get written to stderr to specified file */
 void
 log_redirect_stderr_to(const char *logfile)
 {
 	int fd;
 
 	if ((fd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600)) == -1) {
-		fprintf(thread_stderr, "Couldn't open logfile %s: %s\n", logfile,
+		fprintf(stderr, "Couldn't open logfile %s: %s\n", logfile,
 		     strerror(errno));
+        sshkeygen_cleanup();
 		exit(1);
 	}
 	log_stderr_fd = fd;
@@ -401,8 +410,6 @@ do_log(LogLevel level, const char *fmt, va_list args)
 #endif
 	char msgbuf[MSGBUFSIZ];
 	char fmtbuf[MSGBUFSIZ];
-    explicit_bzero(fmtbuf, MSGBUFSIZ);
-    explicit_bzero(msgbuf, MSGBUFSIZ);
 	char *txt = NULL;
 	int pri = LOG_INFO;
 	int saved_errno = errno;
@@ -465,11 +472,11 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		(void)write(log_stderr_fd, msgbuf, strlen(msgbuf));
 	} else {
 #if defined(HAVE_OPENLOG_R) && defined(SYSLOG_DATA_INIT)
-		openlog_r(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility, &sdata);
+		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
 		syslog_r(pri, &sdata, "%.500s", fmtbuf);
 		closelog_r(&sdata);
 #else
-		openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
+		openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
 		syslog(pri, "%.500s", fmtbuf);
 		closelog();
 #endif
