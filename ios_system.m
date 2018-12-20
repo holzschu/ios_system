@@ -168,7 +168,10 @@ void initializeEnvironment() {
             fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
         }
         // if we use Python, we define a few more environment variables:
-        setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python scripts in ~/Library/lib/python3.6/
+        setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python files are in ~/Library/lib/python[23].x/
+        setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
+        // pip cache directory: ~/Documents/.cache/
+        setenv("XDG_CACHE_HOME", [docsPath stringByAppendingPathComponent:@".cache"].UTF8String, 0);
         setenv("PYZMQ_BACKEND", "cffi", 0);
         setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
         // hg config file in ~/Documents/.hgrc
@@ -1294,7 +1297,9 @@ int ios_system(const char* inputCmd) {
                             // TODO: only accept "python" or "python2" at the end of the line
                             // executable scripts files. Python and lua:
                             // 1) get script language name
-                            if ([firstLine containsString:@"python"]) {
+                            if ([firstLine containsString:@"python3"]) {
+                                scriptName = "python3";
+                            } else if ([firstLine containsString:@"python"]) {
                                 scriptName = "python";
                             } else if ([firstLine containsString:@"lua"]) {
                                 scriptName = "lua";
