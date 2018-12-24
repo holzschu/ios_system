@@ -573,6 +573,7 @@ static char* concatenateArgv(char* const argv[]) {
     // We need this because some programs call execv() with a single string: "ssh hg@bitbucket.org 'hg -R ... --stdio'"
     // So we rely on ios_system to break them into chunks.
     while(argv[argc] != NULL) { cmdLength += strlen(argv[argc]) + 1; argc++;}
+    if (argc == 0) return NULL; // safeguard check
     char* cmd = malloc((cmdLength  + 2 * argc) * sizeof(char)); // space for quotes
     strcpy(cmd, argv[0]);
     argc = 1;
@@ -1155,7 +1156,7 @@ int ios_system(const char* inputCmd) {
             // argv[0] is a file that doesn't exist. Probably one of our commands.
             // Replace with its name:
             char* newName = basename(argv[0]);
-            argv[0] = realloc(argv[0], strlen(newName));
+            argv[0] = realloc(argv[0], strlen(newName) + 1);
             strcpy(argv[0], newName);
         }
         assert(argc < numSpaces + 2);
@@ -1198,6 +1199,7 @@ int ios_system(const char* inputCmd) {
                     free(dontExpand);
                     free(argv);
                     free(originalCommand);
+                    free(params);
                     return 127;
                 }
             }
@@ -1278,7 +1280,7 @@ int ios_system(const char* inputCmd) {
                         argv = (char **)realloc(argv, sizeof(char*) * argc);
                         // Move everything one step up
                         for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
-                        argv[1] = realloc(argv[1], strlen(locationName.UTF8String));
+                        argv[1] = realloc(argv[1], locationName.length + 1);
                         strcpy(argv[1], locationName.UTF8String);
                         argv[0] = strdup("lli"); // this one is new
                         break;
@@ -1299,6 +1301,8 @@ int ios_system(const char* inputCmd) {
                             // 1) get script language name
                             if ([firstLine containsString:@"python3"]) {
                                 scriptName = "python3";
+                            } else if ([firstLine containsString:@"python2"]) {
+                                scriptName = "python";
                             } else if ([firstLine containsString:@"python"]) {
                                 scriptName = "python";
                             } else if ([firstLine containsString:@"lua"]) {
@@ -1310,7 +1314,7 @@ int ios_system(const char* inputCmd) {
                                 argv = (char **)realloc(argv, sizeof(char*) * argc);
                                 // Move everything one step up
                                 for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
-                                argv[1] = realloc(argv[1], strlen(locationName.UTF8String));
+                                argv[1] = realloc(argv[1], locationName.length + 1);
                                 strcpy(argv[1], locationName.UTF8String);
                                 argv[0] = strdup(scriptName); // this one is new
                                 break;
@@ -1346,7 +1350,7 @@ int ios_system(const char* inputCmd) {
             // points where we can exit from a shell function.
             // Commands call pthread_exit instead of exit
             // thread is attached, could also be un-attached
-            pthread_t _tid;
+            pthread_t _tid = NULL;
             params->argc = argc;
             params->argv = argv;
             params->function = function;
@@ -1391,10 +1395,14 @@ int ios_system(const char* inputCmd) {
                 }
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
-                pthread_create(&_tid, NULL, run_function, params);
+                volatile pthread_t _tid_local = NULL;
+                pthread_create(&_tid_local, NULL, run_function, params);
                 // The last command on the command line (with multiple pipes) will be created first
-                if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid; // will be joined later
-                else pthread_detach(_tid); // a thread must be either joined or detached.
+                if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid_local; // will be joined later
+                else {
+                    while (_tid_local == NULL) { }; // safe checking
+                    pthread_detach(_tid_local); // a thread must be either joined or detached.
+                }
             }
         } else {
             fprintf(thread_stderr, "%s: command not found\n", argv[0]);
@@ -1417,6 +1425,8 @@ int ios_system(const char* inputCmd) {
         } // if (function)
     } else { // argc != 0
         free(argv); // argv is otherwise freed in cleanup_function
+        free(dontExpand);
+        free(params);
     }
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
     fflush(thread_stdin);

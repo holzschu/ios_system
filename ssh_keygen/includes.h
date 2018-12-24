@@ -177,7 +177,7 @@
 #include "entropy.h"
 
 // iOS specific additions:
-extern void sshkeygen_cleanup();
+extern void sshkeygen_cleanup(void);
 #include "ios_error.h"
 
 #endif /* INCLUDES_H */
