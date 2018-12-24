@@ -12,6 +12,7 @@
 
 - (instancetype)init
 {
+    self = [super init];
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     self.isMainThread = TRUE;
     self.current_command_root_thread = 0;
