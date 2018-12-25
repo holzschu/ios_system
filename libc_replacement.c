@@ -115,7 +115,14 @@ pid_t fork(void) { return 0; } // Always go through the child branch
 pid_t vfork(void) { return 0; } // Always go through the child branch
 
 pid_t waitpid(pid_t pid, int *stat_loc, int options) {
-    pthread_join(ios_getLastThreadId(), NULL); // best we can do
+    // pthread_join won't work,  because the thread might have been detached.
+    // (and you can't re-join a detached thread).
+    // ios_getLastThreadId = ID of last thread in current session.
+    // TODO: ios_getLastThreadId is not necessarily the ID of the thread we want to wait for.
+    // however, threadIDs are not integers, and transferring information would be difficult. 
+    while (pthread_kill(ios_getLastThreadId(), 0) == 0) {
+        /* nothing */
+    }
     if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
     return pid;
 }

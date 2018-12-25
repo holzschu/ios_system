@@ -1152,13 +1152,6 @@ int ios_system(const char* inputCmd) {
         argv[argc-1] = unquoteArgument(argv[argc-1]);
         if (mustBreak) break;
         str = end + 1;
-        if ((argc == 1) && (argv[0][0] == '/') && (access(argv[0], R_OK) == -1)) {
-            // argv[0] is a file that doesn't exist. Probably one of our commands.
-            // Replace with its name:
-            char* newName = basename(argv[0]);
-            argv[0] = realloc(argv[0], strlen(newName) + 1);
-            strcpy(argv[0], newName);
-        }
         assert(argc < numSpaces + 2);
         while (str && (str[0] == ' ')) str++; // skip multiple spaces
     }
@@ -1322,6 +1315,14 @@ int ios_system(const char* inputCmd) {
                         }
                     }
                     if (cmdIsAFile) break; // else keep going through the path elements.
+                }
+            } else {
+                if (!cmdIsAFile) {
+                    // argv[0] is a file that doesn't exist. Probably one of our commands.
+                    // Replace with its name:
+                    char* newName = basename(argv[0]);
+                    argv[0] = realloc(argv[0], strlen(newName) + 1);
+                    strcpy(argv[0], newName);
                 }
             }
         }
