@@ -115,7 +115,8 @@ static void* run_function(void* parameters) {
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
     pthread_cleanup_push(cleanup_function, parameters);
-    p->function(p->argc, p->argv);
+    int retval = p->function(p->argc, p->argv);
+    if (currentSession != nil) currentSession.global_errno = retval; 
     pthread_cleanup_pop(1);
     return NULL;
 }
@@ -711,7 +712,7 @@ int ios_dup2(int fd1, int fd2)
     if (fd2 == 0) { child_stdin = fdopen(fd1, "rb"); }
     else if (fd2 == 1) { child_stdout = fdopen(fd1, "wb"); }
     else if (fd2 == 2) {
-        if (fileno(child_stdout) == fd1) child_stderr = child_stdout;
+        if ((child_stdout != NULL) && (fileno(child_stdout) == fd1)) child_stderr = child_stdout;
         else child_stderr = fdopen(fd1, "wb"); }
     else if (fd1 != fd2) {
         if (fcntl(fd1, F_GETFL) < 0)
