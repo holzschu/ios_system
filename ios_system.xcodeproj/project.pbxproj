@@ -22,6 +22,7 @@
 		2217ECE821CBBBBD0049B382 /* verify.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE721CBBBBD0049B382 /* verify.c */; };
 		2217ECEA21CBBBEF0049B382 /* sc25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE921CBBBEF0049B382 /* sc25519.c */; };
 		2217ECEC21CBBC190049B382 /* fe25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECEB21CBBC190049B382 /* fe25519.c */; };
+		221CD98F21E8B30000F3B47C /* openurl.m in Sources */ = {isa = PBXBuildFile; fileRef = 221CD98D21E8B03D00F3B47C /* openurl.m */; };
 		222446342065642E0018D400 /* sessionParameters.h in Headers */ = {isa = PBXBuildFile; fileRef = 222446322065642E0018D400 /* sessionParameters.h */; };
 		222446352065642E0018D400 /* sessionParameters.m in Sources */ = {isa = PBXBuildFile; fileRef = 222446332065642E0018D400 /* sessionParameters.m */; };
 		222CC4DC218CBF2300D3A11C /* strnsubst.c in Sources */ = {isa = PBXBuildFile; fileRef = 222CC4DA218CBF2300D3A11C /* strnsubst.c */; };
@@ -482,6 +483,7 @@
 		2217ECE721CBBBBD0049B382 /* verify.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = verify.c; path = ssh_keygen/verify.c; sourceTree = "<group>"; };
 		2217ECE921CBBBEF0049B382 /* sc25519.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sc25519.c; path = ssh_keygen/sc25519.c; sourceTree = "<group>"; };
 		2217ECEB21CBBC190049B382 /* fe25519.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fe25519.c; path = ssh_keygen/fe25519.c; sourceTree = "<group>"; };
+		221CD98D21E8B03D00F3B47C /* openurl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = openurl.m; sourceTree = "<group>"; };
 		222446322065642E0018D400 /* sessionParameters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sessionParameters.h; sourceTree = "<group>"; };
 		222446332065642E0018D400 /* sessionParameters.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = sessionParameters.m; sourceTree = "<group>"; };
 		222CC4DA218CBF2300D3A11C /* strnsubst.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strnsubst.c; path = shell_cmds/xargs/strnsubst.c; sourceTree = SOURCE_ROOT; };
@@ -1059,6 +1061,7 @@
 			isa = PBXGroup;
 			children = (
 				22122E2A21BC129000D8FE74 /* say.m */,
+				221CD98D21E8B03D00F3B47C /* openurl.m */,
 				22878D4B2036212E00286AF1 /* ssh */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
 				225F060F2016751800466685 /* getopt_long.c */,
@@ -2587,6 +2590,7 @@
 				22F6A1212068395B00E618F9 /* w.c in Sources */,
 				22C505882098ADD800FDDFA9 /* misc.c in Sources */,
 				22F6A11A2068394B00E618F9 /* id.c in Sources */,
+				221CD98F21E8B30000F3B47C /* openurl.m in Sources */,
 				22C5058A2098ADD800FDDFA9 /* function.c in Sources */,
 				22F6A11F2068395B00E618F9 /* pr_time.c in Sources */,
 				22C5058B2098ADD800FDDFA9 /* operator.c in Sources */,
