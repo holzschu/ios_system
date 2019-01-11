@@ -119,12 +119,22 @@ pid_t waitpid(pid_t pid, int *stat_loc, int options) {
     // (and you can't re-join a detached thread).
     // ios_getLastThreadId = ID of last thread in current session.
     // TODO: ios_getLastThreadId is not necessarily the ID of the thread we want to wait for.
-    // however, threadIDs are not integers, and transferring information would be difficult. 
-    while (pthread_kill(ios_getLastThreadId(), 0) == 0) {
-        /* nothing */
+    // however, threadIDs are not integers, and transferring information would be difficult.
+    
+    if (options && WNOHANG) {
+        // WNOHANG: just check that the process is still running:
+        if (pthread_kill(ios_getLastThreadId(), 0) == 0)
+            return 0;
+        else
+            return -1;
+    } else {
+        // Wait until the process is terminated:
+        while (pthread_kill(ios_getLastThreadId(), 0) == 0) {
+            /* nothing */
+        }
+        if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+        return pid;
     }
-    if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
-    return pid;
 }
 //
 void vwarn(const char *fmt, va_list args)
