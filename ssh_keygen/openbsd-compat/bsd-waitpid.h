@@ -27,7 +27,7 @@
 #define _BSD_WAITPID_H
 
 #ifndef HAVE_WAITPID
-/* Clean out any potential issues */
+/* Clean out any potental issues */
 #undef WIFEXITED
 #undef WIFSTOPPED
 #undef WIFSIGNALED

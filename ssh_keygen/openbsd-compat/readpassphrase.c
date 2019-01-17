@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include "ios_error.h"
 
 #ifndef TCSASOFT
 /* If we don't have TCSASOFT define it so that ORing it it below is a no-op. */
@@ -44,6 +45,14 @@
 /* SunOS 4.x which lacks _POSIX_VDISABLE, but has VDISABLE */
 #if !defined(_POSIX_VDISABLE) && defined(VDISABLE)
 #  define _POSIX_VDISABLE       VDISABLE
+#endif
+
+#ifndef _NSIG
+# ifdef NSIG
+#  define _NSIG NSIG
+# else
+#  define _NSIG 128
+# endif
 #endif
 
 static volatile sig_atomic_t signo[_NSIG];
@@ -82,8 +91,8 @@ restart:
 			errno = ENOTTY;
 			return(NULL);
 		}
-		input = STDIN_FILENO;
-		output = STDERR_FILENO;
+        input = fileno(thread_stdin); // STDIN_FILENO;
+        output = fileno(thread_stderr); // STDERR_FILENO;
 	}
 
 	/*
@@ -91,7 +100,7 @@ restart:
 	 * If we are using a tty but are not the foreground pgrp this will
 	 * generate SIGTTOU, so do it *before* installing the signal handlers.
 	 */
-	if (input != STDIN_FILENO && tcgetattr(input, &oterm) == 0) {
+	if (input != fileno(thread_stdin) && tcgetattr(input, &oterm) == 0) {
 		memcpy(&term, &oterm, sizeof(term));
 		if (!(flags & RPP_ECHO_ON))
 			term.c_lflag &= ~(ECHO | ECHONL);
@@ -166,7 +175,7 @@ restart:
 	(void)sigaction(SIGTSTP, &savetstp, NULL);
 	(void)sigaction(SIGTTIN, &savettin, NULL);
 	(void)sigaction(SIGTTOU, &savettou, NULL);
-	if (input != STDIN_FILENO)
+	if (input != fileno(thread_stdin))
 		(void)close(input);
 
 	/*
