@@ -175,6 +175,7 @@ void initializeEnvironment() {
         setenv("XDG_CACHE_HOME", [docsPath stringByAppendingPathComponent:@".cache"].UTF8String, 0);
         setenv("PYZMQ_BACKEND", "cffi", 0);
         setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
+        setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
         // hg config file in ~/Documents/.hgrc
         setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
     }
@@ -469,6 +470,10 @@ int ios_executable(const char* inputCmd) {
 static __thread FILE* child_stdin = NULL;
 static __thread FILE* child_stdout = NULL;
 static __thread FILE* child_stderr = NULL;
+// Python3 + new interpreter: input/output of current thread, temporarily saved:
+static __thread FILE* saved_stdin = NULL;
+static __thread FILE* saved_stdout = NULL;
+static __thread FILE* saved_stderr = NULL;
 
 FILE* ios_popen(const char* inputCmd, const char* type) {
     // Save existing streams:
@@ -723,6 +728,39 @@ int ios_dup2(int fd1, int fd2)
             return -1;
     }
     return fd2;
+}
+
+// New functions for Python3 + new interpreter: we don't create a new thread, but we
+// still change stdin/stdout/stderr. Since we don't call ios_system(), we don't have access
+// to the child_std* variables.
+
+void ios_pushChildThreads() {
+    fflush(thread_stdin);
+    fflush(thread_stdout);
+    fflush(thread_stderr);
+    saved_stdin = thread_stdin;
+    saved_stdout = thread_stdout;
+    saved_stderr = thread_stderr;
+    thread_stdin = child_stdin;
+    if (child_stdout != NULL) thread_stdout = child_stdout;
+    else thread_stdout = stdout;
+    if (child_stderr != NULL) thread_stderr = child_stderr;
+    else thread_stderr = stderr; 
+}
+
+void ios_popChildThreads() {
+    fflush(thread_stdin);
+    fflush(thread_stdout);
+    fflush(thread_stderr);
+    fclose(thread_stdin);
+    fclose(thread_stdout);
+    fclose(thread_stderr);
+    thread_stdin  = saved_stdin;
+    thread_stdout = saved_stdout;
+    thread_stderr = saved_stderr;
+    saved_stdin = NULL;
+    saved_stdout = NULL;
+    saved_stderr = NULL;
 }
 
 int ios_kill()
@@ -1294,10 +1332,14 @@ int ios_system(const char* inputCmd) {
                             // executable scripts files. Python and lua:
                             // 1) get script language name
                             if ([firstLine containsString:@"python3"]) {
+                                setenv("PYTHONEXECUTABLE", "python3", 1); // also set PYTHONEXECUTABLE
                                 scriptName = "python3";
                             } else if ([firstLine containsString:@"python2"]) {
+                                setenv("PYTHONEXECUTABLE", "python", 1); // also set PYTHONEXECUTABLE
                                 scriptName = "python";
                             } else if ([firstLine containsString:@"python"]) {
+                                // for now, the default for python is python2. It might change
+                                setenv("PYTHONEXECUTABLE", "python", 1); // also set PYTHONEXECUTABLE
                                 scriptName = "python";
                             } else if ([firstLine containsString:@"lua"]) {
                                 scriptName = "lua";
