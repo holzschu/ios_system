@@ -43,6 +43,9 @@ __thread void* thread_context;
 
 NSMutableDictionary* sessionList;
 sessionParameters* currentSession;
+// Python3 multiple interpreters:
+const int MaxPythonInterpreters = 10;
+bool isRunning[MaxPythonInterpreters];
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
@@ -80,6 +83,18 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stdout);
     fflush(thread_stderr);
     // release parameters:
+    char* commandName = p->argv_ref[0];
+    // Specific to run multiple python3 interpreters:
+    if ((strcmp(commandName, "python") == 0) && (strlen(commandName) == strlen("python") + 1)) {
+        // It's one of the multiple python3 interpreters
+        char commandNumber = commandName[6];
+        if (commandNumber == '3') isRunning[0] = false;
+        else {
+            commandNumber -= 'A' - 1;
+            if ((commandNumber > 0) && (commandNumber < MaxPythonInterpreters))
+                isRunning[commandNumber] = false;
+        }
+    }
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
@@ -178,6 +193,7 @@ void initializeEnvironment() {
         setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
         // hg config file in ~/Documents/.hgrc
         setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
+        for (int i = 0; i < MaxPythonInterpreters; i++) isRunning[i] = false;
     }
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
@@ -470,10 +486,6 @@ int ios_executable(const char* inputCmd) {
 static __thread FILE* child_stdin = NULL;
 static __thread FILE* child_stdout = NULL;
 static __thread FILE* child_stderr = NULL;
-// Python3 + new interpreter: input/output of current thread, temporarily saved:
-static __thread FILE* saved_stdin = NULL;
-static __thread FILE* saved_stdout = NULL;
-static __thread FILE* saved_stderr = NULL;
 
 FILE* ios_popen(const char* inputCmd, const char* type) {
     // Save existing streams:
@@ -728,39 +740,6 @@ int ios_dup2(int fd1, int fd2)
             return -1;
     }
     return fd2;
-}
-
-// New functions for Python3 + new interpreter: we don't create a new thread, but we
-// still change stdin/stdout/stderr. Since we don't call ios_system(), we don't have access
-// to the child_std* variables.
-
-void ios_pushChildThreads() {
-    fflush(thread_stdin);
-    fflush(thread_stdout);
-    fflush(thread_stderr);
-    saved_stdin = thread_stdin;
-    saved_stdout = thread_stdout;
-    saved_stderr = thread_stderr;
-    thread_stdin = child_stdin;
-    if (child_stdout != NULL) thread_stdout = child_stdout;
-    else thread_stdout = stdout;
-    if (child_stderr != NULL) thread_stderr = child_stderr;
-    else thread_stderr = stderr; 
-}
-
-void ios_popChildThreads() {
-    fflush(thread_stdin);
-    fflush(thread_stdout);
-    fflush(thread_stderr);
-    fclose(thread_stdin);
-    fclose(thread_stdout);
-    fclose(thread_stderr);
-    thread_stdin  = saved_stdin;
-    thread_stdout = saved_stdout;
-    thread_stderr = saved_stderr;
-    saved_stdin = NULL;
-    saved_stdout = NULL;
-    saved_stderr = NULL;
 }
 
 int ios_kill()
@@ -1252,8 +1231,8 @@ int ios_system(const char* inputCmd) {
         } else  {
             NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
             currentSession.commandName = commandName;
-            BOOL isDir = false;
-            BOOL cmdIsAFile = false;
+            bool isDir = false;
+            bool cmdIsAFile = false;
             bool cmdIsAPath = false;
             if ([commandName hasPrefix:@"~/"]) {
                 NSString* replacement_string = [NSString stringWithCString:(getenv("HOME")) encoding:NSUTF8StringEncoding];
@@ -1332,14 +1311,11 @@ int ios_system(const char* inputCmd) {
                             // executable scripts files. Python and lua:
                             // 1) get script language name
                             if ([firstLine containsString:@"python3"]) {
-                                setenv("PYTHONEXECUTABLE", "python3", 1); // also set PYTHONEXECUTABLE
                                 scriptName = "python3";
                             } else if ([firstLine containsString:@"python2"]) {
-                                setenv("PYTHONEXECUTABLE", "python", 1); // also set PYTHONEXECUTABLE
                                 scriptName = "python";
                             } else if ([firstLine containsString:@"python"]) {
                                 // for now, the default for python is python2. It might change
-                                setenv("PYTHONEXECUTABLE", "python", 1); // also set PYTHONEXECUTABLE
                                 scriptName = "python";
                             } else if ([firstLine containsString:@"lua"]) {
                                 scriptName = "lua";
@@ -1377,6 +1353,31 @@ int ios_system(const char* inputCmd) {
         int (*function)(int ac, char** av) = NULL;
         if (commandList == nil) initializeCommandList();
         NSString* commandName = [NSString stringWithCString:argv[0] encoding:NSUTF8StringEncoding];
+        // Make sure python3 and python2 coexist peacefully:
+        if ([commandName isEqualToString: @"python3"]) setenv("PYTHONEXECUTABLE", "python3", 1);
+        else if ([commandName isEqualToString: @"python2"]) setenv("PYTHONEXECUTABLE", "python", 1);
+        else if ([commandName isEqualToString: @"python"]) setenv("PYTHONEXECUTABLE", "python", 1);
+        // Ability to start multiple python3 scripts (required for Jupyter notebooks):
+        if ([commandName isEqualToString: @"python3"]) {
+            int i = 0;
+            while  (i < MaxPythonInterpreters) {
+                if (isRunning[i] == false) break;
+                i++;
+            }
+            if (i >= MaxPythonInterpreters) {
+                fprintf(thread_stderr, "Too many python scripts running simultaneously. Try closing some notebooks.\n");
+                commandName = @"notAValidCommand";
+            } else if (i >= 0) {
+                isRunning[i] = true;
+                if (i > 0) {
+                    char suffix[2];
+                    suffix[0] = 'A' + (i - 1);
+                    suffix[1] = 0;
+                    commandName = [@"python" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                }
+            }
+        }
+        //
         NSArray* commandStructure = [commandList objectForKey: commandName];
         void* handle = NULL;
         if (commandStructure != nil) {
