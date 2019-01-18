@@ -289,6 +289,76 @@
 		<string>3bBc:dEhiJm:OQ:RsStuUvVW:xX?</string>
 		<string>file</string>
 	</array>
+	<key>python3</key>
+	<array>
+		<string>Python3_ios.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string>3bBc:dEhiJm:OQ:RsStuUvVW:xX?</string>
+		<string>file</string>
+	</array>
+	<key>pythonE</key>
+	<array>
+		<string>PythonE.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonA</key>
+	<array>
+		<string>PythonA.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonB</key>
+	<array>
+		<string>PythonB.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonC</key>
+	<array>
+		<string>PythonC.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonD</key>
+	<array>
+		<string>PythonD.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonF</key>
+	<array>
+		<string>PythonF.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonG</key>
+	<array>
+		<string>PythonG.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonH</key>
+	<array>
+		<string>PythonH.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>pythonI</key>
+	<array>
+		<string>PythonI.framework/Python3_ios</string>
+		<string>python_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
 	<key>texlua</key>
 	<array>
 		<string>libluatex.dylib</string>
