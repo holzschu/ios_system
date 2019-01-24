@@ -85,7 +85,7 @@ static void cleanup_function(void* parameters) {
     // release parameters:
     char* commandName = p->argv_ref[0];
     // Specific to run multiple python3 interpreters:
-    if ((strcmp(commandName, "python") == 0) && (strlen(commandName) == strlen("python") + 1)) {
+    if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
         char commandNumber = commandName[6];
         if (commandNumber == '3') isRunning[0] = false;
@@ -753,6 +753,16 @@ int ios_kill()
     return ESRCH;
 }
 
+int ios_killpid(pid_t pid, int sig) {
+    if (currentSession == NULL) return ESRCH;
+    if (currentSession.lastThreadId > 0) {
+        // Send pthread_cancel with the given signal to the last thread
+        return pthread_cancel(ios_getLastThreadId());
+    }
+    // No process running
+    return ESRCH;
+}
+
 void ios_switchSession(void* sessionId) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
@@ -1373,6 +1383,7 @@ int ios_system(const char* inputCmd) {
                     char suffix[2];
                     suffix[0] = 'A' + (i - 1);
                     suffix[1] = 0;
+                    argv[0][6] = suffix[0];
                     commandName = [@"python" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
                 }
             }
