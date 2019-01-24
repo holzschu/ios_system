@@ -191,6 +191,7 @@ void initializeEnvironment() {
         setenv("PYZMQ_BACKEND", "cffi", 0);
         setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
         setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
+        setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
         // hg config file in ~/Documents/.hgrc
         setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
         for (int i = 0; i < MaxPythonInterpreters; i++) isRunning[i] = false;
