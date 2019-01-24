@@ -27,17 +27,19 @@ extern "C" {
 
 #define putchar(a) fputc(a, thread_stdout)
 #define getchar() fgetc(thread_stdin)
-#define getwchar() fgetwc(thread_stdin)
-// iswprint depends on the given locale, and setlocale() fails on iOS:
-#define iswprint(a) 1
-#define write ios_write
-#define fwrite ios_fwrite
-#define puts ios_puts
-#define fputs ios_fputs
-#define fputc ios_fputc
-#define putw ios_putw
-#define fflush ios_fflush
-
+// these functions are defined differently in C++. The #define approach breaks things.
+#ifndef __cplusplus
+  #define getwchar() fgetwc(thread_stdin)
+  // iswprint depends on the given locale, and setlocale() fails on iOS:
+  #define iswprint(a) 1
+  #define write ios_write
+  #define fwrite ios_fwrite
+  #define puts ios_puts
+  #define fputs ios_fputs
+  #define fputc ios_fputc
+  #define putw ios_putw
+  #define fflush ios_fflush
+#endif 
 
 // Thread-local input and output streams
 extern __thread FILE* thread_stdin;
@@ -47,6 +49,9 @@ extern __thread FILE* thread_stderr;
 #define exit ios_exit
 #define abort() ios_exit(1)
 #define _exit ios_exit
+#define kill ios_killpid
+#define _kill ios_killpid
+#define killpg ios_killpid
 #define popen ios_popen
 #define pclose fclose
 #define system ios_system
@@ -59,6 +64,7 @@ extern int ios_executable(const char* cmd); // is this command part of the "shel
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 extern int ios_kill(void); // kill the current running command
+extern int ios_killpid(pid_t pid, int sig); // kill the current running command
 
 extern void ios_exit(int errorCode) __dead2; // set error code and exits from the thread.
 extern int ios_execv(const char *path, char* const argv[]);
