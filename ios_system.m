@@ -817,14 +817,6 @@ void ios_switchSession(void* sessionId) {
     }
 }
 
-void ios_backgroundCommand() {
-    // Start the next command in the background
-    if (currentSession == NULL) {
-        currentSession = [[sessionParameters alloc] init];
-    }
-    currentSession.isMainThread = false;
-}
-
 void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     [fileManager changeCurrentDirectoryPath:[workingDirectoryURL path]];
