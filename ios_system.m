@@ -45,7 +45,8 @@ NSMutableDictionary* sessionList;
 sessionParameters* currentSession;
 // Python3 multiple interpreters:
 const int MaxPythonInterpreters = 10;
-bool isRunning[MaxPythonInterpreters];
+bool PythonIsRunning[MaxPythonInterpreters];
+int currentPythonInterpreter = 0;
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
@@ -88,11 +89,11 @@ static void cleanup_function(void* parameters) {
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
         char commandNumber = commandName[6];
-        if (commandNumber == '3') isRunning[0] = false;
+        if (commandNumber == '3') PythonIsRunning[0] = false;
         else {
             commandNumber -= 'A' - 1;
             if ((commandNumber > 0) && (commandNumber < MaxPythonInterpreters))
-                isRunning[commandNumber] = false;
+                PythonIsRunning[commandNumber] = false;
         }
     }
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
@@ -177,24 +178,55 @@ void initializeEnvironment() {
     setenv("CURL_HOME", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
     setenv("SSL_CERT_FILE", [docsPath stringByAppendingPathComponent:@"cacert.pem"].UTF8String, 0); // SLL cacert.pem in ~/Documents/cacert.pem or [Cloud Drive]/cacert.pem
     // iOS already defines "HOME" as the home dir of the application
+    for (int i = 0; i < MaxPythonInterpreters; i++) PythonIsRunning[i] = false;
+    NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
     if (sideLoading) {
-        NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
         if (![fullCommandPath containsString:@"Library/bin"]) {
             NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
             fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
         }
+        // XDG setup directories:
+        setenv("XDG_CACHE_HOME", [libPath stringByAppendingPathComponent:@"Caches"].UTF8String, 0);
+        setenv("XDG_CONFIG_HOME", [libPath stringByAppendingPathComponent:@"Preferences"].UTF8String, 0);
+        setenv("XDG_DATA_HOME", libPath.UTF8String, 0);
         // if we use Python, we define a few more environment variables:
         setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python files are in ~/Library/lib/python[23].x/
         setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
-        // pip cache directory: ~/Documents/.cache/
-        setenv("XDG_CACHE_HOME", [docsPath stringByAppendingPathComponent:@".cache"].UTF8String, 0);
         setenv("PYZMQ_BACKEND", "cffi", 0);
         setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
         setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
         setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
         // hg config file in ~/Documents/.hgrc
         setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
-        for (int i = 0; i < MaxPythonInterpreters; i++) isRunning[i] = false;
+    } else {
+        // If we're not sideloading, everything will be in the Application directory
+        NSString *mainBundlePath = [[NSBundle mainBundle] resourcePath];
+        NSString *mainBundleLibPath = [mainBundlePath stringByAppendingPathComponent:@"Library"];
+        // if we're not sideloading, all "executable" files are in the AppDir:
+        if (![fullCommandPath containsString:@"Library/bin"]) {
+            NSString *binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin3"];
+            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+            binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin"];
+            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+            // Python packages can install scripts, too:
+            binPath = [libPath stringByAppendingPathComponent:@"bin"];
+            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+        }
+        //
+        NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
+        // XDG setup directories (~/Library/Caches, ~/Library/Preferences):
+        setenv("XDG_CACHE_HOME", [libPath stringByAppendingPathComponent:@"Caches"].UTF8String, 0);
+        setenv("XDG_CONFIG_HOME", [libPath stringByAppendingPathComponent:@"Preferences"].UTF8String, 0);
+        setenv("XDG_DATA_HOME", libPath.UTF8String, 0);
+        // if we use Python, we define a few more environment variables:
+        setenv("PYTHONHOME", mainBundleLibPath.UTF8String, 0);  // Python files are in $APPDIR/Library/lib/python3.x/
+        setenv("PYTHONPATH", [libPath stringByAppendingPathComponent:@"python"].UTF8String, 0);  // User-installed files are in ~/Library/python/
+        setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
+        setenv("PYZMQ_BACKEND", "cffi", 0);
+        // Configuration files are in $HOME (and hidden)
+        setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
+        setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
+        setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
     }
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
@@ -271,7 +303,7 @@ static char* parseArgument(char* argument, char* command) {
     const char* newArgument = [argumentString UTF8String];
     if (strcmp(argument, newArgument) == 0) return argument; // nothing changed
     // Make sure the argument is reallocated, so it can be free-ed
-    char* returnValue = realloc(argument, strlen(newArgument));
+    char* returnValue = realloc(argument, strlen(newArgument) + 1);
     strcpy(returnValue, newArgument);
     return returnValue;
 }
@@ -758,7 +790,8 @@ int ios_killpid(pid_t pid, int sig) {
     if (currentSession == NULL) return ESRCH;
     if (currentSession.lastThreadId > 0) {
         // Send pthread_cancel with the given signal to the last thread
-        return pthread_cancel(ios_getLastThreadId());
+        // return pthread_cancel(ios_getLastThreadId());
+        return pthread_kill(ios_getLastThreadId(), sig);
     }
     // No process running
     return ESRCH;
@@ -782,6 +815,14 @@ void ios_switchSession(void* sessionId) {
         currentSession.stdout = stdout;
         currentSession.stderr = stderr;
     }
+}
+
+void ios_backgroundCommand() {
+    // Start the next command in the background
+    if (currentSession == NULL) {
+        currentSession = [[sessionParameters alloc] init];
+    }
+    currentSession.isMainThread = false;
 }
 
 void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
@@ -1291,8 +1332,10 @@ int ios_system(const char* inputCmd) {
                         // isExecutableFileAtPath replies "NO" even if file has x-bit set.
                         // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
                         struct stat sb;
-                        if (!((stat(locationName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode))) continue;
-                        // File exists, is executable, not a directory.
+                        // Files inside the Application Bundle will always have "x" removed. Don't check.
+                        if (!([path containsString: [[NSBundle mainBundle] resourcePath]]) // Not inside the App Bundle
+                            && !((stat(locationName.UTF8String, &sb) == 0) // file exists, is not a directory
+                            && S_ISXXX(sb.st_mode))) continue; // file has "x" bit set
                     } else
                         // if (cmdIsAFile) we are now ready to execute this file:
                         locationName = commandName;
@@ -1334,7 +1377,7 @@ int ios_system(const char* inputCmd) {
                             if (scriptName) {
                                 // 2) insert script language at beginning of argument list
                                 argc += 1;
-                                argv = (char **)realloc(argv, sizeof(char*) * argc);
+                                argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
                                 // Move everything one step up
                                 for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
                                 argv[1] = realloc(argv[1], locationName.length + 1);
@@ -1370,19 +1413,26 @@ int ios_system(const char* inputCmd) {
         else if ([commandName isEqualToString: @"python"]) setenv("PYTHONEXECUTABLE", "python", 1);
         // Ability to start multiple python3 scripts (required for Jupyter notebooks):
         if ([commandName isEqualToString: @"python3"]) {
-            int i = 0;
-            while  (i < MaxPythonInterpreters) {
-                if (isRunning[i] == false) break;
-                i++;
+            // start by increasing the number of the interpreter, until we're out.
+            int numInterpreter = 0;
+            if (currentPythonInterpreter < MaxPythonInterpreters) {
+                numInterpreter = currentPythonInterpreter;
+                currentPythonInterpreter++;
+            } else {
+                while  (numInterpreter < MaxPythonInterpreters) {
+                    if (PythonIsRunning[numInterpreter] == false) break;
+                    numInterpreter++;
+                }
+                if (numInterpreter >= MaxPythonInterpreters) {
+                    fprintf(thread_stderr, "Too many python scripts running simultaneously. Try closing some notebooks.\n");
+                    commandName = @"notAValidCommand";
+                }
             }
-            if (i >= MaxPythonInterpreters) {
-                fprintf(thread_stderr, "Too many python scripts running simultaneously. Try closing some notebooks.\n");
-                commandName = @"notAValidCommand";
-            } else if (i >= 0) {
-                isRunning[i] = true;
-                if (i > 0) {
+            if ((numInterpreter >= 0) && (numInterpreter < MaxPythonInterpreters)) {
+                PythonIsRunning[numInterpreter] = true;
+                if (numInterpreter > 0) {
                     char suffix[2];
-                    suffix[0] = 'A' + (i - 1);
+                    suffix[0] = 'A' + (numInterpreter - 1);
                     suffix[1] = 0;
                     argv[0][6] = suffix[0];
                     commandName = [@"python" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
