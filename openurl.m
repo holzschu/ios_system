@@ -72,7 +72,7 @@ int openurl_main(int argc, char *argv[]) {
     return -1;
   }
 
-  dispatch_sync(dispatch_get_main_queue(), ^{
+  dispatch_async(dispatch_get_main_queue(), ^{
     NSURL *browserAppURL = __browser_app_url(locationURL);
     [[UIApplication sharedApplication] openURL:browserAppURL ?: locationURL
                                        options:@{}
