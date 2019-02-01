@@ -13,7 +13,6 @@
 
 NSArray<NSString *> *__known_browsers() {
   // TODO: @"opera" opera-http(s): doesn't work
-  //       @"yandexbrowser"
   return @[@"googlechrome", @"firefox", @"safari"];
 }
 
@@ -48,6 +47,13 @@ NSURL *__browser_app_url(NSURL *srcURL) {
     NSString *url = [absSrcURLStr
                         stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet];
     url = [@"firefox://open-url?url=" stringByAppendingString:url];
+    return [NSURL URLWithString:url];
+  }
+  
+  if ([browser isEqualToString:@"yandexbrowser"]) {
+    NSString *url = [absSrcURLStr
+                     stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet];
+    url = [@"yandexbrowser-open-url://" stringByAppendingString:url];
     return [NSURL URLWithString:url];
   }
   
