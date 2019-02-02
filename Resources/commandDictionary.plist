@@ -240,6 +240,13 @@
 		<string></string>
 		<string>no</string>
 	</array>
+	<key>open</key>
+	<array>
+		<string>shell.framework/shell</string>
+		<string>open_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
 	<key>pbcopy</key>
 	<array>
 		<string>SELF</string>

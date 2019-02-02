@@ -61,7 +61,14 @@ NSURL *__browser_app_url(NSURL *srcURL) {
   return [NSURL URLWithString:browserAppUrlStr];
 }
 
+// ------------------------------------------------------------------------------------------------
+// The `openurl` command still available. The `open` command checks if the passed argument is a file path, if it is, it opens it with an `UIActivityViewController` and if not, it calls the `openurl` command.
+// ------------------------------------------------------------------------------------------------
+
+// MARK: - URL
+
 int openurl_main(int argc, char *argv[]) {
+  
   NSString *usage = [@[@"Usage: openurl url",
                        @"you can change default browser with BROWSER env var:",
                        [NSString stringWithFormat: @"  %@", [__known_browsers() componentsJoinedByString:@", "]],
@@ -77,7 +84,7 @@ int openurl_main(int argc, char *argv[]) {
     printf("%s\n", "Invalid URL");
     return -1;
   }
-
+  
   dispatch_async(dispatch_get_main_queue(), ^{
     NSURL *browserAppURL = __browser_app_url(locationURL);
     [[UIApplication sharedApplication] openURL:browserAppURL ?: locationURL
@@ -87,4 +94,51 @@ int openurl_main(int argc, char *argv[]) {
   
   
   return 0;
+}
+
+// MARK: - File path
+
+int open_main(int argc, char *argv[]) {
+  NSString *usage = [@[@"Usage: open url|path",
+                       @"you can change default browser with BROWSER env var:",
+                       [NSString stringWithFormat: @"  %@", [__known_browsers() componentsJoinedByString:@", "]],
+                       ] componentsJoinedByString:@"\n"];
+  
+  if (argc < 2) {
+    printf("%s\n", usage.UTF8String);
+    return -1;
+  }
+  
+  NSURL *fileURL = [NSURL fileURLWithPath:@(argv[1]) relativeToURL:[NSURL fileURLWithPath:NSFileManager.defaultManager.currentDirectoryPath]];
+  
+  if (fileURL && [NSFileManager.defaultManager fileExistsAtPath:fileURL.path]) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      
+      UIWindow *window = [UIApplication sharedApplication].keyWindow;
+      
+      if (!window) {
+        fputs("Cannot find a window. This command require an UI for opening files.\n", thread_stderr)
+        return 1
+      }
+      
+      UIViewController *topController = window.rootViewController;
+      
+      while (topController.presentedViewController) {
+        topController = topController.presentedViewController;
+      }
+      
+      if (!topController) {
+        fputs("Cannot find a View controller on the app window. This command require an UI for opening files.\n", thread_stderr)
+        return 1
+      }
+      
+      UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:[NSArray arrayWithObjects:fileURL count:1] applicationActivities:NULL];
+      activityViewController.popoverPresentationController.sourceView = window;
+      activityViewController.popoverPresentationController.sourceRect = window.bounds;
+      [topController presentViewController:activityViewController animated:YES completion:NULL];
+    })
+    return 0;
+  }
+  
+  return openurl_main(argc, argv);
 }
