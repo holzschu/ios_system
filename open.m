@@ -117,8 +117,8 @@ int open_main(int argc, char *argv[]) {
       UIWindow *window = [UIApplication sharedApplication].keyWindow;
       
       if (!window) {
-        fputs("Cannot find a window. This command require an UI for opening files.\n", thread_stderr)
-        return 1
+        fputs("Cannot find a window. This command require an UI for opening files.\n", thread_stderr);
+        return 1;
       }
       
       UIViewController *topController = window.rootViewController;
@@ -128,7 +128,7 @@ int open_main(int argc, char *argv[]) {
       }
       
       if (!topController) {
-        fputs("Cannot find a View controller on the app window. This command require an UI for opening files.\n", thread_stderr)
+        fputs("Cannot find a View controller on the app window. This command require an UI for opening files.\n", thread_stderr);
         return 1
       }
       
@@ -136,7 +136,7 @@ int open_main(int argc, char *argv[]) {
       activityViewController.popoverPresentationController.sourceView = window;
       activityViewController.popoverPresentationController.sourceRect = window.bounds;
       [topController presentViewController:activityViewController animated:YES completion:NULL];
-    })
+    });
     return 0;
   }
   
