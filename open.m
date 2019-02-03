@@ -132,7 +132,7 @@ int open_main(int argc, char *argv[]) {
       
       UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:NULL];
       activityViewController.popoverPresentationController.sourceView = window;
-      activityViewController.popoverPresentationController.sourceRect = window.bounds;
+      activityViewController.popoverPresentationController.sourceRect = CGRectZero;
       [topController presentViewController:activityViewController animated:YES completion:NULL];
     });
     return 0;
