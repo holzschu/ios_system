@@ -32,6 +32,10 @@
 // If false, you get a smaller set, but more compliance with AppStore rules.
 // *Must* be false in the main branch releases.
 bool sideLoading = false;
+// get getrlimit/setrlimit:
+#include <sys/resource.h>
+struct rlimit limitFilesOpen;
+
 
 extern __thread int    __db_getopt_reset;
 __thread FILE* thread_stdin;
@@ -230,6 +234,8 @@ void initializeEnvironment() {
     }
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
+    // Store the maximum number of file descriptors allowed:
+    getrlimit(RLIMIT_NOFILE, &limitFilesOpen);
 }
 
 static char* parseArgument(char* argument, char* command) {
@@ -1456,6 +1462,24 @@ int ios_system(const char* inputCmd) {
             params->dlHandle = handle;
             params->isPipeOut = (params->stdout != thread_stdout);
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
+            // Before starting, do we have enough file descriptors available?
+            int numFileDescriptorsOpen = 0;
+            for (int fd = 0; fd < limitFilesOpen.rlim_cur; fd++) {
+                errno = 0;
+                int flags = fcntl(fd, F_GETFD, 0);
+                if (flags == -1 && errno) {
+                    continue;
+                }
+                ++numFileDescriptorsOpen ;
+            }
+            // fprintf(stderr, "Num file descriptor = %d\n", numFileDescriptorsOpen);
+            // We assume 128 file descriptors will be enough for a single command.
+            if (numFileDescriptorsOpen + 128 > limitFilesOpen.rlim_cur) {
+                limitFilesOpen.rlim_cur += 1024;
+                int res = setrlimit(RLIMIT_NOFILE, &limitFilesOpen);
+                if (res == 0) fprintf(stderr, "[Info] Increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
+                else fprintf(stderr, "[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
+            }
             if (currentSession.isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
