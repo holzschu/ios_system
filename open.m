@@ -13,7 +13,7 @@
 
 NSArray<NSString *> *__known_browsers() {
   // TODO: @"opera" opera-http(s): doesn't work
-  return @[@"googlechrome", @"firefox", @"safari"];
+  return @[@"googlechrome", @"firefox", @"safari", @"yandexbrowser"];
 }
 
 NSURL *__browser_app_url(NSURL *srcURL) {
