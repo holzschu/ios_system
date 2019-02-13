@@ -48,7 +48,9 @@ __thread void* thread_context;
 NSMutableDictionary* sessionList;
 sessionParameters* currentSession;
 // Python3 multiple interpreters:
-const int MaxPythonInterpreters = 10;
+// limit to 6 = 1 kernel, 4 notebooks, one extra.
+// App Store limit is 150 MB
+const int MaxPythonInterpreters = 6;
 bool PythonIsRunning[MaxPythonInterpreters];
 int currentPythonInterpreter = 0;
 
@@ -184,26 +186,28 @@ void initializeEnvironment() {
     // iOS already defines "HOME" as the home dir of the application
     for (int i = 0; i < MaxPythonInterpreters; i++) PythonIsRunning[i] = false;
     NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
+    // environment variables for Python:
+    setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python files are in ~/Library/lib/python[23].x/
+    // XDG setup directories (~/Library/Caches, ~/Library/Preferences):
+    setenv("XDG_CACHE_HOME", [libPath stringByAppendingPathComponent:@"Caches"].UTF8String, 0);
+    setenv("XDG_CONFIG_HOME", [libPath stringByAppendingPathComponent:@"Preferences"].UTF8String, 0);
+    setenv("XDG_DATA_HOME", libPath.UTF8String, 0);
+    // if we use Python, we define a few more environment variables:
+    setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
+    setenv("PYZMQ_BACKEND", "cffi", 0);
+    // Configuration files are in $HOME (and hidden)
+    setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
+    setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
+    setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
+    // hg config file in ~/Documents/.hgrc
+    setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
     if (sideLoading) {
         if (![fullCommandPath containsString:@"Library/bin"]) {
             NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
             fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
         }
-        // XDG setup directories:
-        setenv("XDG_CACHE_HOME", [libPath stringByAppendingPathComponent:@"Caches"].UTF8String, 0);
-        setenv("XDG_CONFIG_HOME", [libPath stringByAppendingPathComponent:@"Preferences"].UTF8String, 0);
-        setenv("XDG_DATA_HOME", libPath.UTF8String, 0);
-        // if we use Python, we define a few more environment variables:
-        setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python files are in ~/Library/lib/python[23].x/
-        setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
-        setenv("PYZMQ_BACKEND", "cffi", 0);
-        setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
-        setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
-        setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
-        // hg config file in ~/Documents/.hgrc
-        setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
     } else {
-        // If we're not sideloading, everything will be in the Application directory
+        // If we're not sideloading, executeables will also be in the Application directory
         NSString *mainBundlePath = [[NSBundle mainBundle] resourcePath];
         NSString *mainBundleLibPath = [mainBundlePath stringByAppendingPathComponent:@"Library"];
         // if we're not sideloading, all "executable" files are in the AppDir:
@@ -216,21 +220,6 @@ void initializeEnvironment() {
             binPath = [libPath stringByAppendingPathComponent:@"bin"];
             fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
         }
-        //
-        NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
-        // XDG setup directories (~/Library/Caches, ~/Library/Preferences):
-        setenv("XDG_CACHE_HOME", [libPath stringByAppendingPathComponent:@"Caches"].UTF8String, 0);
-        setenv("XDG_CONFIG_HOME", [libPath stringByAppendingPathComponent:@"Preferences"].UTF8String, 0);
-        setenv("XDG_DATA_HOME", libPath.UTF8String, 0);
-        // if we use Python, we define a few more environment variables:
-        setenv("PYTHONHOME", mainBundleLibPath.UTF8String, 0);  // Python files are in $APPDIR/Library/lib/python3.x/
-        setenv("PYTHONPATH", [libPath stringByAppendingPathComponent:@"python"].UTF8String, 0);  // User-installed files are in ~/Library/python/
-        setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
-        setenv("PYZMQ_BACKEND", "cffi", 0);
-        // Configuration files are in $HOME (and hidden)
-        setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
-        setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
-        setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
     }
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
@@ -878,7 +867,10 @@ void replaceCommand(NSString* commandName, NSString* functionName, bool allOccur
     // Does that function exist / is reachable? We've had problems with stripping.
     int (*function)(int ac, char** av) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, functionName.UTF8String);
-    if (!function) return; // if not, we don't replace.
+    if (!function) {
+        NSLog(@"replaceCommand: %@ does not exist", functionName);
+        return; // if not, we don't replace.
+    }
     if (commandList == nil) initializeCommandList();
     NSArray* oldValues = [commandList objectForKey: commandName];
     NSString* oldFunctionName = nil;
