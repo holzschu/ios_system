@@ -1414,7 +1414,7 @@ int ios_system(const char* inputCmd) {
                     numInterpreter++;
                 }
                 if (numInterpreter >= MaxPythonInterpreters) {
-                    fprintf(thread_stderr, "Too many python scripts running simultaneously. Try closing some notebooks.\n");
+                    NSLog(@"%@", @"Too many python scripts running simultaneously. Try closing some notebooks.\n");
                     commandName = @"notAValidCommand";
                 }
             }
@@ -1437,10 +1437,16 @@ int ios_system(const char* inputCmd) {
             if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
             else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
             else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_GLOBAL); // commands defined in dynamic library
-            if (sideLoading && (handle == NULL)) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+            if (handle == NULL) {
+                NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+                if (sideLoading) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+            }
             NSString* functionName = commandStructure[1];
             function = dlsym(handle, functionName.UTF8String);
-            if (sideLoading && (function == NULL)) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+            if (function == NULL) {
+                NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+                if (sideLoading) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+            }
         }
         if (function) {
             // We run the function in a thread because there are several
@@ -1469,8 +1475,8 @@ int ios_system(const char* inputCmd) {
             if (numFileDescriptorsOpen + 128 > limitFilesOpen.rlim_cur) {
                 limitFilesOpen.rlim_cur += 1024;
                 int res = setrlimit(RLIMIT_NOFILE, &limitFilesOpen);
-                if (res == 0) fprintf(stderr, "[Info] Increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
-                else fprintf(stderr, "[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
+                if (res == 0) NSLog(@"[Info] Increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
+                else NSLog(@"[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
             }
             if (currentSession.isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
@@ -1521,6 +1527,7 @@ int ios_system(const char* inputCmd) {
             }
         } else {
             fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            NSLog(@"%s: command not found\n", argv[0]);
             free(argv);
             // If command output was redirected to a pipe, we still need to close it.
             // (to warn the other command that it can stop waiting)
