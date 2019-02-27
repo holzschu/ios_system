@@ -666,7 +666,8 @@ doexec:	if ((plan->flags & F_NEEDOK) && !queryuser(plan->e_argv))
 	case -1:
 		err(1, "fork");
 		/* NOTREACHED */
-	case 0: {
+    default: { // We need to go through both branches:
+	// case 0: {
 		/* change dir back from where we started */
 		if (!(plan->flags & F_EXECDIR) &&
 		    !(ftsoptions & FTS_NOCHDIR) && fchdir(dotfd)) {

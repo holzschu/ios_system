@@ -34,7 +34,7 @@
 bool sideLoading = false;
 // get getrlimit/setrlimit:
 #include <sys/resource.h>
-struct rlimit limitFilesOpen;
+static struct rlimit limitFilesOpen;
 
 
 extern __thread int    __db_getopt_reset;
@@ -45,14 +45,15 @@ __thread void* thread_context;
 
 #import "sessionParameters.h"
 
-NSMutableDictionary* sessionList;
-sessionParameters* currentSession;
+static NSMutableDictionary* sessionList;
+static NSMutableDictionary* pidThreadList;
+static sessionParameters* currentSession;
 // Python3 multiple interpreters:
 // limit to 6 = 1 kernel, 4 notebooks, one extra.
 // App Store limit is 150 MB
-const int MaxPythonInterpreters = 6;
-bool PythonIsRunning[MaxPythonInterpreters];
-int currentPythonInterpreter = 0;
+static const int MaxPythonInterpreters = 6;
+static bool PythonIsRunning[MaxPythonInterpreters];
+static int currentPythonInterpreter = 0;
 
 // replace system-provided exit() by our own:
 void ios_exit(int n) {
@@ -91,6 +92,7 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stderr);
     // release parameters:
     char* commandName = p->argv_ref[0];
+    // NSLog(@"Terminating command: %s", commandName);
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
@@ -119,6 +121,12 @@ static void cleanup_function(void* parameters) {
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
         dlclose(p->dlHandle);
     free(parameters); // This was malloc'ed in ios_system
+    if (currentSession != nil) {
+        if (currentSession.lastThreadId == pthread_self())
+            currentSession.lastThreadId = NULL;
+        if (ios_getThreadId(currentSession.pid) == pthread_self())
+            ios_releaseThreadId(currentSession.pid);
+    }
 }
 
 static void* run_function(void* parameters) {
@@ -129,6 +137,7 @@ static void* run_function(void* parameters) {
     optreset = 1;
     __db_getopt_reset = 1;
     functionParameters *p = (functionParameters *) parameters;
+    // NSLog(@"Starting command: %s", p->argv[0]);
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
@@ -137,6 +146,8 @@ static void* run_function(void* parameters) {
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
     pthread_cleanup_push(cleanup_function, parameters);
+    ios_storeThreadId(pthread_self());
+    if (currentSession != nil) currentSession.pid = ios_currentPid();
     int retval = p->function(p->argc, p->argv);
     if (currentSession != nil) currentSession.global_errno = retval; 
     pthread_cleanup_pop(1);
@@ -225,6 +236,8 @@ void initializeEnvironment() {
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     // Store the maximum number of file descriptors allowed:
     getrlimit(RLIMIT_NOFILE, &limitFilesOpen);
+    // correspondence between thread_id and pid:
+    pidThreadList = [NSMutableDictionary new];
 }
 
 static char* parseArgument(char* argument, char* command) {
@@ -717,7 +730,7 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
     return returnValue;
 }
 
-const pthread_t ios_getLastThreadId() {
+pthread_t ios_getLastThreadId() {
     if (!currentSession) return nil;
     return (currentSession.lastThreadId);
 }
@@ -782,17 +795,10 @@ int ios_kill()
 }
 
 int ios_killpid(pid_t pid, int sig) {
-    if (currentSession == NULL) return ESRCH;
-    if (currentSession.lastThreadId > 0) {
-        // Send pthread_cancel with the given signal to the last thread
-        // return pthread_cancel(ios_getLastThreadId());
-        return pthread_kill(ios_getLastThreadId(), sig);
-    }
-    // No process running
-    return ESRCH;
+    return pthread_cancel(ios_getThreadId(pid));
 }
 
-void ios_switchSession(void* sessionId) {
+void ios_switchSession(const void* sessionId) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
     if (sessionList == nil) {
@@ -822,7 +828,7 @@ void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
     }
 }
 
-void ios_closeSession(void* sessionId) {
+void ios_closeSession(const void* sessionId) {
     // delete information associated with current session:
     if (sessionList == nil) return;
     id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
@@ -1521,7 +1527,7 @@ int ios_system(const char* inputCmd) {
                 // The last command on the command line (with multiple pipes) will be created first
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid_local; // will be joined later
                 else {
-                    while (_tid_local == NULL) { }; // safe checking
+                    while (_tid_local == NULL) { }; // Wait until thread has actually started
                     pthread_detach(_tid_local); // a thread must be either joined or detached.
                 }
             }

@@ -26,6 +26,7 @@
     self.stderr = stderr;
     self.context = nil; 
     self.commandName = nil;
+    self.pid = -1;
   
     return self;
 }

@@ -71,7 +71,9 @@ extern int ios_execv(const char *path, char* const argv[]);
 extern int ios_execve(const char *path, char* const argv[], const char** envlist);
 extern int ios_dup2(int fd1, int fd2);
 extern int ios_isatty(int fd);
-extern const pthread_t ios_getLastThreadId(void); 
+extern pthread_t ios_getLastThreadId(void);  // deprecated
+extern pthread_t ios_getThreadId(pid_t pid);
+extern void ios_storeThreadId(pthread_t thread);
 extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
     

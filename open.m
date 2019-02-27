@@ -13,7 +13,7 @@
 
 NSArray<NSString *> *__known_browsers() {
   // TODO: @"opera" opera-http(s): doesn't work
-  return @[@"googlechrome", @"firefox", @"safari", @"yandexbrowser", @"brave"];
+  return @[@"googlechrome", @"firefox", @"safari", @"yandexbrowser", @"brave", @"opera"];
 }
 
 NSURL *__browser_app_url(NSURL *srcURL) {
@@ -43,20 +43,17 @@ NSURL *__browser_app_url(NSURL *srcURL) {
   
   NSString *absSrcURLStr = [srcURL absoluteString];
   
-  if ([browser isEqualToString:@"firefox"]) {
+  // browsers with the open-url scheme:
+  if (([browser isEqualToString:@"firefox"]) ||
+      ([browser isEqualToString:@"brave"]) ||
+      ([browser isEqualToString:@"opera"])) {
     NSString *url = [absSrcURLStr
                         stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet];
-    url = [@"firefox://open-url?url=" stringByAppendingString:url];
+    NSString *openUrl = [@"://open-url?url=" stringByAppendingString:url];
+    url = [browser stringByAppendingString:openUrl];
     return [NSURL URLWithString:url];
   }
   
-  if ([browser isEqualToString:@"brave"]) {
-    NSString *url = [absSrcURLStr
-                     stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet];
-    url = [@"brave://open-url?url=" stringByAppendingString:url];
-    return [NSURL URLWithString:url];
-  }
-
   if ([browser isEqualToString:@"yandexbrowser"]) {
     NSString *url = [absSrcURLStr
                      stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet];
@@ -64,6 +61,7 @@ NSURL *__browser_app_url(NSURL *srcURL) {
     return [NSURL URLWithString:url];
   }
   
+  // googlechrome: replace "http" with "googlechrome"
   NSString *browserAppUrlStr = [absSrcURLStr stringByReplacingCharactersInRange:NSMakeRange(0, 4) withString:browser];
   return [NSURL URLWithString:browserAppUrlStr];
 }

@@ -28,7 +28,11 @@ extern int ios_system(const char* inputCmd); // execute this command (executable
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 extern int ios_kill(void); // kill the current running command
 extern int ios_isatty(int fd); // test whether a file descriptor refers to a terminal
-extern const pthread_t ios_getLastThreadId(void);
+extern pthread_t ios_getLastThreadId(void);
+extern pthread_t ios_getThreadId(pid_t pid);
+extern void ios_storeThreadId(pthread_t thread);
+extern void ios_releaseThreadId(pid_t pid);
+extern pid_t ios_currentPid(void);
 extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
 
@@ -40,8 +44,8 @@ extern void initializeEnvironment(void);
 extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hierarchy
 extern int ios_setMiniRootURL(NSURL*);  // restricts operations to a certain hierarchy
 extern int ios_setAllowedPaths(NSArray<NSString *> *paths);  // restricts operations to a certain hierarchy
-extern void ios_switchSession(void* sessionid);
-extern void ios_closeSession(void* sessionid);
+extern void ios_switchSession(const void* sessionid);
+extern void ios_closeSession(const void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
 extern void ios_setContext(void *context);
 extern void ios_setDirectoryURL(NSURL* workingDirectoryURL);

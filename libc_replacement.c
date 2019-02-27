@@ -111,25 +111,79 @@ int ios_putw(int w, FILE *stream) {
     if (fileno(stream) == STDERR_FILENO) return putw(w, thread_stderr);
     return putw(w, stream);
 }
-pid_t fork(void) { return 0; } // Always go through the child branch
-pid_t vfork(void) { return 0; } // Always go through the child branch
+
+// Fake process IDs to go with fake forking:
+// You will still need to edit your code to make sure you go through both branches.
+#define IOS_MAX_THREADS 128
+static pthread_t thread_ids[IOS_MAX_THREADS];
+static int pid_overflow = 0;
+static pid_t current_pid = 0;
+
+inline pthread_t ios_getThreadId(pid_t pid) {
+    // return ios_getLastThreadId(); // previous behaviour
+    return thread_ids[pid];
+}
+
+// We do not recycle process ids too quickly to avoid collisions.
+
+static inline const pid_t ios_nextAvailablePid() {
+    if (!pid_overflow && (current_pid < IOS_MAX_THREADS - 1)) return current_pid + 1;
+    // We've already started more than IOS_MAX_THREADS threads.
+    if (!pid_overflow) current_pid = 0; // first time over the limit
+    pid_overflow = 1;
+    while (1) {
+        current_pid += 1;
+        if (current_pid >= IOS_MAX_THREADS) current_pid = 1;
+        pthread_t thread_pid = ios_getThreadId(current_pid);
+        if (thread_pid == 0) return current_pid; // already released
+        if (pthread_kill(thread_pid, 0) != 0) {
+            thread_ids[current_pid] = 0;
+            return current_pid; // not running anymore
+        }
+    }
+}
+
+inline void ios_storeThreadId(pthread_t thread) {
+    // To avoid issues when a command starts a command without forking,
+    // we only store thread IDs for the first thread of the "process".
+    if (thread_ids[current_pid] == 0) {
+        thread_ids[current_pid] = thread;
+        return;
+    }
+    if (pthread_kill(ios_getThreadId(current_pid), 0) != 0) thread_ids[current_pid] = thread;
+}
+
+void ios_releaseThreadId(pid_t pid) {
+    thread_ids[current_pid] = 0;
+}
+
+pid_t ios_currentPid() {
+    return current_pid;
+}
+
+pid_t fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
+pid_t vfork(void) { return ios_nextAvailablePid(); }
 
 pid_t waitpid(pid_t pid, int *stat_loc, int options) {
     // pthread_join won't work,  because the thread might have been detached.
     // (and you can't re-join a detached thread).
-    // ios_getLastThreadId = ID of last thread in current session.
-    // TODO: ios_getLastThreadId is not necessarily the ID of the thread we want to wait for.
-    // however, threadIDs are not integers, and transferring information would be difficult.
+    pthread_t threadToWaitFor;
+    // -1 = the call waits for any child process
+    //  0 = the call waits for any child process in the process group of the caller
+    if ((pid == -1) || (pid == 0)) threadToWaitFor = ios_getLastThreadId();
+    else threadToWaitFor = ios_getThreadId(pid);
     
     if (options && WNOHANG) {
         // WNOHANG: just check that the process is still running:
-        if (pthread_kill(ios_getLastThreadId(), 0) == 0)
+        if (pthread_kill(threadToWaitFor, 0) == 0)
             return 0;
-        else
+        else {
+            if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
             return -1;
+        }
     } else {
         // Wait until the process is terminated:
-        while (pthread_kill(ios_getLastThreadId(), 0) == 0) {
+        while (pthread_kill(threadToWaitFor, 0) == 0) {
             /* nothing */
         }
         if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
