@@ -40,7 +40,7 @@ int fprintf(FILE * restrict stream, const char * restrict format, ...) {
 
     va_start (arg, format);
     if (fileno(stream) == STDOUT_FILENO) done = vfprintf (thread_stdout, format, arg);
-    else if (fileno(stream) == STDERR_FILENO) done = vfprintf (thread_stderr, format, arg);
+    else if (fileno(stream) == STDERR_FILENO) done = vfprintf (stderr, format, arg);
     else done = vfprintf (stream, format, arg);
     va_end (arg);
     
@@ -127,7 +127,11 @@ inline pthread_t ios_getThreadId(pid_t pid) {
 // We do not recycle process ids too quickly to avoid collisions.
 
 static inline const pid_t ios_nextAvailablePid() {
-    if (!pid_overflow && (current_pid < IOS_MAX_THREADS - 1)) return current_pid + 1;
+    if (!pid_overflow && (current_pid < IOS_MAX_THREADS - 1)) {
+        current_pid += 1;
+        thread_ids[current_pid] = 0;
+        return current_pid;
+    }
     // We've already started more than IOS_MAX_THREADS threads.
     if (!pid_overflow) current_pid = 0; // first time over the limit
     pid_overflow = 1;
@@ -135,11 +139,16 @@ static inline const pid_t ios_nextAvailablePid() {
         current_pid += 1;
         if (current_pid >= IOS_MAX_THREADS) current_pid = 1;
         pthread_t thread_pid = ios_getThreadId(current_pid);
-        if (thread_pid == 0) return current_pid; // already released
+        if (thread_pid == 0) {
+            return current_pid; // already released
+        }
+        // Dangerous: if the process is already killed, this wil crash
+        /*
         if (pthread_kill(thread_pid, 0) != 0) {
             thread_ids[current_pid] = 0;
             return current_pid; // not running anymore
         }
+        */
     }
 }
 
@@ -153,8 +162,19 @@ inline void ios_storeThreadId(pthread_t thread) {
     if (pthread_kill(ios_getThreadId(current_pid), 0) != 0) thread_ids[current_pid] = thread;
 }
 
+void ios_releaseThread(pthread_t thread) {
+    // TODO: this is inefficient. Replace with NSMutableArray?
+    for (int p = 0; p < IOS_MAX_THREADS; p++) {
+        if (thread_ids[p] == thread) {
+            thread_ids[p] = 0;
+            return;
+        }
+    }
+}
+
+
 void ios_releaseThreadId(pid_t pid) {
-    thread_ids[current_pid] = 0;
+    thread_ids[pid] = 0;
 }
 
 pid_t ios_currentPid() {
@@ -162,20 +182,41 @@ pid_t ios_currentPid() {
 }
 
 pid_t fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
+pid_t ios_fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
 pid_t vfork(void) { return ios_nextAvailablePid(); }
 
-pid_t waitpid(pid_t pid, int *stat_loc, int options) {
+// simple replacement of waitpid for swift programs
+// We use "optnone" to prevent optimization, otherwise the while loops never end.
+__attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
+    pthread_t threadToWaitFor;
+    // Old system: no explicit pid, just store last thread Id.
+    if ((pid == -1) || (pid == 0)) {
+        threadToWaitFor = ios_getLastThreadId();
+        while (threadToWaitFor != 0) {
+            threadToWaitFor = ios_getLastThreadId();
+        }
+        return;
+    }
+    // New system: thread Id is store with pid:
+    threadToWaitFor = ios_getThreadId(pid);
+    while (threadToWaitFor != 0) {
+        threadToWaitFor = ios_getThreadId(pid);
+    }
+    return;
+}
+
+__attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
     // pthread_join won't work,  because the thread might have been detached.
     // (and you can't re-join a detached thread).
-    pthread_t threadToWaitFor;
     // -1 = the call waits for any child process
     //  0 = the call waits for any child process in the process group of the caller
-    if ((pid == -1) || (pid == 0)) threadToWaitFor = ios_getLastThreadId();
-    else threadToWaitFor = ios_getThreadId(pid);
     
     if (options && WNOHANG) {
         // WNOHANG: just check that the process is still running:
-        if (pthread_kill(threadToWaitFor, 0) == 0)
+        pthread_t threadToWaitFor;
+        if ((pid == -1) || (pid == 0)) threadToWaitFor = ios_getLastThreadId();
+        else threadToWaitFor = ios_getThreadId(pid);
+        if (threadToWaitFor != 0) // the process is still running
             return 0;
         else {
             if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
@@ -183,13 +224,14 @@ pid_t waitpid(pid_t pid, int *stat_loc, int options) {
         }
     } else {
         // Wait until the process is terminated:
-        while (pthread_kill(threadToWaitFor, 0) == 0) {
-            /* nothing */
-        }
+        ios_waitpid(pid);
         if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
         return pid;
     }
 }
+
+
+
 //
 void vwarn(const char *fmt, va_list args)
 {

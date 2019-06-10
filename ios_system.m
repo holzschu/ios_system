@@ -50,8 +50,8 @@ static NSMutableDictionary* pidThreadList;
 static sessionParameters* currentSession;
 // Python3 multiple interpreters:
 // limit to 6 = 1 kernel, 4 notebooks, one extra.
-// App Store limit is 150 MB
-static const int MaxPythonInterpreters = 6;
+// App Store limit is 200 MB
+static const int MaxPythonInterpreters = 6;  
 static bool PythonIsRunning[MaxPythonInterpreters];
 static int currentPythonInterpreter = 0;
 
@@ -117,19 +117,18 @@ static void cleanup_function(void* parameters) {
         fclose(thread_stderr);
         thread_stderr = NULL;
     }
+    // Required for Jupyter. Must check for Blink/LibTerm/iVim:
+    if (fileno(p->stderr) != fileno(currentSession.stderr)) fclose(p->stderr);
+    if (fileno(p->stdout) != fileno(currentSession.stdout)) fclose(p->stdout);
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
         dlclose(p->dlHandle);
     free(parameters); // This was malloc'ed in ios_system
-    if (currentSession != nil) {
-        if (currentSession.lastThreadId == pthread_self())
-            currentSession.lastThreadId = NULL;
-        if (ios_getThreadId(currentSession.pid) == pthread_self())
-            ios_releaseThreadId(currentSession.pid);
-    }
+    ios_releaseThread(pthread_self());
 }
 
 static void* run_function(void* parameters) {
+    ios_storeThreadId(pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
     optind = 1;
@@ -146,7 +145,6 @@ static void* run_function(void* parameters) {
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
     pthread_cleanup_push(cleanup_function, parameters);
-    ios_storeThreadId(pthread_self());
     if (currentSession != nil) currentSession.pid = ios_currentPid();
     int retval = p->function(p->argc, p->argv);
     if (currentSession != nil) currentSession.global_errno = retval; 
@@ -1096,6 +1094,8 @@ int ios_system(const char* inputCmd) {
     if (pipeMarker) {
         bool pushMainThread = currentSession.isMainThread;
         currentSession.isMainThread = false;
+        if (params->stdout != 0) thread_stdout = params->stdout;
+        if (params->stderr != 0) thread_stderr = params->stderr;
         params->stdout = params->stderr = ios_popen(pipeMarker+2, "w");
         currentSession.isMainThread = pushMainThread;
         pipeMarker[0] = 0x0;
@@ -1105,6 +1105,7 @@ int ios_system(const char* inputCmd) {
         if (pipeMarker) {
             bool pushMainThread = currentSession.isMainThread;
             currentSession.isMainThread = false;
+            if (params->stdout != 0) thread_stdout = params->stdout;
             params->stdout = ios_popen(pipeMarker+1, "w");
             currentSession.isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
@@ -1171,7 +1172,8 @@ int ios_system(const char* inputCmd) {
     // insert chain termination elements at the beginning of each filename.
     // Must be done after the parsing
     if (inputFileMarker) inputFileMarker[0] = 0x0;
-    if (outputFileMarker && (params->stdout == NULL)) outputFileMarker[0] = 0x0;
+    // There was a test " && (params->stdout == NULL)" below. Why?
+    if (outputFileMarker) outputFileMarker[0] = 0x0;
     if (errorFileMarker) errorFileMarker[0] = 0x0;
     // strip filenames of quotes, if any:
     if (outputFileName) outputFileName = unquoteArgument(outputFileName);
@@ -1186,14 +1188,23 @@ int ios_system(const char* inputCmd) {
     if (params->stdin == NULL) params->stdin = thread_stdin;
     if (outputFileName) {
         newStream = fopen(outputFileName, "w");
-        if (newStream) params->stdout = newStream; // open did not work
+        if (newStream) {
+            if (fileno(params->stdout) != fileno(currentSession.stdout)) fclose(params->stdout);
+            params->stdout = newStream; 
+        }
     }
     if (params->stdout == NULL) params->stdout = thread_stdout;
-    if (sharedErrorOutput) params->stderr = params->stdout;
+    if (sharedErrorOutput) {
+        if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+        params->stderr = params->stdout;
+    }
     else if (errorFileName) {
         newStream = NULL;
         newStream = fopen(errorFileName, "w");
-        if (newStream) params->stderr = newStream; // open did not work
+        if (newStream) {
+            if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+            params->stderr = newStream;
+        }
     }
     if (params->stderr == NULL) params->stderr = thread_stderr;
     int argc = 0;
@@ -1252,8 +1263,8 @@ int ios_system(const char* inputCmd) {
                     i += gt.gl_matchc - 1;
                     globfree(&gt);
                 } else {
-                    fprintf(thread_stderr, "%s: %s: No match\n", argv[0], argv[i]);
-                    fflush(thread_stderr);
+                    fprintf(params->stderr, "%s: %s: No match\n", argv[0], argv[i]);
+                    fflush(params->stderr);
                     globfree(&gt);
                     free(dontExpand);
                     free(argv);
@@ -1532,15 +1543,15 @@ int ios_system(const char* inputCmd) {
                 }
             }
         } else {
-            fprintf(thread_stderr, "%s: command not found\n", argv[0]);
+            fprintf(params->stderr, "%s: command not found\n", argv[0]);
             NSLog(@"%s: command not found\n", argv[0]);
             free(argv);
             // If command output was redirected to a pipe, we still need to close it.
             // (to warn the other command that it can stop waiting)
-            if (params->stdout != thread_stdout) {
+            if (params->stdout != currentSession.stdout) {
                 fclose(params->stdout);
             }
-            if ((params->stderr != thread_stderr) && (params->stderr != params->stdout)) {
+            if ((params->stderr != currentSession.stderr) && (params->stderr != params->stdout)) {
                 fclose(params->stderr);
             }
             if ((handle != NULL) && (handle != RTLD_SELF)

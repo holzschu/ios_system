@@ -31,10 +31,13 @@ extern int ios_isatty(int fd); // test whether a file descriptor refers to a ter
 extern pthread_t ios_getLastThreadId(void);
 extern pthread_t ios_getThreadId(pid_t pid);
 extern void ios_storeThreadId(pthread_t thread);
+extern void ios_releaseThread(pthread_t thread);
 extern void ios_releaseThreadId(pid_t pid);
 extern pid_t ios_currentPid(void);
 extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
+extern pid_t ios_fork(void);
+extern void ios_waitpid(pid_t pid);
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays

@@ -74,9 +74,14 @@ extern int ios_isatty(int fd);
 extern pthread_t ios_getLastThreadId(void);  // deprecated
 extern pthread_t ios_getThreadId(pid_t pid);
 extern void ios_storeThreadId(pthread_t thread);
+extern void ios_releaseThread(pthread_t thread);
+extern void ios_releaseThreadId(pid_t pid);
+extern pid_t ios_currentPid(void);
 extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
-    
+extern pid_t ios_fork(void);
+extern void ios_waitpid(pid_t pid);
+
 extern ssize_t ios_write(int fildes, const void *buf, size_t nbyte);
 extern size_t ios_fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 extern int ios_puts(const char *s);
