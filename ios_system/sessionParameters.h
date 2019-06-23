@@ -22,7 +22,6 @@
 @property void* context;
 @property int global_errno;
 @property NSString* commandName;
-@property pid_t pid;
 
 
 - (instancetype)init;

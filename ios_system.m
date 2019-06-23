@@ -145,7 +145,6 @@ static void* run_function(void* parameters) {
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
     pthread_cleanup_push(cleanup_function, parameters);
-    if (currentSession != nil) currentSession.pid = ios_currentPid();
     int retval = p->function(p->argc, p->argv);
     if (currentSession != nil) currentSession.global_errno = retval; 
     pthread_cleanup_pop(1);
