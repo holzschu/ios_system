@@ -74,14 +74,14 @@
 	</array>
 	<key>amstex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>bibtex</key>
 	<array>
-		<string>libbibtex.dylib</string>
+		<string>bibtex.framework/bibtex</string>
 		<string>bibtex_main</string>
 		<string></string>
 		<string>file</string>
@@ -109,14 +109,14 @@
 	</array>
 	<key>cslatex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>csplain</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
@@ -130,28 +130,28 @@
 	</array>
 	<key>dvilualatex</key>
 	<array>
-		<string>libluatex.dylib</string>
+		<string>luatex.framework/luatex</string>
 		<string>dllluatexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>dviluatex</key>
 	<array>
-		<string>libluatex.dylib</string>
+		<string>luatex.framework/luatex</string>
 		<string>dllluatexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>eplain</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>etex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
@@ -165,14 +165,14 @@
 	</array>
 	<key>jadetex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>latex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
@@ -193,91 +193,91 @@
 	</array>
 	<key>lualatex</key>
 	<array>
-		<string>libluatex.dylib</string>
+		<string>luatex.framework/luatex</string>
 		<string>dllluatexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>luatex</key>
 	<array>
-		<string>libluatex.dylib</string>
+		<string>luatex.framework/luatex</string>
 		<string>dllluatexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>mex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>mllatex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>mltex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdfcslatex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdfcsplain</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdfetex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdfjadetex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdflatex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdfmex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdftex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>pdfxmltex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
@@ -291,98 +291,70 @@
 	</array>
 	<key>python3</key>
 	<array>
-		<string>Python3_ios.framework/Python3_ios</string>
+		<string>python3_ios.framework/python3_ios</string>
 		<string>python_main</string>
 		<string>3bBc:dEhiJm:OQ:RsStuUvVW:xX?</string>
 		<string>file</string>
 	</array>
 	<key>pythonE</key>
 	<array>
-		<string>PythonE.framework/Python3_ios</string>
+		<string>pythonE.framework/pythonE</string>
 		<string>python_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>pythonA</key>
 	<array>
-		<string>PythonA.framework/Python3_ios</string>
+		<string>pythonA.framework/pythonA</string>
 		<string>python_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>pythonB</key>
 	<array>
-		<string>PythonB.framework/Python3_ios</string>
+		<string>pythonB.framework/pythonB</string>
 		<string>python_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>pythonC</key>
 	<array>
-		<string>PythonC.framework/Python3_ios</string>
+		<string>pythonC.framework/pythonC</string>
 		<string>python_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>pythonD</key>
 	<array>
-		<string>PythonD.framework/Python3_ios</string>
-		<string>python_main</string>
-		<string></string>
-		<string>no</string>
-	</array>
-	<key>pythonF</key>
-	<array>
-		<string>PythonF.framework/Python3_ios</string>
-		<string>python_main</string>
-		<string></string>
-		<string>no</string>
-	</array>
-	<key>pythonG</key>
-	<array>
-		<string>PythonG.framework/Python3_ios</string>
-		<string>python_main</string>
-		<string></string>
-		<string>no</string>
-	</array>
-	<key>pythonH</key>
-	<array>
-		<string>PythonH.framework/Python3_ios</string>
-		<string>python_main</string>
-		<string></string>
-		<string>no</string>
-	</array>
-	<key>pythonI</key>
-	<array>
-		<string>PythonI.framework/Python3_ios</string>
+		<string>pythonD.framework/pythonD</string>
 		<string>python_main</string>
 		<string></string>
 		<string>no</string>
 	</array>
 	<key>texlua</key>
 	<array>
-		<string>libluatex.dylib</string>
+		<string>luatex.framework/luatex</string>
 		<string>dllluatexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>texluac</key>
 	<array>
-		<string>libluatex.dylib</string>
+		<string>luatex.framework/luatex</string>
 		<string>dllluatexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>texsis</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
 	</array>
 	<key>utf8mex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
@@ -396,7 +368,7 @@
 	</array>
 	<key>xmltex</key>
 	<array>
-		<string>libpdftex.dylib</string>
+		<string>pdftex.framework/pdftex</string>
 		<string>dllpdftexmain</string>
 		<string></string>
 		<string>file</string>
