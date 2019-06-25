@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+#include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <pthread.h>
