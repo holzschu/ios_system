@@ -128,7 +128,7 @@ static void cleanup_function(void* parameters) {
 }
 
 void crash_handler(int sig) {
-    NSLog(@"Received signal: %i", sig);
+    fputs("segmentation fault\n", thread_stderr);
     ios_exit(1);
 }
 
