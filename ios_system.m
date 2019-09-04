@@ -127,6 +127,11 @@ static void cleanup_function(void* parameters) {
     ios_releaseThread(pthread_self());
 }
 
+void crash_handler(int sig) {
+    NSLog(@"Received signal: %i", sig);
+    ios_exit(1);
+}
+
 static void* run_function(void* parameters) {
     ios_storeThreadId(pthread_self());
     // re-initialize for getopt:
@@ -141,6 +146,10 @@ static void* run_function(void* parameters) {
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
     thread_context = p->context;
+    
+    signal(SIGSEGV, crash_handler);
+    signal(SIGBUS, crash_handler);
+    
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
