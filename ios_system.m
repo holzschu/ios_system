@@ -128,7 +128,11 @@ static void cleanup_function(void* parameters) {
 }
 
 void crash_handler(int sig) {
-    fputs("segmentation fault\n", thread_stderr);
+    if (sig == SIGSEGV) {
+        fputs("segmentation fault\n", thread_stderr);
+    } else if (sig == SIGBUS) {
+        fputs("bus error\n", thread_stderr);
+    }
     ios_exit(1);
 }
 
