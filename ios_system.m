@@ -51,7 +51,8 @@ static sessionParameters* currentSession;
 // Python3 multiple interpreters:
 // limit to 6 = 1 kernel, 4 notebooks, one extra.
 // App Store limit is 200 MB
-static const int MaxPythonInterpreters = 6;  
+static const int MaxPythonInterpreters = 6; // const so we can allocate an array
+int numPythonInterpreters = MaxPythonInterpreters; // Apps can overwrite this
 static bool PythonIsRunning[MaxPythonInterpreters];
 static int currentPythonInterpreter = 0;
 
@@ -93,6 +94,11 @@ static void cleanup_function(void* parameters) {
     // release parameters:
     char* commandName = p->argv_ref[0];
     // NSLog(@"Terminating command: %s", commandName);
+    fprintf(stderr, "Terminating command: ");
+    for (int i = 0; i < p->argc; i++) {
+        fprintf(stderr, "%s ", p->argv_ref[i]);
+    }
+    fprintf(stderr, " -- thread_id= %x\n", pthread_self());
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
@@ -126,8 +132,9 @@ static void cleanup_function(void* parameters) {
     free(parameters); // This was malloc'ed in ios_system
     ios_releaseThread(pthread_self());
 }
-
+    
 static void* run_function(void* parameters) {
+    fprintf(stderr, "Storing thread_id: %x\n", pthread_self());
     ios_storeThreadId(pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
@@ -137,6 +144,11 @@ static void* run_function(void* parameters) {
     __db_getopt_reset = 1;
     functionParameters *p = (functionParameters *) parameters;
     // NSLog(@"Starting command: %s", p->argv[0]);
+    fprintf(stderr, "Starting command: ");
+    for (int i = 0; i < p->argc; i++) {
+        fprintf(stderr, "%s ", p->argv[i]);
+    }
+    fprintf(stderr, "\n");
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
@@ -209,25 +221,24 @@ void initializeEnvironment() {
     setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
     // hg config file in ~/Documents/.hgrc
     setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
-    if (sideLoading) {
-        if (![fullCommandPath containsString:@"Library/bin"]) {
-            NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
-            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-        }
-    } else {
+    if (![fullCommandPath containsString:@"Library/bin"]) {
+        NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+    }
+    if (!sideLoading) {
         // If we're not sideloading, executeables will also be in the Application directory
         NSString *mainBundlePath = [[NSBundle mainBundle] resourcePath];
         NSString *mainBundleLibPath = [mainBundlePath stringByAppendingPathComponent:@"Library"];
         // if we're not sideloading, all "executable" files are in the AppDir:
-        if (![fullCommandPath containsString:@"Library/bin"]) {
-            NSString *binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin3"];
-            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-            binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin"];
-            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-            // Python packages can install scripts, too:
-            binPath = [libPath stringByAppendingPathComponent:@"bin"];
-            fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-        }
+        // $APPDIR/Library/bin3
+        NSString *binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin3"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+        // $APPDIR/Library/bin
+        binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+        // $APPDIR/bin
+        binPath = [mainBundlePath stringByAppendingPathComponent:@"bin"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
     }
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
@@ -630,7 +641,7 @@ static char* concatenateArgv(char* const argv[]) {
     // So we rely on ios_system to break them into chunks.
     while(argv[argc] != NULL) { cmdLength += strlen(argv[argc]) + 1; argc++;}
     if (argc == 0) return NULL; // safeguard check
-    char* cmd = malloc((cmdLength  + 2 * argc) * sizeof(char)); // space for quotes
+    char* cmd = malloc((cmdLength  + 3 * argc) * sizeof(char)); // space for quotes
     strcpy(cmd, argv[0]);
     argc = 1;
     while (argv[argc] != NULL) {
@@ -662,17 +673,14 @@ static char* concatenateArgv(char* const argv[]) {
 }
 
 int pbpaste(int argc, char** argv) {
-    if (currentSession == NULL) {
-        currentSession = [[sessionParameters alloc] init];
-    }
     // We can paste strings and URLs.
     if ([UIPasteboard generalPasteboard].hasStrings) {
-        fprintf(currentSession.stdout, "%s", [[UIPasteboard generalPasteboard].string UTF8String]);
-        if (![[UIPasteboard generalPasteboard].string hasSuffix:@"\n"]) fprintf(currentSession.stdout, "\n");
+        fprintf(thread_stdout, "%s", [[UIPasteboard generalPasteboard].string UTF8String]);
+        if (![[UIPasteboard generalPasteboard].string hasSuffix:@"\n"]) fprintf(thread_stdout, "\n");
         return 0;
     }
     if ([UIPasteboard generalPasteboard].hasURLs) {
-        fprintf(currentSession.stdout, "%s\n", [[[UIPasteboard generalPasteboard].URL absoluteString] UTF8String]);
+        fprintf(thread_stdout, "%s\n", [[[UIPasteboard generalPasteboard].URL absoluteString] UTF8String]);
         return 0;
     }
     return 1;
@@ -682,9 +690,6 @@ int pbpaste(int argc, char** argv) {
 int pbcopy(int argc, char** argv) {
     if (argc == 1) {
         // no arguments, listen to stdin
-        if (currentSession == NULL) {
-            currentSession = [[sessionParameters alloc] init];
-        }
         const int bufsize = 1024;
         char buffer[bufsize];
         NSMutableData* data = [[NSMutableData alloc] init];
@@ -807,8 +812,9 @@ void ios_switchSession(const void* sessionId) {
         currentSession = [[sessionParameters alloc] init];
         [sessionList setObject: currentSession forKey: sessionKey];
     } else {
-        if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]])
+        if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]]) {
             [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+        }
         currentSession.stdin = stdin;
         currentSession.stdout = stdout;
         currentSession.stderr = stderr;
@@ -836,12 +842,19 @@ void ios_closeSession(const void* sessionId) {
 int ios_isatty(int fd) {
     if (currentSession == NULL) return 0;
     // 2 possibilities: 0, 1, 2 (classical) or fileno(thread_stdout)
-    if ((fd == STDIN_FILENO) || (fd == fileno(currentSession.stdin)) || (fd == fileno(thread_stdin)))
-        return (fileno(thread_stdin) == fileno(currentSession.stdin));
-    if ((fd == STDOUT_FILENO) || (fd == fileno(currentSession.stdout)) || (fd == fileno(thread_stdout)))
-        return (fileno(thread_stdout) == fileno(currentSession.stdout));
-    if ((fd == STDERR_FILENO) || (fd == fileno(currentSession.stderr)) || (fd == fileno(thread_stderr)))
-        return (fileno(thread_stderr) == fileno(currentSession.stderr));
+    if (thread_stdin != NULL) {
+        if ((fd == STDIN_FILENO) || (fd == fileno(currentSession.stdin)) || (fd == fileno(thread_stdin)))
+            return (fileno(thread_stdin) == fileno(currentSession.stdin));
+    }
+    if (thread_stdout != NULL) {
+        if ((fd == STDOUT_FILENO) || (fd == fileno(currentSession.stdout)) || (fd == fileno(thread_stdout))) {
+            return (fileno(thread_stdout) == fileno(currentSession.stdout));
+        }
+    }
+    if (thread_stderr != NULL) {
+        if ((fd == STDERR_FILENO) || (fd == fileno(currentSession.stderr)) || (fd == fileno(thread_stderr)))
+            return (fileno(thread_stderr) == fileno(currentSession.stderr));
+    }
     return 0;
 }
 
@@ -855,6 +868,11 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
 void ios_setContext(void *context) {
     if (currentSession == NULL) return;
     currentSession.context = context;
+}
+
+void* ios_getContext() {
+    if (currentSession == NULL) return NULL;
+    return currentSession.context;
 }
 
 
@@ -914,7 +932,10 @@ NSError* addCommandList(NSString* fileLocation) {
     NSError* error;
     
     NSURL *locationURL = [NSURL fileURLWithPath:fileLocation isDirectory:NO];
-    if ([locationURL checkResourceIsReachableAndReturnError:&error] == NO) return error;
+    if ([locationURL checkResourceIsReachableAndReturnError:&error] == NO) {
+        fprintf(stderr, "Resource dictionary %s not found", fileLocation.UTF8String);
+        return error;
+    }
 
     NSData* dataLoadedFromFile = [NSData dataWithContentsOfFile:fileLocation  options:0 error:&error];
     if (!dataLoadedFromFile) return error;
@@ -1188,20 +1209,26 @@ int ios_system(const char* inputCmd) {
     if (outputFileName) {
         newStream = fopen(outputFileName, "w");
         if (newStream) {
-            if (fileno(params->stdout) != fileno(currentSession.stdout)) fclose(params->stdout);
+            if (params->stdout != NULL) {
+                if (fileno(params->stdout) != fileno(currentSession.stdout)) fclose(params->stdout);
+            }
             params->stdout = newStream; 
         }
     }
     if (params->stdout == NULL) params->stdout = thread_stdout;
     if (sharedErrorOutput) {
-        if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+        if (params->stderr != NULL) {
+            if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+        }
         params->stderr = params->stdout;
     }
     else if (errorFileName) {
         newStream = NULL;
         newStream = fopen(errorFileName, "w");
         if (newStream) {
-            if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+            if (params->stderr != NULL) {
+                if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+            }
             params->stderr = newStream;
         }
     }
@@ -1367,7 +1394,6 @@ int ios_system(const char* inputCmd) {
                             // So long as the 1st line begins with "#!" and contains "python" we accept it as a python script
                             // "#! /usr/bin/python", "#! /usr/local/bin/python" and "#! /usr/bin/myStrangePath/python" are all OK.
                             // We also accept "#! /usr/bin/env python" because it is used.
-                            // TODO: only accept "python" or "python2" at the end of the line
                             // executable scripts files. Python and lua:
                             // 1) get script language name
                             if ([firstLine containsString:@"python3"]) {
@@ -1375,8 +1401,10 @@ int ios_system(const char* inputCmd) {
                             } else if ([firstLine containsString:@"python2"]) {
                                 scriptName = "python";
                             } else if ([firstLine containsString:@"python"]) {
-                                // for now, the default for python is python2. It might change
-                                scriptName = "python";
+                                // the default for python is now python3.
+                                scriptName = "python3";
+                            } else if ([firstLine containsString:@"texlua"]) {
+                                    scriptName = "texlua";
                             } else if ([firstLine containsString:@"lua"]) {
                                 scriptName = "lua";
                             }
@@ -1421,20 +1449,20 @@ int ios_system(const char* inputCmd) {
         if ([commandName isEqualToString: @"python3"]) {
             // start by increasing the number of the interpreter, until we're out.
             int numInterpreter = 0;
-            if (currentPythonInterpreter < MaxPythonInterpreters) {
+            if (currentPythonInterpreter < numPythonInterpreters) {
                 numInterpreter = currentPythonInterpreter;
                 currentPythonInterpreter++;
             } else {
-                while  (numInterpreter < MaxPythonInterpreters) {
+                while  (numInterpreter < numPythonInterpreters) {
                     if (PythonIsRunning[numInterpreter] == false) break;
                     numInterpreter++;
                 }
-                if (numInterpreter >= MaxPythonInterpreters) {
+                if (numInterpreter >= numPythonInterpreters) {
                     NSLog(@"%@", @"Too many python scripts running simultaneously. Try closing some notebooks.\n");
                     commandName = @"notAValidCommand";
                 }
             }
-            if ((numInterpreter >= 0) && (numInterpreter < MaxPythonInterpreters)) {
+            if ((numInterpreter >= 0) && (numInterpreter < numPythonInterpreters)) {
                 PythonIsRunning[numInterpreter] = true;
                 if (numInterpreter > 0) {
                     char suffix[2];
@@ -1456,6 +1484,8 @@ int ios_system(const char* inputCmd) {
             if (handle == NULL) {
                 NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
                 if (sideLoading) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+                NSString* fileLocation = [[NSBundle mainBundle] pathForResource:libraryName ofType:nil];
+                NSLog(@"File inside main bundle: %s", fileLocation.UTF8String);
             }
             NSString* functionName = commandStructure[1];
             function = dlsym(handle, functionName.UTF8String);
@@ -1535,11 +1565,10 @@ int ios_system(const char* inputCmd) {
                 volatile pthread_t _tid_local = NULL;
                 pthread_create(&_tid_local, NULL, run_function, params);
                 // The last command on the command line (with multiple pipes) will be created first
+                while (_tid_local == NULL) { }; // Wait until thread has actually started
+                fprintf(stderr, "Started thread = %x\n", _tid_local);
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid_local; // will be joined later
-                else {
-                    while (_tid_local == NULL) { }; // Wait until thread has actually started
-                    pthread_detach(_tid_local); // a thread must be either joined or detached.
-                }
+                else pthread_detach(_tid_local); // a thread must be either joined or detached.
             }
         } else {
             fprintf(params->stderr, "%s: command not found\n", argv[0]);

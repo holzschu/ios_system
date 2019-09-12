@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <WebKit/WebKit.h>
 
 //! Project version number for ios_system.
 FOUNDATION_EXPORT double ios_systemVersionNumber;
@@ -51,6 +52,8 @@ extern void ios_switchSession(const void* sessionid);
 extern void ios_closeSession(const void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
 extern void ios_setContext(void *context);
+extern void* ios_getContext(void);
 extern void ios_setDirectoryURL(NSURL* workingDirectoryURL);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
 extern NSError* addCommandList(NSString* fileLocation);
+extern int numPythonInterpreters;

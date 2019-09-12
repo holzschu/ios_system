@@ -21,7 +21,6 @@
 #undef putw
 #undef fflush
 
-
 int printf (const char *format, ...) {
     va_list arg;
     int done;
@@ -104,6 +103,9 @@ int ios_fputc(int c, FILE *stream) {
     if (fileno(stream) == STDERR_FILENO) return fputc(c, thread_stderr);
     return fputc(c, stream);
 }
+
+#include <assert.h>
+
 int ios_putw(int w, FILE *stream) {
     if (thread_stdout == NULL) thread_stdout = stdout;
     if (thread_stderr == NULL) thread_stderr = stderr;
@@ -199,6 +201,7 @@ __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
     }
     // New system: thread Id is store with pid:
     threadToWaitFor = ios_getThreadId(pid);
+    fprintf(stderr, "Waiting for thread %x pid %d\n", threadToWaitFor, pid);
     while (threadToWaitFor != 0) {
         threadToWaitFor = ios_getThreadId(pid);
     }
@@ -220,6 +223,8 @@ __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
             return 0;
         else {
             if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+            fflush(thread_stdout);
+            fflush(thread_stderr);
             return -1;
         }
     } else {

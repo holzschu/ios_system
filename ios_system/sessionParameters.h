@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <WebKit/WebKit.h>
 
 @interface sessionParameters : NSObject
 
@@ -22,7 +23,6 @@
 @property void* context;
 @property int global_errno;
 @property NSString* commandName;
-
 
 - (instancetype)init;
 
