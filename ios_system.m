@@ -810,7 +810,7 @@ int ios_killpid(pid_t pid, int sig) {
 
 void ios_switchSession(const void* sessionId) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    id sessionKey = @((NSUInteger)sessionId);
     if (sessionList == nil) {
         sessionList = [NSMutableDictionary new];
         if (currentSession != NULL) [sessionList setObject: currentSession forKey: sessionKey];
@@ -841,7 +841,7 @@ void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
 void ios_closeSession(const void* sessionId) {
     // delete information associated with current session:
     if (sessionList == nil) return;
-    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    id sessionKey = @((NSUInteger)sessionId);
     [sessionList removeObjectForKey: sessionKey];
     currentSession = NULL;
 }
