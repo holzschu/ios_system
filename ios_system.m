@@ -132,7 +132,16 @@ static void cleanup_function(void* parameters) {
     free(parameters); // This was malloc'ed in ios_system
     ios_releaseThread(pthread_self());
 }
-    
+
+void crash_handler(int sig) {
+    if (sig == SIGSEGV) {
+        fputs("segmentation fault\n", thread_stderr);
+    } else if (sig == SIGBUS) {
+        fputs("bus error\n", thread_stderr);
+    }
+    ios_exit(1);
+}
+
 static void* run_function(void* parameters) {
     fprintf(stderr, "Storing thread_id: %x\n", pthread_self());
     ios_storeThreadId(pthread_self());
@@ -153,6 +162,10 @@ static void* run_function(void* parameters) {
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
     thread_context = p->context;
+    
+    signal(SIGSEGV, crash_handler);
+    signal(SIGBUS, crash_handler);
+    
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
@@ -802,7 +815,7 @@ int ios_killpid(pid_t pid, int sig) {
 
 void ios_switchSession(const void* sessionId) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    id sessionKey = @((NSUInteger)sessionId);
     if (sessionList == nil) {
         sessionList = [NSMutableDictionary new];
         if (currentSession != NULL) [sessionList setObject: currentSession forKey: sessionKey];
@@ -834,7 +847,7 @@ void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
 void ios_closeSession(const void* sessionId) {
     // delete information associated with current session:
     if (sessionList == nil) return;
-    id sessionKey = [NSNumber numberWithInt:((int)sessionId)];
+    id sessionKey = @((NSUInteger)sessionId);
     [sessionList removeObjectForKey: sessionKey];
     currentSession = NULL;
 }
