@@ -93,12 +93,7 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stderr);
     // release parameters:
     char* commandName = p->argv_ref[0];
-    // NSLog(@"Terminating command: %s", commandName);
-    fprintf(stderr, "Terminating command: ");
-    for (int i = 0; i < p->argc; i++) {
-        fprintf(stderr, "%s ", p->argv_ref[i]);
-    }
-    fprintf(stderr, " -- thread_id= %x\n", pthread_self());
+    // NSLog(@"Terminating command: %s thread_id %x", commandName, pthread_self());
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
@@ -124,8 +119,13 @@ static void cleanup_function(void* parameters) {
         thread_stderr = NULL;
     }
     // Required for Jupyter. Must check for Blink/LibTerm/iVim:
-    if (fileno(p->stderr) != fileno(currentSession.stderr)) fclose(p->stderr);
-    if (fileno(p->stdout) != fileno(currentSession.stdout)) fclose(p->stdout);
+    if ((fileno(p->stderr) != fileno(currentSession.stderr))
+        && (fileno(p->stderr) != fileno(stderr))
+        && (fileno(p->stderr) != fileno(p->stdout)))
+        fclose(p->stderr);
+    if (fileno(p->stdout) != fileno(currentSession.stdout)
+        && fileno(p->stdout) != fileno(stdout))
+        fclose(p->stdout);
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
         dlclose(p->dlHandle);
@@ -143,21 +143,15 @@ void crash_handler(int sig) {
 }
 
 static void* run_function(void* parameters) {
-    fprintf(stderr, "Storing thread_id: %x\n", pthread_self());
-    ios_storeThreadId(pthread_self());
+    // fprintf(stderr, "Storing thread_id: %x\n", pthread_self());
+    functionParameters *p = (functionParameters *) parameters;
+    // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
     optind = 1;
     opterr = 1;
     optreset = 1;
     __db_getopt_reset = 1;
-    functionParameters *p = (functionParameters *) parameters;
-    // NSLog(@"Starting command: %s", p->argv[0]);
-    fprintf(stderr, "Starting command: ");
-    for (int i = 0; i < p->argc; i++) {
-        fprintf(stderr, "%s ", p->argv[i]);
-    }
-    fprintf(stderr, "\n");
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
@@ -1553,6 +1547,7 @@ int ios_system(const char* inputCmd) {
                         currentSession.isMainThread = false;
                         pthread_create(&_tid, NULL, run_function, params);
                         currentSession.current_command_root_thread = _tid;
+                        ios_storeThreadId(_tid);
                         // Wait for this process to finish:
                         pthread_join(_tid, NULL);
                         // If there are auxiliary process, also wait for them:
@@ -1565,6 +1560,7 @@ int ios_system(const char* inputCmd) {
                     currentSession.isMainThread = false;
                     pthread_create(&_tid, NULL, run_function, params);
                     currentSession.current_command_root_thread = _tid;
+                    ios_storeThreadId(_tid);
                     // Wait for this process to finish:
                     pthread_join(_tid, NULL);
                     // If there are auxiliary process, also wait for them:
@@ -1579,7 +1575,8 @@ int ios_system(const char* inputCmd) {
                 pthread_create(&_tid_local, NULL, run_function, params);
                 // The last command on the command line (with multiple pipes) will be created first
                 while (_tid_local == NULL) { }; // Wait until thread has actually started
-                fprintf(stderr, "Started thread = %x\n", _tid_local);
+                ios_storeThreadId(_tid_local);
+                // fprintf(stderr, "Started thread = %x\n", _tid_local);
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid_local; // will be joined later
                 else pthread_detach(_tid_local); // a thread must be either joined or detached.
             }

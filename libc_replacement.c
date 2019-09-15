@@ -201,7 +201,6 @@ __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
     }
     // New system: thread Id is store with pid:
     threadToWaitFor = ios_getThreadId(pid);
-    fprintf(stderr, "Waiting for thread %x pid %d\n", threadToWaitFor, pid);
     while (threadToWaitFor != 0) {
         threadToWaitFor = ios_getThreadId(pid);
     }
