@@ -57,8 +57,14 @@ static bool PythonIsRunning[MaxPythonInterpreters];
 static int currentPythonInterpreter = 0;
 
 // replace system-provided exit() by our own:
+// Make sure we call pthread_cancel(currentSession.current_command_root_thread)
+// as much as possible, because ios_exit can be called from a signal handler now.
 void ios_exit(int n) {
-    if (currentSession != NULL) currentSession.global_errno = n;
+    if (currentSession != NULL) {
+        currentSession.global_errno = n;
+        pthread_cancel(currentSession.current_command_root_thread);
+        return;
+    }
     pthread_exit(NULL);
 }
 
@@ -159,15 +165,30 @@ static void* run_function(void* parameters) {
     
     signal(SIGSEGV, crash_handler);
     signal(SIGBUS, crash_handler);
-    
+
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
     pthread_cleanup_push(cleanup_function, parameters);
-    int retval = p->function(p->argc, p->argv);
-    if (currentSession != nil) currentSession.global_errno = retval; 
-    pthread_cleanup_pop(1);
-    return NULL;
+    @try
+    {
+        int retval = p->function(p->argc, p->argv);
+        if (currentSession != nil) currentSession.global_errno = retval;
+    }
+    @catch (NSException *exception)
+    {
+      // Print exception information
+      NSLog( @"NSException caught" );
+      NSLog( @"Name: %@", exception.name);
+      NSLog( @"Reason: %@", exception.reason );
+      return NULL;
+    }
+    @finally
+    {
+      // Cleanup, in both success and fail cases
+        pthread_cleanup_pop(1);
+        return NULL;
+    }
 }
 
 static NSString* miniRoot = nil; // limit operations to below a certain directory (~, usually).
@@ -469,7 +490,7 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
   // Was that allowed?
   // Allowed "cd" = below miniRoot *or* below localMiniRoot
   NSString* resultDir = [fileManager currentDirectoryPath];
-  
+
   if (__allowed_cd_to_path(resultDir)) {
     currentSession.previousDirectory = currentSession.currentDir;
     return;
@@ -796,8 +817,19 @@ int ios_kill()
 {
     if (currentSession == NULL) return ESRCH;
     if (currentSession.current_command_root_thread > 0) {
-        // Send pthread_cancel with the given signal to the current main thread, if there is one.
-        return pthread_cancel(currentSession.current_command_root_thread);
+        struct sigaction query_action;
+        if ((sigaction (SIGINT, NULL, &query_action) >= 0) &&
+            (query_action.sa_handler != SIG_DFL) &&
+            (query_action.sa_handler != SIG_IGN)) {
+            /* A programmer-defined signal handler is in effect. */
+            // This might be problematic with multiple commands running at the same time that all define SIGINT
+            // ...such as ls.
+            query_action.sa_handler(SIGINT);
+            // kill(getpid(), SIGINT); // infinite loop?
+        } else {
+            // Send pthread_cancel with the given signal to the current main thread, if there is one.
+            return pthread_cancel(currentSession.current_command_root_thread);
+        }
     }
     // No process running
     return ESRCH;
@@ -1368,6 +1400,11 @@ int ios_system(const char* inputCmd) {
                             fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
                             if (fileFound && isDir) continue; // file exists, but is a directory
                         }
+                        if (!fileFound) {
+                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".wasm"];
+                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            if (fileFound && isDir) continue; // file exists, but is a directory
+                        }
                         if (!fileFound) continue;
                         // isExecutableFileAtPath replies "NO" even if file has x-bit set.
                         // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
@@ -1380,14 +1417,24 @@ int ios_system(const char* inputCmd) {
                         // if (cmdIsAFile) we are now ready to execute this file:
                         locationName = commandName;
                     if (([locationName hasSuffix:@".bc"]) || ([locationName hasSuffix:@".ll"])) {
-                        // insert lli in front of argument list:
+                        // CLANG bitcode. insert lli in front of argument list:
                         argc += 1;
                         argv = (char **)realloc(argv, sizeof(char*) * argc);
                         // Move everything one step up
                         for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
                         argv[1] = realloc(argv[1], locationName.length + 1);
                         strcpy(argv[1], locationName.UTF8String);
-                        argv[0] = strdup("lli"); // this one is new
+                        argv[0] = strdup("lli"); // this argument is new
+                        break;
+                    } else if ([locationName hasSuffix:@".wasm"]) {
+                        // insert wasm in front of argument list:
+                        argc += 1;
+                        argv = (char **)realloc(argv, sizeof(char*) * argc);
+                        // Move everything one step up
+                        for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
+                        argv[1] = realloc(argv[1], locationName.length + 1);
+                        strcpy(argv[1], locationName.UTF8String);
+                        argv[0] = strdup("wasm"); // this argument is new
                         break;
                     } else {
                         NSData *data = [NSData dataWithContentsOfFile:locationName];
@@ -1531,12 +1578,14 @@ int ios_system(const char* inputCmd) {
                 if (res == 0) NSLog(@"[Info] Increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
                 else NSLog(@"[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
             }
+            @try
+            {
             if (currentSession.isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
                                                params->isPipeOut || params->isPipeErr);
                 NSString* currentPath = [fileManager currentDirectoryPath];
-                commandOperatesOnFiles &= (currentPath != nil); 
+                commandOperatesOnFiles &= (currentPath != nil);
                 if (commandOperatesOnFiles) {
                     // Send a signal to the system that we're going to change the current directory:
                     // TODO: only do this if the command actually accesses files: either outputFile exists,
@@ -1579,6 +1628,19 @@ int ios_system(const char* inputCmd) {
                 // fprintf(stderr, "Started thread = %x\n", _tid_local);
                 if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid_local; // will be joined later
                 else pthread_detach(_tid_local); // a thread must be either joined or detached.
+            }
+            }
+            @catch (NSException *exception)
+            {
+                // Print exception information
+                NSLog( @"NSException caught" );
+                NSLog( @"Name: %@", exception.name);
+                NSLog( @"Reason: %@", exception.reason );
+                free(argv); // argv is otherwise freed in cleanup_function
+                free(dontExpand);
+                free(params);
+                free(originalCommand); // releases cmd, which was a strdup of inputCommand
+                return 127;
             }
         } else {
             fprintf(params->stderr, "%s: command not found\n", argv[0]);
