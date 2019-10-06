@@ -114,7 +114,7 @@ int open_main(int argc, char *argv[]) {
     return -1;
   }
   
-  NSURL *fileURL = [NSURL fileURLWithPath:@(argv[1]) relativeToURL:[NSURL fileURLWithPath:NSFileManager.defaultManager.currentDirectoryPath]];
+  NSURL *fileURL = [NSURL fileURLWithPath:[@(argv[1]) stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet] relativeToURL:[NSURL fileURLWithPath:NSFileManager.defaultManager.currentDirectoryPath]];
   
   if (fileURL && [NSFileManager.defaultManager fileExistsAtPath:fileURL.path]) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -136,6 +136,7 @@ int open_main(int argc, char *argv[]) {
       }
       
       UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:NULL];
+      activityViewController.excludedActivityTypes = @[@"com.apple.mobilenotes.SharingExtension"]; // Notes fails every time (and blocks the app).
       activityViewController.popoverPresentationController.sourceView = window;
       activityViewController.popoverPresentationController.sourceRect = CGRectZero;
       [topController presentViewController:activityViewController animated:YES completion:NULL];
