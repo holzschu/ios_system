@@ -57,3 +57,4 @@ extern void ios_setDirectoryURL(NSURL* workingDirectoryURL);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
 extern NSError* addCommandList(NSString* fileLocation);
 extern int numPythonInterpreters;
+extern int cd_main(int argc, char** argv);
