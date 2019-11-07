@@ -23,6 +23,8 @@
 @property void* context;
 @property int global_errno;
 @property NSString* commandName;
+@property NSString* columns;
+@property NSString* lines;
 
 - (instancetype)init;
 

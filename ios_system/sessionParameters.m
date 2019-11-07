@@ -26,6 +26,8 @@
     self.stderr = stderr;
     self.context = nil; 
     self.commandName = nil;
+    self.columns = @"80";
+    self.lines = @"80";
   
     return self;
 }

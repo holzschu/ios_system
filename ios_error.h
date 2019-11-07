@@ -60,6 +60,7 @@ extern __thread FILE* thread_stderr;
 #define execvp ios_execv
 #define execve ios_execve
 #define dup2 ios_dup2
+#define getenv ios_getenv
 
 extern int ios_executable(const char* cmd); // is this command part of the "shell" commands?
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
@@ -71,6 +72,8 @@ extern void ios_exit(int errorCode) __dead2; // set error code and exits from th
 extern int ios_execv(const char *path, char* const argv[]);
 extern int ios_execve(const char *path, char* const argv[], const char** envlist);
 extern int ios_dup2(int fd1, int fd2);
+extern char * ios_getenv(const char *name);
+
 extern int ios_isatty(int fd);
 extern pthread_t ios_getLastThreadId(void);  // deprecated
 extern pthread_t ios_getThreadId(pid_t pid);
@@ -82,6 +85,7 @@ extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
 extern pid_t ios_fork(void);
 extern void ios_waitpid(pid_t pid);
+extern void ios_signal(int signal);
 
 extern ssize_t ios_write(int fildes, const void *buf, size_t nbyte);
 extern size_t ios_fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);

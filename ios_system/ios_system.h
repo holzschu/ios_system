@@ -39,6 +39,8 @@ extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
 extern pid_t ios_fork(void);
 extern void ios_waitpid(pid_t pid);
+extern void ios_signal(int signal); 
+void ios_setWindowSize(int width, int height);
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays

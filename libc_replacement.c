@@ -5,6 +5,7 @@
 //  Created by Nicolas Holzschuch on 30/04/2018.
 //  Copyright © 2018 Nicolas Holzschuch. All rights reserved.
 //
+#include <stdlib.h>
 #include <stdio.h>
 #include <wchar.h>
 #include <unistd.h>
@@ -131,7 +132,7 @@ inline pthread_t ios_getThreadId(pid_t pid) {
 static inline const pid_t ios_nextAvailablePid() {
     if (!pid_overflow && (current_pid < IOS_MAX_THREADS - 1)) {
         current_pid += 1;
-        thread_ids[current_pid] = 0;
+        thread_ids[current_pid] = -1; // Not yet started
         return current_pid;
     }
     // We've already started more than IOS_MAX_THREADS threads.
@@ -157,21 +158,26 @@ static inline const pid_t ios_nextAvailablePid() {
 inline void ios_storeThreadId(pthread_t thread) {
     // To avoid issues when a command starts a command without forking,
     // we only store thread IDs for the first thread of the "process".
-    if (thread_ids[current_pid] == 0) {
+    // fprintf(stderr, "Storing thread %x to pid %d current value: %x\n", thread, current_pid, thread_ids[current_pid]);
+    if (thread_ids[current_pid] == -1) {
         thread_ids[current_pid] = thread;
         return;
     }
-    if (pthread_kill(ios_getThreadId(current_pid), 0) != 0) thread_ids[current_pid] = thread;
+    // The fuck is this line doing here?
+    // if (pthread_kill(ios_getThreadId(current_pid), 0) != 0) thread_ids[current_pid] = thread;
 }
 
 void ios_releaseThread(pthread_t thread) {
     // TODO: this is inefficient. Replace with NSMutableArray?
+    // fprintf(stderr, "Releasing thread %x\n", thread);
     for (int p = 0; p < IOS_MAX_THREADS; p++) {
         if (thread_ids[p] == thread) {
+            // fprintf(stderr, "Found Id %x\n", p);
             thread_ids[p] = 0;
             return;
         }
     }
+    // fprintf(stderr, "Not found\n");
 }
 
 
@@ -202,6 +208,7 @@ __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
     // New system: thread Id is store with pid:
     threadToWaitFor = ios_getThreadId(pid);
     while (threadToWaitFor != 0) {
+        // -1: not started, >0 started, not finished, 0: finished
         threadToWaitFor = ios_getThreadId(pid);
     }
     return;
@@ -210,7 +217,7 @@ __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
 __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
     // pthread_join won't work,  because the thread might have been detached.
     // (and you can't re-join a detached thread).
-    // -1 = the call waits for any child process
+    // -1 = the call waits for any child process (not good yet)
     //  0 = the call waits for any child process in the process group of the caller
     
     if (options && WNOHANG) {
