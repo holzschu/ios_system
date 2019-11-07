@@ -231,7 +231,7 @@ __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
             if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
             fflush(thread_stdout);
             fflush(thread_stderr);
-            return -1;
+            return pid; // was "-1". See man page and https://github.com/holzschu/ios_system/issues/89
         }
     } else {
         // Wait until the process is terminated:
