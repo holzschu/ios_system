@@ -602,7 +602,85 @@ int ssh_main(int argc, char** argv) {
         }
     }
     // public key auth failed
-    if (auth_type & 1) fprintf(thread_stderr, "Password authentication not supported\n");
+    if (auth_type & 1) {
+        fprintf(thread_stderr, "Password authentication: experimental\n");
+        passphrase = read_passphrase("Please enter passphrase (empty to stop)", 1);
+        while (passphrase && (strlen(passphrase) > 0)) {
+            while ((rc = libssh2_userauth_password(_session,   user,   passphrase) == LIBSSH2_ERROR_EAGAIN));
+            if (rc != 0) { if (verboseFlag) fprintf(thread_stderr, "Authentication failure with passphrase.\n"); continue; } // try another key
+            // We are connected
+            rc = 0;
+            char *errmsg;
+            while ((_channel = libssh2_channel_open_session(_session)) == NULL &&
+                   libssh2_session_last_error(_session, NULL, NULL, 0) == LIBSSH2_ERROR_EAGAIN) {
+                ssh_waitsocket(_sock, _session);
+            }
+            if (_channel == NULL) {
+                libssh2_session_last_error(_session, &errmsg, NULL, 0);
+                fprintf(thread_stderr, "ssh: error exec: %s\n", errmsg);
+                rc = -1;
+                break;
+            }
+            if (commandLine) {
+                // simple version:
+                while ((rc = libssh2_channel_exec(_channel, commandLine)) == LIBSSH2_ERROR_EAGAIN) {
+                    ssh_waitsocket(_sock, _session);
+                }
+                if (rc != 0) {
+                    libssh2_session_last_error(_session, &errmsg, NULL, 0);
+                    fprintf(thread_stderr, "ssh: error exec: %s\n", errmsg);
+                    rc = -3;
+                    break;
+                }
+            } else {
+                /* Request a terminal with 'xterm-256color' terminal emulation */
+                while ((rc = libssh2_channel_request_pty(_channel, "xterm-256color")) == LIBSSH2_ERROR_EAGAIN) {
+                    ssh_waitsocket(_sock, _session);
+                }
+                if (rc) {
+                    fprintf(thread_stderr, "Failed requesting pty\n");
+                    rc = -3;
+                    break;
+                }
+                // Tell to the pty the size of our window, so it can adapt:
+                /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
+                 /* Open a SHELL on that pty */
+                while ((rc = libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
+                    ssh_waitsocket(_sock, _session);
+                }
+                if (rc) {
+                    fprintf(thread_stderr, "Unable to request shell on allocated pty\n");
+                    rc = -3;
+                    break;
+                }
+            }
+            rc = ssh_client_loop(_session, _channel, _sock); // data transmission
+            // cleanup:
+            if (rc >= 0) {
+                // We managed to connect, clean up and leave.
+                libssh2_channel_free(_channel);
+                libssh2_session_free(_session);
+                _channel = NULL;
+                free(commandLine);
+                if (passphrase) free(passphrase);
+                return rc;
+            }
+            // -3 is: "we connected, but failed to execute". Not a passphrase problem.
+            if (rc != -3) {
+                fprintf(thread_stderr, "Authentication with passphrase failed. Please enter another passphrase.\n");
+                fflush(thread_stderr);
+                if (passphrase) free(passphrase);
+                passphrase = read_passphrase("Please enter passphrase (empty to stop)", 1);
+            } else {
+                if (passphrase) free(passphrase);
+                libssh2_session_free(_session);
+                _channel = NULL;
+                free(commandLine);
+                fprintf(thread_stderr, "Authentication with passphrase worked, but failed to execute.\n");
+                return rc;
+            }
+        }
+    }
     // libssh2_channel_free(_channel);
     libssh2_session_free(_session);
     _channel = NULL;

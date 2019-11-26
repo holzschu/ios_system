@@ -163,13 +163,18 @@ static void cleanup_function(void* parameters) {
             thread_stderr = NULL;
         }
         // Required for Jupyter. Must check for Blink/LibTerm/iVim:
-        if ((fileno(p->stderr) != fileno(currentSession.stderr))
-            && (fileno(p->stderr) != fileno(stderr))
-            && (fileno(p->stderr) != fileno(p->stdout))) {
+        bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout));
+        if (currentSession != nil) {
+            mustCloseStderr &= fileno(p->stderr) != fileno(currentSession.stderr);
+        }
+        if (mustCloseStderr) {
             fclose(p->stderr);
         }
-        if (fileno(p->stdout) != fileno(currentSession.stdout)
-            && fileno(p->stdout) != fileno(stdout)) {
+        bool mustCloseStdout = fileno(p->stdout) != fileno(stdout);
+        if (currentSession != nil) {
+            mustCloseStdout &= fileno(p->stdout) != fileno(currentSession.stdout);
+        }
+        if (mustCloseStdout) {
             fclose(p->stdout);
         }
     }
@@ -1264,7 +1269,7 @@ int ios_system(const char* inputCmd) {
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    // NSLog(@"command= %s\n", inputCmd);
+    NSLog(@"command= %s\n", inputCmd);
     if (currentSession == NULL) {
         currentSession = [[sessionParameters alloc] init];
     }

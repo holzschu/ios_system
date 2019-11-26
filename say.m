@@ -51,6 +51,7 @@ int say_main(int argc, char *argv[]) {
   for (;;) {
     int c = getopt(argc, argv, "v:f:r:");
     if (c == -1) {
+      printf("%s\n", usage.UTF8String);
       break;
     }
     
