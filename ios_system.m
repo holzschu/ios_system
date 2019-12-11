@@ -25,8 +25,6 @@
 #include <libgen.h> // for basename()
 #include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
 #include <glob.h>   // for wildcard expansion
-// is executable, looking at "x" bit. Other methods fails on iOS:
-#define S_ISXXX(m) ((m) & (S_IXUSR | S_IXGRP | S_IXOTH))
 // Sideloading: when you compile yourself, as opposed to uploading on the app store
 // If true, all functions are enabled + debug messages if dylib not found.
 // If false, you get a smaller set, but more compliance with AppStore rules.
@@ -201,7 +199,7 @@ void crash_handler(int sig) {
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     ios_storeThreadId(pthread_self());
-    NSLog(@"Storing thread_id: %x isPipeOut: %x\n", pthread_self(), p->isPipeOut);
+    NSLog(@"Storing thread_id: %x isPipeOut: %x stdin %d stdout %d stderr %d\n", pthread_self(), p->isPipeOut, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr));
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
@@ -604,7 +602,8 @@ NSString* operatesOn(NSString* commandName) {
 int ios_executable(const char* inputCmd) {
     // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
     if (commandList == nil) initializeCommandList();
-    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:inputCmd encoding:NSUTF8StringEncoding]];
+    // Take basename in case someone put a path before:
+    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:basename(inputCmd) encoding:NSUTF8StringEncoding]];
     // we could dlopen() here, but that would defeat the purpose
     if (valuesFromDict == nil) return 0;
     else return 1;
@@ -1552,7 +1551,7 @@ int ios_system(const char* inputCmd) {
             if ([fileManager fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
                 // File exists, is a file.
                 struct stat sb;
-                if ((stat(commandName.UTF8String, &sb) == 0) && S_ISXXX(sb.st_mode)) {
+                if (stat(commandName.UTF8String, &sb) == 0) {
                     // File exists, is executable, not a directory.
                     cmdIsAFile = true;
                 }
@@ -1597,8 +1596,8 @@ int ios_system(const char* inputCmd) {
                         struct stat sb;
                         // Files inside the Application Bundle will always have "x" removed. Don't check.
                         if (!([path containsString: [[NSBundle mainBundle] resourcePath]]) // Not inside the App Bundle
-                            && !((stat(locationName.UTF8String, &sb) == 0) // file exists, is not a directory
-                            && S_ISXXX(sb.st_mode))) continue; // file has "x" bit set
+                            && !((stat(locationName.UTF8String, &sb) == 0))) // file exists, is not a directory
+                            continue;
                     } else
                         // if (cmdIsAFile) we are now ready to execute this file:
                         locationName = commandName;
