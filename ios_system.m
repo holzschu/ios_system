@@ -604,7 +604,11 @@ NSString* operatesOn(NSString* commandName) {
 int ios_executable(const char* inputCmd) {
     // returns 1 if this is one of the commands we define in ios_system, 0 otherwise
     if (commandList == nil) initializeCommandList();
-    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:inputCmd encoding:NSUTF8StringEncoding]];
+
+    // For our commands (e.g. $SYSROOT/usr/bin/clang)
+    const char* command = basename(inputCmd);
+
+    NSArray* valuesFromDict = [commandList objectForKey: [NSString stringWithCString:command encoding:NSUTF8StringEncoding]];
     // we could dlopen() here, but that would defeat the purpose
     if (valuesFromDict == nil) return 0;
     else return 1;
