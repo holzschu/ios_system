@@ -41,6 +41,8 @@ int fprintf(FILE * restrict stream, const char * restrict format, ...) {
     va_start (arg, format);
     if (fileno(stream) == STDOUT_FILENO) done = vfprintf (thread_stdout, format, arg);
     else if (fileno(stream) == STDERR_FILENO) done = vfprintf (thread_stderr, format, arg);
+    // iOS, debug:
+    // else if (fileno(stream) == STDERR_FILENO) done = vfprintf (stderr, format, arg);
     else done = vfprintf (stream, format, arg);
     va_end (arg);
     
