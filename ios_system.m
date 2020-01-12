@@ -29,8 +29,13 @@
 // If true, all functions are enabled + debug messages if dylib not found.
 // If false, you get a smaller set, but more compliance with AppStore rules.
 // *Must* be false in the main branch releases.
-bool sideLoading = false;
-// get getrlimit/setrlimit:
+bool sideLoading = false; 
+// Should the main thread be joined (which means it takes priority over other tasks)? 
+// Default value is true, which makes sense for shell-like applications.
+// Should be set to false if significant user interaction is carried by the app and 
+// the app takes responsibility for waiting for the command to terminate. 
+bool joinMainThread = true; 
+// Include file for getrlimit/setrlimit:
 #include <sys/resource.h>
 static struct rlimit limitFilesOpen;
 
@@ -128,6 +133,17 @@ typedef struct _functionParameters {
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     functionParameters *p = (functionParameters *) parameters;
+    if ((!joinMainThread) && p->isPipeOut) {
+        if (currentSession.current_command_root_thread != 0) {
+            if (currentSession.current_command_root_thread != pthread_self()) {
+                NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", pthread_self(), currentSession.current_command_root_thread);
+                while (currentSession.current_command_root_thread != 0) { }
+            } else {
+                NSLog(@"Terminating root_thread of currentSession %x \n", pthread_self());
+                currentSession.current_command_root_thread = 0;
+            }
+        }
+    }
     fflush(thread_stdin);
     fflush(thread_stdout);
     fflush(thread_stderr);
@@ -184,6 +200,8 @@ static void cleanup_function(void* parameters) {
         NSLog(@"Terminating lastthread of currentSession %x \n", pthread_self());
         currentSession.lastThreadId = 0;
     }
+    // TODO: place a lock in ios_releaseThread(), don't release until lastThreadId is terminated.
+    // HOW can I do that? replace pthread_self() with lastThreadId? Worth a try.
     ios_releaseThread(pthread_self());
 }
 
@@ -199,7 +217,7 @@ void crash_handler(int sig) {
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     ios_storeThreadId(pthread_self());
-    NSLog(@"Storing thread_id: %x isPipeOut: %x stdin %d stdout %d stderr %d\n", pthread_self(), p->isPipeOut, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr));
+    NSLog(@"Storing thread_id: %x isPipeOut: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
@@ -1784,11 +1802,15 @@ int ios_system(const char* inputCmd) {
                         // ios_storeThreadId(_tid);
                         currentSession.current_command_root_thread = _tid;
                         // Wait for this process to finish:
-                        pthread_join(_tid, NULL);
-                        // If there are auxiliary process, also wait for them:
-                        if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
-                        currentSession.lastThreadId = 0;
-                        currentSession.current_command_root_thread = 0;
+						if (joinMainThread) {
+							pthread_join(_tid, NULL);
+							// If there are auxiliary process, also wait for them:
+							if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
+							currentSession.lastThreadId = 0;
+							currentSession.current_command_root_thread = 0;
+						} else {
+							pthread_detach(_tid); // a thread must be either joined or detached
+						}
                         currentSession.isMainThread = true;
                     }];
                 } else {
@@ -1799,11 +1821,15 @@ int ios_system(const char* inputCmd) {
                     // ios_storeThreadId(_tid);
                     currentSession.current_command_root_thread = _tid;
                     // Wait for this process to finish:
-                    pthread_join(_tid, NULL);
-                    // If there are auxiliary process, also wait for them:
-                    if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
-                    currentSession.lastThreadId = 0;
-                    currentSession.current_command_root_thread = 0;
+					if (joinMainThread) {
+						pthread_join(_tid, NULL);
+						// If there are auxiliary process, also wait for them:
+						if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
+						currentSession.lastThreadId = 0;
+						currentSession.current_command_root_thread = 0;
+					} else {
+						pthread_detach(_tid); // a thread must be either joined or detached
+					}
                     currentSession.isMainThread = true;
                 }
             } else {

@@ -23,6 +23,8 @@ extern __thread FILE* thread_stderr;
 extern __thread void* thread_context;
 // set to true to have more commands available, more debugging information.
 extern bool sideLoading;
+// set to false to have the main thread run in detached mode (non blocking)
+extern bool joinMainThread;
 
 extern int ios_executable(const char* inputCmd); // does this command exist? (executable file or builtin command)
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
