@@ -149,7 +149,7 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stderr);
     // release parameters:
     char* commandName = p->argv_ref[0];
-    NSLog(@"Terminating command: %s thread_id %x", commandName, pthread_self());
+    NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d ", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr));
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
@@ -162,46 +162,47 @@ static void cleanup_function(void* parameters) {
         }
     }
     bool isSh = strcmp(p->argv_ref[0], "sh") == 0;
+    // What happens is that the first command does not return.
+    // Need some way to close the last streams
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
-    if (true) {
-        if (p->isPipeOut) {
-            // Close stdout if it won't be closed by another thread
-            // (i.e. if it's different from the parent thread stdout)
-            fclose(thread_stdout);
-            thread_stdout = NULL;
-        }
-        if (p->isPipeErr) {
-            fclose(thread_stderr);
-            thread_stderr = NULL;
-        }
-        // Required for Jupyter. Must check for Blink/LibTerm/iVim:
-        bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout));
+    bool isLastThread = (currentSession.lastThreadId == pthread_self());
+    // Required for Jupyter. Must check for Blink/LibTerm/iVim:
+    // Is that the issue in iVim?
+    bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout));
+    if (!isSh) {
+        mustCloseStderr &= p->isPipeErr;
         if (currentSession != nil) {
             mustCloseStderr &= fileno(p->stderr) != fileno(currentSession.stderr);
+            mustCloseStderr &= fileno(p->stderr) != fileno(currentSession.stdout);
         }
-        if (mustCloseStderr) {
-            fclose(p->stderr);
-        }
-        bool mustCloseStdout = fileno(p->stdout) != fileno(stdout);
+    }
+    if (mustCloseStderr) {
+        NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
+        fclose(p->stderr);
+    }
+    bool mustCloseStdout = fileno(p->stdout) != fileno(stdout);
+    if (!isSh) {
+        mustCloseStdout &= p->isPipeOut;
         if (currentSession != nil) {
             mustCloseStdout &= fileno(p->stdout) != fileno(currentSession.stdout);
         }
-        if (mustCloseStdout) {
-            fclose(p->stdout);
-        }
+    }
+    if (mustCloseStdout) {
+        NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
+        fclose(p->stdout);
     }
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
         dlclose(p->dlHandle);
     free(parameters); // This was malloc'ed in ios_system
-    if (currentSession.lastThreadId == pthread_self()) {
+    if (isLastThread) {
         NSLog(@"Terminating lastthread of currentSession %x \n", pthread_self());
         currentSession.lastThreadId = 0;
+    } else {
+        NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession.lastThreadId);
     }
-    // TODO: place a lock in ios_releaseThread(), don't release until lastThreadId is terminated.
-    // HOW can I do that? replace pthread_self() with lastThreadId? Worth a try.
     ios_releaseThread(pthread_self());
 }
 
@@ -217,7 +218,7 @@ void crash_handler(int sig) {
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     ios_storeThreadId(pthread_self());
-    NSLog(@"Storing thread_id: %x isPipeOut: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
+    NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
@@ -1368,6 +1369,7 @@ int ios_system(const char* inputCmd) {
             bool pushMainThread = currentSession.isMainThread;
             currentSession.isMainThread = false;
             if (params->stdout != 0) thread_stdout = params->stdout;
+            if (params->stderr != 0) thread_stderr = params->stderr; // ?????
             params->stdout = ios_popen(pipeMarker+1, "w");
             currentSession.isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
@@ -1690,6 +1692,7 @@ int ios_system(const char* inputCmd) {
                 }
             }
         }
+        NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
         // fprintf(thread_stderr, "Command after parsing: ");
         // for (int i = 0; i < argc; i++)
         //    fprintf(thread_stderr, "[%s] ", argv[i]);
