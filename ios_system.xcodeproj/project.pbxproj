@@ -34,6 +34,7 @@
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
 		223A5CC221CB82B70022B5D5 /* ssh-keygen.c in Sources */ = {isa = PBXBuildFile; fileRef = 223A5CC121CB82B70022B5D5 /* ssh-keygen.c */; };
 		223A5CC421CB8DB90022B5D5 /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 223A5CC321CB8DB90022B5D5 /* log.c */; };
+		22484B042434C6DF00D6BDDA /* jsc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22484B022434C5BB00D6BDDA /* jsc.swift */; };
 		224AAC5521CB917E00F8C22F /* ssherr.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5421CB917D00F8C22F /* ssherr.c */; };
 		224AAC5721CB920500F8C22F /* xmalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5621CB920500F8C22F /* xmalloc.c */; };
 		224AAC5C21CB931300F8C22F /* reallocarray.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5B21CB931300F8C22F /* reallocarray.c */; };
@@ -498,6 +499,7 @@
 		223496B61FD5FC89007ED1A9 /* ios_system.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ios_system.m; sourceTree = "<group>"; };
 		223A5CC121CB82B70022B5D5 /* ssh-keygen.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-keygen.c"; path = "ssh_keygen/ssh-keygen.c"; sourceTree = "<group>"; };
 		223A5CC321CB8DB90022B5D5 /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ssh_keygen/log.c; sourceTree = "<group>"; };
+		22484B022434C5BB00D6BDDA /* jsc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = jsc.swift; sourceTree = "<group>"; };
 		2248DB002004A5F800F2944C /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = text_cmds/ed/main.c; sourceTree = SOURCE_ROOT; };
 		2248DB012004A5F800F2944C /* glbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glbl.c; path = text_cmds/ed/glbl.c; sourceTree = SOURCE_ROOT; };
 		2248DB022004A5F800F2944C /* io.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = io.c; path = text_cmds/ed/io.c; sourceTree = SOURCE_ROOT; };
@@ -1063,6 +1065,7 @@
 			isa = PBXGroup;
 			children = (
 				22122E2A21BC129000D8FE74 /* say.m */,
+				22484B022434C5BB00D6BDDA /* jsc.swift */,
 				221CD98D21E8B03D00F3B47C /* open.m */,
 				22878D4B2036212E00286AF1 /* ssh */,
 				22319F9E1FDC2332004D875A /* getopt.c */,
@@ -2330,6 +2333,7 @@
 				TargetAttributes = {
 					223496AA1FD5FC71007ED1A9 = {
 						CreatedOnToolsVersion = 9.2;
+						LastSwiftMigration = 1140;
 						ProvisioningStyle = Manual;
 					};
 					225E1B6A2067F39F005AC151 = {
@@ -2589,6 +2593,7 @@
 			files = (
 				22C505872098ADD800FDDFA9 /* ls.c in Sources */,
 				222CC4DC218CBF2300D3A11C /* strnsubst.c in Sources */,
+				22484B042434C6DF00D6BDDA /* jsc.swift in Sources */,
 				22F6A11E2068395B00E618F9 /* fmt.c in Sources */,
 				22F6A1212068395B00E618F9 /* w.c in Sources */,
 				22C505882098ADD800FDDFA9 /* misc.c in Sources */,
@@ -3053,6 +3058,7 @@
 		223496B41FD5FC71007ED1A9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
 				DEFINES_MODULE = YES;
@@ -3084,12 +3090,15 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
 		223496B51FD5FC71007ED1A9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
 				DEFINES_MODULE = YES;
@@ -3120,6 +3129,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -3247,6 +3257,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.shell";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				STRIP_SWIFT_SYMBOLS = NO;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -3269,6 +3281,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.shell";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				STRIP_SWIFT_SYMBOLS = NO;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
