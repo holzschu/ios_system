@@ -26,9 +26,10 @@
 #include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
 #include <glob.h>   // for wildcard expansion
 // Sideloading: when you compile yourself, as opposed to uploading on the app store
-// If true, all functions are enabled + debug messages if dylib not found.
-// If false, you get a smaller set, but more compliance with AppStore rules.
+// If true, all commands are enabled + debug messages if dylib not found.
+// If false, you get a smaller set, but compliance with AppStore rules.
 // *Must* be false in the main branch releases.
+// Commands that can be enabled only if sideLoading: ctags, readtags, chgrp, chown, chmod, df, id, w.
 bool sideLoading = false; 
 // Should the main thread be joined (which means it takes priority over other tasks)? 
 // Default value is true, which makes sense for shell-like applications.
@@ -46,11 +47,48 @@ __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
 __thread void* thread_context;
 
-#import "sessionParameters.h"
+// Parameters for each session. We can have multiple sessions running in parallel.
+typedef struct _sessionParameters {
+    bool isMainThread;   // are we on the first command?
+    char currentDir[MAXPATHLEN];
+    char previousDirectory[MAXPATHLEN];
+    char localMiniRoot[MAXPATHLEN];
+    pthread_t current_command_root_thread; // thread ID of first command
+    pthread_t lastThreadId; // thread ID of last command
+    FILE* stdin;
+    FILE* stdout;
+    FILE* stderr;
+    void* context;
+    int global_errno;
+    char commandName[NAME_MAX];
+    char columns[4];
+    char lines[4];
+} sessionParameters;
+
+static void initSessionParameters(sessionParameters* sp) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    sp->isMainThread = TRUE;
+    sp->current_command_root_thread = 0;
+    sp->lastThreadId = 0;
+    NSString* currentDirectory = [fileManager currentDirectoryPath];
+    strcpy(sp->currentDir, [currentDirectory UTF8String]);
+    strcpy(sp->previousDirectory, [currentDirectory UTF8String]);
+    sp->localMiniRoot[0] = 0;
+    sp->global_errno = 0;
+    sp->stdin = stdin;
+    sp->stdout = stdout;
+    sp->stderr = stderr;
+    sp->context = nil;
+    sp->commandName[0] = 0;
+    strcpy(sp->columns, "80");
+    strcpy(sp->lines, "80");
+}
 
 static NSMutableDictionary* sessionList;
-static NSMutableDictionary* pidThreadList;
-static sessionParameters* currentSession;
+
+// pointer to sessionParameters. thread-local variable so the entire system is thread-safe.
+// The sessionParameters pointer is shared by all threads in the same session.
+static __thread sessionParameters* currentSession;
 // Python3 multiple interpreters:
 // limit to 6 = 1 kernel, 4 notebooks, one extra.
 // App Store limit is 200 MB
@@ -58,15 +96,15 @@ static const int MaxPythonInterpreters = 6; // const so we can allocate an array
 int numPythonInterpreters = MaxPythonInterpreters; // Apps can overwrite this
 static bool PythonIsRunning[MaxPythonInterpreters];
 static int currentPythonInterpreter = 0;
-// pointers for sh sessions:
+// pointers for sh sessions: 
 char* sh_session = "sh_session";
 
 // replace system-provided exit() by our own:
-// Make sure we call pthread_cancel(currentSession.current_command_root_thread)
+// Make sure we call pthread_cancel(currentSession->current_command_root_thread)
 // as much as possible, because ios_exit can be called from a signal handler now.
 void ios_exit(int n) {
     if (currentSession != NULL) {
-        currentSession.global_errno = n;
+        currentSession->global_errno = n;
     }
     pthread_exit(NULL);
 }
@@ -74,46 +112,43 @@ void ios_exit(int n) {
 void ios_signal(int signal) {
     // Signals the threads of the current session:
     if (currentSession != NULL) {
-        if (currentSession.current_command_root_thread != NULL) {
-            pthread_kill(currentSession.current_command_root_thread, signal);
+        if (currentSession->current_command_root_thread != NULL) {
+            pthread_kill(currentSession->current_command_root_thread, signal);
         }
-        if (currentSession.lastThreadId != NULL) {
-            pthread_kill(currentSession.lastThreadId, signal);
+        if (currentSession->lastThreadId != NULL) {
+            pthread_kill(currentSession->lastThreadId, signal);
         }
     }
 }
 
 #undef getenv
 void ios_setWindowSize(int width, int height) {
-    currentSession.columns = [NSString stringWithFormat:@"%d",width];
-    currentSession.lines = [NSString stringWithFormat:@"%d",height];
+    sprintf(currentSession->columns, "%d", width);
+    sprintf(currentSession->lines, "%d",height);
 }
 
 char * ios_getenv(const char *name) {
     // intercept calls to getenv("COLUMNS") / getenv("LINES")
     if (strcmp(name, "COLUMNS") == 0) {
-        // NSLog(@"getenv COLUMNS = %s", [currentSession.columns UTF8String]);
-        return [currentSession.columns UTF8String];
+        return currentSession->columns;
     }
     if (strcmp(name, "LINES") == 0) {
-        // NSLog(@"getenv LINES = %s", [currentSession.lines UTF8String]);
-        return [currentSession.lines UTF8String];
+        return currentSession->lines;
     }
     if (strcmp(name, "ROWS") == 0) {
-        // NSLog(@"getenv ROWS = %s", [currentSession.lines UTF8String]);
-        return [currentSession.lines UTF8String];
+        return currentSession->lines;
     }
     return getenv(name);
 }
 
 
 int ios_getCommandStatus() {
-    if (currentSession != NULL) return currentSession.global_errno;
+    if (currentSession != NULL) return currentSession->global_errno;
     else return 0;
 }
 
 extern const char* ios_progname(void) {
-    if (currentSession != NULL) return [currentSession.commandName UTF8String];
+    if (currentSession != NULL) return currentSession->commandName;
     else return getprogname();
 }
 
@@ -128,19 +163,20 @@ typedef struct _functionParameters {
     void* dlHandle;
     bool isPipeOut;
     bool isPipeErr;
+    sessionParameters* session;
 } functionParameters;
 
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     functionParameters *p = (functionParameters *) parameters;
     if ((!joinMainThread) && p->isPipeOut) {
-        if (currentSession.current_command_root_thread != 0) {
-            if (currentSession.current_command_root_thread != pthread_self()) {
-                NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", pthread_self(), currentSession.current_command_root_thread);
-                while (currentSession.current_command_root_thread != 0) { }
+        if (currentSession->current_command_root_thread != 0) {
+            if (currentSession->current_command_root_thread != pthread_self()) {
+                NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", pthread_self(), currentSession->current_command_root_thread);
+                while (currentSession->current_command_root_thread != 0) { }
             } else {
                 NSLog(@"Terminating root_thread of currentSession %x \n", pthread_self());
-                currentSession.current_command_root_thread = 0;
+                currentSession->current_command_root_thread = 0;
             }
         }
     }
@@ -148,7 +184,7 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stdout);
     fflush(thread_stderr);
     // release parameters:
-    char* commandName = p->argv_ref[0];
+    char* commandName = p->argv[0];
     NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d ", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr));
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
@@ -161,21 +197,19 @@ static void cleanup_function(void* parameters) {
                 PythonIsRunning[commandNumber] = false;
         }
     }
-    bool isSh = strcmp(p->argv_ref[0], "sh") == 0;
-    // What happens is that the first command does not return.
-    // Need some way to close the last streams
+    bool isSh = strcmp(p->argv[0], "sh") == 0;
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
-    bool isLastThread = (currentSession.lastThreadId == pthread_self());
+    bool isLastThread = (currentSession->lastThreadId == pthread_self());
     // Required for Jupyter. Must check for Blink/LibTerm/iVim:
     // Is that the issue in iVim?
     bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout));
     if (!isSh) {
         mustCloseStderr &= p->isPipeErr;
         if (currentSession != nil) {
-            mustCloseStderr &= fileno(p->stderr) != fileno(currentSession.stderr);
-            mustCloseStderr &= fileno(p->stderr) != fileno(currentSession.stdout);
+            mustCloseStderr &= fileno(p->stderr) != fileno(currentSession->stderr);
+            mustCloseStderr &= fileno(p->stderr) != fileno(currentSession->stdout);
         }
     }
     if (mustCloseStderr) {
@@ -186,7 +220,7 @@ static void cleanup_function(void* parameters) {
     if (!isSh) {
         mustCloseStdout &= p->isPipeOut;
         if (currentSession != nil) {
-            mustCloseStdout &= fileno(p->stdout) != fileno(currentSession.stdout);
+            mustCloseStdout &= fileno(p->stdout) != fileno(currentSession->stdout);
         }
     }
     if (mustCloseStdout) {
@@ -198,10 +232,10 @@ static void cleanup_function(void* parameters) {
         dlclose(p->dlHandle);
     free(parameters); // This was malloc'ed in ios_system
     if (isLastThread) {
-        NSLog(@"Terminating lastthread of currentSession %x \n", pthread_self());
-        currentSession.lastThreadId = 0;
+        NSLog(@"Terminating lastthread of currentSession %x lastThreadId %x\n", pthread_self(), currentSession->lastThreadId);
+        currentSession->lastThreadId = 0;
     } else {
-        NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession.lastThreadId);
+        NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
     }
     ios_releaseThread(pthread_self());
 }
@@ -230,6 +264,7 @@ static void* run_function(void* parameters) {
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
     thread_context = p->context;
+    currentSession = p->session;
     
     signal(SIGSEGV, crash_handler);
     signal(SIGBUS, crash_handler);
@@ -241,7 +276,7 @@ static void* run_function(void* parameters) {
     @try
     {
         int retval = p->function(p->argc, p->argv);
-        if (currentSession != nil) currentSession.global_errno = retval;
+        if (currentSession != nil) currentSession->global_errno = retval;
     }
     @catch (NSException *exception)
     {
@@ -340,8 +375,6 @@ void initializeEnvironment() {
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     // Store the maximum number of file descriptors allowed:
     getrlimit(RLIMIT_NOFILE, &limitFilesOpen);
-    // correspondence between thread_id and pid:
-    pidThreadList = [NSMutableDictionary new];
 }
 
 static char* parseArgument(char* argument, char* command) {
@@ -494,8 +527,8 @@ int ios_setMiniRoot(NSString* mRoot) {
     // Back to where we we before:
     [fileManager changeCurrentDirectoryPath:currentDir];
     if (currentSession != nil) {
-        currentSession.currentDir = miniRoot;
-        currentSession.previousDirectory = miniRoot;
+        strcpy(currentSession->currentDir, [miniRoot UTF8String]);
+        strcpy(currentSession->previousDirectory, [miniRoot UTF8String]);
     }
     return 1; // mission accomplished
 }
@@ -504,11 +537,12 @@ int ios_setMiniRoot(NSString* mRoot) {
 int ios_setMiniRootURL(NSURL* mRoot) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     if (currentSession == NULL) {
-      currentSession = [[sessionParameters alloc] init];
+        currentSession = malloc(sizeof(sessionParameters));
+        initSessionParameters(currentSession);
     }
-    currentSession.localMiniRoot = mRoot;
-    currentSession.previousDirectory = currentSession.currentDir;
-    currentSession.currentDir = [mRoot path];
+    strcpy(currentSession->localMiniRoot, [mRoot.path UTF8String]);
+    strcpy(currentSession->previousDirectory, currentSession->currentDir);
+    strcpy(currentSession->currentDir, [[mRoot path] UTF8String]);
     [fileManager changeCurrentDirectoryPath:[mRoot path]];
     return 1; // mission accomplished
 }
@@ -523,10 +557,12 @@ BOOL __allowed_cd_to_path(NSString *path) {
     return YES;
   }
   
-  NSString *localMiniRootPath = currentSession.localMiniRoot.path;
-  if (localMiniRootPath && [path hasPrefix:localMiniRootPath]) {
-    return YES;
-  }
+    if (strlen(currentSession->localMiniRoot) != 0) {
+        NSString *localMiniRootPath = [NSString stringWithCString:currentSession->localMiniRoot encoding:NSUTF8StringEncoding];
+        if (localMiniRootPath && [path hasPrefix:localMiniRootPath]) {
+            return YES;
+        }
+    }
   
   for (NSString *dir in allowedPaths) {
     if ([path hasPrefix:dir]) {
@@ -560,7 +596,7 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
   NSString* resultDir = [fileManager currentDirectoryPath];
 
   if (__allowed_cd_to_path(resultDir)) {
-    currentSession.previousDirectory = currentSession.currentDir;
+    strcpy(currentSession->previousDirectory, currentSession->currentDir);
     return;
   }
   
@@ -568,11 +604,11 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
   // If the user tried to go above the miniRoot, set it to miniRoot
   if ([miniRoot hasPrefix:resultDir]) {
     [fileManager changeCurrentDirectoryPath:miniRoot];
-    currentSession.currentDir = miniRoot;
-    currentSession.previousDirectory = currentSession.currentDir;
+    strcpy(currentSession->currentDir, [miniRoot UTF8String]);
+    strcpy(currentSession->previousDirectory, currentSession->currentDir);
   } else {
     // go back to where we were before:
-    [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+    [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
   }
 }
 
@@ -586,11 +622,11 @@ int cd_main(int argc, char** argv) {
         NSString* newDir = @(argv[1]);
         if (strcmp(argv[1], "-") == 0) {
             // "cd -" option to pop back to previous directory
-            newDir = currentSession.previousDirectory;
+            newDir = [NSString stringWithCString:currentSession->previousDirectory encoding:NSUTF8StringEncoding];
         }
         __cd_to_dir(newDir, fileManager);
     } else { // [cd] Help, I'm lost, bring me back home
-        currentSession.previousDirectory = [fileManager currentDirectoryPath];
+        strcpy(currentSession->previousDirectory, [[fileManager currentDirectoryPath] UTF8String]);
 
         if (miniRoot != nil) {
             [fileManager changeCurrentDirectoryPath:miniRoot];
@@ -598,7 +634,7 @@ int cd_main(int argc, char** argv) {
             [fileManager changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
         }
     }
-    currentSession.currentDir = [fileManager currentDirectoryPath];
+    strcpy(currentSession->currentDir, [[fileManager currentDirectoryPath] UTF8String]);
     return 0;
 }
 
@@ -829,7 +865,7 @@ static int splitCommandAndExecute(char* command) {
             // Only one command left
             pid_t pid = ios_fork();
             returnValue = ios_system(command);
-            NSLog(@"Started command, stored last_thread= %x", currentSession.lastThreadId);
+            NSLog(@"Started command, stored last_thread= %x", currentSession->lastThreadId);
             ios_waitpid(pid);
             break;
         }
@@ -848,7 +884,7 @@ static int splitCommandAndExecute(char* command) {
         command[nextCommandPosition] = NULL; // terminate string
         pid_t pid = ios_fork();
         returnValue = ios_system(command);
-        NSLog(@"Started command (2), stored last_thread= %x", currentSession.lastThreadId);
+        NSLog(@"Started command (2), stored last_thread= %x", currentSession->lastThreadId);
         ios_waitpid(pid);
         if (andNextCommand && (returnValue != 0)) {
             // && + the command returned error, we return:
@@ -869,6 +905,8 @@ NSString* parentDir;
 int sh_main(int argc, char** argv) {
     // NOT an actual shell.
     // for commands that call other commands as "sh -c command" or "sh -c command1 && command2"
+    NSLog(@"sh_main, stdout %d \n", fileno(thread_stdout));
+    NSLog(@"sh_main, stderr %d \n", fileno(thread_stderr));
     if ((argc < 2) || (strncmp(argv[1], "-h", 2) == 0)) {
         fprintf(thread_stderr, "Not an actual shell. sh is provided for compatibility with commands that call other commands.\n");
         fprintf(thread_stderr, "Usage: sh [-flags] command: executes command (all flags are ignored).\n");
@@ -878,36 +916,41 @@ int sh_main(int argc, char** argv) {
     }
     char** command = argv + 1; // skip past "sh"
     while ((command[0][0] == '-') && (command[0] != NULL)) { command++; } // skip past all flags
-    if (command[0] == NULL) return 0;
+    if (command[0] == NULL) {
+        argv[0][0] = 'h'; // prevent termination in cleanup_function
+        return 0;
+    }
     // If we reach this point, we have commands to execute.
     // Store current sesssion, create a new session specific for this, execute commands
     id sessionKey = @((NSUInteger)&sh_session);
     if (sessionList != nil) {
-        sessionParameters* runningShellSession = [sessionList objectForKey: sessionKey];
+        sessionParameters* runningShellSession = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
         if (runningShellSession != NULL) {
-            if ((runningShellSession.lastThreadId != 0) && (runningShellSession.lastThreadId != pthread_self())){
-                NSLog(@"There is another session running: last_thread= %x", runningShellSession.lastThreadId);
+            if ((runningShellSession->lastThreadId != 0) && (runningShellSession->lastThreadId != pthread_self())){
+                NSLog(@"There is another sh session running: last_thread= %x", runningShellSession->lastThreadId);
+                argv[0][0] = 'h'; // prevent termination in cleanup_function
                 return 1;
             } else {
-                NSLog(@"There is another session running: last_thread= %x us= %x. Continuing.", runningShellSession.lastThreadId, pthread_self());
+                NSLog(@"There is another sh session running: last_thread= %x us= %x. Continuing.", runningShellSession->lastThreadId, pthread_self());
             }
         }
     }
-    NSLog(@"parentSession = %x currentSession = %x\n", parentSession, currentSession);
     NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSLog(@"parentSession = %x currentSession = %x currentDir = %s\n", parentSession, currentSession, [fileManager currentDirectoryPath].UTF8String);
     if (parentSession == NULL) {
-        if (currentSession.context != sh_session)
+        if (currentSession->context != sh_session)
             parentSession = currentSession;
         parentDir = [fileManager currentDirectoryPath];
     }
     ios_switchSession(&sh_session); // create a new session
-    currentSession.isMainThread = false;
-    currentSession.context = sh_session;
-    currentSession.stdin = thread_stdin;
-    currentSession.stdout = thread_stdout;
-    currentSession.stderr = thread_stderr;
-    currentSession.current_command_root_thread = pthread_self();
-    currentSession.lastThreadId = pthread_self();
+    NSLog(@"after switchSession, currentDir = %s\n", [fileManager currentDirectoryPath].UTF8String);
+    currentSession->isMainThread = false;
+    currentSession->context = sh_session;
+    currentSession->stdin = thread_stdin;
+    currentSession->stdout = thread_stdout;
+    currentSession->stderr = thread_stderr;
+    currentSession->current_command_root_thread = NULL;
+    currentSession->lastThreadId = NULL;
     // Need to loop twice: over each argument, and inside each argument.
     // &&: keep computing until one command is in error
     // ||: keep computing until one command is not in error
@@ -936,8 +979,9 @@ int sh_main(int argc, char** argv) {
         }
         command += (i+1);
     }
-    NSLog(@"Closing shell session; last_thread= %x root= %x", currentSession.lastThreadId, currentSession.current_command_root_thread);
+    NSLog(@"Closing shell session; last_thread= %x root= %x", currentSession->lastThreadId, currentSession->current_command_root_thread);
     if (![parentDir isEqualToString:[fileManager currentDirectoryPath]]) {
+        NSLog(@"Reset current Dir to= %s instead of %s", parentDir.UTF8String, [fileManager currentDirectoryPath].UTF8String);
         [fileManager changeCurrentDirectoryPath:parentDir];
     }
     ios_closeSession(&sh_session);
@@ -966,7 +1010,7 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
 
 pthread_t ios_getLastThreadId() {
     if (!currentSession) return nil;
-    return (currentSession.lastThreadId);
+    return (currentSession->lastThreadId);
 }
 
 /*
@@ -1020,7 +1064,7 @@ int ios_dup2(int fd1, int fd2)
 int ios_kill()
 {
     if (currentSession == NULL) return ESRCH;
-    if (currentSession.current_command_root_thread > 0) {
+    if (currentSession->current_command_root_thread > 0) {
         struct sigaction query_action;
         if ((sigaction (SIGINT, NULL, &query_action) >= 0) &&
             (query_action.sa_handler != SIG_DFL) &&
@@ -1032,7 +1076,7 @@ int ios_kill()
             // kill(getpid(), SIGINT); // infinite loop?
         } else {
             // Send pthread_cancel with the given signal to the current main thread, if there is one.
-            return pthread_cancel(currentSession.current_command_root_thread);
+            return pthread_cancel(currentSession->current_command_root_thread);
         }
     }
     // No process running
@@ -1044,23 +1088,29 @@ int ios_killpid(pid_t pid, int sig) {
 }
 
 void ios_switchSession(const void* sessionId) {
+    char* sessionName = (char*) sessionId;
+    NSLog(@"ios_switchSession to %s\n", sessionName);
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = @((NSUInteger)sessionId);
     if (sessionList == nil) {
         sessionList = [NSMutableDictionary new];
-        if (currentSession != NULL) [sessionList setObject: currentSession forKey: sessionKey];
+        if (currentSession != NULL) [sessionList setObject: [NSValue valueWithPointer:currentSession] forKey: sessionKey];
     }
-    currentSession = [sessionList objectForKey: sessionKey];
+    currentSession = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
+    
     if (currentSession == NULL) {
-        currentSession = [[sessionParameters alloc] init];
-        [sessionList setObject: currentSession forKey: sessionKey];
+        sessionParameters* newSession =  malloc(sizeof(sessionParameters));
+        initSessionParameters(newSession);
+        [sessionList setObject: [NSValue valueWithPointer:newSession] forKey: sessionKey];
+        currentSession = newSession;
     } else {
-        if (![currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]]) {
-            [fileManager changeCurrentDirectoryPath:currentSession.currentDir];
+        NSString* currentSessionDir = [NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding];
+        if (![currentSessionDir isEqualToString:[fileManager currentDirectoryPath]]) {
+            [fileManager changeCurrentDirectoryPath:currentSessionDir];
         }
-        currentSession.stdin = stdin;
-        currentSession.stdout = stdout;
-        currentSession.stderr = stderr;
+        currentSession->stdin = stdin;
+        currentSession->stdout = stdout;
+        currentSession->stderr = stderr;
     }
 }
 
@@ -1068,9 +1118,10 @@ void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     [fileManager changeCurrentDirectoryPath:[workingDirectoryURL path]];
     if (currentSession != NULL) {
-        if ([currentSession.currentDir isEqualToString:[fileManager currentDirectoryPath]]) return;
-        currentSession.previousDirectory = currentSession.currentDir;
-        currentSession.currentDir = [workingDirectoryURL path];
+        NSString* currentSessionDir = [NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding];
+        if ([currentSessionDir isEqualToString:[fileManager currentDirectoryPath]]) return;
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+        strcpy(currentSession->currentDir, [[workingDirectoryURL path] UTF8String]);
     }
 }
 
@@ -1086,36 +1137,36 @@ int ios_isatty(int fd) {
     if (currentSession == NULL) return 0;
     // 2 possibilities: 0, 1, 2 (classical) or fileno(thread_stdout)
     if (thread_stdin != NULL) {
-        if ((fd == STDIN_FILENO) || (fd == fileno(currentSession.stdin)) || (fd == fileno(thread_stdin)))
-            return (fileno(thread_stdin) == fileno(currentSession.stdin));
+        if ((fd == STDIN_FILENO) || (fd == fileno(currentSession->stdin)) || (fd == fileno(thread_stdin)))
+            return (fileno(thread_stdin) == fileno(currentSession->stdin));
     }
     if (thread_stdout != NULL) {
-        if ((fd == STDOUT_FILENO) || (fd == fileno(currentSession.stdout)) || (fd == fileno(thread_stdout))) {
-            return (fileno(thread_stdout) == fileno(currentSession.stdout));
+        if ((fd == STDOUT_FILENO) || (fd == fileno(currentSession->stdout)) || (fd == fileno(thread_stdout))) {
+            return (fileno(thread_stdout) == fileno(currentSession->stdout));
         }
     }
     if (thread_stderr != NULL) {
-        if ((fd == STDERR_FILENO) || (fd == fileno(currentSession.stderr)) || (fd == fileno(thread_stderr)))
-            return (fileno(thread_stderr) == fileno(currentSession.stderr));
+        if ((fd == STDERR_FILENO) || (fd == fileno(currentSession->stderr)) || (fd == fileno(thread_stderr)))
+            return (fileno(thread_stderr) == fileno(currentSession->stderr));
     }
     return 0;
 }
 
 void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     if (currentSession == NULL) return;
-    currentSession.stdin = _stdin;
-    currentSession.stdout = _stdout;
-    currentSession.stderr = _stderr;
+    currentSession->stdin = _stdin;
+    currentSession->stdout = _stdout;
+    currentSession->stderr = _stderr;
 }
 
 void ios_setContext(void *context) {
     if (currentSession == NULL) return;
-    currentSession.context = context;
+    currentSession->context = context;
 }
 
 void* ios_getContext() {
     if (currentSession == NULL) return NULL;
-    return currentSession.context;
+    return currentSession->context;
 }
 
 
@@ -1288,15 +1339,20 @@ int ios_system(const char* inputCmd) {
     bool  sharedErrorOutput = false;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     NSLog(@"command= %s\n", inputCmd);
+    NSLog(@"ios_system, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
+    NSLog(@"ios_system, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
     if (currentSession == NULL) {
-        currentSession = [[sessionParameters alloc] init];
+        currentSession = malloc(sizeof(sessionParameters));
+        initSessionParameters(currentSession);
     }
     
     // initialize:
-    if (thread_stdin == 0) thread_stdin = currentSession.stdin;
-    if (thread_stdout == 0) thread_stdout = currentSession.stdout;
-    if (thread_stderr == 0) thread_stderr = currentSession.stderr;
-    if (thread_context == 0) thread_context = currentSession.context;
+    if (thread_stdin == 0) thread_stdin = currentSession->stdin;
+    if (thread_stdout == 0) thread_stdout = currentSession->stdout;
+    if (thread_stderr == 0) thread_stderr = currentSession->stderr;
+    if (thread_context == 0) thread_context = currentSession->context;
+    NSLog(@"ios_system, after currentSession, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
+    NSLog(@"ios_system, after currentSession, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -1335,6 +1391,10 @@ int ios_system(const char* inputCmd) {
     params->stdin = child_stdin;
     params->stdout = child_stdout;
     params->stderr = child_stderr;
+    params->session = currentSession;
+    NSLog(@"ios_system, after child_stdout, params->stdout %d \n", child_stdout == NULL ? 0 : fileno(child_stdout));
+    NSLog(@"ios_system, after child_stderr, params->stderr %d \n", child_stderr == NULL ? 0 : fileno(child_stderr));
+
     params->context = thread_context;
   
     child_stdin = child_stdout = child_stderr = NULL;
@@ -1355,23 +1415,23 @@ int ios_system(const char* inputCmd) {
     char* pipeMarker = strstrquoted(outputFileMarker,"&|");
     if (!pipeMarker) pipeMarker = strstrquoted(outputFileMarker,"|&"); // both seem to work
     if (pipeMarker) {
-        bool pushMainThread = currentSession.isMainThread;
-        currentSession.isMainThread = false;
+        bool pushMainThread = currentSession->isMainThread;
+        currentSession->isMainThread = false;
         if (params->stdout != 0) thread_stdout = params->stdout;
         if (params->stderr != 0) thread_stderr = params->stderr;
         params->stdout = params->stderr = ios_popen(pipeMarker+2, "w");
-        currentSession.isMainThread = pushMainThread;
+        currentSession->isMainThread = pushMainThread;
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
     } else {
         pipeMarker = strstrquoted(outputFileMarker,"|");
         if (pipeMarker) {
-            bool pushMainThread = currentSession.isMainThread;
-            currentSession.isMainThread = false;
+            bool pushMainThread = currentSession->isMainThread;
+            currentSession->isMainThread = false;
             if (params->stdout != 0) thread_stdout = params->stdout;
             if (params->stderr != 0) thread_stderr = params->stderr; // ?????
             params->stdout = ios_popen(pipeMarker+1, "w");
-            currentSession.isMainThread = pushMainThread;
+            currentSession->isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
         }
     }
@@ -1454,7 +1514,7 @@ int ios_system(const char* inputCmd) {
         newStream = fopen(outputFileName, "w");
         if (newStream) {
             if (params->stdout != NULL) {
-                if (fileno(params->stdout) != fileno(currentSession.stdout)) fclose(params->stdout);
+                if (fileno(params->stdout) != fileno(currentSession->stdout)) fclose(params->stdout);
             }
             params->stdout = newStream; 
         }
@@ -1462,7 +1522,7 @@ int ios_system(const char* inputCmd) {
     if (params->stdout == NULL) params->stdout = thread_stdout;
     if (sharedErrorOutput) {
         if (params->stderr != NULL) {
-            if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+            if (fileno(params->stderr) != fileno(currentSession->stderr)) fclose(params->stderr);
         }
         params->stderr = params->stdout;
     }
@@ -1471,7 +1531,7 @@ int ios_system(const char* inputCmd) {
         newStream = fopen(errorFileName, "w");
         if (newStream) {
             if (params->stderr != NULL) {
-                if (fileno(params->stderr) != fileno(currentSession.stderr)) fclose(params->stderr);
+                if (fileno(params->stderr) != fileno(currentSession->stderr)) fclose(params->stderr);
             }
             params->stderr = newStream;
         }
@@ -1559,8 +1619,8 @@ int ios_system(const char* inputCmd) {
             memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {
             NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
-            currentSession.commandName = commandName;
-            bool isDir = false;
+            strcpy(currentSession->commandName, argv[0]);
+            BOOL isDir = false;
             bool cmdIsAFile = false;
             bool cmdIsAPath = false;
             if ([commandName hasPrefix:@"~/"]) {
@@ -1745,7 +1805,6 @@ int ios_system(const char* inputCmd) {
                 NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
                 if (sideLoading) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
                 NSString* fileLocation = [[NSBundle mainBundle] pathForResource:libraryName ofType:nil];
-                NSLog(@"File inside main bundle: %s", fileLocation.UTF8String);
             }
             NSString* functionName = commandStructure[1];
             function = dlsym(handle, functionName.UTF8String);
@@ -1765,6 +1824,7 @@ int ios_system(const char* inputCmd) {
             params->dlHandle = handle;
             params->isPipeOut = (params->stdout != thread_stdout);
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
+            // params->session = currentSession;
             // Before starting, do we have enough file descriptors available?
             int numFileDescriptorsOpen = 0;
             for (int fd = 0; fd < limitFilesOpen.rlim_cur; fd++) {
@@ -1785,7 +1845,7 @@ int ios_system(const char* inputCmd) {
             }
             @try
             {
-            if (currentSession.isMainThread) {
+            if (currentSession->isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
                                                params->isPipeOut || params->isPipeErr);
@@ -1798,42 +1858,42 @@ int ios_system(const char* inputCmd) {
                     NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
                     NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
                     [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
-                        currentSession.isMainThread = false;
+                        currentSession->isMainThread = false;
                         volatile pthread_t _tid = NULL;
                         pthread_create(&_tid, NULL, run_function, params);
                         while (_tid == NULL) { }
                         // ios_storeThreadId(_tid);
-                        currentSession.current_command_root_thread = _tid;
+                        currentSession->current_command_root_thread = _tid;
                         // Wait for this process to finish:
 						if (joinMainThread) {
 							pthread_join(_tid, NULL);
 							// If there are auxiliary process, also wait for them:
-							if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
-							currentSession.lastThreadId = 0;
-							currentSession.current_command_root_thread = 0;
+							if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
+							currentSession->lastThreadId = 0;
+							currentSession->current_command_root_thread = 0;
 						} else {
 							pthread_detach(_tid); // a thread must be either joined or detached
 						}
-                        currentSession.isMainThread = true;
+                        currentSession->isMainThread = true;
                     }];
                 } else {
-                    currentSession.isMainThread = false;
+                    currentSession->isMainThread = false;
                     volatile pthread_t _tid = NULL;
                     pthread_create(&_tid, NULL, run_function, params);
                     while (_tid == NULL) { }
                     // ios_storeThreadId(_tid);
-                    currentSession.current_command_root_thread = _tid;
+                    currentSession->current_command_root_thread = _tid;
                     // Wait for this process to finish:
 					if (joinMainThread) {
 						pthread_join(_tid, NULL);
 						// If there are auxiliary process, also wait for them:
-						if (currentSession.lastThreadId > 0) pthread_join(currentSession.lastThreadId, NULL);
-						currentSession.lastThreadId = 0;
-						currentSession.current_command_root_thread = 0;
+						if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
+						currentSession->lastThreadId = 0;
+						currentSession->current_command_root_thread = 0;
 					} else {
 						pthread_detach(_tid); // a thread must be either joined or detached
 					}
-                    currentSession.isMainThread = true;
+                    currentSession->isMainThread = true;
                 }
             } else {
                 // Don't send signal if not in main thread. Also, don't join threads.
@@ -1842,7 +1902,7 @@ int ios_system(const char* inputCmd) {
                 // The last command on the command line (with multiple pipes) will be created first
                 while (_tid_local == NULL) { }; // Wait until thread has actually started
                 // fprintf(stderr, "Started thread = %x\n", _tid_local);
-                if (currentSession.lastThreadId == 0) currentSession.lastThreadId = _tid_local; // will be joined later
+                if (currentSession->lastThreadId == 0) currentSession->lastThreadId = _tid_local; // will be joined later
                 else pthread_detach(_tid_local); // a thread must be either joined or detached.
             }
             }
@@ -1864,10 +1924,10 @@ int ios_system(const char* inputCmd) {
             free(argv);
             // If command output was redirected to a pipe, we still need to close it.
             // (to warn the other command that it can stop waiting)
-            if (params->stdout != currentSession.stdout) {
+            if (params->stdout != currentSession->stdout) {
                 fclose(params->stdout);
             }
-            if ((params->stderr != currentSession.stderr) && (params->stderr != params->stdout)) {
+            if ((params->stderr != currentSession->stderr) && (params->stderr != params->stdout)) {
                 fclose(params->stderr);
             }
             if ((handle != NULL) && (handle != RTLD_SELF)
@@ -1876,7 +1936,7 @@ int ios_system(const char* inputCmd) {
                 dlclose(handle);
             free(params); // This was malloc'ed in ios_system
             ios_storeThreadId(0);
-            currentSession.global_errno = 127;
+            currentSession->global_errno = 127;
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
     } else { // argc != 0
@@ -1889,5 +1949,5 @@ int ios_system(const char* inputCmd) {
     fflush(thread_stdin);
     fflush(thread_stdout);
     fflush(thread_stderr);
-    return currentSession.global_errno;
+    return currentSession->global_errno;
 }
