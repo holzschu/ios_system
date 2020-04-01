@@ -25,14 +25,24 @@ func convertCArguments(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePoin
         args.append(arg)
         
     }
-    
     return args
+}
+
+func printUsage() {
+    fputs("Usage: jsc file.js\n", thread_stdout)
 }
 
 // execute JavaScript:
 @_cdecl("jsc")
 public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?) -> Int32 {
-    guard let args = convertCArguments(argc: argc, argv: argv) else { return 0 }
+    if (argc != 2) {
+        printUsage()
+        return 0
+    }
+    guard let args = convertCArguments(argc: argc, argv: argv) else {
+        printUsage()
+        return 0
+    }
     let command = args[1]
     let fileName = FileManager().currentDirectoryPath + "/" + command
     do {
