@@ -353,6 +353,10 @@ int ssh_main(int argc, char** argv) {
         verboseFlag = 0; // quiet
         argv++;
     }
+    if (strcmp(argv[1], "-p") == 0) {
+        port = atoi(argv[2]); // port configuration
+        argv += 2;
+    }
     // argv[0] = ssh
     // argv[1] = user@host
     user = argv[1];
