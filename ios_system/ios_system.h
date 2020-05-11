@@ -39,6 +39,7 @@ extern void ios_releaseThreadId(pid_t pid);
 extern pid_t ios_currentPid(void);
 extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
+extern char * ios_getenv(const char *name);
 extern pid_t ios_fork(void);
 extern void ios_waitpid(pid_t pid);
 extern void ios_signal(int signal); 
