@@ -154,7 +154,7 @@ static int ssh_unset_nonblock(int fd) {
 static int ssh_client_loop(LIBSSH2_SESSION *_session, LIBSSH2_CHANNEL *_channel, int _sock) {
     int numfds = 2;
     struct pollfd pfds[numfds];
-    ssize_t rc;
+    ssize_t rc = 0;
     char inputbuf[BUFSIZ];
     char streambuf[BUFSIZ];
     
@@ -332,7 +332,7 @@ static int ssh_timeout_connect(int _sock, const struct sockaddr *addr, socklen_t
 }
 
 static void ssh_usage() {
-    fprintf(thread_stderr, "usage: ssh [-q] user@host [command]\n");
+    fprintf(thread_stderr, "usage: ssh [-q][-p port] user@host [command]\n");
     ios_exit(1);
 }
 
@@ -342,41 +342,49 @@ int ssh_main(int argc, char** argv) {
     int port = 22;
     int connection_timeout = 10;
     char strport[NI_MAXSERV];
-    snprintf(strport, sizeof strport, "%d", port);
     char* user;
     char* host;
     char* commandLine = NULL;
     int verboseFlag = 0;
     if (argc < 2) ssh_usage();
     // Assume several arguments, making sense
-    if (strcmp(argv[1], "-q") == 0) {
-        verboseFlag = 0; // quiet
-        argv++;
+    argv++; // go past ssh (in argv[0])
+    argc--;
+    
+    while (argv[0][0] == '-') {
+        if (strcmp(argv[0], "-q") == 0) {
+            verboseFlag = 0; // quiet
+        } else if (strcmp(argv[0], "-p") == 0) {
+            port = atoi(argv[1]); // port configuration
+            argv += 1; // skip past the port
+            argc--;
+        } else {
+            ssh_usage();
+        }
+        argv++; argc--;
     }
-    if (strcmp(argv[1], "-p") == 0) {
-        port = atoi(argv[2]); // port configuration
-        argv += 2;
-    }
-    // argv[0] = ssh
-    // argv[1] = user@host
-    user = argv[1];
+    
+    snprintf(strport, sizeof strport, "%d", port);
+    // argv[-1] = ssh
+    // argv[0] = user@host
+    user = argv[0];
     host = strchr(user, '@') + 1;
-    if (host == 1) {
+    if (host == 1) { // no user specified
         host = argv[1];
         user = "mobile"; // consistent behaviour
-    } else  *(host - 1) = 0x00; // null-terminate host
+    } else  *(host - 1) = 0x00; // null-terminate user
     // Concatenate all remaining options to form the command string:
     int bufferLength = 0;
     int removeQuotes = 0;
-    if (argc > 2) {
-        for (int i = 2; i < argc; i++) bufferLength += strlen(argv[i]) + 1;
-        if ((argv[2][0] == '\'') || (argv[2][0] == '\"')) { removeQuotes = 1; bufferLength -= 2;} // remove the quotes
+    if (argc > 1) { // is there a command after the connection information?
+        for (int i = 1; i < argc; i++) bufferLength += strlen(argv[i]) + 1;
+        if ((argv[1][0] == '\'') || (argv[1][0] == '\"')) { removeQuotes = 1; bufferLength -= 2;} // remove the quotes
         commandLine = (char*) malloc(bufferLength * sizeof(char));
         int position = 0;
-        strcpy(commandLine + position, argv[2] + removeQuotes);
-        position += strlen(argv[2]) + 1 - removeQuotes;
+        strcpy(commandLine + position, argv[1] + removeQuotes);
+        position += strlen(argv[1]) + 1 - removeQuotes;
         commandLine[position - 1] = ' ';
-        for (int i = 3; i < argc; i++) {
+        for (int i = 2; i < argc; i++) {
             strcpy(commandLine + position, argv[i]);
             position += strlen(argv[i]) + 1;
             commandLine[position - 1] = ' ';
@@ -394,7 +402,7 @@ int ssh_main(int argc, char** argv) {
     int res;
     if ((res = getaddrinfo(host, strport, &hints, &addrs)) != 0) {
         fprintf(thread_stderr, "Host %s not found on port %s, error= %s.\n", host, strport, gai_strerror(res));
-        if (argc > 1) free(commandLine);
+        if (commandLine) free(commandLine);
         return 0;
     }
     struct addrinfo *ai;
@@ -413,7 +421,7 @@ int ssh_main(int argc, char** argv) {
             fprintf(thread_stderr, "ssh: %s", strerror(errno));
             if (!ai->ai_next) {
                 fprintf(thread_stderr, "ssh: connect to host %s port %s: %s", host, strport, strerror(errno));
-                free(commandLine);
+                if (commandLine) free(commandLine);
                 return 0;
             }
             continue;
@@ -432,12 +440,12 @@ int ssh_main(int argc, char** argv) {
     LIBSSH2_SESSION *_session = libssh2_session_init();
     if (!_session) {
         fprintf(thread_stderr, "Could not establish connection with %s.\n", host);
-        free(commandLine);
+        if (commandLine) free(commandLine);
         return 0;
     }
     libssh2_session_set_blocking(_session, 0);
     libssh2_session_set_timeout(_session, connection_timeout);
-    LIBSSH2_CHANNEL *_channel;
+    LIBSSH2_CHANNEL *_channel = NULL;
     char *errmsg;
     int rc;
     while ((rc = libssh2_session_handshake(_session, _sock)) ==
@@ -445,7 +453,7 @@ int ssh_main(int argc, char** argv) {
     if (rc) {
         libssh2_session_last_error(_session, &errmsg, NULL, 0);
         fprintf(thread_stderr, "SSH error: %s\n", errmsg);
-        free(commandLine);
+        if (commandLine) free(commandLine);
         return -1;
     }
     // Set object as handler
@@ -453,7 +461,7 @@ int ssh_main(int argc, char** argv) {
     // Verify host key
     if (ssh_verify_host(ntop, _session, host, port) <= 0) {
         fprintf(thread_stderr, "Could not check host key %s.\n", host);
-        free(commandLine);
+        if (commandLine) free(commandLine);
         return 0;
     }
     // Connect: ssh_login
@@ -464,7 +472,7 @@ int ssh_main(int argc, char** argv) {
         if (!userauthlist) {
             if (libssh2_session_last_errno(_session) != LIBSSH2_ERROR_EAGAIN) {
                 fprintf(thread_stderr, "No userauth list\n");
-                free(commandLine);
+                if (commandLine) free(commandLine);
                 return 0;
             } else {
                 ssh_waitsocket(_sock, _session); /* now we wait */
@@ -497,7 +505,7 @@ int ssh_main(int argc, char** argv) {
             if (!dirp) dirp = opendir(path);
             if (!dirp) {
                 fprintf(thread_stderr, "Can't open directory %s\n", keypath);
-                free(commandLine);
+                if (commandLine) free(commandLine);
                 return 0;
             }
             struct dirent *dp;
@@ -557,7 +565,7 @@ int ssh_main(int argc, char** argv) {
                         break;
                     }
                     // Tell to the pty the size of our window, so it can adapt:
-                    /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
+                    /* libssh2_channel_request_pty_size(_channel, termwidth, termheight); */
                      /* Open a SHELL on that pty */
                     while ((rc = libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
                         ssh_waitsocket(_sock, _session);
@@ -578,16 +586,13 @@ int ssh_main(int argc, char** argv) {
                 libssh2_channel_free(_channel);
                 libssh2_session_free(_session);
                 _channel = NULL;
-                free(commandLine);
+                if (commandLine) free(commandLine);
                 return rc;
             }
             if (rc == -2) {
                 // No keys in the directory
                 fprintf(thread_stderr, "No keys found in directory %s\n", keypath);
-                libssh2_session_free(_session);
-                _channel = NULL;
-                free(commandLine);
-                return -1;
+                break;
             }
             // -3 is: "we connected, but failed to execute". Not a passphrase problem.
             if (rc != -3) {
@@ -595,23 +600,20 @@ int ssh_main(int argc, char** argv) {
                 else fprintf(thread_stderr, "Authentication with public key failed. Please enter another passphrase.\n");
                 fflush(thread_stderr);
                 if (passphrase) free(passphrase);
-                passphrase = read_passphrase("Please enter passphrase (empty to stop)", 1);
-            }
-            if (!passphrase || (strlen(passphrase) == 0)) {
-                libssh2_session_free(_session);
-                _channel = NULL;
-                free(commandLine);
-                return -1;
+                passphrase = read_passphrase("Please enter passphrase for your public key\n (empty to stop)", 1);
+                if (!passphrase || (strlen(passphrase) == 0)) {
+                    break;
+                }
             }
         }
     }
     // public key auth failed
     if (auth_type & 1) {
-        fprintf(thread_stderr, "Password authentication: experimental\n");
-        passphrase = read_passphrase("Please enter passphrase (empty to stop)", 1);
+        fprintf(thread_stderr, "Key authentification failed. Trying password authentication.\n"); fflush(thread_stderr);
+        passphrase = read_passphrase("Please enter your password\n (empty to stop)", 1);
         while (passphrase && (strlen(passphrase) > 0)) {
             while ((rc = libssh2_userauth_password(_session,   user,   passphrase) == LIBSSH2_ERROR_EAGAIN));
-            if (rc != 0) { if (verboseFlag) fprintf(thread_stderr, "Authentication failure with passphrase.\n"); continue; } // try another key
+            if (rc != 0) { if (verboseFlag) fprintf(thread_stderr, "Authentication failure with password.\n"); continue; } // try another password
             // We are connected
             rc = 0;
             char *errmsg;
@@ -647,7 +649,7 @@ int ssh_main(int argc, char** argv) {
                     break;
                 }
                 // Tell to the pty the size of our window, so it can adapt:
-                /* libssh2_channel_request_pty_size(_channel, termwidth, termheight);
+                /* libssh2_channel_request_pty_size(_channel, termwidth, termheight); */
                  /* Open a SHELL on that pty */
                 while ((rc = libssh2_channel_shell(_channel)) == LIBSSH2_ERROR_EAGAIN) {
                     ssh_waitsocket(_sock, _session);
@@ -665,7 +667,7 @@ int ssh_main(int argc, char** argv) {
                 libssh2_channel_free(_channel);
                 libssh2_session_free(_session);
                 _channel = NULL;
-                free(commandLine);
+                if (commandLine) free(commandLine);
                 if (passphrase) free(passphrase);
                 return rc;
             }
@@ -674,12 +676,12 @@ int ssh_main(int argc, char** argv) {
                 fprintf(thread_stderr, "Authentication with passphrase failed. Please enter another passphrase.\n");
                 fflush(thread_stderr);
                 if (passphrase) free(passphrase);
-                passphrase = read_passphrase("Please enter passphrase (empty to stop)", 1);
+                passphrase = read_passphrase("Please enter passphrase\n (empty to stop)", 1);
             } else {
                 if (passphrase) free(passphrase);
                 libssh2_session_free(_session);
                 _channel = NULL;
-                free(commandLine);
+                if (commandLine) free(commandLine);
                 fprintf(thread_stderr, "Authentication with passphrase worked, but failed to execute.\n");
                 return rc;
             }
@@ -688,6 +690,6 @@ int ssh_main(int argc, char** argv) {
     // libssh2_channel_free(_channel);
     libssh2_session_free(_session);
     _channel = NULL;
-    free(commandLine);
+    if (commandLine) free(commandLine);
     return -1;
 }
