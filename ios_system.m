@@ -172,10 +172,10 @@ static void cleanup_function(void* parameters) {
     if ((!joinMainThread) && p->isPipeOut) {
         if (currentSession->current_command_root_thread != 0) {
             if (currentSession->current_command_root_thread != pthread_self()) {
-                NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", pthread_self(), currentSession->current_command_root_thread);
+                // NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", pthread_self(), currentSession->current_command_root_thread);
                 while (currentSession->current_command_root_thread != 0) { }
             } else {
-                NSLog(@"Terminating root_thread of currentSession %x \n", pthread_self());
+                // NSLog(@"Terminating root_thread of currentSession %x \n", pthread_self());
                 currentSession->current_command_root_thread = 0;
             }
         }
@@ -185,7 +185,7 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stderr);
     // release parameters:
     char* commandName = p->argv[0];
-    NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d ", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr));
+    // NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d ", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr));
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
@@ -213,7 +213,7 @@ static void cleanup_function(void* parameters) {
         }
     }
     if (mustCloseStderr) {
-        NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
+        // NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
         fclose(p->stderr);
     }
     bool mustCloseStdout = fileno(p->stdout) != fileno(stdout);
@@ -224,7 +224,7 @@ static void cleanup_function(void* parameters) {
         }
     }
     if (mustCloseStdout) {
-        NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
+        // NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
         fclose(p->stdout);
     }
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
@@ -232,10 +232,10 @@ static void cleanup_function(void* parameters) {
         dlclose(p->dlHandle);
     free(parameters); // This was malloc'ed in ios_system
     if (isLastThread) {
-        NSLog(@"Terminating lastthread of currentSession %x lastThreadId %x\n", pthread_self(), currentSession->lastThreadId);
+        // NSLog(@"Terminating lastthread of currentSession %x lastThreadId %x\n", pthread_self(), currentSession->lastThreadId);
         currentSession->lastThreadId = 0;
     } else {
-        NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
+        // NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
     }
     ios_releaseThread(pthread_self());
 }
@@ -252,7 +252,7 @@ void crash_handler(int sig) {
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     ios_storeThreadId(pthread_self());
-    NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
+    // NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
@@ -865,7 +865,7 @@ static int splitCommandAndExecute(char* command) {
             // Only one command left
             pid_t pid = ios_fork();
             returnValue = ios_system(command);
-            NSLog(@"Started command, stored last_thread= %x", currentSession->lastThreadId);
+            // NSLog(@"Started command, stored last_thread= %x", currentSession->lastThreadId);
             ios_waitpid(pid);
             break;
         }
@@ -884,7 +884,7 @@ static int splitCommandAndExecute(char* command) {
         command[nextCommandPosition] = NULL; // terminate string
         pid_t pid = ios_fork();
         returnValue = ios_system(command);
-        NSLog(@"Started command (2), stored last_thread= %x", currentSession->lastThreadId);
+        // NSLog(@"Started command (2), stored last_thread= %x", currentSession->lastThreadId);
         ios_waitpid(pid);
         if (andNextCommand && (returnValue != 0)) {
             // && + the command returned error, we return:
@@ -905,8 +905,8 @@ NSString* parentDir;
 int sh_main(int argc, char** argv) {
     // NOT an actual shell.
     // for commands that call other commands as "sh -c command" or "sh -c command1 && command2"
-    NSLog(@"sh_main, stdout %d \n", fileno(thread_stdout));
-    NSLog(@"sh_main, stderr %d \n", fileno(thread_stderr));
+    // NSLog(@"sh_main, stdout %d \n", fileno(thread_stdout));
+    // NSLog(@"sh_main, stderr %d \n", fileno(thread_stderr));
     if ((argc < 2) || (strncmp(argv[1], "-h", 2) == 0)) {
         fprintf(thread_stderr, "Not an actual shell. sh is provided for compatibility with commands that call other commands.\n");
         fprintf(thread_stderr, "Usage: sh [-flags] command: executes command (all flags are ignored).\n");
@@ -927,23 +927,23 @@ int sh_main(int argc, char** argv) {
         sessionParameters* runningShellSession = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
         if (runningShellSession != NULL) {
             if ((runningShellSession->lastThreadId != 0) && (runningShellSession->lastThreadId != pthread_self())){
-                NSLog(@"There is another sh session running: last_thread= %x", runningShellSession->lastThreadId);
+                // NSLog(@"There is another sh session running: last_thread= %x", runningShellSession->lastThreadId);
                 argv[0][0] = 'h'; // prevent termination in cleanup_function
                 return 1;
             } else {
-                NSLog(@"There is another sh session running: last_thread= %x us= %x. Continuing.", runningShellSession->lastThreadId, pthread_self());
+                // NSLog(@"There is another sh session running: last_thread= %x us= %x. Continuing.", runningShellSession->lastThreadId, pthread_self());
             }
         }
     }
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    NSLog(@"parentSession = %x currentSession = %x currentDir = %s\n", parentSession, currentSession, [fileManager currentDirectoryPath].UTF8String);
+    // NSLog(@"parentSession = %x currentSession = %x currentDir = %s\n", parentSession, currentSession, [fileManager currentDirectoryPath].UTF8String);
     if (parentSession == NULL) {
         if (currentSession->context != sh_session)
             parentSession = currentSession;
         parentDir = [fileManager currentDirectoryPath];
     }
     ios_switchSession(&sh_session); // create a new session
-    NSLog(@"after switchSession, currentDir = %s\n", [fileManager currentDirectoryPath].UTF8String);
+    // NSLog(@"after switchSession, currentDir = %s\n", [fileManager currentDirectoryPath].UTF8String);
     currentSession->isMainThread = false;
     currentSession->context = sh_session;
     currentSession->stdin = thread_stdin;
@@ -979,9 +979,9 @@ int sh_main(int argc, char** argv) {
         }
         command += (i+1);
     }
-    NSLog(@"Closing shell session; last_thread= %x root= %x", currentSession->lastThreadId, currentSession->current_command_root_thread);
+    // NSLog(@"Closing shell session; last_thread= %x root= %x", currentSession->lastThreadId, currentSession->current_command_root_thread);
     if (![parentDir isEqualToString:[fileManager currentDirectoryPath]]) {
-        NSLog(@"Reset current Dir to= %s instead of %s", parentDir.UTF8String, [fileManager currentDirectoryPath].UTF8String);
+        // NSLog(@"Reset current Dir to= %s instead of %s", parentDir.UTF8String, [fileManager currentDirectoryPath].UTF8String);
         [fileManager changeCurrentDirectoryPath:parentDir];
     }
     ios_closeSession(&sh_session);
@@ -1089,7 +1089,7 @@ int ios_killpid(pid_t pid, int sig) {
 
 void ios_switchSession(const void* sessionId) {
     char* sessionName = (char*) sessionId;
-    NSLog(@"ios_switchSession to %s\n", sessionName);
+    // NSLog(@"ios_switchSession to %s\n", sessionName);
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = @((NSUInteger)sessionId);
     if (sessionList == nil) {
@@ -1338,9 +1338,9 @@ int ios_system(const char* inputCmd) {
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    NSLog(@"command= %s\n", inputCmd);
-    NSLog(@"ios_system, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
-    NSLog(@"ios_system, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
+    // NSLog(@"command= %s\n", inputCmd);
+    // NSLog(@"ios_system, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
+    // NSLog(@"ios_system, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
     if (currentSession == NULL) {
         currentSession = malloc(sizeof(sessionParameters));
         initSessionParameters(currentSession);
@@ -1351,8 +1351,6 @@ int ios_system(const char* inputCmd) {
     if (thread_stdout == 0) thread_stdout = currentSession->stdout;
     if (thread_stderr == 0) thread_stderr = currentSession->stderr;
     if (thread_context == 0) thread_context = currentSession->context;
-    NSLog(@"ios_system, after currentSession, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
-    NSLog(@"ios_system, after currentSession, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
 
     char* cmd = strdup(inputCmd);
     char* maxPointer = cmd + strlen(cmd);
@@ -1392,8 +1390,6 @@ int ios_system(const char* inputCmd) {
     params->stdout = child_stdout;
     params->stderr = child_stderr;
     params->session = currentSession;
-    NSLog(@"ios_system, after child_stdout, params->stdout %d \n", child_stdout == NULL ? 0 : fileno(child_stdout));
-    NSLog(@"ios_system, after child_stderr, params->stderr %d \n", child_stderr == NULL ? 0 : fileno(child_stderr));
 
     params->context = thread_context;
   
@@ -1752,7 +1748,7 @@ int ios_system(const char* inputCmd) {
                 }
             }
         }
-        NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
+        // NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
         // fprintf(thread_stderr, "Command after parsing: ");
         // for (int i = 0; i < argc; i++)
         //    fprintf(thread_stderr, "[%s] ", argv[i]);
@@ -1920,7 +1916,7 @@ int ios_system(const char* inputCmd) {
             }
         } else {
             fprintf(params->stderr, "%s: command not found\n", argv[0]);
-            NSLog(@"%s: command not found\n", argv[0]);
+            // NSLog(@"%s: command not found\n", argv[0]);
             free(argv);
             // If command output was redirected to a pipe, we still need to close it.
             // (to warn the other command that it can stop waiting)
