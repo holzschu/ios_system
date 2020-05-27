@@ -122,9 +122,22 @@ void ios_signal(int signal) {
 }
 
 #undef getenv
-void ios_setWindowSize(int width, int height) {
-    sprintf(currentSession->columns, "%d", width);
-    sprintf(currentSession->lines, "%d",height);
+void ios_setWindowSize(int width, int height, const void* sessionId) {
+    // You can set the window size for a session that is not currently running (e.g. because "sh_session" is running).
+    // So we set it without calling ios_switchSession:
+    sessionParameters* resizedSession;
+
+    id sessionKey = @((NSUInteger)sessionId);
+    if (sessionList == nil) {
+        return;
+    }
+    resizedSession = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
+    if (resizedSession == nil) {
+        return;
+    }
+
+    sprintf(resizedSession->columns, "%d", width);
+    sprintf(resizedSession->lines, "%d",height);
 }
 
 char * ios_getenv(const char *name) {
@@ -901,6 +914,7 @@ static int splitCommandAndExecute(char* command) {
 }
 
 sessionParameters* parentSession = NULL;
+
 NSString* parentDir;
 int sh_main(int argc, char** argv) {
     // NOT an actual shell.
@@ -1089,6 +1103,12 @@ int ios_killpid(pid_t pid, int sig) {
 
 void ios_switchSession(const void* sessionId) {
     char* sessionName = (char*) sessionId;
+    if ((currentSession != nil) && (parentSession != nil)) {
+        if ((currentSession->context == sh_session) && (parentSession->context == sessionName)) {
+            // If we are running a sh_session inside the requested sessionId, there is no need to change:
+            return;
+        }
+    }
     // NSLog(@"ios_switchSession to %s\n", sessionName);
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = @((NSUInteger)sessionId);
@@ -1159,7 +1179,7 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     currentSession->stderr = _stderr;
 }
 
-void ios_setContext(void *context) {
+void ios_setContext(const void *context) {
     if (currentSession == NULL) return;
     currentSession->context = context;
 }
@@ -1589,14 +1609,11 @@ int ios_system(const char* inputCmd) {
                     i += gt.gl_matchc - 1;
                     globfree(&gt);
                 } else {
+                    // If there is no match, leave parameter as is, continue with command.
+                    // Not exactly Unix behaviour, but more convenient on Phones.
                     fprintf(params->stderr, "%s: %s: No match\n", argv[0], argv[i]);
                     fflush(params->stderr);
                     globfree(&gt);
-                    free(dontExpand);
-                    free(argv);
-                    free(originalCommand);
-                    free(params);
-                    return 127;
                 }
             }
         }
@@ -1839,8 +1856,6 @@ int ios_system(const char* inputCmd) {
                 if (res == 0) NSLog(@"[Info] Increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
                 else NSLog(@"[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
             }
-            @try
-            {
             if (currentSession->isMainThread) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
@@ -1900,19 +1915,6 @@ int ios_system(const char* inputCmd) {
                 // fprintf(stderr, "Started thread = %x\n", _tid_local);
                 if (currentSession->lastThreadId == 0) currentSession->lastThreadId = _tid_local; // will be joined later
                 else pthread_detach(_tid_local); // a thread must be either joined or detached.
-            }
-            }
-            @catch (NSException *exception)
-            {
-                // Print exception information
-                NSLog( @"NSException caught" );
-                NSLog( @"Name: %@", exception.name);
-                NSLog( @"Reason: %@", exception.reason );
-                free(argv); // argv is otherwise freed in cleanup_function
-                free(dontExpand);
-                free(params);
-                free(originalCommand); // releases cmd, which was a strdup of inputCommand
-                return 127;
             }
         } else {
             fprintf(params->stderr, "%s: command not found\n", argv[0]);

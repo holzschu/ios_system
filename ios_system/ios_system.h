@@ -43,7 +43,7 @@ extern char * ios_getenv(const char *name);
 extern pid_t ios_fork(void);
 extern void ios_waitpid(pid_t pid);
 extern void ios_signal(int signal); 
-void ios_setWindowSize(int width, int height);
+void ios_setWindowSize(int width, int height, const void* sessionId);
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays
@@ -56,7 +56,7 @@ extern int ios_setAllowedPaths(NSArray<NSString *> *paths);  // restricts operat
 extern void ios_switchSession(const void* sessionid);
 extern void ios_closeSession(const void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
-extern void ios_setContext(void *context);
+extern void ios_setContext(const void *context);
 extern void* ios_getContext(void);
 extern void ios_setDirectoryURL(NSURL* workingDirectoryURL);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);

@@ -79,14 +79,15 @@ int openurl_main(int argc, char *argv[]) {
                        [NSString stringWithFormat: @"  %@", [__known_browsers() componentsJoinedByString:@", "]],
                        ] componentsJoinedByString:@"\n"];
   
-  if (argc < 2) {
-    printf("%s\n", usage.UTF8String);
+  if ((argc < 2) || (strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)) {
+    fprintf(thread_stdout, "%s\n", usage.UTF8String);
     return -1;
   }
   
   NSURL *locationURL = [NSURL URLWithString:@(argv[1])];
   if (!locationURL) {
-    printf("%s\n", "Invalid URL");
+    fprintf(thread_stderr, "%s\n", "Invalid URL");
+    fprintf(thread_stderr, "%s\n", usage.UTF8String);
     return -1;
   }
   
@@ -109,8 +110,8 @@ int open_main(int argc, char *argv[]) {
                        [NSString stringWithFormat: @"  %@", [__known_browsers() componentsJoinedByString:@", "]],
                        ] componentsJoinedByString:@"\n"];
   
-  if (argc < 2) {
-    printf("%s\n", usage.UTF8String);
+  if ((argc < 2) || (strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)) {
+    fprintf(thread_stdout, "%s\n", usage.UTF8String);
     return -1;
   }
   

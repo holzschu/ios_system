@@ -51,7 +51,7 @@ int say_main(int argc, char *argv[]) {
   for (;;) {
     int c = getopt(argc, argv, "v:f:r:");
     if (c == -1) {
-      printf("%s\n", usage.UTF8String);
+      // fprintf(thread_stderr, "%s\n", usage.UTF8String);
       break;
     }
     
@@ -66,7 +66,7 @@ int say_main(int argc, char *argv[]) {
         rate = @([@(optarg) floatValue]);
         break;
       default:
-        printf("%s\n", usage.UTF8String);
+        fprintf(thread_stdout, "%s\n", usage.UTF8String);
         return -1;//[self _exitWithCode:SSH_ERROR andMessage:[self _usage]];
     }
   }
@@ -82,9 +82,9 @@ int say_main(int argc, char *argv[]) {
   
   AVSpeechSynthesisVoice *speechVoice = nil;
   
-  if ([voice isEqual:@"?"]) {
+  if ([voice isEqual:@"?"] || [voice isEqual:@""] || [voice isEqual:@"list"]) {
     for (AVSpeechSynthesisVoice * v in AVSpeechSynthesisVoice.speechVoices) {
-      puts([NSString stringWithFormat:@"%-20s %@\n", v.name.UTF8String, v.language].UTF8String);
+      puts([NSString stringWithFormat:@"%-20s %@", v.name.UTF8String, v.language].UTF8String);
     }
     return 0;
   } else if (voice) {
@@ -97,7 +97,7 @@ int say_main(int argc, char *argv[]) {
     NSError *error = nil;
     text = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
     if (!text) {
-      printf("%s\n", error.localizedDescription.UTF8String);
+      fprintf(thread_stderr, "%s\n", error.localizedDescription.UTF8String);
       return 1;
     }
   }
@@ -115,7 +115,7 @@ int say_main(int argc, char *argv[]) {
   }
   
   if (!text) {
-    printf("%s\n", usage.UTF8String);
+    fprintf(thread_stderr, "%s\n", usage.UTF8String);
     return 1;
   }
   
