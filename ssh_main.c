@@ -370,7 +370,7 @@ int ssh_main(int argc, char** argv) {
     user = argv[0];
     host = strchr(user, '@') + 1;
     if (host == 1) { // no user specified
-        host = argv[1];
+        host = argv[0];
         user = "mobile"; // consistent behaviour
     } else  *(host - 1) = 0x00; // null-terminate user
     // Concatenate all remaining options to form the command string:
