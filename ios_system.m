@@ -951,9 +951,11 @@ int sh_main(int argc, char** argv) {
     }
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     // NSLog(@"parentSession = %x currentSession = %x currentDir = %s\n", parentSession, currentSession, [fileManager currentDirectoryPath].UTF8String);
+    if (currentSession->context == sh_session) {
+        return 1; // We cannot have a sh command starting a sh command.
+    }
     if (parentSession == NULL) {
-        if (currentSession->context != sh_session)
-            parentSession = currentSession;
+        parentSession = currentSession;
         parentDir = [fileManager currentDirectoryPath];
     }
     ios_switchSession(&sh_session); // create a new session
