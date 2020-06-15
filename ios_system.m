@@ -58,6 +58,7 @@ typedef struct _sessionParameters {
     FILE* stdin;
     FILE* stdout;
     FILE* stderr;
+    FILE* tty;
     void* context;
     int global_errno;
     char commandName[NAME_MAX];
@@ -78,6 +79,7 @@ static void initSessionParameters(sessionParameters* sp) {
     sp->stdin = stdin;
     sp->stdout = stdout;
     sp->stderr = stderr;
+    sp->tty = stdin;
     sp->context = nil;
     sp->commandName[0] = 0;
     strcpy(sp->columns, "80");
@@ -182,6 +184,14 @@ typedef struct _functionParameters {
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     functionParameters *p = (functionParameters *) parameters;
+    char* commandName = p->argv[0];
+    if ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0)) {
+        if ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != pthread_self())) {
+            // Command was "root_command | sthg | less". We need to kill root command:
+            pthread_kill(currentSession->current_command_root_thread, SIGINT);
+            while (fgetc(thread_stdin) != EOF) { } // flush input, otherwise previous command gets blocked.
+        }
+    }
     if ((!joinMainThread) && p->isPipeOut) {
         if (currentSession->current_command_root_thread != 0) {
             if (currentSession->current_command_root_thread != pthread_self()) {
@@ -197,8 +207,7 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stdout);
     fflush(thread_stderr);
     // release parameters:
-    char* commandName = p->argv[0];
-    // NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d ", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr));
+    NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d isPipeOut %d", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
@@ -251,6 +260,9 @@ static void cleanup_function(void* parameters) {
         // NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
     }
     ios_releaseThread(pthread_self());
+    if (currentSession->current_command_root_thread == pthread_self()) {
+        currentSession->current_command_root_thread = 0;
+    }
 }
 
 void crash_handler(int sig) {
@@ -266,7 +278,7 @@ static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     ios_storeThreadId(pthread_self());
     // NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
-    // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
+    NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
     optind = 1;
@@ -688,7 +700,6 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     const char* command = inputCmd;
     // skip past all spaces
     while ((command[0] == ' ') && strlen(command) > 0) command++;
-    // TODO: skip past "/bin/sh -c" and "sh -c"
     if (pipe(fd) < 0) { return NULL; } // Nothing we can do if pipe fails
     // NOTES: fd[0] is set up for reading, fd[1] is set up for writing
     // fpout = fdopen(fd[1], "w");
@@ -696,17 +707,20 @@ FILE* ios_popen(const char* inputCmd, const char* type) {
     if (type[0] == 'w') {
         // open pipe for reading
         child_stdin = fdopen(fd[0], "r");
-        // launch command:
-        ios_system(command);
-        return fdopen(fd[1], "w");
+        // launch command: if the command fails, return NULL.
+        int returnValue = ios_system(command);
+        if (returnValue == 0)
+            return fdopen(fd[1], "w");
     } else if (type[0] == 'r') {
         // open pipe for writing
         // set up streams for thread
         child_stdout = fdopen(fd[1], "w");
-        // launch command:
-        ios_system(command);
-        return fdopen(fd[0], "r");
+        // launch command: if the command fails, return NULL.
+        int returnValue = ios_system(command);
+        if (returnValue == 0)
+            return fdopen(fd[0], "r");
     }
+    // pipe creation failed, command starting failed:
     return NULL;
 }
 
@@ -1181,6 +1195,17 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     currentSession->stderr = _stderr;
 }
 
+void ios_settty(FILE* _tty) {
+    if (currentSession == NULL) return;
+    currentSession->tty = _tty;
+}
+
+int ios_gettty() {
+    if (currentSession == NULL) return NULL;
+    if (currentSession->tty == NULL) return -1;
+    return fileno(currentSession->tty);
+}
+
 void ios_setContext(const void *context) {
     if (currentSession == NULL) return;
     currentSession->context = context;
@@ -1367,6 +1392,7 @@ int ios_system(const char* inputCmd) {
         currentSession = malloc(sizeof(sessionParameters));
         initSessionParameters(currentSession);
     }
+    currentSession->global_errno = 0;
     
     // initialize:
     if (thread_stdin == 0) thread_stdin = currentSession->stdin;
@@ -1437,10 +1463,19 @@ int ios_system(const char* inputCmd) {
         currentSession->isMainThread = false;
         if (params->stdout != 0) thread_stdout = params->stdout;
         if (params->stderr != 0) thread_stderr = params->stderr;
-        params->stdout = params->stderr = ios_popen(pipeMarker+2, "w");
+        // if popen fails, don't start the command
+        params->stdout = ios_popen(pipeMarker+2, "w");
+        params->stderr = params->stdout;
         currentSession->isMainThread = pushMainThread;
         pipeMarker[0] = 0x0;
         sharedErrorOutput = true;
+        if (params->stdout == NULL) { // pipe open failed, return before we start a command
+            NSLog(@"Failed launching pipe for %s\n", pipeMarker+2);
+            ios_storeThreadId(0);
+            free(params);
+            free(originalCommand); // releases cmd, which was a strdup of inputCommand
+            return currentSession->global_errno;
+        }
     } else {
         pipeMarker = strstrquoted(outputFileMarker,"|");
         if (pipeMarker) {
@@ -1448,9 +1483,17 @@ int ios_system(const char* inputCmd) {
             currentSession->isMainThread = false;
             if (params->stdout != 0) thread_stdout = params->stdout;
             if (params->stderr != 0) thread_stderr = params->stderr; // ?????
+            // if popen fails, don't start the command
             params->stdout = ios_popen(pipeMarker+1, "w");
             currentSession->isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
+            if (params->stdout == NULL) { // pipe open failed, return before we start a command
+                NSLog(@"Failed launching pipe for %s\n", pipeMarker+1);
+                ios_storeThreadId(0);
+                free(params);
+                free(originalCommand); // releases cmd, which was a strdup of inputCommand
+                return currentSession->global_errno;
+            }
         }
     }
     // We have removed the pipe part. Still need to parse the rest of the command
@@ -1483,6 +1526,8 @@ int ios_system(const char* inputCmd) {
     if (!sharedErrorOutput) {
         outputFileMarker = strstrquoted(outputFileMarker, ">");
         if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
+    } else {
+        outputFileMarker = NULL;
     }
     if (outputFileName) {
         while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
@@ -1512,10 +1557,10 @@ int ios_system(const char* inputCmd) {
         assert(endFile <= maxPointer);
     }
     // insert chain termination elements at the beginning of each filename.
-    // Must be done after the parsing
+    // Must be done after the parsing.
     if (inputFileMarker) inputFileMarker[0] = 0x0;
     // There was a test " && (params->stdout == NULL)" below. Why?
-    if (outputFileMarker) outputFileMarker[0] = 0x0;
+    if (outputFileMarker) outputFileMarker[0] = 0x0; // There
     if (errorFileMarker) errorFileMarker[0] = 0x0;
     // strip filenames of quotes, if any:
     if (outputFileName) outputFileName = unquoteArgument(outputFileName);
@@ -1538,7 +1583,7 @@ int ios_system(const char* inputCmd) {
         }
     }
     if (params->stdout == NULL) params->stdout = thread_stdout;
-    if (sharedErrorOutput) {
+    if (sharedErrorOutput && (params->stderr != params->stdout)) {
         if (params->stderr != NULL) {
             if (fileno(params->stderr) != fileno(currentSession->stderr)) fclose(params->stderr);
         }
@@ -1909,6 +1954,7 @@ int ios_system(const char* inputCmd) {
                     currentSession->isMainThread = true;
                 }
             } else {
+                NSLog(@"Starting command %s, global_errno= %d\n", command, currentSession->global_errno);
                 // Don't send signal if not in main thread. Also, don't join threads.
                 volatile pthread_t _tid_local = NULL;
                 pthread_create(&_tid_local, NULL, run_function, params);
@@ -1924,6 +1970,7 @@ int ios_system(const char* inputCmd) {
             free(argv);
             // If command output was redirected to a pipe, we still need to close it.
             // (to warn the other command that it can stop waiting)
+            // We still need this step because there can be multiple pipes.
             if (params->stdout != currentSession->stdout) {
                 fclose(params->stdout);
             }
@@ -1945,6 +1992,7 @@ int ios_system(const char* inputCmd) {
         free(dontExpand);
         free(params);
     }
+    NSLog(@"returning from ios_system, global_errno= %d\n", currentSession->global_errno);
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
     fflush(thread_stdin);
     fflush(thread_stdout);

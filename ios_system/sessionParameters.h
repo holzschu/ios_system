@@ -20,6 +20,7 @@
 @property FILE* stdin;
 @property FILE* stdout;
 @property FILE* stderr;
+@property FILE* tty;
 @property void* context;
 @property int global_errno;
 @property NSString* commandName;

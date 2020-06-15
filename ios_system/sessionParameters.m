@@ -24,7 +24,8 @@
     self.stdin = stdin;
     self.stdout = stdout;
     self.stderr = stderr;
-    self.context = nil; 
+    self.tty = stdin;
+    self.context = nil;
     self.commandName = nil;
     self.columns = @"80";
     self.lines = @"80";

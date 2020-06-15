@@ -94,6 +94,7 @@ extern int ios_fputs(const char* s, FILE *stream);
 extern    int ios_fputc(int c, FILE *stream);
 extern int ios_putw(int w, FILE *stream);
 extern int ios_fflush(FILE *stream);
+extern int ios_gettty(void);
 
 #ifdef __cplusplus
 }
