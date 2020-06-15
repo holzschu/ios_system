@@ -1,0 +1,530 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		59DE08D710322F5500739622 /* default */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 59DE08EA10322F7B00739622 /* Build configuration list for PBXAggregateTarget "default" */;
+			buildPhases = (
+				590CF74910324682007112A1 /* OSLicense */,
+				590CF751103246D9007112A1 /* OSVersion */,
+				590CF7571032476E007112A1 /* chmog + gzip */,
+			);
+			dependencies = (
+				59DE08DC10322F5E00739622 /* PBXTargetDependency */,
+				59DE08DA10322F5C00739622 /* PBXTargetDependency */,
+			);
+			name = default;
+			productName = default;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		590CF71D10323516007112A1 /* lessecho.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 590CF71C10323511007112A1 /* lessecho.1 */; };
+		590CF72F10323D62007112A1 /* less.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 590CF72E10323D52007112A1 /* less.1 */; };
+		590CF74B103246A7007112A1 /* less.txt in OSLicense */ = {isa = PBXBuildFile; fileRef = 590CF74A103246A7007112A1 /* less.txt */; };
+		590CF752103246E7007112A1 /* less.plist in OSVersion */ = {isa = PBXBuildFile; fileRef = 590CF71510323386007112A1 /* less.plist */; };
+		597A0FF619AFEF9F007468CF /* cvt.c in Sources */ = {isa = PBXBuildFile; fileRef = 597A0FF519AFEF59007468CF /* cvt.c */; };
+		597A0FF719AFEFA4007468CF /* pattern.c in Sources */ = {isa = PBXBuildFile; fileRef = 597A0FF319AFEF1F007468CF /* pattern.c */; };
+		59DE08BE10322DAE00739622 /* lessecho.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4071031F8E900A58A17 /* lessecho.c */; };
+		59F9B4371031F8E900A58A17 /* brac.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3EA1031F8E900A58A17 /* brac.c */; };
+		59F9B4381031F8E900A58A17 /* ch.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3EB1031F8E900A58A17 /* ch.c */; };
+		59F9B4391031F8E900A58A17 /* charset.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3EC1031F8E900A58A17 /* charset.c */; };
+		59F9B43A1031F8E900A58A17 /* cmdbuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3EF1031F8E900A58A17 /* cmdbuf.c */; };
+		59F9B43B1031F8E900A58A17 /* command.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3F01031F8E900A58A17 /* command.c */; };
+		59F9B43C1031F8E900A58A17 /* decode.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3F31031F8E900A58A17 /* decode.c */; };
+		59F9B43D1031F8E900A58A17 /* edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3F91031F8E900A58A17 /* edit.c */; };
+		59F9B43E1031F8E900A58A17 /* filename.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3FA1031F8E900A58A17 /* filename.c */; };
+		59F9B43F1031F8E900A58A17 /* forwback.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3FB1031F8E900A58A17 /* forwback.c */; };
+		59F9B4401031F8E900A58A17 /* help.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3FD1031F8E900A58A17 /* help.c */; };
+		59F9B4411031F8E900A58A17 /* ifile.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3FE1031F8E900A58A17 /* ifile.c */; };
+		59F9B4421031F8E900A58A17 /* input.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B3FF1031F8E900A58A17 /* input.c */; };
+		59F9B4431031F8E900A58A17 /* jump.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4021031F8E900A58A17 /* jump.c */; };
+		59F9B4461031F8E900A58A17 /* line.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4101031F8E900A58A17 /* line.c */; };
+		59F9B4471031F8E900A58A17 /* linenum.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4111031F8E900A58A17 /* linenum.c */; };
+		59F9B4481031F8E900A58A17 /* lsystem.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4121031F8E900A58A17 /* lsystem.c */; };
+		59F9B4491031F8E900A58A17 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4131031F8E900A58A17 /* main.c */; };
+		59F9B44A1031F8E900A58A17 /* mark.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B41E1031F8E900A58A17 /* mark.c */; };
+		59F9B44C1031F8E900A58A17 /* optfunc.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4231031F8E900A58A17 /* optfunc.c */; };
+		59F9B44D1031F8E900A58A17 /* option.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4241031F8E900A58A17 /* option.c */; };
+		59F9B44E1031F8E900A58A17 /* opttbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4261031F8E900A58A17 /* opttbl.c */; };
+		59F9B44F1031F8E900A58A17 /* os.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4271031F8E900A58A17 /* os.c */; };
+		59F9B4501031F8E900A58A17 /* output.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4281031F8E900A58A17 /* output.c */; };
+		59F9B4511031F8E900A58A17 /* position.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B42A1031F8E900A58A17 /* position.c */; };
+		59F9B4521031F8E900A58A17 /* prompt.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B42C1031F8E900A58A17 /* prompt.c */; };
+		59F9B4541031F8E900A58A17 /* screen.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4301031F8E900A58A17 /* screen.c */; };
+		59F9B4561031F8E900A58A17 /* search.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4321031F8E900A58A17 /* search.c */; };
+		59F9B4571031F8E900A58A17 /* signal.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4331031F8E900A58A17 /* signal.c */; };
+		59F9B4581031F8E900A58A17 /* tags.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4341031F8E900A58A17 /* tags.c */; };
+		59F9B4591031F8E900A58A17 /* ttyin.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4351031F8E900A58A17 /* ttyin.c */; };
+		59F9B45A1031F8E900A58A17 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 59F9B4361031F8E900A58A17 /* version.c */; };
+		59F9B45C1031F92000A58A17 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 59F9B45B1031F92000A58A17 /* libncurses.dylib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		59DE08D910322F5C00739622 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 59DE08BA10322DA000739622;
+			remoteInfo = lessecho;
+		};
+		59DE08DB10322F5E00739622 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DD76FA90486AB0100D96B5E;
+			remoteInfo = less;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		590CF719103233CE007112A1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1;
+			dstSubfolderSpec = 0;
+			files = (
+				590CF71D10323516007112A1 /* lessecho.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		590CF74910324682007112A1 /* OSLicense */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/local/OpenSourceLicenses;
+			dstSubfolderSpec = 0;
+			files = (
+				590CF74B103246A7007112A1 /* less.txt in OSLicense */,
+			);
+			name = OSLicense;
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		590CF751103246D9007112A1 /* OSVersion */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/local/OpenSourceVersions;
+			dstSubfolderSpec = 0;
+			files = (
+				590CF752103246E7007112A1 /* less.plist in OSVersion */,
+			);
+			name = OSVersion;
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		8DD76FAF0486AB0100D96B5E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				590CF72F10323D62007112A1 /* less.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		590CF71510323386007112A1 /* less.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = less.plist; sourceTree = "<group>"; };
+		590CF71C10323511007112A1 /* lessecho.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; path = lessecho.1; sourceTree = "<group>"; };
+		590CF72E10323D52007112A1 /* less.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; path = less.1; sourceTree = "<group>"; };
+		590CF74A103246A7007112A1 /* less.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = less.txt; sourceTree = "<group>"; };
+		597A0FF319AFEF1F007468CF /* pattern.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pattern.c; sourceTree = "<group>"; };
+		597A0FF419AFEF1F007468CF /* pattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pattern.h; sourceTree = "<group>"; };
+		597A0FF519AFEF59007468CF /* cvt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cvt.c; sourceTree = "<group>"; };
+		59DE08BB10322DA000739622 /* lessecho */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lessecho; sourceTree = BUILT_PRODUCTS_DIR; };
+		59DE08C210322EA000739622 /* defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = defines.h; sourceTree = "<group>"; };
+		59F9B3E81031F88400A58A17 /* BSD.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = BSD.xcconfig; sourceTree = "<group>"; };
+		59F9B3EA1031F8E900A58A17 /* brac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = brac.c; sourceTree = "<group>"; };
+		59F9B3EB1031F8E900A58A17 /* ch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ch.c; sourceTree = "<group>"; };
+		59F9B3EC1031F8E900A58A17 /* charset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = charset.c; sourceTree = "<group>"; };
+		59F9B3EF1031F8E900A58A17 /* cmdbuf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cmdbuf.c; sourceTree = "<group>"; };
+		59F9B3F01031F8E900A58A17 /* command.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = command.c; sourceTree = "<group>"; };
+		59F9B3F31031F8E900A58A17 /* decode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = decode.c; sourceTree = "<group>"; };
+		59F9B3F91031F8E900A58A17 /* edit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = edit.c; sourceTree = "<group>"; };
+		59F9B3FA1031F8E900A58A17 /* filename.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = filename.c; sourceTree = "<group>"; };
+		59F9B3FB1031F8E900A58A17 /* forwback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = forwback.c; sourceTree = "<group>"; };
+		59F9B3FD1031F8E900A58A17 /* help.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = help.c; sourceTree = "<group>"; };
+		59F9B3FE1031F8E900A58A17 /* ifile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ifile.c; sourceTree = "<group>"; };
+		59F9B3FF1031F8E900A58A17 /* input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = input.c; sourceTree = "<group>"; };
+		59F9B4021031F8E900A58A17 /* jump.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = jump.c; sourceTree = "<group>"; };
+		59F9B4061031F8E900A58A17 /* less.nro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = less.nro; sourceTree = "<group>"; };
+		59F9B4071031F8E900A58A17 /* lessecho.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lessecho.c; sourceTree = "<group>"; };
+		59F9B4091031F8E900A58A17 /* lessecho.nro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = lessecho.nro; sourceTree = "<group>"; };
+		59F9B40E1031F8E900A58A17 /* lglob.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lglob.h; sourceTree = "<group>"; };
+		59F9B40F1031F8E900A58A17 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		59F9B4101031F8E900A58A17 /* line.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = line.c; sourceTree = "<group>"; };
+		59F9B4111031F8E900A58A17 /* linenum.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = linenum.c; sourceTree = "<group>"; };
+		59F9B4121031F8E900A58A17 /* lsystem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lsystem.c; sourceTree = "<group>"; };
+		59F9B4131031F8E900A58A17 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		59F9B41E1031F8E900A58A17 /* mark.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mark.c; sourceTree = "<group>"; };
+		59F9B4231031F8E900A58A17 /* optfunc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = optfunc.c; sourceTree = "<group>"; };
+		59F9B4241031F8E900A58A17 /* option.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = option.c; sourceTree = "<group>"; };
+		59F9B4261031F8E900A58A17 /* opttbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = opttbl.c; sourceTree = "<group>"; };
+		59F9B4271031F8E900A58A17 /* os.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = os.c; sourceTree = "<group>"; };
+		59F9B4281031F8E900A58A17 /* output.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = output.c; sourceTree = "<group>"; };
+		59F9B42A1031F8E900A58A17 /* position.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = position.c; sourceTree = "<group>"; };
+		59F9B42C1031F8E900A58A17 /* prompt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = prompt.c; sourceTree = "<group>"; };
+		59F9B42E1031F8E900A58A17 /* regexp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = regexp.c; sourceTree = "<group>"; };
+		59F9B4301031F8E900A58A17 /* screen.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = screen.c; sourceTree = "<group>"; };
+		59F9B4321031F8E900A58A17 /* search.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = search.c; sourceTree = "<group>"; };
+		59F9B4331031F8E900A58A17 /* signal.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = signal.c; sourceTree = "<group>"; };
+		59F9B4341031F8E900A58A17 /* tags.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tags.c; sourceTree = "<group>"; };
+		59F9B4351031F8E900A58A17 /* ttyin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ttyin.c; sourceTree = "<group>"; };
+		59F9B4361031F8E900A58A17 /* version.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = version.c; sourceTree = "<group>"; };
+		59F9B45B1031F92000A58A17 /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = /usr/lib/libncurses.dylib; sourceTree = "<absolute>"; };
+		8DD76FB20486AB0100D96B5E /* less */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = less; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		59DE08B910322DA000739622 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD76FAD0486AB0100D96B5E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59F9B45C1031F92000A58A17 /* libncurses.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08FB7794FE84155DC02AAC07 /* less */ = {
+			isa = PBXGroup;
+			children = (
+				59F9B3E81031F88400A58A17 /* BSD.xcconfig */,
+				08FB7795FE84155DC02AAC07 /* Source */,
+				C6A0FF2B0290797F04C91782 /* Documentation */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+				59F9B45B1031F92000A58A17 /* libncurses.dylib */,
+			);
+			name = less;
+			sourceTree = "<group>";
+		};
+		08FB7795FE84155DC02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				59DE08C210322EA000739622 /* defines.h */,
+				59F9B3E91031F8E900A58A17 /* less */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8DD76FB20486AB0100D96B5E /* less */,
+				59DE08BB10322DA000739622 /* lessecho */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		59F9B3E91031F8E900A58A17 /* less */ = {
+			isa = PBXGroup;
+			children = (
+				597A0FF519AFEF59007468CF /* cvt.c */,
+				597A0FF319AFEF1F007468CF /* pattern.c */,
+				597A0FF419AFEF1F007468CF /* pattern.h */,
+				59F9B3EA1031F8E900A58A17 /* brac.c */,
+				59F9B3EB1031F8E900A58A17 /* ch.c */,
+				59F9B3EC1031F8E900A58A17 /* charset.c */,
+				59F9B3EF1031F8E900A58A17 /* cmdbuf.c */,
+				59F9B3F01031F8E900A58A17 /* command.c */,
+				59F9B3F31031F8E900A58A17 /* decode.c */,
+				59F9B3F91031F8E900A58A17 /* edit.c */,
+				59F9B3FA1031F8E900A58A17 /* filename.c */,
+				59F9B3FB1031F8E900A58A17 /* forwback.c */,
+				59F9B3FD1031F8E900A58A17 /* help.c */,
+				59F9B3FE1031F8E900A58A17 /* ifile.c */,
+				59F9B3FF1031F8E900A58A17 /* input.c */,
+				59F9B4021031F8E900A58A17 /* jump.c */,
+				59F9B4061031F8E900A58A17 /* less.nro */,
+				59F9B4071031F8E900A58A17 /* lessecho.c */,
+				59F9B4091031F8E900A58A17 /* lessecho.nro */,
+				59F9B40E1031F8E900A58A17 /* lglob.h */,
+				59F9B40F1031F8E900A58A17 /* LICENSE */,
+				59F9B4101031F8E900A58A17 /* line.c */,
+				59F9B4111031F8E900A58A17 /* linenum.c */,
+				59F9B4121031F8E900A58A17 /* lsystem.c */,
+				59F9B4131031F8E900A58A17 /* main.c */,
+				59F9B41E1031F8E900A58A17 /* mark.c */,
+				59F9B4231031F8E900A58A17 /* optfunc.c */,
+				59F9B4241031F8E900A58A17 /* option.c */,
+				59F9B4261031F8E900A58A17 /* opttbl.c */,
+				59F9B4271031F8E900A58A17 /* os.c */,
+				59F9B4281031F8E900A58A17 /* output.c */,
+				59F9B42A1031F8E900A58A17 /* position.c */,
+				59F9B42C1031F8E900A58A17 /* prompt.c */,
+				59F9B42E1031F8E900A58A17 /* regexp.c */,
+				59F9B4301031F8E900A58A17 /* screen.c */,
+				59F9B4321031F8E900A58A17 /* search.c */,
+				59F9B4331031F8E900A58A17 /* signal.c */,
+				59F9B4341031F8E900A58A17 /* tags.c */,
+				59F9B4351031F8E900A58A17 /* ttyin.c */,
+				59F9B4361031F8E900A58A17 /* version.c */,
+			);
+			path = less;
+			sourceTree = "<group>";
+		};
+		C6A0FF2B0290797F04C91782 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				590CF71C10323511007112A1 /* lessecho.1 */,
+				590CF71510323386007112A1 /* less.plist */,
+				590CF72E10323D52007112A1 /* less.1 */,
+				590CF74A103246A7007112A1 /* less.txt */,
+			);
+			name = Documentation;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		59DE08BA10322DA000739622 /* lessecho */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 59DE08C110322DD200739622 /* Build configuration list for PBXNativeTarget "lessecho" */;
+			buildPhases = (
+				59DE08B810322DA000739622 /* Sources */,
+				59DE08B910322DA000739622 /* Frameworks */,
+				590CF719103233CE007112A1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = lessecho;
+			productName = lessecho;
+			productReference = 59DE08BB10322DA000739622 /* lessecho */;
+			productType = "com.apple.product-type.tool";
+		};
+		8DD76FA90486AB0100D96B5E /* less */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB928508733DD80010E9CD /* Build configuration list for PBXNativeTarget "less" */;
+			buildPhases = (
+				8DD76FAB0486AB0100D96B5E /* Sources */,
+				8DD76FAD0486AB0100D96B5E /* Frameworks */,
+				8DD76FAF0486AB0100D96B5E /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = less;
+			productInstallPath = "$(HOME)/bin";
+			productName = less;
+			productReference = 8DD76FB20486AB0100D96B5E /* less */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0600;
+			};
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "less" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 08FB7794FE84155DC02AAC07 /* less */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				59DE08D710322F5500739622 /* default */,
+				8DD76FA90486AB0100D96B5E /* less */,
+				59DE08BA10322DA000739622 /* lessecho */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		590CF7571032476E007112A1 /* chmog + gzip */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 8;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "chmog + gzip";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+			shellPath = /bin/sh;
+			shellScript = "set -ex\nif [[ ${UID} -eq 0 ]]; then\n\tchown -R root:wheel ${DSTROOT}/usr\nfi\nfor f in $(find ${DSTROOT}/usr/local -type f); do \n\tchmod a-wx $f\ndone\ngzip -fn ${DSTROOT}/usr/share/man/man[1]/*.[1]\nchmod  u-w ${DSTROOT}/usr/share/man/man1/*\nln ${DSTROOT}/usr/bin/{less,more}\nln ${DSTROOT}/usr/share/man/man1/{less,more}.1.gz\nexit 0";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		59DE08B810322DA000739622 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59DE08BE10322DAE00739622 /* lessecho.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD76FAB0486AB0100D96B5E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				597A0FF719AFEFA4007468CF /* pattern.c in Sources */,
+				597A0FF619AFEF9F007468CF /* cvt.c in Sources */,
+				59F9B4371031F8E900A58A17 /* brac.c in Sources */,
+				59F9B4381031F8E900A58A17 /* ch.c in Sources */,
+				59F9B4391031F8E900A58A17 /* charset.c in Sources */,
+				59F9B43A1031F8E900A58A17 /* cmdbuf.c in Sources */,
+				59F9B43B1031F8E900A58A17 /* command.c in Sources */,
+				59F9B43C1031F8E900A58A17 /* decode.c in Sources */,
+				59F9B43D1031F8E900A58A17 /* edit.c in Sources */,
+				59F9B43E1031F8E900A58A17 /* filename.c in Sources */,
+				59F9B43F1031F8E900A58A17 /* forwback.c in Sources */,
+				59F9B4401031F8E900A58A17 /* help.c in Sources */,
+				59F9B4411031F8E900A58A17 /* ifile.c in Sources */,
+				59F9B4421031F8E900A58A17 /* input.c in Sources */,
+				59F9B4431031F8E900A58A17 /* jump.c in Sources */,
+				59F9B4461031F8E900A58A17 /* line.c in Sources */,
+				59F9B4471031F8E900A58A17 /* linenum.c in Sources */,
+				59F9B4481031F8E900A58A17 /* lsystem.c in Sources */,
+				59F9B4491031F8E900A58A17 /* main.c in Sources */,
+				59F9B44A1031F8E900A58A17 /* mark.c in Sources */,
+				59F9B44C1031F8E900A58A17 /* optfunc.c in Sources */,
+				59F9B44D1031F8E900A58A17 /* option.c in Sources */,
+				59F9B44E1031F8E900A58A17 /* opttbl.c in Sources */,
+				59F9B44F1031F8E900A58A17 /* os.c in Sources */,
+				59F9B4501031F8E900A58A17 /* output.c in Sources */,
+				59F9B4511031F8E900A58A17 /* position.c in Sources */,
+				59F9B4521031F8E900A58A17 /* prompt.c in Sources */,
+				59F9B4541031F8E900A58A17 /* screen.c in Sources */,
+				59F9B4561031F8E900A58A17 /* search.c in Sources */,
+				59F9B4571031F8E900A58A17 /* signal.c in Sources */,
+				59F9B4581031F8E900A58A17 /* tags.c in Sources */,
+				59F9B4591031F8E900A58A17 /* ttyin.c in Sources */,
+				59F9B45A1031F8E900A58A17 /* version.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		59DE08DA10322F5C00739622 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 59DE08BA10322DA000739622 /* lessecho */;
+			targetProxy = 59DE08D910322F5C00739622 /* PBXContainerItemProxy */;
+		};
+		59DE08DC10322F5E00739622 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8DD76FA90486AB0100D96B5E /* less */;
+			targetProxy = 59DE08DB10322F5E00739622 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB928708733DD80010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_MODEL_TUNING = G5;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"SYSDIR='\"/etc\"'",
+					"BINDIR='\"/usr/bin\"'",
+				);
+				PRODUCT_NAME = less;
+				SKIP_INSTALL = NO;
+			};
+			name = Release;
+		};
+		1DEB928B08733DD80010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 59F9B3E81031F88400A58A17 /* BSD.xcconfig */;
+			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)";
+				INSTALL_PATH = /usr/bin;
+				PREBINDING = NO;
+				SDKROOT = "";
+			};
+			name = Release;
+		};
+		59DE08BD10322DA100739622 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				PREBINDING = NO;
+				PRODUCT_NAME = lessecho;
+				SKIP_INSTALL = NO;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		59DE08D810322F5500739622 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = default;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB928508733DD80010E9CD /* Build configuration list for PBXNativeTarget "less" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB928708733DD80010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "less" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB928B08733DD80010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		59DE08C110322DD200739622 /* Build configuration list for PBXNativeTarget "lessecho" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				59DE08BD10322DA100739622 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		59DE08EA10322F7B00739622 /* Build configuration list for PBXAggregateTarget "default" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				59DE08D810322F5500739622 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}
