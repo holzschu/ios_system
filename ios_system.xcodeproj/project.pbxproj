@@ -3,118 +3,22 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 48;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		220B945424B11B60007E036D /* url.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780811FDB4D380050F312 /* url.c */; };
-		220B945524B11B75007E036D /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257802F1FDB4D380050F312 /* md5.c */; };
-		220B945624B11B9B007E036D /* multi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780351FDB4D380050F312 /* multi.c */; };
-		220B945724B11BE3007E036D /* easy.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE71FDB4D370050F312 /* easy.c */; };
-		220B945824B11C18007E036D /* ftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF21FDB4D370050F312 /* ftp.c */; };
-		220B945924B11C29007E036D /* curl_des.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBF1FDB4D370050F312 /* curl_des.c */; };
-		220B945A24B11C37007E036D /* transfer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807F1FDB4D380050F312 /* transfer.c */; };
-		220B945B24B11C44007E036D /* mprintf.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780341FDB4D380050F312 /* mprintf.c */; };
-		220B945C24B11C4F007E036D /* cookie.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB81FDB4D370050F312 /* cookie.c */; };
-		220B945D24B11C60007E036D /* rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804E1FDB4D380050F312 /* rand.c */; };
-		220B945E24B11C6B007E036D /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA51FDB4D370050F312 /* base64.c */; };
-		220B945F24B11C98007E036D /* gopher.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF91FDB4D370050F312 /* gopher.c */; };
-		220B946024B11CA4007E036D /* hmac.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFD1FDB4D370050F312 /* hmac.c */; };
-		220B946124B11CB8007E036D /* hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFB1FDB4D370050F312 /* hash.c */; };
-		220B946224B11CD6007E036D /* slist.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257805C1FDB4D380050F312 /* slist.c */; };
-		220B946324B11CEE007E036D /* connect.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB41FDB4D370050F312 /* connect.c */; };
-		220B946424B11D03007E036D /* sendf.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780551FDB4D380050F312 /* sendf.c */; };
-		220B946524B11D0D007E036D /* vtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AC1FDB4D380050F312 /* vtls.c */; };
-		220B946624B11D49007E036D /* strerror.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780711FDB4D380050F312 /* strerror.c */; };
-		220B946724B11D67007E036D /* tool_easysrc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E11FDB4D380050F312 /* tool_easysrc.c */; };
-		220B946824B11D74007E036D /* hostip.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780011FDB4D370050F312 /* hostip.c */; };
-		220B946924B11DB7007E036D /* socks_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780661FDB4D380050F312 /* socks_sspi.c */; };
-		220B946A24B11DC0007E036D /* socks.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780631FDB4D380050F312 /* socks.c */; };
-		220B946B24B11DD2007E036D /* tool_helpers.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780EB1FDB4D380050F312 /* tool_helpers.c */; };
-		220B946C24B11DE2007E036D /* asyn-thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA31FDB4D370050F312 /* asyn-thread.c */; };
-		220B946D24B11E38007E036D /* llist.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780221FDB4D380050F312 /* llist.c */; };
-		220B946E24B11E47007E036D /* timeval.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807D1FDB4D380050F312 /* timeval.c */; };
-		220B946F24B11E63007E036D /* darwinssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809A1FDB4D380050F312 /* darwinssl.c */; };
-		220B947024B11E88007E036D /* digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780871FDB4D380050F312 /* digest.c */; };
-		220B947124B11EA6007E036D /* strdup.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806F1FDB4D380050F312 /* strdup.c */; };
-		220B947224B11EBF007E036D /* warnless.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AE1FDB4D380050F312 /* warnless.c */; };
-		220B947324B11EE4007E036D /* tool_getparam.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E51FDB4D380050F312 /* tool_getparam.c */; };
-		220B947424B11EF5007E036D /* select.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780531FDB4D380050F312 /* select.c */; };
-		220B947524B11F18007E036D /* conncache.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB21FDB4D370050F312 /* conncache.c */; };
-		220B947624B11F35007E036D /* curl_memrchr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FCE1FDB4D370050F312 /* curl_memrchr.c */; };
-		220B947724B11F39007E036D /* curl_multibyte.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD01FDB4D370050F312 /* curl_multibyte.c */; };
-		220B947824B11F41007E036D /* curl_ntlm_wb.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD41FDB4D370050F312 /* curl_ntlm_wb.c */; };
-		220B947924B11F48007E036D /* curl_rtmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD71FDB4D370050F312 /* curl_rtmp.c */; };
-		220B947A24B11FFA007E036D /* getinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF71FDB4D370050F312 /* getinfo.c */; };
-		220B947B24B12004007E036D /* wildcard.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780B01FDB4D380050F312 /* wildcard.c */; };
-		220B947C24B1200F007E036D /* http_chunks.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800A1FDB4D370050F312 /* http_chunks.c */; };
-		220B947D24B1201A007E036D /* smtp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780601FDB4D380050F312 /* smtp.c */; };
-		220B947E24B121D3007E036D /* tool_msgs.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F91FDB4D380050F312 /* tool_msgs.c */; };
-		220B947F24B121D6007E036D /* tool_operate.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780FB1FDB4D380050F312 /* tool_operate.c */; settings = {COMPILER_FLAGS = "-x objective-c"; }; };
-		220B948024B121D9007E036D /* tool_xattr.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781181FDB4D380050F312 /* tool_xattr.c */; };
-		220B948124B121DD007E036D /* tool_writeout.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781161FDB4D380050F312 /* tool_writeout.c */; };
-		220B948224B121E0007E036D /* tool_writeenv.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781141FDB4D380050F312 /* tool_writeenv.c */; };
-		220B948324B121E6007E036D /* tool_urlglob.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257810D1FDB4D380050F312 /* tool_urlglob.c */; };
-		220B948424B121E9007E036D /* tool_strdup.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257810B1FDB4D380050F312 /* tool_strdup.c */; };
-		220B948524B121EC007E036D /* tool_sleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781091FDB4D380050F312 /* tool_sleep.c */; };
-		220B948624B121F4007E036D /* tool_paramhlp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781011FDB4D380050F312 /* tool_paramhlp.c */; };
-		220B948724B12201007E036D /* tool_mfiles.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F71FDB4D380050F312 /* tool_mfiles.c */; };
-		220B948824B12211007E036D /* tool_homedir.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780ED1FDB4D380050F312 /* tool_homedir.c */; };
-		220B948924B12220007E036D /* tool_getpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E71FDB4D380050F312 /* tool_getpass.c */; };
-		220B948A24B12236007E036D /* tool_formparse.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E31FDB4D380050F312 /* tool_formparse.c */; };
-		220B948B24B12245007E036D /* tool_convert.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780DB1FDB4D380050F312 /* tool_convert.c */; };
-		220B948C24B1225E007E036D /* tftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807B1FDB4D380050F312 /* tftp.c */; };
-		220B948D24B1226D007E036D /* pingpong.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780461FDB4D380050F312 /* pingpong.c */; };
-		220B948E24B12282007E036D /* ftplistparser.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF41FDB4D370050F312 /* ftplistparser.c */; };
-		220B948F24B122A4007E036D /* parsedate.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780441FDB4D380050F312 /* parsedate.c */; };
-		220B949024B122B1007E036D /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FEB1FDB4D370050F312 /* file.c */; };
-		220B949124B1234B007E036D /* vauth.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780921FDB4D380050F312 /* vauth.c */; };
-		220B949224B12358007E036D /* hostip4.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780031FDB4D370050F312 /* hostip4.c */; };
-		220B949324B12365007E036D /* hostip6.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780041FDB4D370050F312 /* hostip6.c */; };
-		220B949424B12371007E036D /* splay.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780691FDB4D380050F312 /* splay.c */; };
-		220B949524B12383007E036D /* if2ip.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780151FDB4D370050F312 /* if2ip.c */; };
-		220B949724B123A1007E036D /* http_proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780121FDB4D370050F312 /* http_proxy.c */; };
-		220B949824B123AC007E036D /* curl_endian.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC11FDB4D370050F312 /* curl_endian.c */; };
-		220B949924B123B7007E036D /* tool_cb_prg.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D11FDB4D380050F312 /* tool_cb_prg.c */; };
-		220B949A24B123C2007E036D /* dotdot.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE51FDB4D370050F312 /* dotdot.c */; };
-		220B949B24B1241C007E036D /* ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808C1FDB4D380050F312 /* ntlm.c */; };
-		220B949C24B12433007E036D /* smb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257805E1FDB4D380050F312 /* smb.c */; };
-		220B949D24B1243F007E036D /* oauth2.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808F1FDB4D380050F312 /* oauth2.c */; };
-		220B949E24B12453007E036D /* nonblock.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257803C1FDB4D380050F312 /* nonblock.c */; };
-		220B949F24B1245E007E036D /* speedcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780671FDB4D380050F312 /* speedcheck.c */; };
-		220B94A024B1246B007E036D /* imap.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780171FDB4D370050F312 /* imap.c */; };
-		220B94A124B12479007E036D /* fileinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FED1FDB4D370050F312 /* fileinfo.c */; };
-		220B94A224B12490007E036D /* tool_help.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E91FDB4D380050F312 /* tool_help.c */; };
-		220B94A324B1249A007E036D /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE31FDB4D370050F312 /* dict.c */; };
-		220B94A424B124A3007E036D /* telnet.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780791FDB4D380050F312 /* telnet.c */; };
-		220B94A524B124AC007E036D /* netrc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780381FDB4D380050F312 /* netrc.c */; };
-		220B94A624B124B5007E036D /* tool_cb_hdr.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780CF1FDB4D380050F312 /* tool_cb_hdr.c */; };
-		220B94A724B124BE007E036D /* tool_cb_dbg.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780CD1FDB4D380050F312 /* tool_cb_dbg.c */; };
-		220B94A824B124C7007E036D /* tool_dirhie.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780DD1FDB4D380050F312 /* tool_dirhie.c */; };
-		220B94A924B124DB007E036D /* ssh.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806B1FDB4D380050F312 /* ssh.c */; };
-		220B94AA24B124E3007E036D /* tool_binmode.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780C91FDB4D380050F312 /* tool_binmode.c */; };
-		220B94AB24B1250A007E036D /* tool_cb_wrt.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D71FDB4D380050F312 /* tool_cb_wrt.c */; };
-		220B94AC24B1261C007E036D /* hostcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFF1FDB4D370050F312 /* hostcheck.c */; };
-		220B94AD24B1263A007E036D /* inet_ntop.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780191FDB4D370050F312 /* inet_ntop.c */; };
-		220B94AE24B1263E007E036D /* inet_pton.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257801B1FDB4D370050F312 /* inet_pton.c */; };
-		220B94AF24B1264E007E036D /* non-ascii.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257803A1FDB4D380050F312 /* non-ascii.c */; };
-		220B94B024B12661007E036D /* openldap.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780431FDB4D380050F312 /* openldap.c */; };
-		220B94B124B12682007E036D /* security.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780521FDB4D380050F312 /* security.c */; };
-		220B94B224B12695007E036D /* strtok.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780731FDB4D380050F312 /* strtok.c */; };
-		220B94B324B1269C007E036D /* strtoofft.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780751FDB4D380050F312 /* strtoofft.c */; };
-		220B94B424B126C0007E036D /* tool_bname.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780CB1FDB4D380050F312 /* tool_bname.c */; };
 		22122E2C21BC130700D8FE74 /* say.m in Sources */ = {isa = PBXBuildFile; fileRef = 22122E2A21BC129000D8FE74 /* say.m */; };
-		2217ECD421CBA5F40049B382 /* entropy.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD321CBA5F40049B382 /* entropy.c */; settings = {COMPILER_FLAGS = "-I ./Frameworks/openssl.xcframework/ios-armv7_arm64/"; }; };
+		2217ECD421CBA5F40049B382 /* entropy.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD321CBA5F40049B382 /* entropy.c */; };
 		2217ECD621CBA6240049B382 /* openssl-compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD521CBA6240049B382 /* openssl-compat.c */; };
 		2217ECD821CBA7520049B382 /* sshbuf-misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD721CBA7510049B382 /* sshbuf-misc.c */; };
-		2217ECDA21CBA7740049B382 /* ssh-ed25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD921CBA7730049B382 /* ssh-ed25519.c */; settings = {COMPILER_FLAGS = "-I ./Frameworks/openssl.xcframework/ios-armv7_arm64/"; }; };
-		2217ECDC21CBA79B0049B382 /* ed25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECDB21CBA79B0049B382 /* ed25519.c */; settings = {COMPILER_FLAGS = "-I ./Frameworks/openssl.xcframework/ios-armv7_arm64/"; }; };
+		2217ECDA21CBA7740049B382 /* ssh-ed25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD921CBA7730049B382 /* ssh-ed25519.c */; };
+		2217ECDC21CBA79B0049B382 /* ed25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECDB21CBA79B0049B382 /* ed25519.c */; };
 		2217ECDE21CBA7EA0049B382 /* ssh-dss.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECDD21CBA7EA0049B382 /* ssh-dss.c */; };
 		2217ECE021CBBA700049B382 /* bcrypt_pbkdf.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECDF21CBBA700049B382 /* bcrypt_pbkdf.c */; };
 		2217ECE221CBBA970049B382 /* blowfish.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE121CBBA970049B382 /* blowfish.c */; };
 		2217ECE421CBBACD0049B382 /* hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE321CBBACD0049B382 /* hash.c */; };
 		2217ECE621CBBB620049B382 /* ge25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE521CBBB620049B382 /* ge25519.c */; };
-		2217ECE821CBBBBD0049B382 /* verify.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE721CBBBBD0049B382 /* verify.c */; settings = {COMPILER_FLAGS = "-I ./Frameworks/openssl.xcframework/ios-armv7_arm64/"; }; };
+		2217ECE821CBBBBD0049B382 /* verify.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE721CBBBBD0049B382 /* verify.c */; };
 		2217ECEA21CBBBEF0049B382 /* sc25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECE921CBBBEF0049B382 /* sc25519.c */; };
 		2217ECEC21CBBC190049B382 /* fe25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECEB21CBBC190049B382 /* fe25519.c */; };
 		221CD98F21E8B30000F3B47C /* open.m in Sources */ = {isa = PBXBuildFile; fileRef = 221CD98D21E8B03D00F3B47C /* open.m */; };
@@ -126,7 +30,7 @@
 		22327AA1209E3AE30026B98C /* commoncrypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 22327AA0209E3AE30026B98C /* commoncrypto.c */; };
 		223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */ = {isa = PBXBuildFile; fileRef = 223496AE1FD5FC71007ED1A9 /* ios_system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
-		223A5CC221CB82B70022B5D5 /* ssh-keygen.c in Sources */ = {isa = PBXBuildFile; fileRef = 223A5CC121CB82B70022B5D5 /* ssh-keygen.c */; settings = {COMPILER_FLAGS = "-I ./Frameworks/openssl.xcframework/ios-armv7_arm64/"; }; };
+		223A5CC221CB82B70022B5D5 /* ssh-keygen.c in Sources */ = {isa = PBXBuildFile; fileRef = 223A5CC121CB82B70022B5D5 /* ssh-keygen.c */; };
 		223A5CC421CB8DB90022B5D5 /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 223A5CC321CB8DB90022B5D5 /* log.c */; };
 		22484B042434C6DF00D6BDDA /* jsc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22484B022434C5BB00D6BDDA /* jsc.swift */; };
 		224AAC5521CB917E00F8C22F /* ssherr.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5421CB917D00F8C22F /* ssherr.c */; };
@@ -420,66 +324,181 @@
 		22F6A16020683BDC00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 		22F6A16A20683D5200E618F9 /* ssh_cmd.h in Headers */ = {isa = PBXBuildFile; fileRef = 22F6A16820683D5200E618F9 /* ssh_cmd.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22F6A16E20683D6F00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
-		22F6A16F20683D8000E618F9 /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.xcframework */; };
-		22F6A17020683D8000E618F9 /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.xcframework */; };
+		22F6A16F20683D8000E618F9 /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
+		22F6A17020683D8000E618F9 /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
 		22F6A1A720683E1200E618F9 /* ssh_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F061120171B4300466685 /* ssh_main.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		22F6A1A820683E5000E618F9 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2253BA1D201942B10019CB39 /* libresolv.9.tbd */; };
 		22F6A1A920683E5700E618F9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567DD2020BAD9009850FD /* libz.tbd */; };
-		22F6A1BD20683F6700E618F9 /* content_encoding.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB61FDB4D370050F312 /* content_encoding.c */; };
-		22F6A1BF20683F6700E618F9 /* curl_addrinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBA1FDB4D370050F312 /* curl_addrinfo.c */; };
-		22F6A1C220683F6700E618F9 /* curl_fnmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC31FDB4D370050F312 /* curl_fnmatch.c */; };
-		22F6A1C320683F6700E618F9 /* curl_gethostname.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC51FDB4D370050F312 /* curl_gethostname.c */; };
-		22F6A1C720683F6700E618F9 /* curl_ntlm_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD21FDB4D370050F312 /* curl_ntlm_core.c */; };
-		22F6A1CA20683F6700E618F9 /* curl_sasl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD91FDB4D370050F312 /* curl_sasl.c */; };
-		22F6A1CC20683F6700E618F9 /* curl_threads.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE01FDB4D370050F312 /* curl_threads.c */; };
-		22F6A1D020683F6700E618F9 /* escape.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE91FDB4D370050F312 /* escape.c */; };
-		22F6A1D320683F6700E618F9 /* formdata.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF01FDB4D370050F312 /* formdata.c */; };
-		22F6A1D620683F6700E618F9 /* getenv.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF61FDB4D370050F312 /* getenv.c */; };
-		22F6A1DB20683F6700E618F9 /* hostasyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFE1FDB4D370050F312 /* hostasyn.c */; };
-		22F6A1E020683F6700E618F9 /* hostsyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780051FDB4D370050F312 /* hostsyn.c */; };
-		22F6A1E120683F6700E618F9 /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780061FDB4D370050F312 /* http.c */; };
-		22F6A1E220683F6700E618F9 /* http2.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780081FDB4D370050F312 /* http2.c */; };
-		22F6A1E420683F6700E618F9 /* http_digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800C1FDB4D370050F312 /* http_digest.c */; };
-		22F6A1E520683F6700E618F9 /* http_negotiate.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800E1FDB4D370050F312 /* http_negotiate.c */; };
-		22F6A1E620683F6700E618F9 /* http_ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780101FDB4D370050F312 /* http_ntlm.c */; };
-		22F6A1E820683F6700E618F9 /* idn_win32.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780141FDB4D370050F312 /* idn_win32.c */; };
-		22F6A1ED20683F6700E618F9 /* krb5.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257801D1FDB4D370050F312 /* krb5.c */; };
-		22F6A1EE20683F6700E618F9 /* ldap.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257801E1FDB4D370050F312 /* ldap.c */; };
-		22F6A1F020683F6700E618F9 /* md4.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257802E1FDB4D380050F312 /* md4.c */; };
-		22F6A1F220683F6700E618F9 /* memdebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780301FDB4D380050F312 /* memdebug.c */; };
-		22F6A1FD20683F6700E618F9 /* pipeline.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780481FDB4D380050F312 /* pipeline.c */; };
-		22F6A1FE20683F6700E618F9 /* pop3.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804A1FDB4D380050F312 /* pop3.c */; };
-		22F6A1FF20683F6700E618F9 /* progress.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804C1FDB4D380050F312 /* progress.c */; };
-		22F6A20120683F6700E618F9 /* rtsp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780501FDB4D380050F312 /* rtsp.c */; };
-		22F6A20520683F6700E618F9 /* share.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780591FDB4D380050F312 /* share.c */; };
-		22F6A20A20683F6700E618F9 /* socks_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780651FDB4D380050F312 /* socks_gssapi.c */; };
-		22F6A20F20683F6700E618F9 /* strcase.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806D1FDB4D380050F312 /* strcase.c */; };
-		22F6A21A20683F6E00E618F9 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780941FDB4D380050F312 /* version.c */; };
-		22F6A21E20683F7900E618F9 /* axtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780961FDB4D380050F312 /* axtls.c */; };
-		22F6A22120683F7900E618F9 /* gskit.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809C1FDB4D380050F312 /* gskit.c */; };
-		22F6A22520683F7900E618F9 /* openssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780A41FDB4D380050F312 /* openssl.c */; };
-		22F6A22620683F7900E618F9 /* polarssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780A61FDB4D380050F312 /* polarssl.c */; };
-		22F6A22A20683F7E00E618F9 /* cleartext.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780851FDB4D380050F312 /* cleartext.c */; };
-		22F6A22B20683F7E00E618F9 /* cram.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780861FDB4D380050F312 /* cram.c */; };
-		22F6A22F20683F7E00E618F9 /* krb5_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808B1FDB4D380050F312 /* krb5_sspi.c */; };
-		22F6A23320683F7E00E618F9 /* spnego_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780901FDB4D380050F312 /* spnego_gssapi.c */; };
-		22F6A23620683F8500E618F9 /* slist_wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780C71FDB4D380050F312 /* slist_wc.c */; };
-		22F6A23C20683F8500E618F9 /* tool_cb_rea.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D31FDB4D380050F312 /* tool_cb_rea.c */; };
-		22F6A23D20683F8500E618F9 /* tool_cb_see.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D51FDB4D380050F312 /* tool_cb_see.c */; };
-		22F6A23F20683F8500E618F9 /* tool_cfgable.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D91FDB4D380050F312 /* tool_cfgable.c */; };
-		22F6A24A20683F8500E618F9 /* tool_hugehelp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780EF1FDB4D380050F312 /* tool_hugehelp.c */; };
-		22F6A24B20683F8500E618F9 /* tool_libinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F11FDB4D380050F312 /* tool_libinfo.c */; };
-		22F6A24C20683F8500E618F9 /* tool_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F31FDB4D380050F312 /* tool_main.c */; };
-		22F6A24D20683F8500E618F9 /* tool_metalink.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F51FDB4D380050F312 /* tool_metalink.c */; };
-		22F6A25120683F8500E618F9 /* tool_operhlp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780FD1FDB4D380050F312 /* tool_operhlp.c */; };
-		22F6A25220683F8500E618F9 /* tool_panykey.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780FF1FDB4D380050F312 /* tool_panykey.c */; };
-		22F6A25420683F8500E618F9 /* tool_parsecfg.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781031FDB4D380050F312 /* tool_parsecfg.c */; };
-		22F6A25520683F8500E618F9 /* tool_setopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781061FDB4D380050F312 /* tool_setopt.c */; };
-		22F6A25920683F8500E618F9 /* tool_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257810F1FDB4D380050F312 /* tool_util.c */; };
-		22F6A25A20683F8500E618F9 /* tool_vms.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781121FDB4D380050F312 /* tool_vms.c */; };
+		22F6A1B720683F6700E618F9 /* amigaos.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577F9F1FDB4D370050F312 /* amigaos.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1B820683F6700E618F9 /* asyn-ares.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA21FDB4D370050F312 /* asyn-ares.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1B920683F6700E618F9 /* asyn-thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA31FDB4D370050F312 /* asyn-thread.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1BA20683F6700E618F9 /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FA51FDB4D370050F312 /* base64.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1BB20683F6700E618F9 /* conncache.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB21FDB4D370050F312 /* conncache.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1BC20683F6700E618F9 /* connect.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB41FDB4D370050F312 /* connect.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1BD20683F6700E618F9 /* content_encoding.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB61FDB4D370050F312 /* content_encoding.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1BE20683F6700E618F9 /* cookie.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FB81FDB4D370050F312 /* cookie.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1BF20683F6700E618F9 /* curl_addrinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBA1FDB4D370050F312 /* curl_addrinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C020683F6700E618F9 /* curl_des.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FBF1FDB4D370050F312 /* curl_des.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C120683F6700E618F9 /* curl_endian.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC11FDB4D370050F312 /* curl_endian.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C220683F6700E618F9 /* curl_fnmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC31FDB4D370050F312 /* curl_fnmatch.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C320683F6700E618F9 /* curl_gethostname.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC51FDB4D370050F312 /* curl_gethostname.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C420683F6700E618F9 /* curl_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FC71FDB4D370050F312 /* curl_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C520683F6700E618F9 /* curl_memrchr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FCE1FDB4D370050F312 /* curl_memrchr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C620683F6700E618F9 /* curl_multibyte.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD01FDB4D370050F312 /* curl_multibyte.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C720683F6700E618F9 /* curl_ntlm_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD21FDB4D370050F312 /* curl_ntlm_core.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C820683F6700E618F9 /* curl_ntlm_wb.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD41FDB4D370050F312 /* curl_ntlm_wb.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1C920683F6700E618F9 /* curl_rtmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD71FDB4D370050F312 /* curl_rtmp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1CA20683F6700E618F9 /* curl_sasl.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FD91FDB4D370050F312 /* curl_sasl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1CB20683F6700E618F9 /* curl_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FDE1FDB4D370050F312 /* curl_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1CC20683F6700E618F9 /* curl_threads.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE01FDB4D370050F312 /* curl_threads.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1CD20683F6700E618F9 /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE31FDB4D370050F312 /* dict.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1CE20683F6700E618F9 /* dotdot.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE51FDB4D370050F312 /* dotdot.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1CF20683F6700E618F9 /* easy.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE71FDB4D370050F312 /* easy.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D020683F6700E618F9 /* escape.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FE91FDB4D370050F312 /* escape.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D120683F6700E618F9 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FEB1FDB4D370050F312 /* file.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D220683F6700E618F9 /* fileinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FED1FDB4D370050F312 /* fileinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D320683F6700E618F9 /* formdata.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF01FDB4D370050F312 /* formdata.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D420683F6700E618F9 /* ftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF21FDB4D370050F312 /* ftp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D520683F6700E618F9 /* ftplistparser.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF41FDB4D370050F312 /* ftplistparser.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D620683F6700E618F9 /* getenv.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF61FDB4D370050F312 /* getenv.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D720683F6700E618F9 /* getinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF71FDB4D370050F312 /* getinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D820683F6700E618F9 /* gopher.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FF91FDB4D370050F312 /* gopher.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1D920683F6700E618F9 /* hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFB1FDB4D370050F312 /* hash.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1DA20683F6700E618F9 /* hmac.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFD1FDB4D370050F312 /* hmac.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1DB20683F6700E618F9 /* hostasyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFE1FDB4D370050F312 /* hostasyn.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1DC20683F6700E618F9 /* hostcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577FFF1FDB4D370050F312 /* hostcheck.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1DD20683F6700E618F9 /* hostip.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780011FDB4D370050F312 /* hostip.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1DE20683F6700E618F9 /* hostip4.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780031FDB4D370050F312 /* hostip4.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1DF20683F6700E618F9 /* hostip6.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780041FDB4D370050F312 /* hostip6.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E020683F6700E618F9 /* hostsyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780051FDB4D370050F312 /* hostsyn.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E120683F6700E618F9 /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780061FDB4D370050F312 /* http.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E220683F6700E618F9 /* http2.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780081FDB4D370050F312 /* http2.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E320683F6700E618F9 /* http_chunks.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800A1FDB4D370050F312 /* http_chunks.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E420683F6700E618F9 /* http_digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800C1FDB4D370050F312 /* http_digest.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E520683F6700E618F9 /* http_negotiate.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257800E1FDB4D370050F312 /* http_negotiate.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E620683F6700E618F9 /* http_ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780101FDB4D370050F312 /* http_ntlm.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E720683F6700E618F9 /* http_proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780121FDB4D370050F312 /* http_proxy.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E820683F6700E618F9 /* idn_win32.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780141FDB4D370050F312 /* idn_win32.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1E920683F6700E618F9 /* if2ip.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780151FDB4D370050F312 /* if2ip.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1EA20683F6700E618F9 /* imap.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780171FDB4D370050F312 /* imap.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1EB20683F6700E618F9 /* inet_ntop.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780191FDB4D370050F312 /* inet_ntop.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1EC20683F6700E618F9 /* inet_pton.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257801B1FDB4D370050F312 /* inet_pton.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1ED20683F6700E618F9 /* krb5.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257801D1FDB4D370050F312 /* krb5.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1EE20683F6700E618F9 /* ldap.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257801E1FDB4D370050F312 /* ldap.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1EF20683F6700E618F9 /* llist.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780221FDB4D380050F312 /* llist.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F020683F6700E618F9 /* md4.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257802E1FDB4D380050F312 /* md4.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F120683F6700E618F9 /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257802F1FDB4D380050F312 /* md5.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F220683F6700E618F9 /* memdebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780301FDB4D380050F312 /* memdebug.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F320683F6700E618F9 /* mprintf.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780341FDB4D380050F312 /* mprintf.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F420683F6700E618F9 /* multi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780351FDB4D380050F312 /* multi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F520683F6700E618F9 /* netrc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780381FDB4D380050F312 /* netrc.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F620683F6700E618F9 /* non-ascii.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257803A1FDB4D380050F312 /* non-ascii.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F720683F6700E618F9 /* nonblock.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257803C1FDB4D380050F312 /* nonblock.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F820683F6700E618F9 /* nwlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257803E1FDB4D380050F312 /* nwlib.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1F920683F6700E618F9 /* nwos.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257803F1FDB4D380050F312 /* nwos.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1FA20683F6700E618F9 /* openldap.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780431FDB4D380050F312 /* openldap.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1FB20683F6700E618F9 /* parsedate.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780441FDB4D380050F312 /* parsedate.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1FC20683F6700E618F9 /* pingpong.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780461FDB4D380050F312 /* pingpong.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1FD20683F6700E618F9 /* pipeline.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780481FDB4D380050F312 /* pipeline.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1FE20683F6700E618F9 /* pop3.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804A1FDB4D380050F312 /* pop3.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A1FF20683F6700E618F9 /* progress.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804C1FDB4D380050F312 /* progress.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20020683F6700E618F9 /* rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257804E1FDB4D380050F312 /* rand.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20120683F6700E618F9 /* rtsp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780501FDB4D380050F312 /* rtsp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20220683F6700E618F9 /* security.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780521FDB4D380050F312 /* security.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20320683F6700E618F9 /* select.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780531FDB4D380050F312 /* select.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20420683F6700E618F9 /* sendf.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780551FDB4D380050F312 /* sendf.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20520683F6700E618F9 /* share.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780591FDB4D380050F312 /* share.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20620683F6700E618F9 /* slist.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257805C1FDB4D380050F312 /* slist.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20720683F6700E618F9 /* smb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257805E1FDB4D380050F312 /* smb.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20820683F6700E618F9 /* smtp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780601FDB4D380050F312 /* smtp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20920683F6700E618F9 /* socks.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780631FDB4D380050F312 /* socks.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20A20683F6700E618F9 /* socks_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780651FDB4D380050F312 /* socks_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20B20683F6700E618F9 /* socks_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780661FDB4D380050F312 /* socks_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20C20683F6700E618F9 /* speedcheck.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780671FDB4D380050F312 /* speedcheck.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20D20683F6700E618F9 /* splay.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780691FDB4D380050F312 /* splay.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20E20683F6700E618F9 /* ssh.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806B1FDB4D380050F312 /* ssh.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A20F20683F6700E618F9 /* strcase.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806D1FDB4D380050F312 /* strcase.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21020683F6700E618F9 /* strdup.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257806F1FDB4D380050F312 /* strdup.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21120683F6700E618F9 /* strerror.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780711FDB4D380050F312 /* strerror.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21220683F6700E618F9 /* strtok.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780731FDB4D380050F312 /* strtok.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21320683F6700E618F9 /* strtoofft.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780751FDB4D380050F312 /* strtoofft.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21420683F6700E618F9 /* system_win32.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780771FDB4D380050F312 /* system_win32.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21520683F6700E618F9 /* telnet.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780791FDB4D380050F312 /* telnet.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21620683F6700E618F9 /* tftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807B1FDB4D380050F312 /* tftp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21720683F6700E618F9 /* timeval.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807D1FDB4D380050F312 /* timeval.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21820683F6700E618F9 /* transfer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257807F1FDB4D380050F312 /* transfer.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21920683F6700E618F9 /* url.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780811FDB4D380050F312 /* url.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21A20683F6E00E618F9 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780941FDB4D380050F312 /* version.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21B20683F7400E618F9 /* warnless.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AE1FDB4D380050F312 /* warnless.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21C20683F7400E618F9 /* wildcard.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780B01FDB4D380050F312 /* wildcard.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21D20683F7400E618F9 /* x509asn1.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780B21FDB4D380050F312 /* x509asn1.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21E20683F7900E618F9 /* axtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780961FDB4D380050F312 /* axtls.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A21F20683F7900E618F9 /* cyassl.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780981FDB4D380050F312 /* cyassl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22020683F7900E618F9 /* darwinssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809A1FDB4D380050F312 /* darwinssl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22120683F7900E618F9 /* gskit.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809C1FDB4D380050F312 /* gskit.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22220683F7900E618F9 /* gtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257809E1FDB4D380050F312 /* gtls.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22320683F7900E618F9 /* mbedtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780A01FDB4D380050F312 /* mbedtls.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22420683F7900E618F9 /* nss.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780A21FDB4D380050F312 /* nss.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22520683F7900E618F9 /* openssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780A41FDB4D380050F312 /* openssl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22620683F7900E618F9 /* polarssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780A61FDB4D380050F312 /* polarssl.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22720683F7900E618F9 /* polarssl_threadlock.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780A81FDB4D380050F312 /* polarssl_threadlock.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22820683F7900E618F9 /* schannel.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AA1FDB4D380050F312 /* schannel.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22920683F7900E618F9 /* vtls.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780AC1FDB4D380050F312 /* vtls.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22A20683F7E00E618F9 /* cleartext.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780851FDB4D380050F312 /* cleartext.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22B20683F7E00E618F9 /* cram.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780861FDB4D380050F312 /* cram.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22C20683F7E00E618F9 /* digest.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780871FDB4D380050F312 /* digest.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22D20683F7E00E618F9 /* digest_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780891FDB4D380050F312 /* digest_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22E20683F7E00E618F9 /* krb5_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808A1FDB4D380050F312 /* krb5_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A22F20683F7E00E618F9 /* krb5_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808B1FDB4D380050F312 /* krb5_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23020683F7E00E618F9 /* ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808C1FDB4D380050F312 /* ntlm.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23120683F7E00E618F9 /* ntlm_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808E1FDB4D380050F312 /* ntlm_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23220683F7E00E618F9 /* oauth2.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257808F1FDB4D380050F312 /* oauth2.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23320683F7E00E618F9 /* spnego_gssapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780901FDB4D380050F312 /* spnego_gssapi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23420683F7E00E618F9 /* spnego_sspi.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780911FDB4D380050F312 /* spnego_sspi.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23520683F7E00E618F9 /* vauth.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780921FDB4D380050F312 /* vauth.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23620683F8500E618F9 /* slist_wc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780C71FDB4D380050F312 /* slist_wc.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23720683F8500E618F9 /* tool_binmode.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780C91FDB4D380050F312 /* tool_binmode.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23820683F8500E618F9 /* tool_bname.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780CB1FDB4D380050F312 /* tool_bname.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23920683F8500E618F9 /* tool_cb_dbg.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780CD1FDB4D380050F312 /* tool_cb_dbg.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23A20683F8500E618F9 /* tool_cb_hdr.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780CF1FDB4D380050F312 /* tool_cb_hdr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23B20683F8500E618F9 /* tool_cb_prg.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D11FDB4D380050F312 /* tool_cb_prg.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23C20683F8500E618F9 /* tool_cb_rea.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D31FDB4D380050F312 /* tool_cb_rea.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23D20683F8500E618F9 /* tool_cb_see.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D51FDB4D380050F312 /* tool_cb_see.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23E20683F8500E618F9 /* tool_cb_wrt.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D71FDB4D380050F312 /* tool_cb_wrt.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A23F20683F8500E618F9 /* tool_cfgable.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780D91FDB4D380050F312 /* tool_cfgable.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24020683F8500E618F9 /* tool_convert.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780DB1FDB4D380050F312 /* tool_convert.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24120683F8500E618F9 /* tool_dirhie.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780DD1FDB4D380050F312 /* tool_dirhie.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24220683F8500E618F9 /* tool_doswin.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780DF1FDB4D380050F312 /* tool_doswin.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24320683F8500E618F9 /* tool_easysrc.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E11FDB4D380050F312 /* tool_easysrc.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24420683F8500E618F9 /* tool_formparse.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E31FDB4D380050F312 /* tool_formparse.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24520683F8500E618F9 /* tool_getparam.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E51FDB4D380050F312 /* tool_getparam.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24620683F8500E618F9 /* tool_getpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E71FDB4D380050F312 /* tool_getpass.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24720683F8500E618F9 /* tool_help.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780E91FDB4D380050F312 /* tool_help.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24820683F8500E618F9 /* tool_helpers.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780EB1FDB4D380050F312 /* tool_helpers.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24920683F8500E618F9 /* tool_homedir.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780ED1FDB4D380050F312 /* tool_homedir.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24A20683F8500E618F9 /* tool_hugehelp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780EF1FDB4D380050F312 /* tool_hugehelp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24B20683F8500E618F9 /* tool_libinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F11FDB4D380050F312 /* tool_libinfo.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24C20683F8500E618F9 /* tool_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F31FDB4D380050F312 /* tool_main.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24D20683F8500E618F9 /* tool_metalink.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F51FDB4D380050F312 /* tool_metalink.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24E20683F8500E618F9 /* tool_mfiles.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F71FDB4D380050F312 /* tool_mfiles.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A24F20683F8500E618F9 /* tool_msgs.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780F91FDB4D380050F312 /* tool_msgs.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25020683F8500E618F9 /* tool_operate.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780FB1FDB4D380050F312 /* tool_operate.c */; settings = {COMPILER_FLAGS = "-x objective-c -DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25120683F8500E618F9 /* tool_operhlp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780FD1FDB4D380050F312 /* tool_operhlp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25220683F8500E618F9 /* tool_panykey.c in Sources */ = {isa = PBXBuildFile; fileRef = 225780FF1FDB4D380050F312 /* tool_panykey.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25320683F8500E618F9 /* tool_paramhlp.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781011FDB4D380050F312 /* tool_paramhlp.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25420683F8500E618F9 /* tool_parsecfg.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781031FDB4D380050F312 /* tool_parsecfg.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25520683F8500E618F9 /* tool_setopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781061FDB4D380050F312 /* tool_setopt.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25620683F8500E618F9 /* tool_sleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781091FDB4D380050F312 /* tool_sleep.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25720683F8500E618F9 /* tool_strdup.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257810B1FDB4D380050F312 /* tool_strdup.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25820683F8500E618F9 /* tool_urlglob.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257810D1FDB4D380050F312 /* tool_urlglob.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25920683F8500E618F9 /* tool_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 2257810F1FDB4D380050F312 /* tool_util.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25A20683F8500E618F9 /* tool_vms.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781121FDB4D380050F312 /* tool_vms.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25B20683F8500E618F9 /* tool_writeenv.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781141FDB4D380050F312 /* tool_writeenv.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25C20683F8500E618F9 /* tool_writeout.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781161FDB4D380050F312 /* tool_writeout.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
+		22F6A25D20683F8600E618F9 /* tool_xattr.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781181FDB4D380050F312 /* tool_xattr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
 		22F6A25E20683F9B00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
-		22F6A25F20683FB200E618F9 /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.xcframework */; };
-		22F6A26020683FB200E618F9 /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.xcframework */; };
+		22F6A25F20683FB200E618F9 /* openssl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567C72020B807009850FD /* openssl.framework */; };
+		22F6A26020683FB200E618F9 /* libssh2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22AC09E520209C57006F7D8B /* libssh2.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -932,7 +951,7 @@
 		22A3736721CB983400230846 /* uuencode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uuencode.c; path = ssh_keygen/uuencode.c; sourceTree = "<group>"; };
 		22A3736921CB986900230846 /* sshkey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshkey.c; path = ssh_keygen/sshkey.c; sourceTree = "<group>"; };
 		22A3736B21CB99EB00230846 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = ssh_keygen/misc.c; sourceTree = "<group>"; };
-		22AC09E520209C57006F7D8B /* libssh2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssh2.xcframework; path = Frameworks/libssh2.xcframework; sourceTree = "<group>"; };
+		22AC09E520209C57006F7D8B /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = Frameworks/libssh2.framework; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
 		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
 		22C5057D2098ADD700FDDFA9 /* y.tab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = y.tab.c; path = bsd_find/y.tab.c; sourceTree = SOURCE_ROOT; };
@@ -989,7 +1008,7 @@
 		22F0804E209766BD003C3BF0 /* coll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = coll.c; path = text_cmds/sort/coll.c; sourceTree = SOURCE_ROOT; };
 		22F0804F209766BD003C3BF0 /* radixsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = radixsort.c; path = text_cmds/sort/radixsort.c; sourceTree = SOURCE_ROOT; };
 		22F0805920979938003C3BF0 /* uniq.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uniq.c; path = text_cmds/uniq/uniq.c; sourceTree = SOURCE_ROOT; };
-		22F567C72020B807009850FD /* openssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = openssl.xcframework; path = Frameworks/openssl.xcframework; sourceTree = "<group>"; };
+		22F567C72020B807009850FD /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = Frameworks/openssl.framework; sourceTree = "<group>"; };
 		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		22F568222020C42F009850FD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		22F6A10C2068390800E618F9 /* shell.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = shell.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1068,8 +1087,8 @@
 			files = (
 				22F6A1A920683E5700E618F9 /* libz.tbd in Frameworks */,
 				22F6A1A820683E5000E618F9 /* libresolv.9.tbd in Frameworks */,
-				22F6A16F20683D8000E618F9 /* openssl.xcframework in Frameworks */,
-				22F6A17020683D8000E618F9 /* libssh2.xcframework in Frameworks */,
+				22F6A16F20683D8000E618F9 /* openssl.framework in Frameworks */,
+				22F6A17020683D8000E618F9 /* libssh2.framework in Frameworks */,
 				22F6A16E20683D6F00E618F9 /* ios_system.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1078,8 +1097,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				22F6A25F20683FB200E618F9 /* openssl.xcframework in Frameworks */,
-				22F6A26020683FB200E618F9 /* libssh2.xcframework in Frameworks */,
+				22F6A25F20683FB200E618F9 /* openssl.framework in Frameworks */,
+				22F6A26020683FB200E618F9 /* libssh2.framework in Frameworks */,
 				22F6A25E20683F9B00E618F9 /* ios_system.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1170,8 +1189,8 @@
 				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
 				22F568222020C42F009850FD /* libxml2.tbd */,
 				22F567DD2020BAD9009850FD /* libz.tbd */,
-				22F567C72020B807009850FD /* openssl.xcframework */,
-				22AC09E520209C57006F7D8B /* libssh2.xcframework */,
+				22F567C72020B807009850FD /* openssl.framework */,
+				22AC09E520209C57006F7D8B /* libssh2.framework */,
 				22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */,
 			);
 			name = Frameworks;
@@ -2872,153 +2891,172 @@
 			buildActionMask = 2147483647;
 			files = (
 				22F6A22A20683F7E00E618F9 /* cleartext.c in Sources */,
-				220B948C24B1225E007E036D /* tftp.c in Sources */,
-				220B945924B11C29007E036D /* curl_des.c in Sources */,
 				22F6A1C720683F6700E618F9 /* curl_ntlm_core.c in Sources */,
-				220B946224B11CD6007E036D /* slist.c in Sources */,
 				22F6A23D20683F8500E618F9 /* tool_cb_see.c in Sources */,
-				220B947824B11F41007E036D /* curl_ntlm_wb.c in Sources */,
 				22F6A1F020683F6700E618F9 /* md4.c in Sources */,
 				22F6A23620683F8500E618F9 /* slist_wc.c in Sources */,
-				220B947124B11EA6007E036D /* strdup.c in Sources */,
 				22F6A23320683F7E00E618F9 /* spnego_gssapi.c in Sources */,
 				22F6A25420683F8500E618F9 /* tool_parsecfg.c in Sources */,
 				22F6A20F20683F6700E618F9 /* strcase.c in Sources */,
-				220B947F24B121D6007E036D /* tool_operate.c in Sources */,
-				220B949B24B1241C007E036D /* ntlm.c in Sources */,
 				22F6A1CC20683F6700E618F9 /* curl_threads.c in Sources */,
-				220B946B24B11DD2007E036D /* tool_helpers.c in Sources */,
-				220B946124B11CB8007E036D /* hash.c in Sources */,
-				220B947324B11EE4007E036D /* tool_getparam.c in Sources */,
-				220B948E24B12282007E036D /* ftplistparser.c in Sources */,
 				22F6A21E20683F7900E618F9 /* axtls.c in Sources */,
-				220B948424B121E9007E036D /* tool_strdup.c in Sources */,
-				220B948F24B122A4007E036D /* parsedate.c in Sources */,
 				22F6A1E520683F6700E618F9 /* http_negotiate.c in Sources */,
-				220B94B224B12695007E036D /* strtok.c in Sources */,
-				220B945524B11B75007E036D /* md5.c in Sources */,
-				220B948B24B12245007E036D /* tool_convert.c in Sources */,
-				220B945F24B11C98007E036D /* gopher.c in Sources */,
-				220B949E24B12453007E036D /* nonblock.c in Sources */,
 				22F6A1D620683F6700E618F9 /* getenv.c in Sources */,
-				220B947B24B12004007E036D /* wildcard.c in Sources */,
 				22F6A1F220683F6700E618F9 /* memdebug.c in Sources */,
-				220B945C24B11C4F007E036D /* cookie.c in Sources */,
 				22F6A1D320683F6700E618F9 /* formdata.c in Sources */,
-				220B947924B11F48007E036D /* curl_rtmp.c in Sources */,
 				22F6A24D20683F8500E618F9 /* tool_metalink.c in Sources */,
 				22F6A25520683F8500E618F9 /* tool_setopt.c in Sources */,
 				22F6A1E020683F6700E618F9 /* hostsyn.c in Sources */,
-				220B948924B12220007E036D /* tool_getpass.c in Sources */,
 				22F6A23C20683F8500E618F9 /* tool_cb_rea.c in Sources */,
-				220B946424B11D03007E036D /* sendf.c in Sources */,
 				22F6A25A20683F8500E618F9 /* tool_vms.c in Sources */,
-				220B948824B12211007E036D /* tool_homedir.c in Sources */,
 				22F6A22120683F7900E618F9 /* gskit.c in Sources */,
 				22F6A25120683F8500E618F9 /* tool_operhlp.c in Sources */,
-				220B949424B12371007E036D /* splay.c in Sources */,
-				220B949F24B1245E007E036D /* speedcheck.c in Sources */,
-				220B94AD24B1263A007E036D /* inet_ntop.c in Sources */,
-				220B945B24B11C44007E036D /* mprintf.c in Sources */,
-				220B94B324B1269C007E036D /* strtoofft.c in Sources */,
-				220B947624B11F35007E036D /* curl_memrchr.c in Sources */,
-				220B946724B11D67007E036D /* tool_easysrc.c in Sources */,
-				220B945424B11B60007E036D /* url.c in Sources */,
-				220B94B424B126C0007E036D /* tool_bname.c in Sources */,
-				220B949824B123AC007E036D /* curl_endian.c in Sources */,
 				22F6A22620683F7900E618F9 /* polarssl.c in Sources */,
+				22F6A22D20683F7E00E618F9 /* digest_sspi.c in Sources */,
 				22F6A22B20683F7E00E618F9 /* cram.c in Sources */,
-				220B947E24B121D3007E036D /* tool_msgs.c in Sources */,
 				22F6A20A20683F6700E618F9 /* socks_gssapi.c in Sources */,
-				220B945E24B11C6B007E036D /* base64.c in Sources */,
-				220B949D24B1243F007E036D /* oauth2.c in Sources */,
-				220B946D24B11E38007E036D /* llist.c in Sources */,
-				220B94B124B12682007E036D /* security.c in Sources */,
-				220B94A524B124AC007E036D /* netrc.c in Sources */,
-				220B946524B11D0D007E036D /* vtls.c in Sources */,
 				22F6A20520683F6700E618F9 /* share.c in Sources */,
 				22F6A1E620683F6700E618F9 /* http_ntlm.c in Sources */,
 				22F6A24C20683F8500E618F9 /* tool_main.c in Sources */,
-				220B94A024B1246B007E036D /* imap.c in Sources */,
-				220B948024B121D9007E036D /* tool_xattr.c in Sources */,
-				220B945824B11C18007E036D /* ftp.c in Sources */,
 				22F6A25920683F8500E618F9 /* tool_util.c in Sources */,
 				22F6A1FE20683F6700E618F9 /* pop3.c in Sources */,
 				22F6A24A20683F8500E618F9 /* tool_hugehelp.c in Sources */,
-				220B947424B11EF5007E036D /* select.c in Sources */,
-				220B94AA24B124E3007E036D /* tool_binmode.c in Sources */,
-				220B945D24B11C60007E036D /* rand.c in Sources */,
 				22F6A1C320683F6700E618F9 /* curl_gethostname.c in Sources */,
-				220B947524B11F18007E036D /* conncache.c in Sources */,
 				22F6A1BD20683F6700E618F9 /* content_encoding.c in Sources */,
-				220B949124B1234B007E036D /* vauth.c in Sources */,
-				220B946A24B11DC0007E036D /* socks.c in Sources */,
-				220B945624B11B9B007E036D /* multi.c in Sources */,
-				220B947C24B1200F007E036D /* http_chunks.c in Sources */,
-				220B94A424B124A3007E036D /* telnet.c in Sources */,
 				22F6A1E120683F6700E618F9 /* http.c in Sources */,
-				220B94A324B1249A007E036D /* dict.c in Sources */,
 				22F6A1ED20683F6700E618F9 /* krb5.c in Sources */,
-				220B948D24B1226D007E036D /* pingpong.c in Sources */,
-				220B94A924B124DB007E036D /* ssh.c in Sources */,
-				220B946824B11D74007E036D /* hostip.c in Sources */,
-				220B94AF24B1264E007E036D /* non-ascii.c in Sources */,
-				220B947224B11EBF007E036D /* warnless.c in Sources */,
 				22F6A22520683F7900E618F9 /* openssl.c in Sources */,
 				22F6A1C220683F6700E618F9 /* curl_fnmatch.c in Sources */,
-				220B949C24B12433007E036D /* smb.c in Sources */,
 				22F6A1E420683F6700E618F9 /* http_digest.c in Sources */,
 				22F6A23F20683F8500E618F9 /* tool_cfgable.c in Sources */,
-				220B94A124B12479007E036D /* fileinfo.c in Sources */,
-				220B948524B121EC007E036D /* tool_sleep.c in Sources */,
 				22F6A1FF20683F6700E618F9 /* progress.c in Sources */,
-				220B949924B123B7007E036D /* tool_cb_prg.c in Sources */,
-				220B948324B121E6007E036D /* tool_urlglob.c in Sources */,
-				220B947A24B11FFA007E036D /* getinfo.c in Sources */,
 				22F6A21A20683F6E00E618F9 /* version.c in Sources */,
-				220B946E24B11E47007E036D /* timeval.c in Sources */,
 				22F6A25220683F8500E618F9 /* tool_panykey.c in Sources */,
 				22F6A24B20683F8500E618F9 /* tool_libinfo.c in Sources */,
 				22F6A1CA20683F6700E618F9 /* curl_sasl.c in Sources */,
-				220B947724B11F39007E036D /* curl_multibyte.c in Sources */,
 				22F6A1E220683F6700E618F9 /* http2.c in Sources */,
 				22F6A1FD20683F6700E618F9 /* pipeline.c in Sources */,
 				22F6A20120683F6700E618F9 /* rtsp.c in Sources */,
-				220B945A24B11C37007E036D /* transfer.c in Sources */,
-				220B949024B122B1007E036D /* file.c in Sources */,
-				220B94AE24B1263E007E036D /* inet_pton.c in Sources */,
-				220B946C24B11DE2007E036D /* asyn-thread.c in Sources */,
-				220B949A24B123C2007E036D /* dotdot.c in Sources */,
-				220B94A224B12490007E036D /* tool_help.c in Sources */,
-				220B946924B11DB7007E036D /* socks_sspi.c in Sources */,
-				220B947D24B1201A007E036D /* smtp.c in Sources */,
-				220B94A824B124C7007E036D /* tool_dirhie.c in Sources */,
-				220B94AB24B1250A007E036D /* tool_cb_wrt.c in Sources */,
-				220B949524B12383007E036D /* if2ip.c in Sources */,
-				220B946F24B11E63007E036D /* darwinssl.c in Sources */,
-				220B948A24B12236007E036D /* tool_formparse.c in Sources */,
-				220B94A624B124B5007E036D /* tool_cb_hdr.c in Sources */,
-				220B94AC24B1261C007E036D /* hostcheck.c in Sources */,
-				220B948124B121DD007E036D /* tool_writeout.c in Sources */,
-				220B946624B11D49007E036D /* strerror.c in Sources */,
-				220B948724B12201007E036D /* tool_mfiles.c in Sources */,
-				220B949224B12358007E036D /* hostip4.c in Sources */,
 				22F6A1D020683F6700E618F9 /* escape.c in Sources */,
-				220B947024B11E88007E036D /* digest.c in Sources */,
 				22F6A22F20683F7E00E618F9 /* krb5_sspi.c in Sources */,
-				220B946024B11CA4007E036D /* hmac.c in Sources */,
-				220B949724B123A1007E036D /* http_proxy.c in Sources */,
 				22F6A1EE20683F6700E618F9 /* ldap.c in Sources */,
-				220B948224B121E0007E036D /* tool_writeenv.c in Sources */,
-				220B948624B121F4007E036D /* tool_paramhlp.c in Sources */,
-				220B945724B11BE3007E036D /* easy.c in Sources */,
 				22F6A1E820683F6700E618F9 /* idn_win32.c in Sources */,
-				220B946324B11CEE007E036D /* connect.c in Sources */,
 				22F6A1BF20683F6700E618F9 /* curl_addrinfo.c in Sources */,
 				22F6A1DB20683F6700E618F9 /* hostasyn.c in Sources */,
-				220B949324B12365007E036D /* hostip6.c in Sources */,
-				220B94B024B12661007E036D /* openldap.c in Sources */,
-				220B94A724B124BE007E036D /* tool_cb_dbg.c in Sources */,
+				22F6A1BC20683F6700E618F9 /* connect.c in Sources */,
+				22F6A1F320683F6700E618F9 /* mprintf.c in Sources */,
+				22F6A1DF20683F6700E618F9 /* hostip6.c in Sources */,
+				22F6A25020683F8500E618F9 /* tool_operate.c in Sources */,
+				22F6A24720683F8500E618F9 /* tool_help.c in Sources */,
+				22F6A24820683F8500E618F9 /* tool_helpers.c in Sources */,
+				22F6A22E20683F7E00E618F9 /* krb5_gssapi.c in Sources */,
+				22F6A1C620683F6700E618F9 /* curl_multibyte.c in Sources */,
+				22F6A1C820683F6700E618F9 /* curl_ntlm_wb.c in Sources */,
+				22F6A23220683F7E00E618F9 /* oauth2.c in Sources */,
+				22F6A1D720683F6700E618F9 /* getinfo.c in Sources */,
+				22F6A1D420683F6700E618F9 /* ftp.c in Sources */,
+				22F6A23520683F7E00E618F9 /* vauth.c in Sources */,
+				22F6A1F620683F6700E618F9 /* non-ascii.c in Sources */,
+				22F6A22020683F7900E618F9 /* darwinssl.c in Sources */,
+				22F6A21F20683F7900E618F9 /* cyassl.c in Sources */,
+				22F6A24120683F8500E618F9 /* tool_dirhie.c in Sources */,
+				22F6A1CF20683F6700E618F9 /* easy.c in Sources */,
+				22F6A20920683F6700E618F9 /* socks.c in Sources */,
+				22F6A1F920683F6700E618F9 /* nwos.c in Sources */,
+				22F6A1F720683F6700E618F9 /* nonblock.c in Sources */,
+				22F6A1F520683F6700E618F9 /* netrc.c in Sources */,
+				22F6A22820683F7900E618F9 /* schannel.c in Sources */,
+				22F6A22920683F7900E618F9 /* vtls.c in Sources */,
+				22F6A20620683F6700E618F9 /* slist.c in Sources */,
+				22F6A25320683F8500E618F9 /* tool_paramhlp.c in Sources */,
+				22F6A21720683F6700E618F9 /* timeval.c in Sources */,
+				22F6A21020683F6700E618F9 /* strdup.c in Sources */,
+				22F6A1C520683F6700E618F9 /* curl_memrchr.c in Sources */,
+				22F6A23B20683F8500E618F9 /* tool_cb_prg.c in Sources */,
+				22F6A23020683F7E00E618F9 /* ntlm.c in Sources */,
+				22F6A24320683F8500E618F9 /* tool_easysrc.c in Sources */,
+				22F6A23E20683F8500E618F9 /* tool_cb_wrt.c in Sources */,
+				22F6A1F120683F6700E618F9 /* md5.c in Sources */,
+				22F6A24420683F8500E618F9 /* tool_formparse.c in Sources */,
+				22F6A21D20683F7400E618F9 /* x509asn1.c in Sources */,
+				22F6A22220683F7900E618F9 /* gtls.c in Sources */,
+				22F6A20E20683F6700E618F9 /* ssh.c in Sources */,
+				22F6A1EA20683F6700E618F9 /* imap.c in Sources */,
+				22F6A24020683F8500E618F9 /* tool_convert.c in Sources */,
+				22F6A23920683F8500E618F9 /* tool_cb_dbg.c in Sources */,
+				22F6A1DC20683F6700E618F9 /* hostcheck.c in Sources */,
+				22F6A22320683F7900E618F9 /* mbedtls.c in Sources */,
+				22F6A21520683F6700E618F9 /* telnet.c in Sources */,
+				22F6A1FB20683F6700E618F9 /* parsedate.c in Sources */,
+				22F6A1FC20683F6700E618F9 /* pingpong.c in Sources */,
+				22F6A1B920683F6700E618F9 /* asyn-thread.c in Sources */,
+				22F6A23A20683F8500E618F9 /* tool_cb_hdr.c in Sources */,
+				22F6A21320683F6700E618F9 /* strtoofft.c in Sources */,
+				22F6A25720683F8500E618F9 /* tool_strdup.c in Sources */,
+				22F6A21220683F6700E618F9 /* strtok.c in Sources */,
+				22F6A20B20683F6700E618F9 /* socks_sspi.c in Sources */,
+				22F6A20820683F6700E618F9 /* smtp.c in Sources */,
+				22F6A1C920683F6700E618F9 /* curl_rtmp.c in Sources */,
+				22F6A1C120683F6700E618F9 /* curl_endian.c in Sources */,
+				22F6A1EF20683F6700E618F9 /* llist.c in Sources */,
+				22F6A1D920683F6700E618F9 /* hash.c in Sources */,
+				22F6A25C20683F8500E618F9 /* tool_writeout.c in Sources */,
+				22F6A1F820683F6700E618F9 /* nwlib.c in Sources */,
+				22F6A1EB20683F6700E618F9 /* inet_ntop.c in Sources */,
+				22F6A20020683F6700E618F9 /* rand.c in Sources */,
+				22F6A1BE20683F6700E618F9 /* cookie.c in Sources */,
+				22F6A21920683F6700E618F9 /* url.c in Sources */,
+				22F6A1E320683F6700E618F9 /* http_chunks.c in Sources */,
+				22F6A24E20683F8500E618F9 /* tool_mfiles.c in Sources */,
+				22F6A1CE20683F6700E618F9 /* dotdot.c in Sources */,
+				22F6A25620683F8500E618F9 /* tool_sleep.c in Sources */,
+				22F6A23820683F8500E618F9 /* tool_bname.c in Sources */,
+				22F6A21B20683F7400E618F9 /* warnless.c in Sources */,
+				22F6A1D820683F6700E618F9 /* gopher.c in Sources */,
+				22F6A1DA20683F6700E618F9 /* hmac.c in Sources */,
+				22F6A20D20683F6700E618F9 /* splay.c in Sources */,
+				22F6A1E720683F6700E618F9 /* http_proxy.c in Sources */,
+				22F6A1B720683F6700E618F9 /* amigaos.c in Sources */,
+				22F6A25B20683F8500E618F9 /* tool_writeenv.c in Sources */,
+				22F6A20220683F6700E618F9 /* security.c in Sources */,
+				22F6A1CB20683F6700E618F9 /* curl_sspi.c in Sources */,
+				22F6A1C020683F6700E618F9 /* curl_des.c in Sources */,
+				22F6A21820683F6700E618F9 /* transfer.c in Sources */,
+				22F6A1BB20683F6700E618F9 /* conncache.c in Sources */,
+				22F6A22420683F7900E618F9 /* nss.c in Sources */,
+				22F6A1BA20683F6700E618F9 /* base64.c in Sources */,
+				22F6A24920683F8500E618F9 /* tool_homedir.c in Sources */,
+				22F6A23420683F7E00E618F9 /* spnego_sspi.c in Sources */,
+				22F6A1CD20683F6700E618F9 /* dict.c in Sources */,
+				22F6A1C420683F6700E618F9 /* curl_gssapi.c in Sources */,
+				22F6A20320683F6700E618F9 /* select.c in Sources */,
+				22F6A20720683F6700E618F9 /* smb.c in Sources */,
+				22F6A1FA20683F6700E618F9 /* openldap.c in Sources */,
+				22F6A24F20683F8500E618F9 /* tool_msgs.c in Sources */,
+				22F6A21C20683F7400E618F9 /* wildcard.c in Sources */,
+				22F6A1F420683F6700E618F9 /* multi.c in Sources */,
+				22F6A1B820683F6700E618F9 /* asyn-ares.c in Sources */,
+				22F6A24220683F8500E618F9 /* tool_doswin.c in Sources */,
+				22F6A25D20683F8600E618F9 /* tool_xattr.c in Sources */,
+				22F6A1E920683F6700E618F9 /* if2ip.c in Sources */,
+				22F6A23120683F7E00E618F9 /* ntlm_sspi.c in Sources */,
+				22F6A23720683F8500E618F9 /* tool_binmode.c in Sources */,
+				22F6A24520683F8500E618F9 /* tool_getparam.c in Sources */,
+				22F6A21620683F6700E618F9 /* tftp.c in Sources */,
+				22F6A24620683F8500E618F9 /* tool_getpass.c in Sources */,
+				22F6A1D520683F6700E618F9 /* ftplistparser.c in Sources */,
+				22F6A22720683F7900E618F9 /* polarssl_threadlock.c in Sources */,
+				22F6A25820683F8500E618F9 /* tool_urlglob.c in Sources */,
+				22F6A20420683F6700E618F9 /* sendf.c in Sources */,
+				22F6A20C20683F6700E618F9 /* speedcheck.c in Sources */,
+				22F6A1D120683F6700E618F9 /* file.c in Sources */,
+				22F6A22C20683F7E00E618F9 /* digest.c in Sources */,
+				22F6A21420683F6700E618F9 /* system_win32.c in Sources */,
+				22F6A1DE20683F6700E618F9 /* hostip4.c in Sources */,
+				22F6A1DD20683F6700E618F9 /* hostip.c in Sources */,
+				22F6A1EC20683F6700E618F9 /* inet_pton.c in Sources */,
+				22F6A1D220683F6700E618F9 /* fileinfo.c in Sources */,
+				22F6A21120683F6700E618F9 /* strerror.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3173,11 +3211,7 @@
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -3218,11 +3252,7 @@
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3256,11 +3286,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = tar/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -3290,11 +3316,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = tar/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3323,11 +3345,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = files/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.files";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -3350,11 +3368,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = files/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.files";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -3376,11 +3390,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = shell/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.shell";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -3405,11 +3415,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = shell/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.shell";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -3433,11 +3439,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = text/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.text";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -3460,11 +3462,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = text/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Nicolas-Holzschuch.text";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -3486,11 +3484,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = awk/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -3521,11 +3515,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = awk/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3560,11 +3550,7 @@
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
@@ -3600,11 +3586,7 @@
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
@@ -3639,26 +3621,8 @@
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CFLAGS = (
-					"-Wshorten-64-to-32",
-					"-Wno-ambiguous-macro",
-					"-Wunused-const-variable",
-					"-Wincompatible-pointer-types-discards-qualifiers",
-					"-DHAVE_CONFIG_H",
-					"-I",
-					curl/curl/include/,
-					"-I",
-					curl/curl/lib/,
-					"-DBUILDING_LIBCURL",
-					"-I",
-					"./Frameworks/libssh2.xcframework/ios-armv7_arm64/libssh2.framework/Headers/",
-				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-F",
@@ -3690,25 +3654,7 @@
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				OTHER_CFLAGS = (
-					"-Wshorten-64-to-32",
-					"-Wno-ambiguous-macro",
-					"-Wunused-const-variable",
-					"-Wincompatible-pointer-types-discards-qualifiers",
-					"-DHAVE_CONFIG_H",
-					"-I",
-					curl/curl/include/,
-					"-I",
-					curl/curl/lib/,
-					"-DBUILDING_LIBCURL",
-					"-I",
-					"./Frameworks/libssh2.xcframework/ios-armv7_arm64/libssh2.framework/Headers/",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-F",

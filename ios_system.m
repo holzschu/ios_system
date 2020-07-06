@@ -185,24 +185,11 @@ static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     functionParameters *p = (functionParameters *) parameters;
     char* commandName = p->argv[0];
-    // commandName can be NULL, I don't know exactly under which circumstances.
-    if (commandName != NULL) {
-        if ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0)) {
-            if ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != pthread_self())) {
-                // Something started less. Was that a pipe?
-                NSLog(@"less quitting. currentsession->stdin: %d thread_stdin: %d\n", fileno(currentSession->stdin), fileno(thread_stdin));
-                if (fileno(currentSession->stdin) != fileno(thread_stdin)) {
-                    // Command was "root_command | sthg | less". We need to kill the root command:
-                    pthread_kill(currentSession->current_command_root_thread, SIGINT);
-                    // ... and keep listening for input, otherwise the command piping into us will get blocked:
-                    char c;
-                    // Stop when rootthread is 0? will it work?
-                    // fflush(thread_stdin)?
-                    while (((c = fgetc(thread_stdin)) != EOF) && (currentSession->current_command_root_thread != 0)) {
-                        // NSLog(@"Root thread: %x received: %c\n", currentSession->current_command_root_thread, c);
-                    }
-                }
-            }
+    if ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0)) {
+        if ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != pthread_self())) {
+            // Command was "root_command | sthg | less". We need to kill root command:
+            pthread_kill(currentSession->current_command_root_thread, SIGINT);
+            while (fgetc(thread_stdin) != EOF) { } // flush input, otherwise previous command gets blocked.
         }
     }
     if ((!joinMainThread) && p->isPipeOut) {
@@ -220,18 +207,16 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stdout);
     fflush(thread_stderr);
     // release parameters:
-    if (commandName != NULL) {
-        // NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d isPipeOut %d", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
-        // Specific to run multiple python3 interpreters:
-        if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
-            // It's one of the multiple python3 interpreters
-            char commandNumber = commandName[6];
-            if (commandNumber == '3') PythonIsRunning[0] = false;
-            else {
-                commandNumber -= 'A' - 1;
-                if ((commandNumber > 0) && (commandNumber < MaxPythonInterpreters))
-                    PythonIsRunning[commandNumber] = false;
-            }
+    NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d isPipeOut %d", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
+    // Specific to run multiple python3 interpreters:
+    if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
+        // It's one of the multiple python3 interpreters
+        char commandNumber = commandName[6];
+        if (commandNumber == '3') PythonIsRunning[0] = false;
+        else {
+            commandNumber -= 'A' - 1;
+            if ((commandNumber > 0) && (commandNumber < MaxPythonInterpreters))
+                PythonIsRunning[commandNumber] = false;
         }
     }
     bool isSh = strcmp(p->argv[0], "sh") == 0;
@@ -293,7 +278,7 @@ static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     ios_storeThreadId(pthread_self());
     // NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
-    // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
+    NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
     optind = 1;
@@ -368,7 +353,7 @@ void initializeEnvironment() {
     setenv("TMPDIR", NSTemporaryDirectory().UTF8String, 0); // tmp directory
     setenv("CLICOLOR", "1", 1);
     setenv("LSCOLORS", "ExFxBxDxCxegedabagacad", 0); // colors for ls on black background
-
+    
     // We can't write in $HOME so we need to set the position of config files:
     setenv("SSH_HOME", docsPath.UTF8String, 0);  // SSH keys in ~/Documents/.ssh/ or [Cloud Drive]/.ssh
     setenv("DIG_HOME", docsPath.UTF8String, 0);  // .digrc is in ~/Documents/.digrc or [Cloud Drive]/.digrc
@@ -1969,7 +1954,7 @@ int ios_system(const char* inputCmd) {
                     currentSession->isMainThread = true;
                 }
             } else {
-                // NSLog(@"Starting command %s, global_errno= %d\n", command, currentSession->global_errno);
+                NSLog(@"Starting command %s, global_errno= %d\n", command, currentSession->global_errno);
                 // Don't send signal if not in main thread. Also, don't join threads.
                 volatile pthread_t _tid_local = NULL;
                 pthread_create(&_tid_local, NULL, run_function, params);
@@ -2007,7 +1992,7 @@ int ios_system(const char* inputCmd) {
         free(dontExpand);
         free(params);
     }
-    // NSLog(@"returning from ios_system, global_errno= %d\n", currentSession->global_errno);
+    NSLog(@"returning from ios_system, global_errno= %d\n", currentSession->global_errno);
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
     fflush(thread_stdin);
     fflush(thread_stdout);
