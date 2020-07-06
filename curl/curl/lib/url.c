@@ -4643,7 +4643,7 @@ static CURLcode parseurlandfillconn(struct Curl_easy *data,
    * the host name
    */
 #ifdef BLINKSHELL // get user and host from Blinkshell config
-    if ((strcmp(protop, "scp") == 0) || (strcmp(protop, "sftp") == 0)) {
+    if ((strcmp(protop, "scp") == 0) || (strcmp(protop, "sftp") == 0)) {
         BKHosts *host;
         if (host = [BKHosts withHost:[NSString stringWithUTF8String:conn->host.name]]) {
             if (host.hostName) conn->host.name = [host.hostName UTF8String];
