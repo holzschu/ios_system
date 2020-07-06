@@ -82,7 +82,7 @@ int say_main(int argc, char *argv[]) {
   
   AVSpeechSynthesisVoice *speechVoice = nil;
   
-  if ([voice isEqual:@"?"] || [voice isEqual:@""] || [voice isEqual:@"list"]) {
+  if ([voice isEqual:@"?"] || [voice isEqual:@""] || [voice isEqual:@"list"]) {
     for (AVSpeechSynthesisVoice * v in AVSpeechSynthesisVoice.speechVoices) {
       puts([NSString stringWithFormat:@"%-20s %@", v.name.UTF8String, v.language].UTF8String);
     }
