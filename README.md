@@ -54,17 +54,13 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 
 ## Installation:
 
-**The easy way:** run the script `./get_binaries.sh`. This will download the compiled versions of all existing frameworks (`ios_system.framework`, plus all the frameworks libraries, including `network_ios`). 
+**The easy way:** (Xcode 12 and above) `ios_system` is available as a set of binary frameworks. Add this project as "Swift Package dependency", and link and embed the frameworks as you need them. 
 
 **The hard way:**
 
-- Run the script `./get_sources.sh`. This will download the latest sources form [Apple OpenSource](https://opensource.apple.com) and patch them for compatibility with iOS. 
-- We need libSSH2 and OpenSSL. Either: 
-    - **[Fast]** Run the script `./get_frameworks.sh` to download precompiled versions of `openSSL.framework` and `libSSH2.framework`.
-    - **[Slow]** Run the script `./get_frameworks_as_source.sh` to download the source for  `openSSL.framework` and `libSSH2.framework`, compile them, and move them to `Frameworks`. 
 - Open the Xcode project `ios_system.xcodeproj` and hit build. This will create the `ios_system` framework, ready to be included in your own projects. 
-- Compile the other targets as well: files, tar, curl, awk, shell, text, ssh_cmd. This will create the corresponding frameworks.
-- Alternatively, type `xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Debug -quiet` to build all targets.
+- Compile the other targets as well: `files`, `tar`, `curl`, `awk`, `shell`, `text`, `ssh_cmd`. This will create the corresponding frameworks.
+- Alternatively, type `xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Release -quiet` to build all the frameworks.
 - If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios), [TeX](https://github.com/holzschu/lib-tex) or [network_ios](https://github.com/holzschu/network_ios), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile.
 
 ## Integration with your app:
@@ -135,7 +131,6 @@ To add a command:
     - Edit the `Resources/extraCommandsDictionary.plist` to add your command, and run. 
     - That's it. 
     - Test a lot. Side effects can appear after several launches.
-    - if your command has a large code base, work out the difference in your edits and make a patch, rather than commit the entire code. See `get_sources_for_patching.sh` for an example. 
 
 **Frequently asked commands:** here is a list of commands that are often requested, and my experience with them:
 - `ping`, `nslookup`, `telnet`: now provided in the [network_ios](https://github.com/holzschu/network_ios) package.
