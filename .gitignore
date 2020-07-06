@@ -16,7 +16,6 @@
 .*.sw?
 
 # Downloaded files:
-/file_cmds/
 /libarchive/
 /libinfo/
 /libutil/
