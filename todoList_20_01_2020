@@ -1,0 +1,97 @@
+- port ios_system to iVim 
+   X make main thread non-blocking
+   X errors at startup. Works with "!"
+   X grep not always, flake8 not always.
+   X Works in Carnets 
+   X Works in iVim 
+   - check a-Shell: fails on 2nd/3rd call.
+   * suggest same to Blink
+
+- don't start parsing commands until finished parsing current command
+- except a command can start another command (in which case it is allowed) either with pipe or system()
+- Possible : just with "sh", as in: single sh session? Don't start a new sh session until the previous one is over? 
+- Current system of not running is worse
+- Could be an issue with long sh sessions (clang can take several seconds). So no. 
+- Once the command is started can go back ot parsing. lastThreadId tells us whether parsing is finished. It is set in ios_system, but not always (not set if mainthread).
+
+- okay, create new sessions each time. 
+- currentSession is a global, non thread local, variable --> lots of potential problems here.
+- cannot be thread local, though. Unless reset at creation of thread, as part of parameters. 
+
+
+- "exec" creates a new thread, with a new currentSession (and thread_std*). *Then* we run ios_system.  
+- Yeah, exec() must create a new thread and a new currentSession. 
+
+- Go slowly. 
+- currentSession becomes __thread 
+- params has a session, to be passed to the other threads
+
+- Cannot have objective-C class that is thread-local. Move to C struct. 
+
+
+
+
+
+__thread currentSession
+
+ios_system : set currentSession if not set
+params.session = currentSession
+run_function = set currentSession to params.session
+ios_system, mainThread + lastThreadId == 0 --> set lastThreadId (mainThread is always started last)
+currentSession.parsing: set to true at beginning of ios_system, set to false when lastThreadId is set.
+
+Won't work with pipes, though.
+Can't block parsing, then. 
+
+currentSession = thread_local 
+reset each time
+sh = create new session (as it does now).
+
+
+Back to basics: ios_system works on "currentSession" (sets stdout, stderr, etc). 
+Two commands start simultaneously --> problem
+Need some kind of lock, really. Real lock. 
+
+Scenario: ls and flake8 get started at the same time (slightly later). flake8 will impact currentSession.everything. 
+
+New ide
+
+
+
+copy currentSession in ios_system(), act on content, then set it in run_function()? 
+Still an issue with pipes. 
+
+Lock (again): while ios_system is parsing, don't do anything, except for the current command. 
+How do I know that's the current command?
+
+while "sh" is parsing, don't do anything. Easier, because higher level control.
+How do I know it's still parsing? Because ios_system() is being called. 
+
+Entering sh : we are parsing. 
+Each function : still parsing (with waitpid).
+That still allows multiple sessions, but not multiple commands per session. 
+
+
+
+
+
+
+
+
+
+- add ios_system, Carnets, a-Shell to BIL
+- release all three with APP
+- ios_system and friends new binary release
+
+- cleanup Python3 code (new repo? forked from main?) 
+- how to deal with extraPackages? fork all + submodules? Probably the best, but that's a *lot* of forks. 
+- all of them will have to be submodules of Python3 repo.
+
+- Bokeh
+- OpenCV
+
+X Wenzel review
+- Sunrise paper
+- Alban paper
+- Guillaume paper
+
