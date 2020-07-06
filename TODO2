@@ -1,0 +1,38 @@
+procfile("-")
+then grep_open(NULL)
+
+Now: grep is the first thread to reach phtread_start
+And it has been "joined"
+So the second thread never starts. Need to "not join". 
+
+If I don't join, by the time grep starts, everything has been erased. 
+
+So need to wait for the thread to be active, then release. 
+
+
+- replace STDIN_FILENO with fileno(thread_stdin). Can't use #define
+- replace all isatty
+- TODO: also TeX/LaTeX. Keep compatible? 
+- X move global variables to __thread for multi-calls.
+
+- todo: add ID of stream to close to params (in and out)
+- don't close streams equal to thread_stdout, someone else will.
+- don't close threads for system(), only for popen. Will be hard.
+- easy to close out-stream after popen, harder to close in-stream.
+
+X __thread for all commands in all groups
+! extern variables inside functions also
+X continue testing
+- create new patches for Python and Lua
+- test if python now works with system(python) (ballsy)
+X fileno(thread_stdout) does not exist. 
+
+- TODO (now): 
+X ssh + command (easy-ish). 
+X mercurial calls subprocess.Popen(), it seems.
+X popen does not call posix_popen
+X dup2 inside execute_child. To state "p2cread == (new process) stdin"
+- can use that.
+- Need to think about what Popen does. 
+
+X hg connects but doesn't read data / write ? 

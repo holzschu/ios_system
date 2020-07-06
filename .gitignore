@@ -22,6 +22,8 @@
 /libutil/
 /shell_cmds/
 /text_cmds/
+/network_cmds-543/
+/ssh_keygen_110/
 
 # Precompiled Headers
 *.gch
