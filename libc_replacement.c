@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 #include "ios_error.h"
 #undef write
@@ -35,12 +36,16 @@ int printf (const char *format, ...) {
 int fprintf(FILE * restrict stream, const char * restrict format, ...) {
     va_list arg;
     int done;
-    if (thread_stderr == NULL) thread_stderr = stderr;
-    if (thread_stdout == NULL) thread_stdout = stdout;
-
+    
     va_start (arg, format);
-    if (fileno(stream) == STDOUT_FILENO) done = vfprintf (thread_stdout, format, arg);
-    else if (fileno(stream) == STDERR_FILENO) done = vfprintf (thread_stderr, format, arg);
+    if (fileno(stream) == STDOUT_FILENO) {
+        if (thread_stdout == NULL) thread_stdout = stdout;
+        done = vfprintf (thread_stdout, format, arg);
+    }
+    else if (fileno(stream) == STDERR_FILENO) {
+        if (thread_stderr == NULL) thread_stderr = stderr;
+        done = vfprintf (thread_stderr, format, arg);
+    }
     // iOS, debug:
     // else if (fileno(stream) == STDERR_FILENO) done = vfprintf (stderr, format, arg);
     else done = vfprintf (stream, format, arg);
@@ -125,6 +130,7 @@ static int pid_overflow = 0;
 static pid_t current_pid = 0;
 
 inline pthread_t ios_getThreadId(pid_t pid) {
+    if (pid >= IOS_MAX_THREADS) return NULL;
     // return ios_getLastThreadId(); // previous behaviour
     return thread_ids[pid];
 }

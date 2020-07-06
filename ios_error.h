@@ -31,6 +31,7 @@ extern "C" {
 // these functions are defined differently in C++. The #define approach breaks things.
 #ifndef __cplusplus
   #define getwchar() fgetwc(thread_stdin)
+  #define putwchar(a) fputwc(a, thread_stdout)
   // iswprint depends on the given locale, and setlocale() fails on iOS:
   #define iswprint(a) 1
   #define write ios_write

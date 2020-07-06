@@ -631,7 +631,6 @@ quit(status)
 	SetConsoleTitle(consoleTitle);
 #endif
 	close_getchr();
-    lower_left(); // iOS, required in some cases.
     flush();
 	exit(status);
 }
