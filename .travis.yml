@@ -1,11 +1,8 @@
 osx_image:
-- xcode9.2
-- xcode10.2
+- xcode12.0
 language: objective-c
 
 before_install: 
-- ./get_sources.sh
-- ./get_frameworks_fat.sh
 
 script:
 - xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Debug -quiet
