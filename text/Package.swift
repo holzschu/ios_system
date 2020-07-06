@@ -30,6 +30,9 @@ let package = Package(
                         .define("WITHOUT_LZMA", to: "1"),
                         .headerSearchPath("./"),
                         .headerSearchPath("../"),
-                        .unsafeFlags([""])]),
+                        .unsafeFlags([""])],
+            linkerSettings: [.linkedLibrary("libz2")]
+        ),
+
     ]
 )

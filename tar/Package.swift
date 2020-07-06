@@ -4,14 +4,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "files",
+    name: "tar",
     // thread-local variables are only available with iOS 11+. This setting is required for compilation.
     platforms: [.iOS(.v11)],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
         .library(
-            name: "files",
-            targets: ["files"]),
+            name: "tar",
+            targets: ["tar"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -23,14 +23,16 @@ let package = Package(
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
-            name: "files",
+            name: "tar",
             dependencies: ["ios_system"],
-            exclude: ["gzip/unbzip2.c", "gzip/zuncompress.c", "gzip/unpack.c"],
-            cSettings: [.define("COLORLS", to: "1"),
-                        .headerSearchPath("./"),
+            exclude: [],
+            cSettings: [.define("HAVE_CONFIG_H", to: "1"),
                         .headerSearchPath("../"),
+                        .headerSearchPath("./"),
+                        .headerSearchPath("./libarchive/"),
+                        .headerSearchPath("./libarchive_fe/"),
                         .unsafeFlags([""])],
-            linkerSettings: [.linkedLibrary("libz2"), .linkedLibrary("libncurses")]
+            linkerSettings: [.linkedLibrary("libz2"), .linkedLibrary("libxml2")]
         ),
     ]
 )
