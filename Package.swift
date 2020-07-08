@@ -49,6 +49,11 @@ let package = Package(
             name: "text",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/text.xcframework.zip",
             checksum: "63141350d266ffa471cfe3ea5e55a450730e6a944f18c7c4de3e4f8a5c43b042"
+        ),
+        .binaryTarget(
+            name: "mandoc",
+            url: "https://github.com/holzschu/ios_system/releases/download/2.6/mandoc.xcframework.zip",
+            checksum: "d76e4632432ef1829446731b03f61d14558acbfcbc0c7e49d2eb361a5b0f0880"
         )
     ]
 )
