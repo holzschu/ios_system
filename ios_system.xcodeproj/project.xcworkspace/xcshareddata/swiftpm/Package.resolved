@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "openssl",
+        "repositoryURL": "https://github.com/holzschu/libssh2-for-iOS",
+        "state": {
+          "branch": "master",
+          "revision": "f843bfe1906fc880e99dc36a9327a2ee91e99e03",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}

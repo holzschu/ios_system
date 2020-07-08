@@ -9,12 +9,9 @@
 /* Begin PBXBuildFile section */
 		2209215924B3AD9300D3327B /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215524B3AD7700D3327B /* libssh2.xcframework */; };
 		2209215A24B3AD9300D3327B /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215724B3AD8600D3327B /* openssl.xcframework */; };
-		2209215B24B3B05100D3327B /* jsc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22484B022434C5BB00D6BDDA /* jsc.swift */; };
 		2209215C24B3B05A00D3327B /* open.m in Sources */ = {isa = PBXBuildFile; fileRef = 221CD98D21E8B03D00F3B47C /* open.m */; };
 		2209215E24B3B5BA00D3327B /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215524B3AD7700D3327B /* libssh2.xcframework */; };
-		2209215F24B3B5BA00D3327B /* libssh2.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215524B3AD7700D3327B /* libssh2.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2209216124B3B5BC00D3327B /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215724B3AD8600D3327B /* openssl.xcframework */; };
-		2209216224B3B5BC00D3327B /* openssl.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215724B3AD8600D3327B /* openssl.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		22122E2C21BC130700D8FE74 /* say.m in Sources */ = {isa = PBXBuildFile; fileRef = 22122E2A21BC129000D8FE74 /* say.m */; };
 		2217ECD421CBA5F40049B382 /* entropy.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD321CBA5F40049B382 /* entropy.c */; };
 		2217ECD621CBA6240049B382 /* openssl-compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD521CBA6240049B382 /* openssl-compat.c */; };
@@ -502,21 +499,6 @@
 		22F6A25D20683F8600E618F9 /* tool_xattr.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781181FDB4D380050F312 /* tool_xattr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
 		22F6A25E20683F9B00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		2209216024B3B5BA00D3327B /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				2209216224B3B5BC00D3327B /* openssl.xcframework in Embed Frameworks */,
-				2209215F24B3B5BA00D3327B /* libssh2.xcframework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2209215524B3AD7700D3327B /* libssh2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssh2.xcframework; path = "/Users/holzschu/Library/Developer/Xcode/DerivedData/ios_system-casnnthccszagwbhuwonmdqyriod/SourcePackages/artifacts/openssl/libssh2.xcframework"; sourceTree = "<absolute>"; };
@@ -2428,7 +2410,6 @@
 				22F6A16220683D5200E618F9 /* Frameworks */,
 				22F6A16320683D5200E618F9 /* Headers */,
 				22F6A16420683D5200E618F9 /* Resources */,
-				2209216024B3B5BA00D3327B /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2598,7 +2579,6 @@
 			files = (
 				22319FA01FDC2332004D875A /* getopt.c in Sources */,
 				22F0803820973712003C3BF0 /* libc_replacement.c in Sources */,
-				2209215B24B3B05100D3327B /* jsc.swift in Sources */,
 				225F06102016751900466685 /* getopt_long.c in Sources */,
 				223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */,
 				2209215C24B3B05A00D3327B /* open.m in Sources */,
