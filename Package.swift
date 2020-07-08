@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "ios_system",
     products: [
-        .library(name: "ios_system", targets: ["awk", "curl_ios", "files", "ios_system", "shell", "ssh_cmd", "tar", "text"])
+        .library(name: "ios_system", targets: ["awk", "curl_ios", "files", "ios_system", "shell", "ssh_cmd", "tar", "text", "mandoc"])
     ],
     dependencies: [
     ],
