@@ -38,7 +38,7 @@ let package = Package(
         .binaryTarget(
             name: "ssh_cmd",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/ssh_cmd.xcframework.zip",
-            checksum: "a7531795e020fc4f296e263bb1e192121da2ee0cb124cf44789bf34222577f96"
+            checksum: "063888a88cb6acbe9c0a3b4420a5937b190f1746dbca177ac57000c7d544b118"
         ),
         .binaryTarget(
             name: "tar",
