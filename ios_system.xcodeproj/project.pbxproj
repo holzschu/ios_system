@@ -2406,6 +2406,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 22F6A16B20683D5200E618F9 /* Build configuration list for PBXNativeTarget "ssh_cmd" */;
 			buildPhases = (
+				2224506D24D303E1008C9CA3 /* ShellScript */,
 				22F6A16120683D5200E618F9 /* Sources */,
 				22F6A16220683D5200E618F9 /* Frameworks */,
 				22F6A16320683D5200E618F9 /* Headers */,
@@ -2571,6 +2572,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		2224506D24D303E1008C9CA3 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nenv\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		223496A61FD5FC71007ED1A9 /* Sources */ = {
