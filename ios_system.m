@@ -186,8 +186,9 @@ static void cleanup_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     char* commandName = p->argv[0];
     if ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0)) {
-        if ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != pthread_self())) {
-            // Command was "root_command | sthg | less". We need to kill root command:
+        if ((strcmp(currentSession->commandName, "less") != 0) && (strcmp(currentSession->commandName, "more") != 0)) {
+            // Command was "root_command | sthg | less". We need to kill root command.
+            // Unless less / more was started as a pager, in which case don't kill root command (e.g. for man).
             pthread_kill(currentSession->current_command_root_thread, SIGINT);
             while (fgetc(thread_stdin) != EOF) { } // flush input, otherwise previous command gets blocked.
         }
