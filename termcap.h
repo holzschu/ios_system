@@ -54,10 +54,10 @@ extern "C"
 #undef  NCURSES_OSPEED 
 #define NCURSES_OSPEED short 
 
-extern NCURSES_EXPORT_VAR(char) PC;
+// extern NCURSES_EXPORT_VAR(char) PC;
 extern NCURSES_EXPORT_VAR(char *) UP;
 extern NCURSES_EXPORT_VAR(char *) BC;
-extern NCURSES_EXPORT_VAR(NCURSES_OSPEED) ospeed; 
+// extern NCURSES_EXPORT_VAR(NCURSES_OSPEED) ospeed; 
 
 #if !defined(NCURSES_TERM_H_incl)
 extern NCURSES_EXPORT(char *) tgetstr (NCURSES_CONST char *, char **);

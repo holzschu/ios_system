@@ -245,7 +245,7 @@
 #define HAVE_MEMORY_H 1
 
 /* Define HAVE_OSPEED if your termcap library has the ospeed variable. */
-#define HAVE_OSPEED 1
+#define HAVE_OSPEED 0
 
 /* PCRE (Perl-compatible regular expression) library */
 /* #undef HAVE_PCRE */
@@ -370,7 +370,7 @@
 
 /* Define MUST_DEFINE_OSPEED if you have ospeed but it is not defined in
    termcap.h. */
-/* #undef MUST_DEFINE_OSPEED */
+#undef MUST_DEFINE_OSPEED 
 
 /* pattern matching is supported, but without metacharacters. */
 /* #undef NO_REGEX */

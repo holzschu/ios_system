@@ -157,6 +157,12 @@ uname_main(argc, argv)
 		s = getenv ("UNAME_NODENAME"); if (s) strncpy (u.nodename, s, sizeof (u.nodename));
 		s = getenv ("UNAME_RELEASE");  if (s) strncpy (u.release,  s, sizeof (u.release));
 		s = getenv ("UNAME_VERSION");  if (s) strncpy (u.version,  s, sizeof (u.version));
+#if TARGET_OS_SIMULATOR
+        // iOS simulator pretends to be a Mac, so we make it explicit here:
+        s = getenv("SIMULATOR_MODEL_IDENTIFIER");
+        if (s) strncpy (u.machine,  s, sizeof (u.machine));
+#endif
+		// but we can still override it with environment variables:
 		s = getenv ("UNAME_MACHINE");  if (s) strncpy (u.machine,  s, sizeof (u.machine));
 	}
 #endif /* __APPLE__ */

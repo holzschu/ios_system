@@ -111,6 +111,19 @@ void ios_exit(int n) {
     pthread_exit(NULL);
 }
 
+// Replace standard abort and exit functions with ours:
+// We also do this using #define, but this is for the unmodified code.
+void abort(void) {
+    ios_exit(1);
+}
+void exit(int n) {
+    ios_exit(n);
+}
+void _exit(int n) {
+    ios_exit(n);
+}
+//
+
 void ios_signal(int signal) {
     // Signals the threads of the current session:
     if (currentSession != NULL) {
@@ -1508,9 +1521,13 @@ int ios_system(const char* inputCmd) {
         // Currently, we don't check for that.
         errorFileMarker = strstrquoted(outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
         if (errorFileMarker) {
+            outputFileName = NULL;
             if (params->stdout) params->stderr = params->stdout;
             outputFileMarker = strstrquoted(outputFileMarker, ">");
-            if (outputFileMarker) outputFileName = outputFileMarker + 1; // skip past '>'
+            if (outputFileMarker - errorFileMarker == 1) // the first '>' was the one from '2>&1'
+                outputFileMarker = strstrquoted(outputFileMarker + 2, ">"); // is there one after that?
+            if (outputFileMarker)
+                outputFileName = outputFileMarker + 1; // skip past '>'
         }
     }
     if (errorFileMarker) { sharedErrorOutput = true; }
@@ -1778,8 +1795,8 @@ int ios_system(const char* inputCmd) {
                             // 1) get script language name
                             if ([firstLine containsString:@"python3"]) {
                                 scriptName = "python3";
-                            } else if ([firstLine containsString:@"python2"]) {
-                                scriptName = "python";
+                            // } else if ([firstLine containsString:@"python2"]) {
+                            //    scriptName = "python";
                             } else if ([firstLine containsString:@"python"]) {
                                 // the default for python is now python3.
                                 scriptName = "python3";
@@ -1822,12 +1839,12 @@ int ios_system(const char* inputCmd) {
         int (*function)(int ac, char** av) = NULL;
         if (commandList == nil) initializeCommandList();
         NSString* commandName = [NSString stringWithCString:argv[0] encoding:NSUTF8StringEncoding];
-        // Make sure python3 and python2 coexist peacefully:
+        // Removing parts that took care of python2 now that it's EOLed.
         if ([commandName isEqualToString: @"python3"]) setenv("PYTHONEXECUTABLE", "python3", 1);
-        else if ([commandName isEqualToString: @"python2"]) setenv("PYTHONEXECUTABLE", "python", 1);
-        else if ([commandName isEqualToString: @"python"]) setenv("PYTHONEXECUTABLE", "python", 1);
+        // else if ([commandName isEqualToString: @"python2"]) setenv("PYTHONEXECUTABLE", "python", 1);
+        else if ([commandName isEqualToString: @"python"]) setenv("PYTHONEXECUTABLE", "python3", 1);
         // Ability to start multiple python3 scripts (required for Jupyter notebooks):
-        if ([commandName isEqualToString: @"python3"]) {
+        if ([commandName isEqualToString: @"python3"] || [commandName isEqualToString: @"python"]) {
             // start by increasing the number of the interpreter, until we're out.
             int numInterpreter = 0;
             if (currentPythonInterpreter < numPythonInterpreters) {

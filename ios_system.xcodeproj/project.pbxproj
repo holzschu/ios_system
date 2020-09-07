@@ -952,7 +952,6 @@
 		22A3736721CB983400230846 /* uuencode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uuencode.c; path = ssh_keygen/uuencode.c; sourceTree = "<group>"; };
 		22A3736921CB986900230846 /* sshkey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshkey.c; path = ssh_keygen/sshkey.c; sourceTree = "<group>"; };
 		22A3736B21CB99EB00230846 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = ssh_keygen/misc.c; sourceTree = "<group>"; };
-		22AC09E520209C57006F7D8B /* libssh2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = libssh2.framework; path = Frameworks/libssh2.framework; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
 		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
 		22C5057D2098ADD700FDDFA9 /* y.tab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = y.tab.c; path = bsd_find/y.tab.c; sourceTree = SOURCE_ROOT; };
@@ -1009,7 +1008,6 @@
 		22F0804E209766BD003C3BF0 /* coll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = coll.c; path = text_cmds/sort/coll.c; sourceTree = SOURCE_ROOT; };
 		22F0804F209766BD003C3BF0 /* radixsort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = radixsort.c; path = text_cmds/sort/radixsort.c; sourceTree = SOURCE_ROOT; };
 		22F0805920979938003C3BF0 /* uniq.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uniq.c; path = text_cmds/uniq/uniq.c; sourceTree = SOURCE_ROOT; };
-		22F567C72020B807009850FD /* openssl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = openssl.framework; path = Frameworks/openssl.framework; sourceTree = "<group>"; };
 		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		22F568222020C42F009850FD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		22F6A10C2068390800E618F9 /* shell.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = shell.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1107,15 +1105,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2209215D24B3B35700D3327B /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				22F567C72020B807009850FD /* openssl.framework */,
-				22AC09E520209C57006F7D8B /* libssh2.framework */,
-			);
-			name = "Recovered References";
-			sourceTree = "<group>";
-		};
 		222CC4D9218CBEED00D3A11C /* xarg */ = {
 			isa = PBXGroup;
 			children = (
@@ -1162,7 +1151,6 @@
 				22878D4B2036212E00286AF1 /* ssh */,
 				223496AC1FD5FC71007ED1A9 /* Products */,
 				223497AB1FD6CF7A007ED1A9 /* Frameworks */,
-				2209215D24B3B35700D3327B /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
