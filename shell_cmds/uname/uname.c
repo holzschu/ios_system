@@ -45,6 +45,7 @@ __RCSID("$NetBSD: uname.c,v 1.10 1998/11/09 13:24:05 kleink Exp $");
 #include <err.h>
 #ifdef __APPLE__
 #include <string.h>
+#include <TargetConditionals.h>
 #endif /* __APPLE__ */
 
 #include <sys/sysctl.h>
