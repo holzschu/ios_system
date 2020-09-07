@@ -33,7 +33,7 @@ let package = Package(
         .binaryTarget(
             name: "shell",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/shell.xcframework.zip",
-            checksum: "6871bf99cd576dd8cbcb963c9a43a524a396f7452ed09935ca3a4ea556c796ce"
+            checksum: "1d89e218e0455b6cb18a727112c9c9165fdf914ac5a94d2191e2288a3567b64b"
         ),
         .binaryTarget(
             name: "ssh_cmd",
@@ -67,7 +67,7 @@ xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_syst
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/ios_system.xcframework
 2e27e36a4770ef57a1ed1d1764e32e869b2ec64fcbd47c3d678fb4a62e09adbf
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/shell.xcframework
-6871bf99cd576dd8cbcb963c9a43a524a396f7452ed09935ca3a4ea556c796ce
+1d89e218e0455b6cb18a727112c9c9165fdf914ac5a94d2191e2288a3567b64b
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/ssh_cmd.xcframework
 b4bd0a8a6318f4efeef3c8fb6051ffa82343e3ca832cd94ea7507cf2657aca7d
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/tar.xcframework
