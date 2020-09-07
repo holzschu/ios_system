@@ -48,12 +48,12 @@ let package = Package(
         .binaryTarget(
             name: "text",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/text.xcframework.zip",
-            checksum: "3a15ce0cd715b9dc2219c547fb3efcfecc3c99dbe18d58ab828f7994cfc0da5b"
+            checksum: "161a7f03ab3d54e9ee64d7f7473971979769a4c4f4806b32dab9c235e0d3f7be"
         ),
         .binaryTarget(
             name: "mandoc",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/mandoc.xcframework.zip",
-            checksum: "0ceefad5b792d7b6d490cd41a09322323a332fd7f379dc141938c70d0000a332"
+            checksum: "aabef1654771a373bf317b9be092ace5d84a515f03ad291c63b793ac8997be57"
         )
     ]
 )
@@ -73,5 +73,5 @@ e62533e953d9615ca8bc76ba0292aae8dd0fd92ecb10c3ba87ed089e8604d1c0
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/tar.xcframework
 0ceefad5b792d7b6d490cd41a09322323a332fd7f379dc141938c70d0000a332
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/text.xcframework
-0ceefad5b792d7b6d490cd41a09322323a332fd7f379dc141938c70d0000a332
+161a7f03ab3d54e9ee64d7f7473971979769a4c4f4806b32dab9c235e0d3f7be
 */
