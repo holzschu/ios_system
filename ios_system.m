@@ -225,12 +225,16 @@ static void cleanup_function(void* parameters) {
     // Specific to run multiple python3 interpreters:
     if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
         // It's one of the multiple python3 interpreters
-        char commandNumber = commandName[6];
-        if (commandNumber == '3') PythonIsRunning[0] = false;
-        else {
-            commandNumber -= 'A' - 1;
-            if ((commandNumber > 0) && (commandNumber < MaxPythonInterpreters))
-                PythonIsRunning[commandNumber] = false;
+        if (strlen(commandName) == 6) { // "python"
+            PythonIsRunning[0] = false;
+        } else { // python3, pythonA...
+            char commandNumber = commandName[6];
+            if (commandNumber == '3') PythonIsRunning[0] = false;
+            else {
+                commandNumber -= 'A' - 1;
+                if ((commandNumber > 0) && (commandNumber < MaxPythonInterpreters))
+                    PythonIsRunning[commandNumber] = false;
+            }
         }
     }
     bool isSh = strcmp(p->argv[0], "sh") == 0;

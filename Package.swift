@@ -13,42 +13,42 @@ let package = Package(
         .binaryTarget(
             name: "awk",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/awk.xcframework.zip",
-            checksum: "19a626d8f287b184326ba488e1ae6bdc751a94e42fc6bf4befde1f1ff27c81af"
+            checksum: "8c4bdf31ed8fb997706b7d5bef9dd86549069d86a0ee9ca13d6da1009377057c"
         ),
         .binaryTarget(
             name: "curl_ios",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/curl_ios.xcframework.zip",
-            checksum: "7bfe8663dd09845a53ee658c1a9aa89b5337fac3c704d7c3b959d651f339d063"
+            checksum: "e4db23176d19f646f75090dc4dc41749d32af68c492b3dee2c24eb773efb8632"
         ),
         .binaryTarget(
             name: "files",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/files.xcframework.zip",
-            checksum: "2e2854239675f2dc17453834777fe01614b31d7c3b32da65764fec99c672a1e9"
+            checksum: "5966d6c0e7bbf847780e0cfe1b55009719b5bb3e9671accf4682e1596cbbf024"
         ),
         .binaryTarget(
             name: "ios_system",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/ios_system.xcframework.zip",
-            checksum: "f57e41414b144dcdfb63a2d109db2ec048438f328f1d308321dafb3de1002327"
+            checksum: "092ad07cd83aafa810ca5fb6a6ed615f2be78f2120486a1cd5c962864a6e5746"
         ),
         .binaryTarget(
             name: "shell",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/shell.xcframework.zip",
-            checksum: "71118a0d66c7e83f44eba76ef4e36f210349a22e1a0b2277df17856fe7e6f4d9"
+            checksum: "173a6af34cc300a3ca6ef313acfb4bc104ac3270a33ebd0d4fd8d7358f83e9ca"
         ),
         .binaryTarget(
             name: "ssh_cmd",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/ssh_cmd.xcframework.zip",
-            checksum: "e62533e953d9615ca8bc76ba0292aae8dd0fd92ecb10c3ba87ed089e8604d1c0"
+            checksum: "eeab1e2715ef53a3e47d297e3ed580175133000c8f887e9a36254416253266a4"
         ),
         .binaryTarget(
             name: "tar",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/tar.xcframework.zip",
-            checksum: "0ceefad5b792d7b6d490cd41a09322323a332fd7f379dc141938c70d0000a332"
+            checksum: "37b18e43adb7531d9bc0e413b0bd4a37df31da9b415746aa40a10b8d75820fe4"
         ),
         .binaryTarget(
             name: "text",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/text.xcframework.zip",
-            checksum: "161a7f03ab3d54e9ee64d7f7473971979769a4c4f4806b32dab9c235e0d3f7be"
+            checksum: "afac71a875d0889d7ebea47ffe1caa105e2473415ca3e2da8c2b37b25534eeee"
         ),
         .binaryTarget(
             name: "mandoc",
@@ -59,19 +59,19 @@ let package = Package(
 )
 /* 
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/awk.xcframework
-19a626d8f287b184326ba488e1ae6bdc751a94e42fc6bf4befde1f1ff27c81af
+8c4bdf31ed8fb997706b7d5bef9dd86549069d86a0ee9ca13d6da1009377057c
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/curl_ios.xcframework
-7bfe8663dd09845a53ee658c1a9aa89b5337fac3c704d7c3b959d651f339d063
+e4db23176d19f646f75090dc4dc41749d32af68c492b3dee2c24eb773efb8632
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/files.xcframework
-2e2854239675f2dc17453834777fe01614b31d7c3b32da65764fec99c672a1e9
+5966d6c0e7bbf847780e0cfe1b55009719b5bb3e9671accf4682e1596cbbf024
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/ios_system.xcframework
-f57e41414b144dcdfb63a2d109db2ec048438f328f1d308321dafb3de1002327
+092ad07cd83aafa810ca5fb6a6ed615f2be78f2120486a1cd5c962864a6e5746
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/shell.xcframework
-71118a0d66c7e83f44eba76ef4e36f210349a22e1a0b2277df17856fe7e6f4d9
+173a6af34cc300a3ca6ef313acfb4bc104ac3270a33ebd0d4fd8d7358f83e9ca
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/ssh_cmd.xcframework
-e62533e953d9615ca8bc76ba0292aae8dd0fd92ecb10c3ba87ed089e8604d1c0
+eeab1e2715ef53a3e47d297e3ed580175133000c8f887e9a36254416253266a4
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/tar.xcframework
-0ceefad5b792d7b6d490cd41a09322323a332fd7f379dc141938c70d0000a332
+37b18e43adb7531d9bc0e413b0bd4a37df31da9b415746aa40a10b8d75820fe4
 xcframework successfully written out to: /Users/holzschu/src/Xcode_iPad/ios_system/text.xcframework
-161a7f03ab3d54e9ee64d7f7473971979769a4c4f4806b32dab9c235e0d3f7be
-*/
+afac71a875d0889d7ebea47ffe1caa105e2473415ca3e2da8c2b37b25534eeee
+
