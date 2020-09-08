@@ -223,11 +223,11 @@ static void cleanup_function(void* parameters) {
     // release parameters:
     NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d isPipeOut %d", commandName, pthread_self(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
     // Specific to run multiple python3 interpreters:
-    if ((strncmp(commandName, "python", 6) == 0) && (strlen(commandName) == strlen("python") + 1)) {
-        // It's one of the multiple python3 interpreters
+    if (strncmp(commandName, "python", 6) == 0) {
+        // It could be one of the multiple python3 interpreters
         if (strlen(commandName) == 6) { // "python"
             PythonIsRunning[0] = false;
-        } else { // python3, pythonA...
+        } else if (strlen(commandName) == strlen("python") + 1) { // python3, pythonA...
             char commandNumber = commandName[6];
             if (commandNumber == '3') PythonIsRunning[0] = false;
             else {
