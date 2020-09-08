@@ -1048,11 +1048,14 @@ int ios_execv(const char *path, char* const argv[]) {
     return returnValue;
 }
 
+extern char **environ;
 int ios_execve(const char *path, char* const argv[], char* envp[]) {
-    // TODO: save the environment (HOW?) and current dir
-    // TODO: replace environment with envp. envp looks a lot like current environment, though.
+    // save the environment (done) and current dir (TODO)
+    char** oldEnvironment = environ;
+    environ = envp;
     int returnValue = ios_execv(path, argv);
-    // TODO: restore the environment (HOW?)
+    // restore the environment:
+    environ = oldEnvironment;
     return returnValue;
 }
 
