@@ -1,4 +1,4 @@
-//
+    //
 //  ios_system.m
 //
 //  Created by Nicolas Holzschuch on 17/11/2017.
@@ -1048,14 +1048,73 @@ int ios_execv(const char *path, char* const argv[]) {
     return returnValue;
 }
 
-extern char **environ;
+extern char** environ;
 int ios_execve(const char *path, char* const argv[], char* envp[]) {
     // save the environment (done) and current dir (TODO)
-    char** oldEnvironment = environ;
-    environ = envp;
+    int i = 0;
+    while ((envp[i] != NULL) && (environ[i] != NULL)) {
+        if (strcmp(envp[i], environ[i]) != 0) {
+            break;
+        }
+        i++;
+    }
+    // We can have new values for old variables, new variables, etc
+    // Need to store variables that are going to be set and their prior values.
+    int newVariableStart = i;
+    int numVariablesSet = 0;
+    char** previousValues = NULL;
+    char** variableNames = NULL;
+    // Sometimes, envp == environ. In that case, no need to to anything specific:
+    if (envp[newVariableStart] != NULL) {
+        while (envp[newVariableStart + numVariablesSet] != NULL) {
+            numVariablesSet++;
+        }
+        previousValues = malloc(numVariablesSet * sizeof(char*));
+        variableNames = malloc(numVariablesSet * sizeof(char*));
+        // Set up the new environment variables, store previous value for restore:
+        for (int i = 0; i < numVariablesSet; i++) {
+            variableNames[i] = strdup(envp[newVariableStart + i]);
+            // fprintf(stderr, "Setting new variable: %s\n", variableNames[i]); fflush(stderr);
+            char* position = strstr(variableNames[i],"=");
+            char* value = position + 1;
+            *position = 0;
+            char* previousValue = getenv(variableNames[i]);
+            if (previousValue == NULL)
+                previousValues[i] = NULL;
+            else
+                previousValues[i] = strdup(previousValue);
+            // fprintf(stderr, "Setting %s to %s\n", variableNames[i], value); fflush(stderr);
+            int failure = setenv(variableNames[i], value, 1);
+            if (failure) {
+                fprintf(stderr, "Could not set variable %s: %s\n", variableNames[i], strerror(errno));
+            }
+        }
+    }
+    // fprintf(stderr, "Going in, value= %s\n", getenv("PEP517_BUILD_BACKEND"));
+    
     int returnValue = ios_execv(path, argv);
-    // restore the environment:
-    environ = oldEnvironment;
+    // If we change the environment, we need to wait until the command is finished:
+    if (numVariablesSet > 0) { ios_waitpid(ios_currentPid()); }
+    // fprintf(stderr, "command terminated, restoring environment\n");
+    // restore the environment (if needed):
+    if (numVariablesSet > 0) {
+        for (int i = 0; i < numVariablesSet; i++) {
+            if (strlen(variableNames[i]) == 0)
+                continue;
+            if (previousValues[i] == NULL)
+                unsetenv(variableNames[i]);
+            else
+                setenv(variableNames[i], previousValues[i], 1);
+        }
+        // Free the variables allocated:
+        for (int i = 0; i < numVariablesSet; i++) {
+            if (previousValues[i] != NULL)
+                free(previousValues[i]);
+            free(variableNames[i]);
+        }
+        free(previousValues);
+        free(variableNames);
+    }
     return returnValue;
 }
 
@@ -1707,6 +1766,7 @@ int ios_system(const char* inputCmd) {
             strcpy(currentSession->commandName, argv[0]);
             BOOL isDir = false;
             bool cmdIsAFile = false;
+            bool cmdIsReal = false;
             bool cmdIsAPath = false;
             if ([commandName hasPrefix:@"~/"]) {
                 NSString* replacement_string = [NSString stringWithCString:(getenv("HOME")) encoding:NSUTF8StringEncoding];
@@ -1719,6 +1779,8 @@ int ios_system(const char* inputCmd) {
                 if (stat(commandName.UTF8String, &sb) == 0) {
                     // File exists, is executable, not a directory.
                     cmdIsAFile = true;
+                    // We can have an empty file with the same name in the path, to fool which():
+                    if (sb.st_size > 0) cmdIsReal = true;
                 }
             }
             // if commandName contains "/", then it's a path, and we don't search for it in PATH.
@@ -1828,8 +1890,8 @@ int ios_system(const char* inputCmd) {
                     if (cmdIsAFile) break; // else keep going through the path elements.
                 }
             } else {
-                if (!cmdIsAFile) {
-                    // argv[0] is a file that doesn't exist. Probably one of our commands.
+                if (!cmdIsAFile || !cmdIsReal) {
+                    // argv[0] is a file that doesn't exist, or has size 0. Probably one of our commands.
                     // Replace with its name:
                     char* newName = basename(argv[0]);
                     argv[0] = realloc(argv[0], strlen(newName) + 1);
