@@ -1048,73 +1048,11 @@ int ios_execv(const char *path, char* const argv[]) {
     return returnValue;
 }
 
-extern char** environ;
 int ios_execve(const char *path, char* const argv[], char* envp[]) {
     // save the environment (done) and current dir (TODO)
-    int i = 0;
-    while ((envp[i] != NULL) && (environ[i] != NULL)) {
-        if (strcmp(envp[i], environ[i]) != 0) {
-            break;
-        }
-        i++;
-    }
-    // We can have new values for old variables, new variables, etc
-    // Need to store variables that are going to be set and their prior values.
-    int newVariableStart = i;
-    int numVariablesSet = 0;
-    char** previousValues = NULL;
-    char** variableNames = NULL;
-    // Sometimes, envp == environ. In that case, no need to to anything specific:
-    if (envp[newVariableStart] != NULL) {
-        while (envp[newVariableStart + numVariablesSet] != NULL) {
-            numVariablesSet++;
-        }
-        previousValues = malloc(numVariablesSet * sizeof(char*));
-        variableNames = malloc(numVariablesSet * sizeof(char*));
-        // Set up the new environment variables, store previous value for restore:
-        for (int i = 0; i < numVariablesSet; i++) {
-            variableNames[i] = strdup(envp[newVariableStart + i]);
-            // fprintf(stderr, "Setting new variable: %s\n", variableNames[i]); fflush(stderr);
-            char* position = strstr(variableNames[i],"=");
-            char* value = position + 1;
-            *position = 0;
-            char* previousValue = getenv(variableNames[i]);
-            if (previousValue == NULL)
-                previousValues[i] = NULL;
-            else
-                previousValues[i] = strdup(previousValue);
-            // fprintf(stderr, "Setting %s to %s\n", variableNames[i], value); fflush(stderr);
-            int failure = setenv(variableNames[i], value, 1);
-            if (failure) {
-                fprintf(stderr, "Could not set variable %s: %s\n", variableNames[i], strerror(errno));
-            }
-        }
-    }
-    // fprintf(stderr, "Going in, value= %s\n", getenv("PEP517_BUILD_BACKEND"));
-    
+    storeEnvironment(envp);
     int returnValue = ios_execv(path, argv);
-    // If we change the environment, we need to wait until the command is finished:
-    if (numVariablesSet > 0) { ios_waitpid(ios_currentPid()); }
-    // fprintf(stderr, "command terminated, restoring environment\n");
-    // restore the environment (if needed):
-    if (numVariablesSet > 0) {
-        for (int i = 0; i < numVariablesSet; i++) {
-            if (strlen(variableNames[i]) == 0)
-                continue;
-            if (previousValues[i] == NULL)
-                unsetenv(variableNames[i]);
-            else
-                setenv(variableNames[i], previousValues[i], 1);
-        }
-        // Free the variables allocated:
-        for (int i = 0; i < numVariablesSet; i++) {
-            if (previousValues[i] != NULL)
-                free(previousValues[i]);
-            free(variableNames[i]);
-        }
-        free(previousValues);
-        free(variableNames);
-    }
+    // The environment will be restored to previous value when the thread Id is released.
     return returnValue;
 }
 

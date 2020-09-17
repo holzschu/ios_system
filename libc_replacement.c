@@ -121,6 +121,7 @@ int ios_putw(int w, FILE *stream) {
 // You will still need to edit your code to make sure you go through both branches.
 #define IOS_MAX_THREADS 128
 static pthread_t thread_ids[IOS_MAX_THREADS];
+static char** environment[IOS_MAX_THREADS];
 static int pid_overflow = 0;
 static pid_t current_pid = 0;
 
@@ -169,12 +170,103 @@ inline void ios_storeThreadId(pthread_t thread) {
     // if (pthread_kill(ios_getThreadId(current_pid), 0) != 0) thread_ids[current_pid] = thread;
 }
 
+
+// store extra environment variables (called from execve)
+// Only store the variables that are not already in the environment.
+char* libc_getenv(char* variableName) {
+    if (environment[current_pid] != NULL) {
+        char** envp = environment[current_pid];
+        int i = 0;
+        while (envp[i] != NULL) {
+            char* position = strstr(envp[i],"=");
+            if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
+                char* value = position + 1;
+                return value;
+            }
+            i++;
+        }
+    }
+    return getenv(variableName);
+}
+
+extern char** environ;
+void storeEnvironment(char* envp[]) {
+    environment[current_pid] = envp;
+    /*
+    int i = 0;
+    while ((envp[i] != NULL) && (environ[i] != NULL)) {
+        if (strcmp(envp[i], environ[i]) != 0) {
+            break;
+        }
+        i++;
+    }
+    // We can have new values for old variables, new variables, etc
+    // Need to store variables that are going to be set and their prior values.
+    int newVariableStart = i;
+    int numVariablesSet = 0;
+    char** previousValues = NULL;
+    char** variableNames = NULL;
+    // Sometimes, envp == environ. In that case, no need to to anything specific:
+    if (envp[newVariableStart] != NULL) {
+        while (envp[newVariableStart + numVariablesSet] != NULL) {
+            numVariablesSet++;
+        }
+        previousValues = malloc(numVariablesSet * sizeof(char*));
+        variableNames = malloc(numVariablesSet * sizeof(char*));
+        // Set up the new environment variables, store previous value for restore:
+        for (int i = 0; i < numVariablesSet; i++) {
+            variableNames[i] = strdup(envp[newVariableStart + i]);
+            // fprintf(stderr, "Setting new variable: %s\n", variableNames[i]); fflush(stderr);
+            char* position = strstr(variableNames[i],"=");
+            char* value = position + 1;
+            *position = 0;
+            char* previousValue = getenv(variableNames[i]);
+            if (previousValue == NULL)
+                previousValues[i] = NULL;
+            else
+                previousValues[i] = strdup(previousValue);
+            // fprintf(stderr, "Setting %s to %s\n", variableNames[i], value); fflush(stderr);
+            int failure = setenv(variableNames[i], value, 1);
+            if (failure) {
+                fprintf(stderr, "Could not set variable %s: %s\n", variableNames[i], strerror(errno));
+            }
+        }
+    }
+     */
+}
+
+// when the command is terminated, release the environment variables that were added.
+void resetEnvironment(pid_t pid) {
+    environment[pid] = NULL;
+/*
+    if (numVariablesSet > 0) {
+        for (int i = 0; i < numVariablesSet; i++) {
+            if (strlen(variableNames[i]) == 0)
+                continue;
+            if (previousValues[i] == NULL)
+                unsetenv(variableNames[i]);
+            else
+                setenv(variableNames[i], previousValues[i], 1);
+        }
+        // Free the variables allocated:
+        for (int i = 0; i < numVariablesSet; i++) {
+            if (previousValues[i] != NULL)
+                free(previousValues[i]);
+            free(variableNames[i]);
+        }
+        free(previousValues);
+        free(variableNames);
+    }
+*/
+}
+
 void ios_releaseThread(pthread_t thread) {
     // TODO: this is inefficient. Replace with NSMutableArray?
     // fprintf(stderr, "Releasing thread %x\n", thread);
     for (int p = 0; p < IOS_MAX_THREADS; p++) {
         if (thread_ids[p] == thread) {
             // fprintf(stderr, "Found Id %x\n", p);
+            resetEnvironment(p);
             thread_ids[p] = 0;
             return;
         }
@@ -184,6 +276,7 @@ void ios_releaseThread(pthread_t thread) {
 
 
 void ios_releaseThreadId(pid_t pid) {
+    resetEnvironment(pid);
     thread_ids[pid] = 0;
 }
 
