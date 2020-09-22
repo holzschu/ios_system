@@ -136,6 +136,7 @@ static inline const pid_t ios_nextAvailablePid() {
     if (!pid_overflow && (current_pid < IOS_MAX_THREADS - 1)) {
         current_pid += 1;
         thread_ids[current_pid] = -1; // Not yet started
+        environment[current_pid] = NULL;
         return current_pid;
     }
     // We've already started more than IOS_MAX_THREADS threads.
@@ -146,6 +147,7 @@ static inline const pid_t ios_nextAvailablePid() {
         if (current_pid >= IOS_MAX_THREADS) current_pid = 1;
         pthread_t thread_pid = ios_getThreadId(current_pid);
         if (thread_pid == 0) {
+            environment[current_pid] = NULL;
             return current_pid; // already released
         }
         // Dangerous: if the process is already killed, this wil crash
@@ -166,8 +168,6 @@ inline void ios_storeThreadId(pthread_t thread) {
         thread_ids[current_pid] = thread;
         return;
     }
-    // The fuck is this line doing here?
-    // if (pthread_kill(ios_getThreadId(current_pid), 0) != 0) thread_ids[current_pid] = thread;
 }
 
 
@@ -192,71 +192,71 @@ char* libc_getenv(char* variableName) {
 extern char** environ;
 void storeEnvironment(char* envp[]) {
     environment[current_pid] = envp;
-    /*
-    int i = 0;
-    while ((envp[i] != NULL) && (environ[i] != NULL)) {
-        if (strcmp(envp[i], environ[i]) != 0) {
-            break;
-        }
-        i++;
-    }
-    // We can have new values for old variables, new variables, etc
-    // Need to store variables that are going to be set and their prior values.
-    int newVariableStart = i;
-    int numVariablesSet = 0;
-    char** previousValues = NULL;
-    char** variableNames = NULL;
-    // Sometimes, envp == environ. In that case, no need to to anything specific:
-    if (envp[newVariableStart] != NULL) {
-        while (envp[newVariableStart + numVariablesSet] != NULL) {
-            numVariablesSet++;
-        }
-        previousValues = malloc(numVariablesSet * sizeof(char*));
-        variableNames = malloc(numVariablesSet * sizeof(char*));
-        // Set up the new environment variables, store previous value for restore:
-        for (int i = 0; i < numVariablesSet; i++) {
-            variableNames[i] = strdup(envp[newVariableStart + i]);
-            // fprintf(stderr, "Setting new variable: %s\n", variableNames[i]); fflush(stderr);
-            char* position = strstr(variableNames[i],"=");
-            char* value = position + 1;
-            *position = 0;
-            char* previousValue = getenv(variableNames[i]);
-            if (previousValue == NULL)
-                previousValues[i] = NULL;
-            else
-                previousValues[i] = strdup(previousValue);
-            // fprintf(stderr, "Setting %s to %s\n", variableNames[i], value); fflush(stderr);
-            int failure = setenv(variableNames[i], value, 1);
-            if (failure) {
-                fprintf(stderr, "Could not set variable %s: %s\n", variableNames[i], strerror(errno));
-            }
-        }
-    }
-     */
+    /*     int i = 0;
+     while ((envp[i] != NULL) && (environ[i] != NULL)) {
+         if (strcmp(envp[i], environ[i]) != 0) {
+             break;
+         }
+         i++;
+     }
+     // We can have new values for old variables, new variables, etc
+     // Need to store variables that are going to be set and their prior values.
+     int newVariableStart = i;
+     numVariablesSet[current_pid] = 0;
+     previousValues[current_pid] = NULL;
+     variableNames[current_pid] = NULL;
+     // Sometimes, envp == environ. In that case, no need to to anything specific:
+     if (envp[newVariableStart] != NULL) {
+         while (envp[newVariableStart + numVariablesSet[current_pid]] != NULL) {
+             numVariablesSet[current_pid]++;
+         }
+         previousValues[current_pid] = malloc(numVariablesSet[current_pid] * sizeof(char*));
+         variableNames[current_pid] = malloc(numVariablesSet[current_pid] * sizeof(char*));
+         // Set up the new environment variables, store previous value for restore:
+         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+             variableNames[current_pid][i] = strdup(envp[newVariableStart + i]);
+             // fprintf(stderr, "Setting new variable: %s\n", variableNames[i]); fflush(stderr);
+             char* position = strstr(variableNames[current_pid][i],"=");
+             char* value = position + 1;
+             *position = 0;
+             char* previousValue = getenv(variableNames[current_pid][i]);
+             if (previousValue == NULL)
+                 previousValues[current_pid][i] = NULL;
+             else
+                 previousValues[current_pid][i] = strdup(previousValue);
+             // fprintf(stderr, "Setting %s to %s\n", variableNames[i], value); fflush(stderr);
+             int failure = setenv(variableNames[current_pid][i], value, 1);
+             if (failure) {
+                 fprintf(stderr, "Could not set variable %s: %s\n", variableNames[current_pid][i], strerror(errno));
+             }
+         }
+     } */
 }
 
 // when the command is terminated, release the environment variables that were added.
 void resetEnvironment(pid_t pid) {
     environment[pid] = NULL;
 /*
-    if (numVariablesSet > 0) {
-        for (int i = 0; i < numVariablesSet; i++) {
-            if (strlen(variableNames[i]) == 0)
-                continue;
-            if (previousValues[i] == NULL)
-                unsetenv(variableNames[i]);
-            else
-                setenv(variableNames[i], previousValues[i], 1);
-        }
-        // Free the variables allocated:
-        for (int i = 0; i < numVariablesSet; i++) {
-            if (previousValues[i] != NULL)
-                free(previousValues[i]);
-            free(variableNames[i]);
-        }
-        free(previousValues);
-        free(variableNames);
-    }
+    if (numVariablesSet[current_pid] > 0) {
+      for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+          if (strlen(variableNames[current_pid][i]) == 0)
+              continue;
+          if (previousValues[current_pid][i] == NULL)
+              unsetenv(variableNames[current_pid][i]);
+          else
+              setenv(variableNames[current_pid][i], previousValues[current_pid][i], 1);
+      }
+      // Free the variables allocated:
+      for (int i = 0; i < numVariablesSet; i++) {
+          if (previousValues[current_pid][i] != NULL)
+              free(previousValues[current_pid][i]);
+          free(variableNames[current_pid][i]);
+      }
+      free(previousValues[current_pid]);
+      free(variableNames[current_pid]);
+      previousValues[current_pid] = NULL;
+      variableNames[current_pid] = NULL;
+  }
 */
 }
 
@@ -265,7 +265,7 @@ void ios_releaseThread(pthread_t thread) {
     // fprintf(stderr, "Releasing thread %x\n", thread);
     for (int p = 0; p < IOS_MAX_THREADS; p++) {
         if (thread_ids[p] == thread) {
-            // fprintf(stderr, "Found Id %x\n", p);
+            // fprintf(stderr, "Found Id %d\n", p);
             resetEnvironment(p);
             thread_ids[p] = 0;
             return;
@@ -291,6 +291,7 @@ pid_t vfork(void) { return ios_nextAvailablePid(); }
 // simple replacement of waitpid for swift programs
 // We use "optnone" to prevent optimization, otherwise the while loops never end.
 __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
+
     pthread_t threadToWaitFor;
     // Old system: no explicit pid, just store last thread Id.
     if ((pid == -1) || (pid == 0)) {
