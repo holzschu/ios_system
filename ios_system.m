@@ -1403,7 +1403,7 @@ int ios_system(const char* inputCmd) {
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    // NSLog(@"command= %s\n", inputCmd);
+    NSLog(@"command= %s\n", inputCmd);
     // NSLog(@"ios_system, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
     // NSLog(@"ios_system, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
     if (currentSession == NULL) {
@@ -1722,8 +1722,8 @@ int ios_system(const char* inputCmd) {
                 }
             }
             // if commandName contains "/", then it's a path, and we don't search for it in PATH.
-            cmdIsAPath = ([commandName rangeOfString:@"/"].location != NSNotFound) && !cmdIsAFile;
-            if (!cmdIsAPath) {
+            cmdIsAPath = ([commandName rangeOfString:@"/"].location != NSNotFound);
+            if (!cmdIsAPath || cmdIsAFile) {
                 // We go through the path, because that command may be a file in the path
                 NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSUTF8StringEncoding];
                 if (! [fullCommandPath isEqualToString:checkingPath]) {
@@ -1827,14 +1827,13 @@ int ios_system(const char* inputCmd) {
                     }
                     if (cmdIsAFile) break; // else keep going through the path elements.
                 }
-            } else {
-                if (!cmdIsAFile || !cmdIsReal) {
-                    // argv[0] is a file that doesn't exist, or has size 0. Probably one of our commands.
-                    // Replace with its name:
-                    char* newName = basename(argv[0]);
-                    argv[0] = realloc(argv[0], strlen(newName) + 1);
-                    strcpy(argv[0], newName);
-                }
+            }
+            if (!cmdIsReal || (cmdIsAPath && !cmdIsAFile)) {
+                // argv[0] is a file that doesn't exist, or has size 0. Probably one of our commands.
+                // Replace with its name:
+                char* newName = basename(argv[0]);
+                argv[0] = realloc(argv[0], strlen(newName) + 1);
+                strcpy(argv[0], newName);
             }
         }
         // NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
@@ -1991,7 +1990,7 @@ int ios_system(const char* inputCmd) {
             }
         } else {
             fprintf(params->stderr, "%s: command not found\n", argv[0]);
-            // NSLog(@"%s: command not found\n", argv[0]);
+            NSLog(@"%s: command not found\n", argv[0]);
             free(argv);
             // If command output was redirected to a pipe, we still need to close it.
             // (to warn the other command that it can stop waiting)
