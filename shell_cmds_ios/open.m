@@ -84,7 +84,11 @@ int openurl_main(int argc, char *argv[]) {
     return -1;
   }
   
-  NSURL *locationURL = [NSURL URLWithString:@(argv[1])];
+  // URL could contain several lines. We keep only the first:
+  NSString* urlString = [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+  NSArray*  urlLines = [urlString componentsSeparatedByString:@"\n"];
+
+  NSURL *locationURL = [NSURL URLWithString: urlLines[0]];
   if (!locationURL) {
     fprintf(thread_stderr, "%s\n", "Invalid URL");
     fprintf(thread_stderr, "%s\n", usage.UTF8String);
