@@ -28,7 +28,7 @@ let package = Package(
         .binaryTarget(
             name: "ios_system",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/ios_system.xcframework.zip",
-            checksum: "1ae111cd468e8764013a9d34944607b446cc43f181b51babf602646f4f620993"
+            checksum: "26557a6a728d4f19fdc79d53849692edbaf496324ad08f9a59897244b5f7be80"
         ),
         .binaryTarget(
             name: "shell",
