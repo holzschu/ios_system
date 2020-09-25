@@ -155,6 +155,7 @@ void ios_setWindowSize(int width, int height, const void* sessionId) {
     sprintf(resizedSession->lines, "%d",height);
 }
 
+extern char* libc_getenv(const char* variableName);
 char * ios_getenv(const char *name) {
     // intercept calls to getenv("COLUMNS") / getenv("LINES")
     if (strcmp(name, "COLUMNS") == 0) {
@@ -166,7 +167,7 @@ char * ios_getenv(const char *name) {
     if (strcmp(name, "ROWS") == 0) {
         return currentSession->lines;
     }
-    return getenv(name);
+    return libc_getenv(name);
 }
 
 

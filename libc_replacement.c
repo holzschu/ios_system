@@ -174,7 +174,7 @@ inline void ios_storeThreadId(pthread_t thread) {
     }
 }
 
-char* libc_getenv(char* variableName) {
+char* libc_getenv(const char* variableName) {
     if (numVariablesSet[current_pid] > 0) {
         char** envp = environment[current_pid];
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
