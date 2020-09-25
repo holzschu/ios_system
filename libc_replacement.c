@@ -21,6 +21,7 @@
 #undef fputc
 #undef putw
 #undef fflush
+#undef getenv
 
 int printf (const char *format, ...) {
     va_list arg;
