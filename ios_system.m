@@ -38,8 +38,6 @@ bool sideLoading = false;
 bool joinMainThread = true; 
 // Include file for getrlimit/setrlimit:
 #include <sys/resource.h>
-// To check for Mach-O executables:
-#include <mach-o/loader.h>
 static struct rlimit limitFilesOpen;
 
 
@@ -1406,12 +1404,11 @@ static int isRealCommand(const char* fileName) {
         int fd = open(fileName, O_RDONLY);
         if (fd > 0) {
             char res[4];
-            int retval = read(fd, &res, 4);
+            ssize_t retval = read(fd, &res, 4);
             if (retval == 4) {
-                float f;
-                memcpy (&f, res, 4);
-                if (f != MH_MAGIC_64) {
-                    // It's not a Mach-O binary:
+                // MH_MAGIC_64 = 0xfeedfacf
+                if ((res[0] != '\xcf') || (res[1] != '\xfa') || (res[2] != '\xed') || (res[3] != '\xfe')) {
+                    // it's not a Mach-O binary:
                     returnValue = true;
                 }
             }
