@@ -1397,7 +1397,7 @@ static int isRealCommand(const char* fileName) {
     // We check whether: a) its size is > 0 and b) it is not a Mach-O binary
     int returnValue = false;
     struct stat sb;
-    if (stat(commandName.UTF8String, &sb) == 0) {
+    if (stat(fileName, &sb) == 0) {
         // We can have an empty file with the same name in the path, to fool which():
         if (sb.st_size == 0) {
             return false;
