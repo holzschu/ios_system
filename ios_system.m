@@ -1392,21 +1392,31 @@ static char* unquoteArgument(char* argument) {
 }
 
 
-static int mach_o_binary(const char* fileName) {
+static int isRealCommand(const char* fileName) {
+    // File exists, is executable, not a directory.
+    // We check whether: a) its size is > 0 and b) it is not a Mach-O binary
     int returnValue = false;
-    int fd = open(fileName, O_RDONLY);
-    if (fd > 0) {
-        char res[4];
-        int retval = read(fd, &res, 4);
-        if (retval == 4) {
-            float f;
-            memcpy (&f, res, 4);
-            if (f == MH_MAGIC_64) {
-                // It's a Mach-O binary:
-                returnValue = true;
-            }
+    struct stat sb;
+    if (stat(commandName.UTF8String, &sb) == 0) {
+        // We can have an empty file with the same name in the path, to fool which():
+        if (sb.st_size == 0) {
+            return false;
         }
-        close ( fd);
+        // Not an empty file, so let's check its magic number:
+        int fd = open(fileName, O_RDONLY);
+        if (fd > 0) {
+            char res[4];
+            int retval = read(fd, &res, 4);
+            if (retval == 4) {
+                float f;
+                memcpy (&f, res, 4);
+                if (f != MH_MAGIC_64) {
+                    // It's not a Mach-O binary:
+                    returnValue = true;
+                }
+            }
+            close (fd);
+        }
     }
     return returnValue;
 }
@@ -1741,9 +1751,7 @@ int ios_system(const char* inputCmd) {
                     cmdIsAFile = true;
                     // We can have an empty file with the same name in the path, to fool which():
                     // We can also have a Mach-O binary with the same name in the path (in simulator, mostly)
-                    if (sb.st_size > 0) {
-                        cmdIsReal = !mach_o_binary(commandName.UTF8String);
-                    }
+                    cmdIsReal = isRealCommand(commandName.UTF8String);
                 }
             }
             // if commandName contains "/", then it's a path, and we don't search for it in PATH.
@@ -1812,7 +1820,7 @@ int ios_system(const char* inputCmd) {
                         argv[0] = strdup("wasm"); // this argument is new
                         break;
                     } else {
-                        if (!mach_o_binary(locationName.UTF8String)) {
+                        if (isRealCommand(locationName.UTF8String)) {
                             cmdIsReal = true;
                             NSData *data = [NSData dataWithContentsOfFile:locationName];
                             NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
