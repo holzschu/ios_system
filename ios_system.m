@@ -38,6 +38,8 @@ bool sideLoading = false;
 bool joinMainThread = true; 
 // Include file for getrlimit/setrlimit:
 #include <sys/resource.h>
+// To check for Mach-O executables:
+#include <mach-o/loader.h>
 static struct rlimit limitFilesOpen;
 
 
@@ -1390,6 +1392,25 @@ static char* unquoteArgument(char* argument) {
 }
 
 
+static int mach_o_binary(const char* fileName) {
+    int returnValue = false;
+    int fd = open(fileName, O_RDONLY);
+    if (fd > 0) {
+        char res[4];
+        int retval = read(fd, &res, 4);
+        if (retval == 4) {
+            float f;
+            memcpy (&f, res, 4);
+            if (f == MH_MAGIC_64) {
+                // It's a Mach-O binary:
+                returnValue = true;
+            }
+        }
+        close ( fd);
+    }
+    return returnValue;
+}
+
 int ios_system(const char* inputCmd) {
     char* command;
     // The names of the files for stdin, stdout, stderr
@@ -1719,7 +1740,10 @@ int ios_system(const char* inputCmd) {
                     // File exists, is executable, not a directory.
                     cmdIsAFile = true;
                     // We can have an empty file with the same name in the path, to fool which():
-                    if (sb.st_size > 0) cmdIsReal = true;
+                    // We can also have a Mach-O binary with the same name in the path (in simulator, mostly)
+                    if (sb.st_size > 0) {
+                        cmdIsReal = !mach_o_binary(commandName.UTF8String);
+                    }
                 }
             }
             // if commandName contains "/", then it's a path, and we don't search for it in PATH.
@@ -1788,42 +1812,47 @@ int ios_system(const char* inputCmd) {
                         argv[0] = strdup("wasm"); // this argument is new
                         break;
                     } else {
-                        NSData *data = [NSData dataWithContentsOfFile:locationName];
-                        NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
-                        NSRange firstLineRange = [fileContent rangeOfString:@"\n"];
-                        if (firstLineRange.location == NSNotFound) firstLineRange.location = 0;
-                        firstLineRange.length = firstLineRange.location;
-                        firstLineRange.location = 0;
-                        NSString* firstLine = [fileContent substringWithRange:firstLineRange];
-                        if ([firstLine hasPrefix:@"#!"]) {
-                            // So long as the 1st line begins with "#!" and contains "python" we accept it as a python script
-                            // "#! /usr/bin/python", "#! /usr/local/bin/python" and "#! /usr/bin/myStrangePath/python" are all OK.
-                            // We also accept "#! /usr/bin/env python" because it is used.
-                            // executable scripts files. Python and lua:
-                            // 1) get script language name
-                            if ([firstLine containsString:@"python3"]) {
-                                scriptName = "python3";
-                            // } else if ([firstLine containsString:@"python2"]) {
-                            //    scriptName = "python";
-                            } else if ([firstLine containsString:@"python"]) {
-                                // the default for python is now python3.
-                                scriptName = "python3";
-                            } else if ([firstLine containsString:@"texlua"]) {
+                        if (!mach_o_binary(locationName.UTF8String)) {
+                            cmdIsReal = true;
+                            NSData *data = [NSData dataWithContentsOfFile:locationName];
+                            NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+                            NSRange firstLineRange = [fileContent rangeOfString:@"\n"];
+                            if (firstLineRange.location == NSNotFound) firstLineRange.location = 0;
+                            firstLineRange.length = firstLineRange.location;
+                            firstLineRange.location = 0;
+                            NSString* firstLine = [fileContent substringWithRange:firstLineRange];
+                            if ([firstLine hasPrefix:@"#!"]) {
+                                // So long as the 1st line begins with "#!" and contains "python" we accept it as a python script
+                                // "#! /usr/bin/python", "#! /usr/local/bin/python" and "#! /usr/bin/myStrangePath/python" are all OK.
+                                // We also accept "#! /usr/bin/env python" because it is used.
+                                // executable scripts files. Python and lua:
+                                // 1) get script language name
+                                if ([firstLine containsString:@"python3"]) {
+                                    scriptName = "python3";
+                                    // } else if ([firstLine containsString:@"python2"]) {
+                                    //    scriptName = "python";
+                                } else if ([firstLine containsString:@"python"]) {
+                                    // the default for python is now python3.
+                                    scriptName = "python3";
+                                } else if ([firstLine containsString:@"texlua"]) {
                                     scriptName = "texlua";
-                            } else if ([firstLine containsString:@"lua"]) {
-                                scriptName = "lua";
+                                } else if ([firstLine containsString:@"lua"]) {
+                                    scriptName = "lua";
+                                }
+                                if (scriptName) {
+                                    // 2) insert script language at beginning of argument list
+                                    argc += 1;
+                                    argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
+                                    // Move everything one step up
+                                    for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
+                                    argv[1] = realloc(argv[1], locationName.length + 1);
+                                    strcpy(argv[1], locationName.UTF8String);
+                                    argv[0] = strdup(scriptName); // this one is new
+                                    break;
+                                }
                             }
-                            if (scriptName) {
-                                // 2) insert script language at beginning of argument list
-                                argc += 1;
-                                argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
-                                // Move everything one step up
-                                for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
-                                argv[1] = realloc(argv[1], locationName.length + 1);
-                                strcpy(argv[1], locationName.UTF8String);
-                                argv[0] = strdup(scriptName); // this one is new
-                                break;
-                            }
+                        } else {
+                            cmdIsReal = false;
                         }
                     }
                     if (cmdIsAFile) break; // else keep going through the path elements.
