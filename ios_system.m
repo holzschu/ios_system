@@ -1904,10 +1904,15 @@ int ios_system(const char* inputCmd) {
             if ((numInterpreter >= 0) && (numInterpreter < numPythonInterpreters)) {
                 PythonIsRunning[numInterpreter] = true;
                 if (numInterpreter > 0) {
+                    if ([commandName isEqualToString: @"python"]) {
+                        // Add space for an extra letter at the end of "python" (+1 for "A", +1 for '\0')
+                        argv[0] = realloc(argv[0], strlen(argv[0] + 2));
+                    }
                     char suffix[2];
                     suffix[0] = 'A' + (numInterpreter - 1);
                     suffix[1] = 0;
                     argv[0][6] = suffix[0];
+                    argv[0][7] = 0;
                     commandName = [@"python" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
                 }
             }
