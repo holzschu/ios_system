@@ -1906,7 +1906,7 @@ int ios_system(const char* inputCmd) {
                 if (numInterpreter > 0) {
                     if ([commandName isEqualToString: @"python"]) {
                         // Add space for an extra letter at the end of "python" (+1 for "A", +1 for '\0')
-                        argv[0] = realloc(argv[0], strlen(argv[0] + 2));
+                        argv[0] = realloc(argv[0], strlen(argv[0]) + 2);
                     }
                     char suffix[2];
                     suffix[0] = 'A' + (numInterpreter - 1);
