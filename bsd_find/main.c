@@ -176,7 +176,7 @@ find_main(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "%s\n%s\n",
+	(void)fprintf(thread_stderr, "%s\n%s\n",
 "usage: find [-H | -L | -P] [-EXdsx] [-f path] path ... [expression]",
 "       find [-H | -L | -P] [-EXdsx] -f path [path ...] [expression]");
 	exit(1);

@@ -760,9 +760,10 @@ static void
 printtime(time_t ftime)
 {
 	char longstring[80];
-	static time_t now;
+    // iOS: no static members in functions.
+	static __thread time_t now;
 	const char *format;
-	static int d_first = -1;
+	static __thread int d_first = -1;
 
 	if (d_first < 0)
 		d_first = (*nl_langinfo(D_MD_ORDER) == 'd');

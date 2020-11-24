@@ -197,6 +197,6 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: head [-n lines | -c bytes] [file ...]\n");
+	(void)fprintf(thread_stderr, "usage: head [-n lines | -c bytes] [file ...]\n");
 	exit(1);
 }

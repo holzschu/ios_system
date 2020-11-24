@@ -208,7 +208,7 @@ chflags_main(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr,
+	(void)fprintf(thread_stderr,
 	    "usage: chflags [-fhv] [-R [-H | -L | -P]] flags file ...\n");
 	exit(1);
 }

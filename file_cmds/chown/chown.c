@@ -310,12 +310,12 @@ usage(void)
 {
 
 	if (ischown)
-		(void)fprintf(stderr, "%s\n%s\n",
+		(void)fprintf(thread_stderr, "%s\n%s\n",
 		    "usage: chown [-fhv] [-R [-H | -L | -P]] owner[:group]"
 		    " file ...",
 		    "       chown [-fhv] [-R [-H | -L | -P]] :group file ...");
 	else
-		(void)fprintf(stderr, "%s\n",
+		(void)fprintf(thread_stderr, "%s\n",
 		    "usage: chgrp [-fhv] [-R [-H | -L | -P]] group file ...");
 	exit(1);
 }

@@ -295,6 +295,6 @@ word:	gotsp = 1;
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: wc [-clmw] [file ...]\n");
+	(void)fprintf(thread_stderr, "usage: wc [-clmw] [file ...]\n");
 	exit(1);
 }

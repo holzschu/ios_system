@@ -350,7 +350,7 @@ obsolete(char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr,
+	(void)fprintf(thread_stderr,
 	    "usage: tail [-F | -f | -r] [-q] [-b # | -c # | -n #]"
 	    " [file ...]\n");
 	exit(1);

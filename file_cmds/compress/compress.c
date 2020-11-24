@@ -262,7 +262,7 @@ compress(const char *in, const char *out, int bits)
 
 		if (!force && sb.st_size >= isb.st_size) {
 			if (verbose)
-		(void)fprintf(stderr, "compress: %s: file would grow; left unmodified\n",
+		(void)fprintf(thread_stderr, "compress: %s: file would grow; left unmodified\n",
 		    in);
 			eval = 2;
 			if (unlink(out))
@@ -276,12 +276,12 @@ compress(const char *in, const char *out, int bits)
 			cwarn("%s", in);
 
 		if (verbose) {
-			(void)fprintf(stderr, "%s: ", out);
+			(void)fprintf(thread_stderr, "%s: ", out);
 			if (isb.st_size > sb.st_size)
-				(void)fprintf(stderr, "%.0f%% compression\n",
+				(void)fprintf(thread_stderr, "%.0f%% compression\n",
 				    ((float)sb.st_size / isb.st_size) * 100.0);
 			else
-				(void)fprintf(stderr, "%.0f%% expansion\n",
+				(void)fprintf(thread_stderr, "%.0f%% expansion\n",
 				    ((float)isb.st_size / sb.st_size) * 100.0);
 		}
 	}
@@ -365,12 +365,12 @@ decompress(const char *in, const char *out, int bits)
 		if (verbose) {
 			struct stat isb = sb;
 			stat(out, &sb);
-			(void)fprintf(stderr, "%s: ", out);
+			(void)fprintf(thread_stderr, "%s: ", out);
 			if (isb.st_size > sb.st_size)
-				(void)fprintf(stderr, "%.0f%% compression\n",
+				(void)fprintf(thread_stderr, "%.0f%% compression\n",
 				    ((float)sb.st_size / isb.st_size) * 100.0);
 			else
-				(void)fprintf(stderr, "%.0f%% expansion\n",
+				(void)fprintf(thread_stderr, "%.0f%% expansion\n",
 				    ((float)isb.st_size / sb.st_size) * 100.0);
 		}
 	}
@@ -422,7 +422,7 @@ permission(const char *fname)
 
     if (!ios_isatty(STDERR_FILENO))
 		return (0);
-	(void)fprintf(stderr, "overwrite %s? ", fname);
+	(void)fprintf(thread_stderr, "overwrite %s? ", fname);
     fflush(stderr);
 	first = ch = getchar();
 	while (ch != '\n' && ch != EOF)
@@ -434,10 +434,10 @@ void
 usage(int iscompress)
 {
 	if (iscompress)
-		(void)fprintf(stderr,
+		(void)fprintf(thread_stderr,
 		    "usage: compress [-cfv] [-b bits] [file ...]\n");
 	else
-		(void)fprintf(stderr,
+		(void)fprintf(thread_stderr,
 		    "usage: uncompress [-cfv] [-b bits] [file ...]\n");
 	exit(1);
 }

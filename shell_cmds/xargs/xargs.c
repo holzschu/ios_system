@@ -592,9 +592,9 @@ run(char **argv)
 	 * followed by a prompt, then prompt them.
 	 */
 	if (tflag || pflag) {
-		(void)fprintf(stderr, "%s", *argv);
+		(void)fprintf(thread_stderr, "%s", *argv);
 		for (avec = argv + 1; *avec != NULL; ++avec)
-			(void)fprintf(stderr, " %s", *avec);
+			(void)fprintf(thread_stderr, " %s", *avec);
 		/*
 		 * If the user has asked to be prompted, do so.
 		 */
@@ -613,7 +613,7 @@ run(char **argv)
 			case 2:
 				break;
 			}
-		(void)fprintf(stderr, "\n");
+		(void)fprintf(thread_stderr, "\n");
 		(void)fflush(stderr);
 	}
 exec:
@@ -713,7 +713,7 @@ prompt(void)
 
 	if ((ttyfp = fopen(_PATH_TTY, "r")) == NULL)
 		return (2);	/* Indicate that the TTY failed to open. */
-	(void)fprintf(stderr, "?...");
+	(void)fprintf(thread_stderr, "?...");
 	(void)fflush(stderr);
 	if ((response = fgetln(ttyfp, &rsize)) == NULL ||
 	    regcomp(&cre, nl_langinfo(YESEXPR), REG_BASIC) != 0) {
@@ -729,7 +729,7 @@ prompt(void)
 static void
 usage(void)
 {
-	fprintf(stderr,
+	fprintf(thread_stderr,
 "usage: xargs [-0opt] [-E eofstr] [-I replstr [-R replacements]] [-J replstr]\n"
 "             [-L number] [-n number [-x]] [-P maxprocs] [-s size]\n"
 "             [utility [argument ...]]\n");

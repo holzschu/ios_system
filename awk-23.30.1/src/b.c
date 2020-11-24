@@ -234,19 +234,19 @@ void freetr(Node *p)	/* free parse tree */
 	switch (type(p)) {
 	ELEAF
 	LEAF
-        fprintf(stderr, "Freeing leaf %x\n", p); fflush(stderr);
+        // fprintf(stderr, "Freeing leaf %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
 	UNARY
 		freetr(left(p));
-        fprintf(stderr, "Freeing unary %x\n", p); fflush(stderr);
+        // fprintf(stderr, "Freeing unary %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
 	case CAT:
 	case OR:
 		freetr(left(p));
 		freetr(right(p));
-        fprintf(stderr, "Freeing tree %x\n", p); fflush(stderr);
+        // fprintf(stderr, "Freeing tree %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
 	default:	/* can't happen */

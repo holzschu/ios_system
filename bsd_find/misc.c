@@ -128,19 +128,19 @@ queryuser(char *argv[])
 {
 	char *p, resp[256];
 
-	(void)fprintf(stderr, "\"%s", *argv);
+	(void)fprintf(thread_stderr, "\"%s", *argv);
 	while (*++argv)
-		(void)fprintf(stderr, " %s", *argv);
-	(void)fprintf(stderr, "\"? ");
-	(void)fflush(stderr);
+		(void)fprintf(thread_stderr, " %s", *argv);
+	(void)fprintf(thread_stderr, "\"? ");
+	(void)fflush(thread_stderr);
 
 	if (fgets(resp, sizeof(resp), stdin) == NULL)
 		*resp = '\0';
 	if ((p = strchr(resp, '\n')) != NULL)
 		*p = '\0';
 	else {
-		(void)fprintf(stderr, "\n");
-		(void)fflush(stderr);
+		(void)fprintf(thread_stderr, "\n");
+		(void)fflush(thread_stderr);
 	}
         return (rpmatch(resp) == 1);
 }

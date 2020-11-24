@@ -370,7 +370,7 @@ obsolete(char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr,
+	(void)fprintf(thread_stderr,
 "usage: uniq [-c | -d | -u] [-i] [-f fields] [-s chars] [input [output]]\n");
 	exit(1);
 }

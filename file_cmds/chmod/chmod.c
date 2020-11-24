@@ -458,11 +458,11 @@ void
 chmod_usage(void)
 {
 #ifdef __APPLE__
-	(void)fprintf(stderr,
+	(void)fprintf(thread_stderr,
 		      "usage:\tchmod [-fhv] [-R [-H | -L | -P]] [-a | +a | =a  [i][# [ n]]] mode|entry file ...\n"
 		      "\tchmod [-fhv] [-R [-H | -L | -P]] [-E | -C | -N | -i | -I] file ...\n"); /* add -A and -V when implemented */
 #else
-	(void)fprintf(stderr,
+	(void)fprintf(thread_stderr,
 	    "usage: chmod [-fhv] [-R [-H | -L | -P]] mode file ...\n");
 #endif /* __APPLE__ */
 	exit(1);

@@ -145,7 +145,7 @@ chksum_main(int argc, char **argv)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: cksum [-o 1 | 2 | 3] [file ...]\n");
-	(void)fprintf(stderr, "       sum [file ...]\n");
+	(void)fprintf(thread_stderr, "usage: cksum [-o 1 | 2 | 3] [file ...]\n");
+	(void)fprintf(thread_stderr, "       sum [file ...]\n");
 	exit(1);
 }

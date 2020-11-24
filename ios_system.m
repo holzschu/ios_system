@@ -1054,6 +1054,7 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
     storeEnvironment(envp);
     int returnValue = ios_execv(path, argv);
     // The environment will be restored to previous value when the thread Id is released.
+    NSLog(@"Done\n");
     return returnValue;
 }
 

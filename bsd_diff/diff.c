@@ -211,7 +211,7 @@ diff_main(int argc, char **argv)
 			break;
 		case 'l':
 			// lflag = 1;
-			fprintf(stderr, "-l option is deactivated on iOS\n");
+			fprintf(thread_stderr, "-l option is deactivated on iOS\n");
 			break;
 		case 'N':
 			Nflag = 1;
@@ -481,7 +481,7 @@ print_status(int val, char *path1, char *path2, const char *entry)
 void
 usage(void)
 {
-	(void)fprintf(stderr,
+	(void)fprintf(thread_stderr,
 	    "usage: diff [-abdilpTtw] [-c | -e | -f | -n | -q | -u] [--ignore-case]\n"
 	    "            [--no-ignore-case] [--normal] [--strip-trailing-cr] [--tabsize]\n"
 	    "            [-I pattern] [-L label] file1 file2\n"
