@@ -150,10 +150,11 @@ static inline const pid_t ios_nextAvailablePid() {
         current_pid += 1;
         if (current_pid >= IOS_MAX_THREADS) current_pid = 1;
         pthread_t thread_pid = ios_getThreadId(current_pid);
-        if (thread_pid == 0) {
+        if (thread_pid == 0) { // We found a not-active pid
+            thread_ids[current_pid] = -1; // Not yet started
             numVariablesSet[current_pid] = 0;
             environment[current_pid] = NULL;
-            return current_pid; // already released
+            return current_pid;
         }
         // Dangerous: if the process is already killed, this wil crash
         /*
