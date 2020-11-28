@@ -98,7 +98,9 @@ archive_read_open_filename(struct archive *a, const char *filename,
 		 * want easy handling of the common case.
 		 */
 		filename = ""; /* Normalize NULL to "" */
-		fd = 0;
+        // iOS: get input from thread_stdin
+		// fd = 0;
+        fd = fileno(thread_stdin);
 #if defined(__CYGWIN__) || defined(_WIN32)
 		setmode(0, O_BINARY);
 #endif
