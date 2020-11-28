@@ -210,15 +210,23 @@ void storeEnvironment(char* envp[]) {
 
 // when the command is terminated, release the environment variables that were added.
 void resetEnvironment(pid_t pid) {
-    if (numVariablesSet[current_pid] > 0) {
+    if (numVariablesSet[pid] > 0) {
         // Free the variables allocated:
-        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
-            free(environment[current_pid][i]);
-            environment[current_pid][i] = NULL;
+        for (int i = 0; i < numVariablesSet[pid]; i++) {
+            free(environment[pid][i]);
+            environment[pid][i] = NULL;
         }
-        free(environment[current_pid]);
-        environment[current_pid] = NULL;
-        numVariablesSet[current_pid] = 0;
+        free(environment[pid]);
+        environment[pid] = NULL;
+        numVariablesSet[pid] = 0;
+    }
+}
+
+char** environmentVariables(pid_t pid) {
+    if (numVariablesSet[pid] > 0) {
+        return environment[pid];
+    } else {
+        return environ;
     }
 }
 

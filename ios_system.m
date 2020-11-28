@@ -1058,6 +1058,24 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
     return returnValue;
 }
 
+extern char** environmentVariables(pid_t pid);
+NSString* environmentAsDictionary() {
+    char** env_pid = environmentVariables(ios_currentPid());
+    NSString* dictionary = @"var env = { ";
+    int i = 0;
+    while (env_pid[i] != NULL) {
+        NSString* variable =  [NSString stringWithCString:env_pid[i] encoding:NSUTF8StringEncoding];
+        NSArray* variableComponents = [variable componentsSeparatedByString:@"="];
+        dictionary = [dictionary stringByAppendingString:variableComponents[0]];
+        dictionary = [dictionary stringByAppendingString:@": "];
+        dictionary = [dictionary stringByAppendingString:variableComponents[1]];
+        dictionary = [dictionary stringByAppendingString:@",\n"];
+        i++;
+    }
+    dictionary = [dictionary stringByAppendingString:@"};\n"];
+    return dictionary;
+}
+
 pthread_t ios_getLastThreadId() {
     if (!currentSession) return nil;
     return (currentSession->lastThreadId);
