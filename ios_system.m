@@ -1061,7 +1061,7 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
 extern char** environmentVariables(pid_t pid);
 NSArray* environmentAsArray() {
     char** env_pid = environmentVariables(ios_currentPid());
-    NSMutableArray* dictionary;
+    NSMutableArray<NSString*> *dictionary;
     int i = 0;
     while (env_pid[i] != NULL) {
         NSString* variable =  [NSString stringWithCString:env_pid[i] encoding:NSUTF8StringEncoding];
