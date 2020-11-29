@@ -1061,14 +1061,14 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
 extern char** environmentVariables(pid_t pid);
 NSArray* environmentAsArray() {
     char** env_pid = environmentVariables(ios_currentPid());
-    NSMutableArray<NSString*> *dictionary;
+    NSMutableArray<NSString*> *dictionary = [[NSMutableArray alloc]init];
     int i = 0;
     while (env_pid[i] != NULL) {
         NSString* variable =  [NSString stringWithCString:env_pid[i] encoding:NSUTF8StringEncoding];
         [dictionary addObject:variable];
         i++;
     }
-    return dictionary;
+    return [dictionary copy];
 }
 
 pthread_t ios_getLastThreadId() {
