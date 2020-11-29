@@ -1059,20 +1059,15 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
 }
 
 extern char** environmentVariables(pid_t pid);
-NSString* environmentAsDictionary() {
+NSArray* environmentAsDictionary() {
     char** env_pid = environmentVariables(ios_currentPid());
-    NSString* dictionary = @"var env = { ";
+    NSMutableArray* dictionary;
     int i = 0;
     while (env_pid[i] != NULL) {
         NSString* variable =  [NSString stringWithCString:env_pid[i] encoding:NSUTF8StringEncoding];
-        NSArray* variableComponents = [variable componentsSeparatedByString:@"="];
-        dictionary = [dictionary stringByAppendingString:variableComponents[0]];
-        dictionary = [dictionary stringByAppendingString:@": "];
-        dictionary = [dictionary stringByAppendingString:variableComponents[1]];
-        dictionary = [dictionary stringByAppendingString:@",\n"];
+        [dictionary addObject:variable];
         i++;
     }
-    dictionary = [dictionary stringByAppendingString:@"};\n"];
     return dictionary;
 }
 
