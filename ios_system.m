@@ -1823,9 +1823,9 @@ int ios_system(const char* inputCmd) {
                     } else if ([locationName hasSuffix:@".wasm"]) {
                         // insert wasm in front of argument list:
                         argc += 1;
-                        argv = (char **)realloc(argv, sizeof(char*) * argc);
+                        argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
                         // Move everything one step up
-                        for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
+                        for (int i = argc-1; i >= 1; i--) { argv[i] = argv[i-1]; }
                         argv[1] = realloc(argv[1], locationName.length + 1);
                         strcpy(argv[1], locationName.UTF8String);
                         argv[0] = strdup("wasm"); // this argument is new
