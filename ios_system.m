@@ -962,7 +962,7 @@ int sh_main(int argc, char** argv) {
         return 0;
     }
     char** command = argv + 1; // skip past "sh"
-    while ((command[0][0] == '-') && (command[0] != NULL)) { command++; } // skip past all flags
+    while ((command[0] != NULL) && (command[0][0] == '-')) { command++; } // skip past all flags
     if (command[0] == NULL) {
         argv[0][0] = 'h'; // prevent termination in cleanup_function
         return 0;
