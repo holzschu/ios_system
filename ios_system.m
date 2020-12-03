@@ -1454,7 +1454,12 @@ int ios_system(const char* inputCmd) {
         initSessionParameters(currentSession);
     }
     currentSession->global_errno = 0;
-    
+    // Don't start if the command is NULL:
+    if (inputCmd == NULL) {
+        ios_storeThreadId(0);
+        return 0;
+    }
+
     // initialize:
     if (thread_stdin == 0) thread_stdin = currentSession->stdin;
     if (thread_stdout == 0) thread_stdout = currentSession->stdout;
