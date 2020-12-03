@@ -959,6 +959,7 @@ int sh_main(int argc, char** argv) {
         fprintf(thread_stderr, "Usage: sh [-flags] command: executes command (all flags are ignored).\n");
         fprintf(thread_stderr, "       sh [-flags] command1 && command2 [&& command3 && ...]: executes the commands, in order, until one returns error.\n");
         fprintf(thread_stderr, "       sh [-flags] command1 || command2 [|| command3 || ...]: executes the commands, in order, until one returns OK.\n");
+        argv[0][0] = 'h'; // prevent termination in cleanup_function
         return 0;
     }
     char** command = argv + 1; // skip past "sh"
@@ -966,6 +967,12 @@ int sh_main(int argc, char** argv) {
     if (command[0] == NULL) {
         argv[0][0] = 'h'; // prevent termination in cleanup_function
         return 0;
+    }
+    // Did we redirect output? (most of the time, yes)
+    if ((fileno(currentSession->stdout) == fileno(thread_stdout)) ||
+        (fileno(currentSession->stderr) == fileno(thread_stderr)) ||
+        (fileno(currentSession->stdout) == fileno(thread_stderr))) {
+        argv[0][0] = 'h'; // prevent termination in cleanup_function
     }
     // If we reach this point, we have commands to execute.
     // Store current sesssion, create a new session specific for this, execute commands
