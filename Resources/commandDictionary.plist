@@ -492,5 +492,12 @@
 		<string>0E:I:J:L:n:oP:pR:s:tx</string>
 		<string>no</string>
 	</array>
+	<key>wol</key>
+	<array>
+		<string>network_ios.framework/network_ios</string>
+		<string>_Z8wol_mainiPKPc</string>
+		<string>hqb:p:d:</string>
+		<string>no</string>
+	</array>
 </dict>
 </plist>
