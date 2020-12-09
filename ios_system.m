@@ -1153,8 +1153,12 @@ int ios_kill()
     return ESRCH;
 }
 
+extern pthread_t ios_getThreadId(pid_t pid);
 int ios_killpid(pid_t pid, int sig) {
-    return pthread_cancel(ios_getThreadId(pid));
+    if (ios_getThreadId(pid) > 0) {
+        return pthread_kill(ios_getThreadId(pid), sig);
+    }
+    return 0;
 }
 
 void ios_switchSession(const void* sessionId) {

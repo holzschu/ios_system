@@ -30,6 +30,8 @@ extern int ios_executable(const char* inputCmd); // does this command exist? (ex
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 extern int ios_kill(void); // kill the current running command
+extern int ios_killpid(pid_t pid, int sig); // kill the current running command
+
 extern int ios_isatty(int fd); // test whether a file descriptor refers to a terminal
 extern pthread_t ios_getLastThreadId(void);
 extern pthread_t ios_getThreadId(pid_t pid);
