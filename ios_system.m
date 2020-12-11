@@ -1805,9 +1805,6 @@ int ios_system(const char* inputCmd) {
                         // search for 3 possibilities: name, name.bc and name.ll
                         locationName = [path stringByAppendingPathComponent:commandName];
                         bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
-                        if (fileFound) {
-                            NSLog(@"File: %@ exists\n", locationName);
-                        }
                         if (fileFound && isDir) continue; // file exists, but is a directory
                         if (!fileFound) {
                             locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".bc"];
