@@ -284,11 +284,17 @@ static void cleanup_function(void* parameters) {
     }
 }
 
+// Avoir calling crash_handler several times:
+static __thread crash_handler_called = false;
 void crash_handler(int sig) {
-    if (sig == SIGSEGV) {
-        fputs("segmentation fault\n", thread_stderr);
-    } else if (sig == SIGBUS) {
-        fputs("bus error\n", thread_stderr);
+    if (thread_stderr == NULL) thread_stderr = stderr;
+    if (!crash_handler_called) {
+        crash_handler_called = true;
+        if (sig == SIGSEGV) {
+            fputs("segmentation fault\n", thread_stderr);
+        } else if (sig == SIGBUS) {
+            fputs("bus error\n", thread_stderr);
+        }
     }
     ios_exit(1);
 }
@@ -1799,6 +1805,9 @@ int ios_system(const char* inputCmd) {
                         // search for 3 possibilities: name, name.bc and name.ll
                         locationName = [path stringByAppendingPathComponent:commandName];
                         bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                        if (fileFound) {
+                            NSLog(@"File: %@ exists\n", locationName);
+                        }
                         if (fileFound && isDir) continue; // file exists, but is a directory
                         if (!fileFound) {
                             locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".bc"];
