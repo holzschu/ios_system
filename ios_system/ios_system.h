@@ -62,6 +62,7 @@ extern void ios_closeSession(const void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
 extern void ios_settty(FILE* _tty);
 extern int ios_gettty(void);
+extern int ios_activePager(void);
 extern void ios_setContext(const void *context);
 extern void* ios_getContext(void);
 extern void ios_setDirectoryURL(NSURL* workingDirectoryURL);
