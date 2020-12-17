@@ -64,7 +64,6 @@ typedef struct _sessionParameters {
     char commandName[NAME_MAX];
     char columns[4];
     char lines[4];
-    int activePager;
 } sessionParameters;
 
 static void initSessionParameters(sessionParameters* sp) {
@@ -85,7 +84,6 @@ static void initSessionParameters(sessionParameters* sp) {
     sp->commandName[0] = 0;
     strcpy(sp->columns, "80");
     strcpy(sp->lines, "80");
-    sp->activePager = 0;
 }
 
 static NSMutableDictionary* sessionList;
@@ -208,7 +206,6 @@ static void cleanup_function(void* parameters) {
             pthread_kill(currentSession->current_command_root_thread, SIGINT);
             while (fgetc(thread_stdin) != EOF) { } // flush input, otherwise previous command gets blocked.
         }
-        currentSession->activePager = 0;
     }
     if ((!joinMainThread) && p->isPipeOut) {
         if (currentSession->current_command_root_thread != 0) {
@@ -281,6 +278,9 @@ static void cleanup_function(void* parameters) {
     } else {
         // NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
     }
+    if (strcmp(currentSession->commandName, commandName) == 0) {
+        currentSession->commandName[0] = 0;
+    }
     ios_releaseThread(pthread_self());
     if (currentSession->current_command_root_thread == pthread_self()) {
         currentSession->current_command_root_thread = 0;
@@ -307,9 +307,6 @@ static void* run_function(void* parameters) {
     ios_storeThreadId(pthread_self());
     // NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
     NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
-    if ((strcmp(p->argv[0], "less") == 0) || (strcmp(p->argv[0], "more") == 0)) {
-        if (currentSession != nil) currentSession->activePager = 1;
-    }
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
     optind = 1;
@@ -1263,7 +1260,11 @@ int ios_gettty() {
 }
 
 int ios_activePager() {
-    return currentSession->activePager;
+    if (currentSession == nil) { return 0; }
+    if ((strcmp(currentSession->commandName, "less") == 0) || (strcmp(currentSession->commandName, "more") == 0)) {
+        return 1;
+    }
+    return 0;
 }
 
 void ios_setContext(const void *context) {
