@@ -310,9 +310,6 @@ static void* run_function(void* parameters) {
     ios_storeThreadId(pthread_self());
     // NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
     NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
-    if ((strcmp(p->argv[0], "less") == 0) || (strcmp(p->argv[0], "more") == 0)) {
-        if (currentSession != nil) currentSession->activePager = TRUE;
-    }
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
     optind = 1;
@@ -324,7 +321,10 @@ static void* run_function(void* parameters) {
     thread_stderr = p->stderr;
     thread_context = p->context;
     currentSession = p->session;
-    
+    if ((strcmp(p->argv[0], "less") == 0) || (strcmp(p->argv[0], "more") == 0)) {
+        if (currentSession != nil) currentSession->activePager = TRUE;
+    }
+
     signal(SIGSEGV, crash_handler);
     signal(SIGBUS, crash_handler);
 
