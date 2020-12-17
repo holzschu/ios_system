@@ -238,6 +238,9 @@ static void cleanup_function(void* parameters) {
             }
         }
     }
+    if (strcmp(currentSession->commandName, commandName) == 0) {
+        currentSession->commandName[0] = 0;
+    }
     bool isSh = strcmp(p->argv[0], "sh") == 0;
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
@@ -277,9 +280,6 @@ static void cleanup_function(void* parameters) {
         currentSession->lastThreadId = 0;
     } else {
         // NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
-    }
-    if (strcmp(currentSession->commandName, commandName) == 0) {
-        currentSession->commandName[0] = 0;
     }
     ios_releaseThread(pthread_self());
     if (currentSession->current_command_root_thread == pthread_self()) {
