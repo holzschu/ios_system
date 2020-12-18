@@ -53,7 +53,7 @@ let package = Package(
         .binaryTarget(
             name: "mandoc",
             url: "https://github.com/holzschu/ios_system/releases/download/2.6/mandoc.xcframework.zip",
-            checksum: "9e4ce408f1ec66afae125782117a4a847dc17c83cbc8d105fa89a0415e86880b"
+            checksum: "4d0c3a72bea16aa96c0a4459f48172a4cb26853fb3e3fda69a5b6ec68ed9f9a8"
         )
     ]
 )
