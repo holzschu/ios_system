@@ -243,6 +243,7 @@
 		22AFD0792067F88500881B2A /* pathmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4C1FDB47A90050F312 /* pathmatch.c */; };
 		22B753052068DF8400F2B025 /* shell.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B753042068DF8400F2B025 /* shell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22B7530B2069801700F2B025 /* curl_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B7530A2069801700F2B025 /* curl_ios.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		22BA522A258E94E100923893 /* sleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 22BA520F258E94C200923893 /* sleep.c */; };
 		22C1D2E920A842460093127F /* ios_error.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27661FDB3FDA0087DDAD /* ios_error.h */; };
 		22C505852098ADD800FDDFA9 /* y.tab.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057D2098ADD700FDDFA9 /* y.tab.c */; };
 		22C505862098ADD800FDDFA9 /* find.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057E2098ADD700FDDFA9 /* find.c */; };
@@ -954,6 +955,7 @@
 		22A3736B21CB99EB00230846 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = ssh_keygen/misc.c; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
 		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
+		22BA520F258E94C200923893 /* sleep.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sleep.c; sourceTree = "<group>"; };
 		22C5057D2098ADD700FDDFA9 /* y.tab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = y.tab.c; path = bsd_find/y.tab.c; sourceTree = SOURCE_ROOT; };
 		22C5057E2098ADD700FDDFA9 /* find.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = find.c; path = bsd_find/find.c; sourceTree = SOURCE_ROOT; };
 		22C5057F2098ADD700FDDFA9 /* ls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ls.c; path = bsd_find/ls.c; sourceTree = SOURCE_ROOT; };
@@ -1837,6 +1839,7 @@
 				22CF27601FDB3FDA0087DDAD /* libutil.h */,
 				22CF27671FDB3FDA0087DDAD /* printenv */,
 				22CF27771FDB3FDA0087DDAD /* pwd */,
+				22BA520F258E94C200923893 /* sleep.c */,
 				22CF277A1FDB3FDA0087DDAD /* uname */,
 				22CF277D1FDB3FDA0087DDAD /* w */,
 			);
@@ -2777,6 +2780,7 @@
 				22F6A1182068394700E618F9 /* env.c in Sources */,
 				22F6A1162068394200E618F9 /* date.c in Sources */,
 				22F6A1142068393900E618F9 /* tee.c in Sources */,
+				22BA522A258E94E100923893 /* sleep.c in Sources */,
 				22F6A11D2068395600E618F9 /* uname.c in Sources */,
 				222CC4DF218CBF2900D3A11C /* xargs.c in Sources */,
 				22F6A1192068394700E618F9 /* envopts.c in Sources */,
