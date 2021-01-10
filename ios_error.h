@@ -62,6 +62,8 @@ extern __thread FILE* thread_stderr;
 #define execve ios_execve
 #define dup2 ios_dup2
 #define getenv ios_getenv
+#define setenv ios_setenv
+#define unsetenv ios_unsetenv
 
 extern int ios_executable(const char* cmd); // is this command part of the "shell" commands?
 extern int ios_system(const char* inputCmd); // execute this command (executable file or builtin command)
@@ -74,6 +76,8 @@ extern int ios_execv(const char *path, char* const argv[]);
 extern int ios_execve(const char *path, char* const argv[], char** envlist);
 extern int ios_dup2(int fd1, int fd2);
 extern char * ios_getenv(const char *name);
+extern int ios_setenv(const char* variableName, const char* value, int overwrite);
+int ios_unsetenv(const char* variableName);
 
 extern int ios_isatty(int fd);
 extern pthread_t ios_getLastThreadId(void);  // deprecated

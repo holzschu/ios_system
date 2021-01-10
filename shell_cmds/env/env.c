@@ -153,7 +153,7 @@ usage(void)
 int setenv_main(int argc, char** argv) {
     if (argc <= 1) return env_main(argc, argv);
     if (argc > 3) {
-        fprintf(thread_stderr, "setenv: Too many arguments\n"); fflush(thread_stderr);
+        fprintf(thread_stderr, "setenv: Too many arguments. Usage: setenv variable value\n"); fflush(thread_stderr);
         return 0;
     }
     // setenv VARIABLE value
@@ -162,9 +162,26 @@ int setenv_main(int argc, char** argv) {
     return 0;
 }
 
+int export_main(int argc, char** argv) {
+    if ((argc <= 1) || (argc > 3)) {
+        fprintf(thread_stderr, "usage: export variable=value\n"); fflush(thread_stderr);
+        return 0;
+    }
+    char* argument = strdup(argv[1]);
+    char* position = strstr(argument,"=");
+    if (position == NULL) {
+        fprintf(thread_stderr, "export: can't find '='. Usage: export variable=value\n"); fflush(thread_stderr);
+        return 0;
+    }
+    *position = 0;
+    int returnValue = setenv(argument, position+1, 1);
+    free(argument);
+    return returnValue;
+}
+
 int unsetenv_main(int argc, char** argv) {
     if (argc <= 1) {
-        fprintf(thread_stderr, "unsetenv: Too few arguments\n"); fflush(thread_stderr);
+        fprintf(thread_stderr, "unsetenv: Too few arguments. Usage: unsetenv variable\n"); fflush(thread_stderr);
         return 0;
     }
     // unsetenv acts on all parameters

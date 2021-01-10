@@ -194,7 +194,7 @@ char* libc_getenv(const char* variableName) {
     }
 }
 
-int libc_setenv(const char* variableName, const char* value, int overwrite) {
+int ios_setenv(const char* variableName, const char* value, int overwrite) {
     if (numVariablesSet[current_pid] > 0) {
         if (variableName == NULL) {
             errno = EINVAL;
@@ -232,7 +232,7 @@ int libc_setenv(const char* variableName, const char* value, int overwrite) {
     }
 }
 
-int libc_unsetenv(const char* variableName) {
+int ios_unsetenv(const char* variableName) {
     if (numVariablesSet[current_pid] > 0) {
         if (variableName == NULL) {
             errno = EINVAL;
