@@ -243,7 +243,6 @@
 		22AFD0792067F88500881B2A /* pathmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4C1FDB47A90050F312 /* pathmatch.c */; };
 		22B753052068DF8400F2B025 /* shell.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B753042068DF8400F2B025 /* shell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22B7530B2069801700F2B025 /* curl_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B7530A2069801700F2B025 /* curl_ios.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		22BA522A258E94E100923893 /* sleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 22BA520F258E94C200923893 /* sleep.c */; };
 		22C1D2E920A842460093127F /* ios_error.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27661FDB3FDA0087DDAD /* ios_error.h */; };
 		22C505852098ADD800FDDFA9 /* y.tab.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057D2098ADD700FDDFA9 /* y.tab.c */; };
 		22C505862098ADD800FDDFA9 /* find.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C5057E2098ADD700FDDFA9 /* find.c */; };
@@ -258,7 +257,7 @@
 		22C505942098B56400FDDFA9 /* diff.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505902098B56400FDDFA9 /* diff.c */; };
 		22C505952098B56400FDDFA9 /* diffreg.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505912098B56400FDDFA9 /* diffreg.c */; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
-		22F0803820973712003C3BF0 /* libc_replacement.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803620973712003C3BF0 /* libc_replacement.c */; };
+		22D99CC325AB5C83007F56C9 /* sleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803620973712003C3BF0 /* sleep.c */; };
 		22F0803B20975779003C3BF0 /* head.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803A20975779003C3BF0 /* head.c */; };
 		22F08041209761EA003C3BF0 /* forward.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803D209761EA003C3BF0 /* forward.c */; };
 		22F08042209761EA003C3BF0 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803E209761EA003C3BF0 /* misc.c */; };
@@ -955,7 +954,6 @@
 		22A3736B21CB99EB00230846 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = ssh_keygen/misc.c; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
 		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
-		22BA520F258E94C200923893 /* sleep.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sleep.c; sourceTree = "<group>"; };
 		22C5057D2098ADD700FDDFA9 /* y.tab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = y.tab.c; path = bsd_find/y.tab.c; sourceTree = SOURCE_ROOT; };
 		22C5057E2098ADD700FDDFA9 /* find.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = find.c; path = bsd_find/find.c; sourceTree = SOURCE_ROOT; };
 		22C5057F2098ADD700FDDFA9 /* ls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ls.c; path = bsd_find/ls.c; sourceTree = SOURCE_ROOT; };
@@ -994,7 +992,7 @@
 		22D8DEB920079E4C00FAADB7 /* cmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmap.c; path = text_cmds/tr/cmap.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBA20079E4C00FAADB7 /* tr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tr.c; path = text_cmds/tr/tr.c; sourceTree = SOURCE_ROOT; };
 		22D8DEBB20079E4C00FAADB7 /* str.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = str.c; path = text_cmds/tr/str.c; sourceTree = SOURCE_ROOT; };
-		22F0803620973712003C3BF0 /* libc_replacement.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = libc_replacement.c; sourceTree = "<group>"; };
+		22F0803620973712003C3BF0 /* sleep.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = sleep.c; path = ../shell_cmds/sleep/sleep.c; sourceTree = "<group>"; };
 		22F0803A20975779003C3BF0 /* head.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = head.c; path = text_cmds/head/head.c; sourceTree = SOURCE_ROOT; };
 		22F0803D209761EA003C3BF0 /* forward.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = forward.c; path = text_cmds/tail/forward.c; sourceTree = SOURCE_ROOT; };
 		22F0803E209761EA003C3BF0 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = text_cmds/tail/misc.c; sourceTree = SOURCE_ROOT; };
@@ -1132,7 +1130,6 @@
 				22319F9E1FDC2332004D875A /* getopt.c */,
 				223496B61FD5FC89007ED1A9 /* ios_system.m */,
 				225F060F2016751800466685 /* getopt_long.c */,
-				22F0803620973712003C3BF0 /* libc_replacement.c */,
 				22CF27661FDB3FDA0087DDAD /* ios_error.h */,
 				22B7530A2069801700F2B025 /* curl_ios.h */,
 				22B753042068DF8400F2B025 /* shell.h */,
@@ -1827,6 +1824,7 @@
 		226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
+				22F0803620973712003C3BF0 /* sleep.c */,
 				221CD98D21E8B03D00F3B47C /* open.m */,
 				22484B022434C5BB00D6BDDA /* jsc.swift */,
 				222CC4D9218CBEED00D3A11C /* xarg */,
@@ -1839,7 +1837,6 @@
 				22CF27601FDB3FDA0087DDAD /* libutil.h */,
 				22CF27671FDB3FDA0087DDAD /* printenv */,
 				22CF27771FDB3FDA0087DDAD /* pwd */,
-				22BA520F258E94C200923893 /* sleep.c */,
 				22CF277A1FDB3FDA0087DDAD /* uname */,
 				22CF277D1FDB3FDA0087DDAD /* w */,
 			);
@@ -2590,7 +2587,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				22319FA01FDC2332004D875A /* getopt.c in Sources */,
-				22F0803820973712003C3BF0 /* libc_replacement.c in Sources */,
 				225F06102016751900466685 /* getopt_long.c in Sources */,
 				223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */,
 				2209215C24B3B05A00D3327B /* open.m in Sources */,
@@ -2780,7 +2776,7 @@
 				22F6A1182068394700E618F9 /* env.c in Sources */,
 				22F6A1162068394200E618F9 /* date.c in Sources */,
 				22F6A1142068393900E618F9 /* tee.c in Sources */,
-				22BA522A258E94E100923893 /* sleep.c in Sources */,
+				22D99CC325AB5C83007F56C9 /* sleep.c in Sources */,
 				22F6A11D2068395600E618F9 /* uname.c in Sources */,
 				222CC4DF218CBF2900D3A11C /* xargs.c in Sources */,
 				22F6A1192068394700E618F9 /* envopts.c in Sources */,

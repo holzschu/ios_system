@@ -22,6 +22,8 @@
 #undef putw
 #undef fflush
 #undef getenv
+#undef setenv
+#undef unsetenv
 
 int printf (const char *format, ...) {
     va_list arg;
@@ -189,6 +191,83 @@ char* libc_getenv(const char* variableName) {
         return NULL;
     } else {
         return getenv(variableName);
+    }
+}
+
+int libc_setenv(const char* variableName, const char* value, int overwrite) {
+    if (numVariablesSet[current_pid] > 0) {
+        if (variableName == NULL) {
+            errno = EINVAL;
+            return -1;
+        }
+        if (strlen(variableName) == 0) {
+            errno = EINVAL;
+            return -1;
+        }
+        char* position = strstr(variableName,"=");
+        if (position != NULL) {
+            errno = EINVAL;
+            return -1;
+        }
+        char** envp = environment[current_pid];
+        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+            char* position = strstr(envp[i],"=");
+            if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
+                // This variable is defined in the current environment:
+                if (overwrite == 0) { return 0; }
+                envp[i] = realloc(envp[i], strlen(variableName) + strlen(value) + 1);
+                sprintf(envp[i], "%s=%s", variableName, value);
+                return 0;
+            }
+        }
+        // Not found so far, add it to the list:
+        int pos = numVariablesSet[current_pid];
+        envp = realloc(envp, numVariablesSet[current_pid] + 1);
+        envp[pos] = malloc(strlen(variableName) + strlen(value)+1);
+        sprintf(envp[pos], "%s=%s", variableName, value);
+        numVariablesSet[current_pid] += 1;
+        return 0;
+    } else {
+        return setenv(variableName, value, overwrite);
+    }
+}
+
+int libc_unsetenv(const char* variableName) {
+    if (numVariablesSet[current_pid] > 0) {
+        if (variableName == NULL) {
+            errno = EINVAL;
+            return -1;
+        }
+        if (strlen(variableName) == 0) {
+            errno = EINVAL;
+            return -1;
+        }
+        char* position = strstr(variableName,"=");
+        if (position != NULL) {
+            errno = EINVAL;
+            return -1;
+        }
+        char** envp = environment[current_pid];
+        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+            char* position = strstr(envp[i],"=");
+            if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
+                // This variable is defined in the current environment:
+                free(envp[i]);
+                envp[i] = NULL;
+                if (i < numVariablesSet[current_pid] - 1) {
+                    for (int j = i; j < numVariablesSet[current_pid] - 2; j++) {
+                        envp[j] = envp[j+1];
+                    }
+                    envp[numVariablesSet[current_pid] - 1] = NULL;
+                }
+                envp = realloc(envp, numVariablesSet[current_pid] - 1);
+                return 0;
+            }
+        }
+        // Not found:
+        return 0;
+    } else {
+        return unsetenv(variableName);
     }
 }
 
