@@ -1063,6 +1063,7 @@ int sh_main(int argc, char** argv) {
 
 
 int ios_execv(const char *path, char* const argv[]) {
+    // TODO: store new environment if current process has already stored some. 
     // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
     // start "child" with the child streams:
     char* cmd = concatenateArgv(argv);
