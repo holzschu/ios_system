@@ -48,11 +48,12 @@ __FBSDID("$FreeBSD: src/bin/sleep/sleep.c,v 1.20 2005/08/07 09:11:38 stefanf Exp
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
+#include "ios_error.h"
 
 void usage(void);
 
 int
-main(int argc, char *argv[])
+sleep_main(int argc, char *argv[])
 {
 	struct timespec time_to_sleep;
 	long l;
@@ -127,5 +128,6 @@ usage(void)
 {
 	const char msg[] = "usage: sleep seconds\n";
 
-	write(STDERR_FILENO, msg, sizeof(msg) - 1);
+	// write(STDERR_FILENO, msg, sizeof(msg) - 1);
+    fprintf(thread_stderr, msg);
 }
