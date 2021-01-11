@@ -215,15 +215,16 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
             if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
                 // This variable is defined in the current environment:
                 if (overwrite == 0) { return 0; }
-                envp[i] = realloc(envp[i], strlen(variableName) + strlen(value) + 1);
+                envp[i] = realloc(envp[i], strlen(variableName) + strlen(value) + 2);
                 sprintf(envp[i], "%s=%s", variableName, value);
                 return 0;
             }
         }
         // Not found so far, add it to the list:
         int pos = numVariablesSet[current_pid];
-        envp = realloc(envp, numVariablesSet[current_pid] + 1);
-        envp[pos] = malloc(strlen(variableName) + strlen(value)+1);
+        envp = realloc(envp, (numVariablesSet[current_pid] + 2) * sizeof(char*));
+        envp[pos] = malloc(strlen(variableName) + strlen(value) + 2);
+        envp[pos + 1] = NULL;
         sprintf(envp[pos], "%s=%s", variableName, value);
         numVariablesSet[current_pid] += 1;
         return 0;
@@ -260,7 +261,8 @@ int ios_unsetenv(const char* variableName) {
                     }
                     envp[numVariablesSet[current_pid] - 1] = NULL;
                 }
-                envp = realloc(envp, numVariablesSet[current_pid] - 1);
+                numVariablesSet[current_pid] -= 1;
+                envp = realloc(envp, (numVariablesSet[current_pid] + 1) * sizeof(char*));
                 return 0;
             }
         }
