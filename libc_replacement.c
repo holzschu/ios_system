@@ -281,10 +281,12 @@ void storeEnvironment(char* envp[]) {
         i++;
     }
     numVariablesSet[current_pid] = i;
-    environment[current_pid] = malloc(numVariablesSet[current_pid] * sizeof(char*));
+    environment[current_pid] = malloc((numVariablesSet[current_pid] + 1) * sizeof(char*));
     for (int i = 0; i < numVariablesSet[current_pid]; i++) {
         environment[current_pid][i] = strdup(envp[i]);
     }
+    // Keep NULL-termination:
+    environment[current_pid][numVariablesSet[current_pid]] = NULL;
 }
 
 // when the command is terminated, release the environment variables that were added.
