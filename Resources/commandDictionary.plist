@@ -338,6 +338,13 @@
 		<string></string>
 		<string>no</string>
 	</array>
+	<key>export</key>
+	<array>
+		<string>shell.framework/shell</string>
+		<string>export_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
 	<key>sftp</key>
 	<array>
 		<string>curl_ios.framework/curl_ios</string>
