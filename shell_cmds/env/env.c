@@ -135,7 +135,11 @@ env_main(int argc, char **argv)
         execvp(*argv, argv);
         err(errno == ENOENT ? 127 : 126, "%s", *argv);
 	}
-	for (ep = environ; *ep; ep++)
+#if !TARGET_OS_IPHONE
+        for (ep = environ; *ep != NULL; ep++)
+#else
+        for (ep = environmentVariables(ios_currentPid()); *ep != NULL; ep++)
+#endif
 		(void)fprintf(thread_stdout, "%s\n", *ep);
 	exit(0);
 }

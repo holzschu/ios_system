@@ -78,6 +78,7 @@ extern int ios_dup2(int fd1, int fd2);
 extern char * ios_getenv(const char *name);
 extern int ios_setenv(const char* variableName, const char* value, int overwrite);
 int ios_unsetenv(const char* variableName);
+extern char** environmentVariables(pid_t pid);
 
 extern int ios_isatty(int fd);
 extern pthread_t ios_getLastThreadId(void);  // deprecated

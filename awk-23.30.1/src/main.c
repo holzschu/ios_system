@@ -203,7 +203,11 @@ int awk_main(int argc, char *argv[])
 	   dprintf( (thread_stdout, "argc=%d, argv[0]=%s\n", argc, argv[0]) );
 	arginit(argc, argv);
 	if (!safe)
+#if !TARGET_OS_IPHONE
 		envinit(environ);
+#else
+        envinit(environmentVariables(ios_currentPid()));
+#endif
 	yyparse();
 	setlocale(LC_NUMERIC, ""); /* back to whatever it is locally */
 	if (fs)

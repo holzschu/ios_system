@@ -77,12 +77,20 @@ printenv_main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc == 0) {
-		for (ep = environ; *ep; ep++)
+#if !TARGET_OS_IPHONE
+        for (ep = environ; *ep != NULL; ep++)
+#else
+        for (ep = environmentVariables(ios_currentPid()); *ep != NULL; ep++)
+#endif
 			(void)fprintf(thread_stdout, "%s\n", *ep);
 		exit(0);
 	}
 	len = strlen(*argv);
-	for (ep = environ; *ep; ep++)
+#if !TARGET_OS_IPHONE
+    for (ep = environ; *ep != NULL; ep++)
+#else
+    for (ep = environmentVariables(ios_currentPid()); *ep != NULL; ep++)
+#endif
 		if (!memcmp(*ep, *argv, len)) {
 			cp = *ep + len;
 			if (!*cp || *cp == '=') {

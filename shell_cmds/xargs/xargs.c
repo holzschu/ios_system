@@ -113,7 +113,11 @@ xargs_main(int argc, char *argv[])
 	char *endptr;
 
 	inpline = replstr = NULL;
+#if !TARGET_OS_IPHONE
 	ep = environ;
+#else
+    ep = environmentVariables(ios_currentPid());
+#endif
 	eofstr = "";
 	Jflag = nflag = 0;
     

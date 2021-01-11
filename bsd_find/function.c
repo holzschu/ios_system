@@ -748,7 +748,12 @@ c_exec(OPTION *option, char ***argvp)
 			argmax = _POSIX_ARG_MAX;
 		}
 		argmax -= 1024;
+
+#if !TARGET_OS_IPHONE
 		for (ep = environ; *ep != NULL; ep++)
+#else
+        for (ep = environmentVariables(ios_currentPid()); *ep != NULL; ep++)
+#endif
 			argmax -= strlen(*ep) + 1 + sizeof(*ep);
 		argmax -= 1 + sizeof(*ep);
 		/*
