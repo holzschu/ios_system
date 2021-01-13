@@ -5,7 +5,9 @@
 //  Copyright © 2017 N. Holzschuch. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+
+#import <UIKit/UIKit.h>
+
 #include "ios_system.h"
 
 // ios_system(cmd): Executes the command in "cmd". The goal is to be a drop-in replacement for system(), as much as possible.
