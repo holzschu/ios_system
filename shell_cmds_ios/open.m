@@ -8,7 +8,8 @@
 #include <stdio.h>
 #include "ios_system/ios_system.h"
 #include "ios_error.h"
-#import <Foundation/Foundation.h>
+
+#import <UIKit/UIKit.h>
 
 
 NSArray<NSString *> *__known_browsers() {
