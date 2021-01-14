@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  build:
+    name: Building release assets
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: xcode-select
+      run: sudo xcode-select -s /Applications/Xcode_12.3.app
+
+    - name: build-ios_system
+      run: swift run --package-path xcfs build
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: .build/release.md
+        draft: false
+        prerelease: false
+
+    - name: Upload ios_system
+      id: upload-ios_system
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/ios_system.xcframework.zip
+        asset_name: ios_system.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload awk.xcframework
+      id: upload-awk
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/awk.xcframework.zip
+        asset_name: awk.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload tar.xcframework
+      id: upload-tar
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/tar.xcframework.zip
+        asset_name: tar.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload curl_ios.xcframework
+      id: upload-curl_ios
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/curl_ios.xcframework.zip
+        asset_name: curl_ios.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload files.xcframework
+      id: upload-files
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/files.xcframework.zip
+        asset_name: files.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload shell.xcframework
+      id: upload-shell
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/shell.xcframework.zip
+        asset_name: shell.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload ssh_cmd.xcframework
+      id: upload-shell
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/ssh_cmd.xcframework.zip
+        asset_name: ssh_cmd.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload tar.xcframework
+      id: upload-tar
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/tar.xcframework.zip
+        asset_name: tar.xcframework.zip
+        asset_content_type: application/zip
+    - name: Upload text.xcframework
+      id: upload-text
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: .build/text.xcframework.zip
+        asset_name: text.xcframework.zip
+        asset_content_type: application/zip
