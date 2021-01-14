@@ -7,11 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2209215924B3AD9300D3327B /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215524B3AD7700D3327B /* libssh2.xcframework */; };
-		2209215A24B3AD9300D3327B /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215724B3AD8600D3327B /* openssl.xcframework */; };
 		2209215C24B3B05A00D3327B /* open.m in Sources */ = {isa = PBXBuildFile; fileRef = 221CD98D21E8B03D00F3B47C /* open.m */; };
-		2209215E24B3B5BA00D3327B /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215524B3AD7700D3327B /* libssh2.xcframework */; };
-		2209216124B3B5BC00D3327B /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215724B3AD8600D3327B /* openssl.xcframework */; };
 		22122E2C21BC130700D8FE74 /* say.m in Sources */ = {isa = PBXBuildFile; fileRef = 22122E2A21BC129000D8FE74 /* say.m */; };
 		2217ECD421CBA5F40049B382 /* entropy.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD321CBA5F40049B382 /* entropy.c */; };
 		2217ECD621CBA6240049B382 /* openssl-compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD521CBA6240049B382 /* openssl-compat.c */; };
@@ -499,11 +495,13 @@
 		22F6A25C20683F8500E618F9 /* tool_writeout.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781161FDB4D380050F312 /* tool_writeout.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
 		22F6A25D20683F8600E618F9 /* tool_xattr.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781181FDB4D380050F312 /* tool_xattr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
 		22F6A25E20683F9B00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		D212F98B25B066E9007F5D2D /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F98A25B066E9007F5D2D /* libssh2.xcframework */; };
+		D212F98C25B066E9007F5D2D /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F98A25B066E9007F5D2D /* libssh2.xcframework */; };
+		D212F99625B06810007F5D2D /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F99525B06810007F5D2D /* openssl.xcframework */; };
+		D212F99725B06810007F5D2D /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F99525B06810007F5D2D /* openssl.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2209215524B3AD7700D3327B /* libssh2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssh2.xcframework; path = "/Users/holzschu/Library/Developer/Xcode/DerivedData/ios_system-casnnthccszagwbhuwonmdqyriod/SourcePackages/artifacts/openssl/libssh2.xcframework"; sourceTree = "<absolute>"; };
-		2209215724B3AD8600D3327B /* openssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = openssl.xcframework; path = "/Users/holzschu/Library/Developer/Xcode/DerivedData/ios_system-casnnthccszagwbhuwonmdqyriod/SourcePackages/artifacts/openssl/openssl.xcframework"; sourceTree = "<absolute>"; };
 		22122E2A21BC129000D8FE74 /* say.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = say.m; sourceTree = "<group>"; };
 		2217ECD321CBA5F40049B382 /* entropy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = entropy.c; path = ssh_keygen/entropy.c; sourceTree = "<group>"; };
 		2217ECD521CBA6240049B382 /* openssl-compat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "openssl-compat.c"; path = "ssh_keygen/openbsd-compat/openssl-compat.c"; sourceTree = "<group>"; };
@@ -1026,6 +1024,8 @@
 		22F6A16920683D5200E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		22F6A1AF20683F4100E618F9 /* curl_ios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = curl_ios.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		22F6A1B220683F4100E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../curl_ios/Info.plist; sourceTree = "<group>"; };
+		D212F98A25B066E9007F5D2D /* libssh2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssh2.xcframework; path = xcfs/.build/artifacts/xcfs/libssh2.xcframework; sourceTree = "<group>"; };
+		D212F99525B06810007F5D2D /* openssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = openssl.xcframework; path = xcfs/.build/artifacts/xcfs/openssl.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1087,8 +1087,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				22F6A1A920683E5700E618F9 /* libz.tbd in Frameworks */,
-				2209215E24B3B5BA00D3327B /* libssh2.xcframework in Frameworks */,
-				2209216124B3B5BC00D3327B /* openssl.xcframework in Frameworks */,
+				D212F98B25B066E9007F5D2D /* libssh2.xcframework in Frameworks */,
+				D212F99625B06810007F5D2D /* openssl.xcframework in Frameworks */,
 				22F6A1A820683E5000E618F9 /* libresolv.9.tbd in Frameworks */,
 				22F6A16E20683D6F00E618F9 /* ios_system.framework in Frameworks */,
 			);
@@ -1098,9 +1098,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D212F98C25B066E9007F5D2D /* libssh2.xcframework in Frameworks */,
 				22F6A25E20683F9B00E618F9 /* ios_system.framework in Frameworks */,
-				2209215924B3AD9300D3327B /* libssh2.xcframework in Frameworks */,
-				2209215A24B3AD9300D3327B /* openssl.xcframework in Frameworks */,
+				D212F99725B06810007F5D2D /* openssl.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1183,11 +1183,11 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D212F99525B06810007F5D2D /* openssl.xcframework */,
+				D212F98A25B066E9007F5D2D /* libssh2.xcframework */,
 				227F87D6202EFA68001751C6 /* libncurses.tbd */,
 				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
-				2209215724B3AD8600D3327B /* openssl.xcframework */,
 				22F568222020C42F009850FD /* libxml2.tbd */,
-				2209215524B3AD7700D3327B /* libssh2.xcframework */,
 				22F567DD2020BAD9009850FD /* libz.tbd */,
 				22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */,
 			);
@@ -2487,7 +2487,6 @@
 			);
 			mainGroup = 223496A11FD5FC71007ED1A9;
 			packageReferences = (
-				2209214E24B3AC7600D3327B /* XCRemoteSwiftPackageReference "libssh2-for-iOS" */,
 			);
 			productRefGroup = 223496AC1FD5FC71007ED1A9 /* Products */;
 			projectDirPath = "";
@@ -3242,7 +3241,7 @@
 				);
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3262,7 +3261,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Acube.ios-system";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -3287,7 +3288,7 @@
 				);
 				INFOPLIST_FILE = ios_system/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3306,7 +3307,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Acube.ios-system";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -3326,6 +3329,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = tar/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3360,6 +3364,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = tar/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3393,6 +3398,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = files/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3420,6 +3426,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = files/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3446,6 +3453,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = shell/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3475,6 +3483,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = shell/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3503,6 +3512,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = text/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3530,6 +3540,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = text/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3556,6 +3567,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = awk/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3591,6 +3603,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = awk/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3629,7 +3642,7 @@
 				);
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3669,7 +3682,7 @@
 				);
 				INFOPLIST_FILE = ssh_cmd/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3692,6 +3705,7 @@
 		22F6A1B520683F4100E618F9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
@@ -3708,7 +3722,7 @@
 				);
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3741,6 +3755,7 @@
 		22F6A1B620683F4100E618F9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
@@ -3757,7 +3772,7 @@
 				);
 				INFOPLIST_FILE = curl_ios/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3871,17 +3886,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		2209214E24B3AC7600D3327B /* XCRemoteSwiftPackageReference "libssh2-for-iOS" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/holzschu/libssh2-for-iOS";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 223496A21FD5FC71007ED1A9 /* Project object */;
 }
