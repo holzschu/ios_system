@@ -29,7 +29,7 @@
 // If true, all commands are enabled + debug messages if dylib not found.
 // If false, you get a smaller set, but compliance with AppStore rules.
 // *Must* be false in the main branch releases.
-// Commands that can be enabled only if sideLoading: ctags, readtags, chgrp, chown, chmod, df, id, w.
+// Commands that can be enabled only if sideLoading: chgrp, chown, df, id, w.
 bool sideLoading = false; 
 // Should the main thread be joined (which means it takes priority over other tasks)? 
 // Default value is true, which makes sense for shell-like applications.
@@ -89,6 +89,7 @@ static void initSessionParameters(sessionParameters* sp) {
 }
 
 static NSMutableDictionary* sessionList;
+static NSMutableDictionary* aliasDictionary;
 
 // pointer to sessionParameters. thread-local variable so the entire system is thread-safe.
 // The sessionParameters pointer is shared by all threads in the same session.
@@ -111,6 +112,10 @@ void ios_exit(int n) {
         currentSession->global_errno = n;
     }
     pthread_exit(NULL);
+}
+
+void set_session_errno(int n) {
+    currentSession->global_errno = n;
 }
 
 // Replace standard abort and exit functions with ours:
@@ -697,7 +702,6 @@ int cd_main(int argc, char** argv) {
     return 0;
 }
 
-
 NSString* getoptString(NSString* commandName) {
     if (commandList == nil) initializeCommandList();
     NSArray* commandStructure = [commandList objectForKey: commandName];
@@ -909,6 +913,111 @@ int pbcopy(int argc, char** argv) {
     return 0;
 }
 
+int alias_main(int argc, char** argv) {
+    // Syntax: alias command="new command" or alias command "new command" (both must work)
+    // alias -h or alias --help: print help
+    // alias (no arguments): print list of aliases
+    // alias (single argument): print corresponding alias
+    NSString* usage = @"usage: alias command=\"new command\"";
+    if (aliasDictionary == nil) {
+        aliasDictionary = [NSMutableDictionary new];
+    }
+    if (argc == 1) {
+        // no arguments: print list of aliases
+        for (NSString* command in aliasDictionary) {
+            NSArray* aliasArray = aliasDictionary[command];
+            fprintf(thread_stdout, "%s\t", command.UTF8String);
+            for (NSString* component in aliasArray) {
+                fprintf(thread_stdout, "%s ", component.UTF8String);
+            }
+            fprintf(thread_stdout, "\n");
+        }
+        return 0;
+    }
+    if (argv[1][0] == '-') {
+        if ((strncmp(argv[1], "-h", 2) != 0) && (strncmp(argv[1], "--help", 6) != 0)) {
+            fprintf(thread_stderr, "alias: unrecognized option %s\n", argv[1]);
+        }
+        fprintf(thread_stderr, "%s\n", usage.UTF8String);
+        return 0;
+    }
+    NSString* command = nil;
+    NSMutableArray<NSString *> *commandArray = [[NSMutableArray alloc] init];
+    if (argc == 2) {
+        char* equalSign = strchr(argv[1], '=');
+        if (equalSign == NULL) {
+            // single command, show alias:
+            command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+            NSString* alias = aliasDictionary[command];
+            if (alias != nil) {
+                fprintf(thread_stdout, "%s\n", alias.UTF8String);
+            }
+            return 0;
+        }
+        equalSign[0] = 0;
+        char* alias = equalSign + 1;
+        command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+        commandArray[0] = [NSString stringWithCString:alias encoding:NSUTF8StringEncoding];;
+    }
+    if (argc >= 3) {
+        command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+        // We keep the benefit of the parsing that was already done:
+        for (int i = 0; i < argc - 2; i++) {
+            commandArray[i] = [NSString stringWithCString:argv[i + 2] encoding:NSUTF8StringEncoding];
+        }
+    }
+    if ((command == nil) || (commandArray == nil) || (commandArray.count == 0)) {
+        // Something went wrong
+        return 1;
+    }
+    if (commandArray.count == 1) {
+        // single command, we might need to split it:
+        // remove quotes at the beginning or end of the command:
+        NSString* aliasCommand = commandArray[0];
+        if ([aliasCommand hasPrefix:@"\""] && [aliasCommand hasSuffix:@"\""]) {
+            aliasCommand = [aliasCommand substringFromIndex:1];
+            aliasCommand = [aliasCommand substringToIndex:[aliasCommand length] -1];
+        } else if ([aliasCommand hasPrefix:@"'"] && [aliasCommand hasSuffix:@"'"]) {
+            aliasCommand = [aliasCommand substringFromIndex:1];
+            aliasCommand = [aliasCommand substringToIndex:[aliasCommand length] -1];
+        }
+        char* aliasCommandCString = aliasCommand.UTF8String;
+        char* nextSpace = strstrquoted(aliasCommandCString, " ");
+        int i = 0;
+        while (nextSpace != NULL) {
+            *nextSpace = 0;
+            commandArray[i] = [NSString stringWithCString:aliasCommandCString encoding:NSUTF8StringEncoding];
+            aliasCommandCString = nextSpace + 1;
+            if (*aliasCommandCString == 0) {
+                break;
+            }
+            nextSpace = strstrquoted(aliasCommandCString, " ");
+            i += 1;
+        }
+    }
+    aliasDictionary[command] = commandArray;
+    return 0;
+}
+
+int unalias_main(int argc, char** argv) {
+    NSString* usage = @"usage: unalias [command|-a]";
+    if (aliasDictionary == nil) {
+        aliasDictionary = [NSMutableDictionary new];
+    }
+    if ((argc == 1) || ((argv[1][0] == '-') && (strncmp(argv[1], "-a", 2) != 0))) {
+        fprintf(thread_stderr, "%s\n", usage.UTF8String);
+        return 0;
+    }
+    if (strncmp(argv[1], "-a", 2) == 0) {
+        [aliasDictionary removeAllObjects];
+        return 0;
+    }
+    for (int i = 1; i < argc; i++) {
+        NSString* command =  [NSString stringWithCString:argv[i] encoding:NSUTF8StringEncoding];
+        [aliasDictionary removeObjectForKey: command];
+    }
+    return 0;
+}
 
 // Auxiliary function for sh_main. Given a string of characters (command1 && command2),
 // split it into the sub commands and execute each of them in sequence:
@@ -1741,6 +1850,17 @@ int ios_system(const char* inputCmd) {
         argv_copy[argc] = NULL;
         free(argv);
         argv = argv_copy;
+        // Alias rewriting occurs before any other:
+        // Do we have an alias for this command?
+        if (aliasDictionary != nil) {
+            NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
+            NSArray* aliasArray = aliasDictionary[commandName];
+            if (aliasArray != nil) {
+                // Yes, we do. Let's rewrite the command:
+
+                
+            }
+        }
         // We have the arguments. Parse them for environment variables, ~, etc.
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) {  argv[i] = parseArgument(argv[i], argv[0]); }
         // wildcard expansion (*, ?, []...) Has to be after $ and ~ expansion, results in larger arguments
@@ -1781,6 +1901,7 @@ int ios_system(const char* inputCmd) {
             // The executable file has precedence, unless the user has specified they want the original
             // version, by prefixing it with \. So "\ls" == always "our" ls. "ls" == maybe ~/Library/bin/ls
             // (if it exists).
+            // It also cancels aliases.
             size_t len_with_terminator = strlen(argv[0] + 1) + 1;
             memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {

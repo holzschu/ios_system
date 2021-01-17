@@ -258,7 +258,7 @@
 		22C505952098B56400FDDFA9 /* diffreg.c in Sources */ = {isa = PBXBuildFile; fileRef = 22C505912098B56400FDDFA9 /* diffreg.c */; };
 		22CF278C1FDB3FDB0087DDAD /* libutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27601FDB3FDA0087DDAD /* libutil.h */; };
 		22D99CC325AB5C83007F56C9 /* sleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803620973712003C3BF0 /* sleep.c */; };
-		22D99CED25AB76BF007F56C9 /* libc_replacement.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D99CEC25AB76BE007F56C9 /* libc_replacement.c */; settings = {COMPILER_FLAGS = "-x objective-c"; }; };
+		22D99CED25AB76BF007F56C9 /* libc_replacement.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D99CEC25AB76BE007F56C9 /* libc_replacement.c */; };
 		22F0803B20975779003C3BF0 /* head.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803A20975779003C3BF0 /* head.c */; };
 		22F08041209761EA003C3BF0 /* forward.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803D209761EA003C3BF0 /* forward.c */; };
 		22F08042209761EA003C3BF0 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0803E209761EA003C3BF0 /* misc.c */; };
