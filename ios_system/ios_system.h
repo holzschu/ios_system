@@ -7,8 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
-#import <WebKit/WebKit.h>
 
 //! Project version number for ios_system.
 FOUNDATION_EXPORT double ios_systemVersionNumber;
