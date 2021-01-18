@@ -37,7 +37,8 @@ bool sideLoading = false;
 // Default value is true, which makes sense for shell-like applications.
 // Should be set to false if significant user interaction is carried by the app and 
 // the app takes responsibility for waiting for the command to terminate. 
-bool joinMainThread = true; 
+bool joinMainThread = true;
+static NSString* ios_bookmarkDictionaryName = @"bookmarkNames";
 // Include file for getrlimit/setrlimit:
 #include <sys/resource.h>
 static struct rlimit limitFilesOpen;
@@ -88,6 +89,10 @@ static void initSessionParameters(sessionParameters* sp) {
     strcpy(sp->columns, "80");
     strcpy(sp->lines, "80");
     sp->activePager = FALSE;
+}
+
+void ios_setBookmarkDictionaryName(NSString* name) {
+    ios_bookmarkDictionaryName = name;
 }
 
 static NSMutableDictionary* sessionList;
@@ -472,6 +477,7 @@ static char* parseArgument(char* argument, char* command) {
     }
     // 2) Tilde conversion: replace "~" with $HOME
     // If there are multiple users on iOS, this code will need to be changed.
+    // (old behaviour, kept as is for compatibility)
     if([argumentString hasPrefix:@"~"]) {
         // So it begins with "~". We can't use stringByExpandingTildeInPath because apps redefine HOME
         NSString* replacement_string;
@@ -481,6 +487,18 @@ static char* parseArgument(char* argument, char* command) {
         if (([argumentString hasPrefix:@"~/"]) || ([argumentString hasPrefix:@"~:"]) || ([argumentString length] == 1)) {
             NSString* test_string = @"~";
             argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange(0, 1)];
+        } else {
+            // 2a) expand "~something" with the content of userPreference dictionary (to be set by each app)
+            NSDictionary *tildeExpansionDictionary = [[NSUserDefaults standardUserDefaults] dictionaryForKey:ios_bookmarkDictionaryName];
+            if (tildeExpansionDictionary != nil) {
+                NSCharacterSet* separators = [NSCharacterSet characterSetWithCharactersInString:@":/"];
+                NSArray<NSString*>* components = [argumentString componentsSeparatedByCharactersInSet:separators];
+                NSString* name = [components[0] substringFromIndex:1]; // remove the "~"
+                NSString* expandedPath = tildeExpansionDictionary[name];
+                if (expandedPath != nil) {
+                    argumentString = [argumentString stringByReplacingOccurrencesOfString:components[0] withString:expandedPath options:NULL range:NSMakeRange(0, [components[0] length])];
+                }
+            }
         }
     }
     // Also convert ":~something" in PATH style variables
@@ -494,18 +512,16 @@ static char* parseArgument(char* argument, char* command) {
             else homeDir = miniRoot;
             // Only 1 possibility: ":~" (same as $HOME)
             if (homeDir.length > 0) {
+                NSString* replacement_string = [@":" stringByAppendingString:homeDir];
                 if ([argumentString containsString:@":~/"]) {
                     NSString* test_string = @":~/";
-                    NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSUTF8StringEncoding] stringByAppendingString:homeDir];
                     replacement_string = [replacement_string stringByAppendingString:[NSString stringWithCString:"/" encoding:NSUTF8StringEncoding]];
                     argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string];
                 } else if ([argumentString hasSuffix:@":~"]) {
                     NSString* test_string = @":~";
-                    NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSUTF8StringEncoding] stringByAppendingString:homeDir];
                     argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange([argumentString length] - 2, 2)];
                 } else if ([argumentString hasSuffix:@":"]) {
                     NSString* test_string = @":";
-                    NSString* replacement_string = [[NSString stringWithCString:":" encoding:NSUTF8StringEncoding] stringByAppendingString:homeDir];
                     argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange([argumentString length] - 2, 2)];
                 }
             }
@@ -920,17 +936,20 @@ int alias_main(int argc, char** argv) {
     // alias -h or alias --help: print help
     // alias (no arguments): print list of aliases
     // alias (single argument): print corresponding alias
-    NSString* usage = @"usage: alias command=\"new command\"";
+    NSString* usage = @"usage: alias command new command\n\talias command=new command\n\t!^ = first argument\n\t!* = all arguments";
     if (aliasDictionary == nil) {
         aliasDictionary = [NSMutableDictionary new];
     }
-    if (argc == 1) {
+    if (argc <= 1) {
         // no arguments: print list of aliases
         for (NSString* command in aliasDictionary) {
-            NSArray* aliasArray = aliasDictionary[command];
+            NSArray<NSString*>* aliasArray = aliasDictionary[command];
             fprintf(thread_stdout, "%s\t", command.UTF8String);
-            for (NSString* component in aliasArray) {
-                fprintf(thread_stdout, "%s ", component.UTF8String);
+            fprintf(thread_stdout, "%s", aliasArray[0].UTF8String);
+            if ([aliasArray[2] isEqualToString: @"afterFirst"]) {
+                fprintf(thread_stdout, " !^ %s", aliasArray[1].UTF8String);
+            } else if ([aliasArray[2] isEqualToString: @"afterLast"]) {
+                fprintf(thread_stdout, " !* %s", aliasArray[1].UTF8String);
             }
             fprintf(thread_stdout, "\n");
         }
@@ -943,52 +962,63 @@ int alias_main(int argc, char** argv) {
         fprintf(thread_stderr, "%s\n", usage.UTF8String);
         return 0;
     }
+    char* equalSign = strchr(argv[1], '=');
     NSString* command = nil;
-    NSMutableArray<NSString *> *commandArray = [[NSMutableArray alloc] init];
-    if (argc == 2) {
-        char* equalSign = strchr(argv[1], '=');
-        if (equalSign == NULL) {
-            // single command, show alias:
-            command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
-            NSString* alias = aliasDictionary[command];
-            if (alias != nil) {
-                fprintf(thread_stdout, "%s\n", alias.UTF8String);
-            }
-            return 0;
+    if ((equalSign == NULL) && (argc == 2)) {
+        // single command, show alias:
+        command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+        NSArray<NSString*>* aliasArray = aliasDictionary[command];
+        if (aliasArray == nil) { return 0; }
+        fprintf(thread_stdout, "%s", aliasArray[0]);
+        if ([aliasArray[2] isEqualToString: @"afterFirst"]) {
+            fprintf(thread_stdout, " !^ %s", aliasArray[1]);
+        } else if ([aliasArray[2] isEqualToString: @"afterLast"]) {
+            fprintf(thread_stdout, " !* %s", aliasArray[1]);
         }
+        fprintf(thread_stdout, "\n");
+        return 0;
+    }
+    NSMutableArray<NSString *> *commandArray = [[NSMutableArray alloc] init];
+    if (equalSign != NULL) {
+        // There is an equal sign in the second argument. Split into alias / command:
         equalSign[0] = 0;
         char* alias = equalSign + 1;
         command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
         commandArray[0] = [NSString stringWithCString:alias encoding:NSUTF8StringEncoding];;
+    } else {
+        command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
     }
     if (argc >= 3) {
-        command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
         // We keep the benefit of the parsing that was already done:
         for (int i = 0; i < argc - 2; i++) {
-            commandArray[i] = [NSString stringWithCString:argv[i + 2] encoding:NSUTF8StringEncoding];
+            [commandArray addObject: [NSString stringWithCString:argv[i + 2] encoding:NSUTF8StringEncoding]];
         }
     }
     if ((command == nil) || (commandArray == nil) || (commandArray.count == 0)) {
         // Something went wrong
         return 1;
     }
-    if (commandArray.count == 1) {
-        // single command, we might need to split it:
-        // remove quotes at the beginning or end of the command:
-        NSString* aliasCommand = commandArray[0];
-        if ([aliasCommand hasPrefix:@"\""] && [aliasCommand hasSuffix:@"\""]) {
-            aliasCommand = [aliasCommand substringFromIndex:1];
-            aliasCommand = [aliasCommand substringToIndex:[aliasCommand length] -1];
-        } else if ([aliasCommand hasPrefix:@"'"] && [aliasCommand hasSuffix:@"'"]) {
-            aliasCommand = [aliasCommand substringFromIndex:1];
-            aliasCommand = [aliasCommand substringToIndex:[aliasCommand length] -1];
+    if ((equalSign != NULL) || (commandArray.count == 1)) {
+        // If there was an equal sign, so there might be some extra quotes:
+        // Observed decomposition with equal sign: "ll=\"ls" + "-l\""
+        // If there is a single command, we separate it as well: alias ls "ls -l"
+        if ([commandArray[0] hasPrefix:@"\""] && [[commandArray lastObject] hasSuffix:@"\""]) {
+            commandArray[0] = [commandArray[0] substringFromIndex:1];
+            commandArray[commandArray.count - 1] = [[commandArray lastObject] substringToIndex:[[commandArray lastObject] length] -1];
+        } else if ([commandArray[0] hasPrefix:@"'"] && [[commandArray lastObject] hasSuffix:@"'"]) {
+            commandArray[0] = [commandArray[0] substringFromIndex:1];
+            commandArray[commandArray.count - 1] = [[commandArray lastObject] substringToIndex:[[commandArray lastObject] length] -1];
         }
-        char* aliasCommandCString = aliasCommand.UTF8String;
+    }
+    if (commandArray.count == 1) {
+        char* aliasCommandCString = strdup(commandArray[0].UTF8String);
+        char* pointerToFree = aliasCommandCString;
         char* nextSpace = strstrquoted(aliasCommandCString, " ");
         int i = 0;
         while (nextSpace != NULL) {
             *nextSpace = 0;
             commandArray[i] = [NSString stringWithCString:aliasCommandCString encoding:NSUTF8StringEncoding];
+            NSLog(@"Adding %s to array.", aliasCommandCString);
             aliasCommandCString = nextSpace + 1;
             if (*aliasCommandCString == 0) {
                 break;
@@ -996,8 +1026,55 @@ int alias_main(int argc, char** argv) {
             nextSpace = strstrquoted(aliasCommandCString, " ");
             i += 1;
         }
+        if (*aliasCommandCString != 0) {
+            NSLog(@"Adding %s to array.", aliasCommandCString);
+            commandArray[i] = [NSString stringWithCString:aliasCommandCString encoding:NSUTF8StringEncoding];
+        }
+        free(pointerToFree);
     }
-    aliasDictionary[command] = commandArray;
+    NSString* before = @"";
+    NSString* after = @"";
+    NSString* position = @"";
+    if (([commandArray containsObject:@"!^"]) && ([commandArray containsObject:@"!*"])) {
+        fprintf(thread_stderr, "alias: can't pecify both !^ and !*, sorry.\n", argv[1]);
+        return 1;
+    } else if ([commandArray containsObject:@"!^"]) {
+        position = @"afterFirst";
+        bool foundMarker = false;
+        for (NSString* component in commandArray) {
+            if ([component isEqualToString: @"!^"]) { foundMarker = true; continue; }
+            if (!foundMarker) {
+                before = [before stringByAppendingString: component];
+                before = [before stringByAppendingString: @" "];
+            } else {
+                after = [after stringByAppendingString: component];
+                after = [after stringByAppendingString: @" "];
+            }
+        }
+    } else if ([commandArray containsObject:@"!*"]) {
+        position = @"afterLast";
+        bool foundMarker = false;
+        for (NSString* component in commandArray) {
+            if ([component isEqualToString:@"!*"]) {
+                foundMarker = true;
+                continue;
+            }
+            if (!foundMarker) {
+                before = [before stringByAppendingString: component];
+                before = [before stringByAppendingString: @" "];
+            } else {
+                after = [after stringByAppendingString: component];
+                after = [after stringByAppendingString: @" "];
+            }
+        }
+    } else {
+        for (NSString* component in commandArray) {
+            before = [before stringByAppendingString: component];
+            before = [before stringByAppendingString: @" "];
+        }
+    }
+    NSArray<NSString *> *result = @[before, after, position];
+    aliasDictionary[command] = result;
     return 0;
 }
 
@@ -1638,6 +1715,71 @@ int ios_system(const char* inputCmd) {
         }
     } else command = cmd;
     // fprintf(thread_stderr, "Command sent: %s \n", command);
+    // alias expansion *before* input, output and error redirection.
+    if (aliasDictionary != nil) {
+        char* commandForParsing = strdup(command);
+        char* firstSpace = strstrquoted(commandForParsing, " ");
+        if (firstSpace != NULL) { *firstSpace = 0; }
+        NSString* commandAsString = [NSString stringWithCString:commandForParsing encoding:NSUTF8StringEncoding];
+        NSArray<NSString*>* aliasedCommand = aliasDictionary[commandAsString];
+        if (aliasedCommand != nil) {
+            NSLog(@"%s %s %s", aliasedCommand[0].UTF8String, aliasedCommand[1].UTF8String, aliasedCommand[2].UTF8String);
+            char* newCommand = NULL;
+            if (aliasedCommand[2].length == 0) {
+                // all the alias, then all the arguments:
+                if (firstSpace == NULL) {
+                    newCommand = strdup(aliasedCommand[0].UTF8String);
+                } else {
+                    int newCommandLength = aliasedCommand[0].length + 2 + strlen(firstSpace+1);
+                    // + 2: 1 for space, 1 for NULL termination
+                    newCommand = malloc(newCommandLength * sizeof(char));
+                    sprintf(newCommand, "%s %s", aliasedCommand[0].UTF8String, firstSpace+1);
+                }
+            } else if ([aliasedCommand[2] isEqualToString: @"afterLast"]) {
+                int newCommandLength = aliasedCommand[0].length + 2 + aliasedCommand[1].length;
+                // + 2: 1 for space, 1 for NULL termination
+                if (firstSpace == NULL) { // no arguments
+                    newCommand = malloc(newCommandLength * sizeof(char));
+                    sprintf(newCommand, "%s %s", aliasedCommand[0].UTF8String, aliasedCommand[1].UTF8String);
+                } else {
+                    newCommandLength += strlen(firstSpace+1) + 1; // 1 more space
+                    newCommand = malloc(newCommandLength * sizeof(char));
+                    sprintf(newCommand, "%s %s %s", aliasedCommand[0].UTF8String, firstSpace+1, aliasedCommand[1].UTF8String);
+                }
+            } else if ([aliasedCommand[2] isEqualToString: @"afterFirst"]) {
+                int newCommandLength = aliasedCommand[0].length + 2 + aliasedCommand[1].length;
+                // + 2: 1 for space, 1 for NULL termination
+                if (firstSpace == NULL) { // no arguments
+                    newCommand = malloc(newCommandLength * sizeof(char));
+                    sprintf(newCommand, "%s %s", aliasedCommand[0].UTF8String, aliasedCommand[1].UTF8String);
+                } else {
+                    char* arguments = firstSpace + 1;
+                    char* secondSpace = strstrquoted(arguments, " ");
+                    if (secondSpace == NULL) {
+                        // only 1 argument, nothing after that:
+                        newCommandLength += strlen(arguments) + 1; // 1 more space
+                        newCommand = malloc(newCommandLength * sizeof(char));
+                        sprintf(newCommand, "%s %s %s", aliasedCommand[0].UTF8String, arguments, aliasedCommand[1].UTF8String);
+                    } else {
+                        *secondSpace = 0;
+                        char* otherArguments = secondSpace + 1;
+                        newCommandLength += strlen(arguments) + strlen(otherArguments) + 2; // 2 more spaces
+                        newCommand = malloc(newCommandLength * sizeof(char));
+                        sprintf(newCommand, "%s %s %s %s", aliasedCommand[0].UTF8String, arguments, aliasedCommand[1].UTF8String, otherArguments);
+                    }
+                }
+            }
+            if (newCommand != NULL) {
+                free(originalCommand);
+                // After alias expansion, the new command replaces the old one:
+                originalCommand = newCommand;
+                cmd = newCommand;
+                command = newCommand;
+            }
+        }
+        free(commandForParsing);
+    }
+    NSLog(@"command after alias expansion= %s\n", command);
     // Search for input, output and error redirection
     // They can be in any order, although the usual are:
     // command < input > output 2> error, command < input > output 2>&1 or command < input >& output
@@ -1852,17 +1994,6 @@ int ios_system(const char* inputCmd) {
         argv_copy[argc] = NULL;
         free(argv);
         argv = argv_copy;
-        // Alias rewriting occurs before any other:
-        // Do we have an alias for this command?
-        if (aliasDictionary != nil) {
-            NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
-            NSArray* aliasArray = aliasDictionary[commandName];
-            if (aliasArray != nil) {
-                // Yes, we do. Let's rewrite the command:
-
-                
-            }
-        }
         // We have the arguments. Parse them for environment variables, ~, etc.
         for (int i = 1; i < argc; i++) if (!dontExpand[i]) {  argv[i] = parseArgument(argv[i], argv[0]); }
         // wildcard expansion (*, ?, []...) Has to be after $ and ~ expansion, results in larger arguments

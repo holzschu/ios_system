@@ -30,6 +30,20 @@
 		<string></string>
 		<string>directory</string>
 	</array>
+	<key>alias</key>
+	<array>
+		<string>SELF</string>
+		<string>alias_main</string>
+		<string></string>
+		<string>no</string>
+	</array>
+	<key>unalias</key>
+	<array>
+		<string>SELF</string>
+		<string>unalias_main</string>
+		<string>a</string>
+		<string>no</string>
+	</array>
 	<key>chflags</key>
 	<array>
 		<string>files.framework/files</string>
