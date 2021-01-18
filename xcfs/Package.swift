@@ -11,6 +11,7 @@ _ = Package(
     ],
     
     targets: [
+        /*
         .binaryTarget(
             name: "libssh2",
             url: "https://github.com/holzschu/libssh2-for-iOS/releases/download/v1.2/libssh2.xcframework.zip",
@@ -21,8 +22,8 @@ _ = Package(
             url: "https://github.com/holzschu/libssh2-for-iOS/releases/download/v1.2/openssl.xcframework.zip",
             checksum: "b13ab2943ebe5ced0048fb917dd36dd9756ab20da9c50b1f667eebac39c689ed"
         ),
+        */
         // ssh_cmd, curl_ios
-        /*
         .binaryTarget(
             name: "libssh2",
             url: "https://github.com/yury/libssh2-apple/releases/download/v1.9.0/libssh2-dynamic.xcframework.zip",
@@ -31,9 +32,9 @@ _ = Package(
         .binaryTarget(
             name: "openssl",
             url: "https://github.com/yury/openssl-apple/releases/download/v1.1.1i/openssl-dynamic.xcframework.zip",
-            checksum: "fcb0fc351299692a1d1de6206f30a3145f27854e71dc1fea9286103237cbd3a9"
+            checksum: "d07917d2db5480add458a7373bb469b2e46e9aba27ab0ebd3ddc8654df58e60f"
         ),
-        */
+
         .target(
             name: "build",
             dependencies: ["FMake"]

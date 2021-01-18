@@ -499,6 +499,13 @@
 		D212F98C25B066E9007F5D2D /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F98A25B066E9007F5D2D /* libssh2.xcframework */; };
 		D212F99625B06810007F5D2D /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F99525B06810007F5D2D /* openssl.xcframework */; };
 		D212F99725B06810007F5D2D /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F99525B06810007F5D2D /* openssl.xcframework */; };
+		D285143225B1D7CD003405B4 /* sshkey.h in Headers */ = {isa = PBXBuildFile; fileRef = D285143125B1D7CD003405B4 /* sshkey.h */; };
+		D285144425B1DE19003405B4 /* cipher.h in Headers */ = {isa = PBXBuildFile; fileRef = D285144325B1DE19003405B4 /* cipher.h */; };
+		D285145625B1DE61003405B4 /* ssherr.h in Headers */ = {isa = PBXBuildFile; fileRef = D285145525B1DE61003405B4 /* ssherr.h */; };
+		D285147025B1E4BF003405B4 /* freezero.c in Sources */ = {isa = PBXBuildFile; fileRef = D285146F25B1E4BF003405B4 /* freezero.c */; };
+		D285147A25B1E4DC003405B4 /* openbsd-compat.h in Headers */ = {isa = PBXBuildFile; fileRef = D285147925B1E4DC003405B4 /* openbsd-compat.h */; };
+		D285149C25B200B9003405B4 /* openssl-compat.h in Headers */ = {isa = PBXBuildFile; fileRef = D285149B25B200B9003405B4 /* openssl-compat.h */; };
+		D28514A625B20351003405B4 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = D28514A525B20351003405B4 /* config.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -1026,6 +1033,13 @@
 		22F6A1B220683F4100E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../curl_ios/Info.plist; sourceTree = "<group>"; };
 		D212F98A25B066E9007F5D2D /* libssh2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssh2.xcframework; path = xcfs/.build/artifacts/xcfs/libssh2.xcframework; sourceTree = "<group>"; };
 		D212F99525B06810007F5D2D /* openssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = openssl.xcframework; path = xcfs/.build/artifacts/xcfs/openssl.xcframework; sourceTree = "<group>"; };
+		D285143125B1D7CD003405B4 /* sshkey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sshkey.h; path = ssh_keygen/sshkey.h; sourceTree = "<group>"; };
+		D285144325B1DE19003405B4 /* cipher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cipher.h; path = ssh_keygen/cipher.h; sourceTree = "<group>"; };
+		D285145525B1DE61003405B4 /* ssherr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ssherr.h; path = ssh_keygen/ssherr.h; sourceTree = "<group>"; };
+		D285146F25B1E4BF003405B4 /* freezero.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = freezero.c; path = "ssh_keygen/openbsd-compat/freezero.c"; sourceTree = "<group>"; };
+		D285147925B1E4DC003405B4 /* openbsd-compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "openbsd-compat.h"; path = "ssh_keygen/openbsd-compat/openbsd-compat.h"; sourceTree = "<group>"; };
+		D285149B25B200B9003405B4 /* openssl-compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "openssl-compat.h"; path = "ssh_keygen/openbsd-compat/openssl-compat.h"; sourceTree = "<group>"; };
+		D28514A525B20351003405B4 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ssh_keygen/config.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1240,6 +1254,9 @@
 		224AAC5821CB930100F8C22F /* openbsd-compat */ = {
 			isa = PBXGroup;
 			children = (
+				D285149B25B200B9003405B4 /* openssl-compat.h */,
+				D285147925B1E4DC003405B4 /* openbsd-compat.h */,
+				D285146F25B1E4BF003405B4 /* freezero.c */,
 				2217ECDF21CBBA700049B382 /* bcrypt_pbkdf.c */,
 				2217ECE121CBBA970049B382 /* blowfish.c */,
 				228D204C21CB9E5F00A9B528 /* bsd-misc.c */,
@@ -1899,6 +1916,10 @@
 		22878D4B2036212E00286AF1 /* ssh */ = {
 			isa = PBXGroup;
 			children = (
+				D28514A525B20351003405B4 /* config.h */,
+				D285145525B1DE61003405B4 /* ssherr.h */,
+				D285144325B1DE19003405B4 /* cipher.h */,
+				D285143125B1D7CD003405B4 /* sshkey.h */,
 				224AAC5821CB930100F8C22F /* openbsd-compat */,
 				223A5CC321CB8DB90022B5D5 /* log.c */,
 				228D205021CBA02900A9B528 /* atomicio.c */,
@@ -2269,6 +2290,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				22F6A16A20683D5200E618F9 /* ssh_cmd.h in Headers */,
+				D285149C25B200B9003405B4 /* openssl-compat.h in Headers */,
+				D285145625B1DE61003405B4 /* ssherr.h in Headers */,
+				D285143225B1D7CD003405B4 /* sshkey.h in Headers */,
+				D285144425B1DE19003405B4 /* cipher.h in Headers */,
+				D285147A25B1E4DC003405B4 /* openbsd-compat.h in Headers */,
+				D28514A625B20351003405B4 /* config.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2911,6 +2938,7 @@
 				22A3736821CB983500230846 /* uuencode.c in Sources */,
 				2261379121F0E5860097B3A0 /* port-tun.c in Sources */,
 				2217ECE821CBBBBD0049B382 /* verify.c in Sources */,
+				D285147025B1E4BF003405B4 /* freezero.c in Sources */,
 				226137A021F0E7870097B3A0 /* blocks.c in Sources */,
 				2217ECD821CBA7520049B382 /* sshbuf-misc.c in Sources */,
 				228D203F21CB9C9000A9B528 /* ssh-pkcs11.c in Sources */,

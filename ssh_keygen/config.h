@@ -416,6 +416,18 @@
 /* Define if libcrypto has EVP_CIPHER_CTX_ctrl */
 #define HAVE_EVP_CIPHER_CTX_CTRL 1
 
+/* Define to 1 if you have the `EVP_CIPHER_CTX_get_iv' function. */
+/* #undef HAVE_EVP_CIPHER_CTX_GET_IV */
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_iv' function. */
+#define HAVE_EVP_CIPHER_CTX_IV 1
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_iv_noconst' function. */
+#define HAVE_EVP_CIPHER_CTX_IV_NOCONST 1
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_set_iv' function. */
+/* #undef HAVE_EVP_CIPHER_CTX_SET_IV */
+
 /* Define to 1 if you have the `EVP_DigestFinal_ex' function. */
 #define HAVE_EVP_DIGESTFINAL_EX 1
 
@@ -1681,6 +1693,15 @@
 
 /* Enable OpenSSL engine support */
 /* #undef USE_OPENSSL_ENGINE */
+
+/* Define to 1 if you have the `OPENSSL_init_crypto' function. */
+#define HAVE_OPENSSL_INIT_CRYPTO 1
+
+/* Define to 1 if you have the `OpenSSL_version' function. */
+#define HAVE_OPENSSL_VERSION 1
+
+/* Define to 1 if you have the `OpenSSL_version_num' function. */
+#define HAVE_OPENSSL_VERSION_NUM 1
 
 /* Define if you want to enable PAM support */
 #define USE_PAM 1
