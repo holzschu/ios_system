@@ -9,15 +9,6 @@ OutputLevel.default = .error
 // TODO: We can add more platforms here
 let platforms: [Platform] = [.iPhoneOS, .iPhoneSimulator]
 
-extension Platform {
-  var excludedArchs: [Platform.Arch] {
-      switch self {
-          case .iPhoneSimulator: return [.arm64] // TODO: add arm64 simulator
-          default: return []
-      }
-  }
-}
-
 let allSchemes = [
     "ios_system",
 
@@ -47,8 +38,7 @@ for scheme in schemes {
         dirPath: ".build",
         project: "ios_system",
         scheme: scheme,
-        platforms: platforms.map { ($0, excludedArchs: $0.excludedArchs) },
-        enableBitCode: false
+        platforms: platforms.map { ($0, excludedArchs: []) }
     )
 
     try cd(".build") {
