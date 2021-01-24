@@ -77,6 +77,14 @@ enum sshkey_fp_rep {
 	SSH_FP_RANDOMART
 };
 
+/* Private key serialisation formats, used on the wire */
+enum sshkey_serialize_rep {
+  SSHKEY_SERIALIZE_DEFAULT = 0,
+  SSHKEY_SERIALIZE_STATE = 1,
+  SSHKEY_SERIALIZE_FULL = 2,
+  SSHKEY_SERIALIZE_INFO = 254,
+};
+
 /* key is stored in external hardware */
 #define SSHKEY_FLAG_EXT		0x0001
 
@@ -112,10 +120,8 @@ struct sshkey {
 #define	ED25519_PK_SZ	crypto_sign_ed25519_PUBLICKEYBYTES
 
 struct sshkey	*sshkey_new(int);
-int		 sshkey_add_private(struct sshkey *);
 struct sshkey	*sshkey_new_private(int);
 void		 sshkey_free(struct sshkey *);
-int		 sshkey_demote(const struct sshkey *, struct sshkey **);
 int		 sshkey_equal_public(const struct sshkey *,
     const struct sshkey *);
 int		 sshkey_equal(const struct sshkey *, const struct sshkey *);
@@ -191,6 +197,7 @@ int	sshkey_parse_private_fileblob(struct sshbuf *buffer,
     const char *passphrase, struct sshkey **keyp, char **commentp);
 int	sshkey_parse_private_fileblob_type(struct sshbuf *blob, int type,
     const char *passphrase, struct sshkey **keyp, char **commentp);
+int ssh_rsa_complete_crt_parameters(struct sshkey *, const BIGNUM *);
 
 #ifdef SSHKEY_INTERNAL
 int ssh_rsa_sign(const struct sshkey *key,

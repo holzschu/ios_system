@@ -7,11 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2209215924B3AD9300D3327B /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215524B3AD7700D3327B /* libssh2.xcframework */; };
-		2209215A24B3AD9300D3327B /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215724B3AD8600D3327B /* openssl.xcframework */; };
 		2209215C24B3B05A00D3327B /* open.m in Sources */ = {isa = PBXBuildFile; fileRef = 221CD98D21E8B03D00F3B47C /* open.m */; };
-		2209215E24B3B5BA00D3327B /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215524B3AD7700D3327B /* libssh2.xcframework */; };
-		2209216124B3B5BC00D3327B /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2209215724B3AD8600D3327B /* openssl.xcframework */; };
 		22122E2C21BC130700D8FE74 /* say.m in Sources */ = {isa = PBXBuildFile; fileRef = 22122E2A21BC129000D8FE74 /* say.m */; };
 		2217ECD421CBA5F40049B382 /* entropy.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD321CBA5F40049B382 /* entropy.c */; };
 		2217ECD621CBA6240049B382 /* openssl-compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 2217ECD521CBA6240049B382 /* openssl-compat.c */; };
@@ -499,11 +495,20 @@
 		22F6A25C20683F8500E618F9 /* tool_writeout.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781161FDB4D380050F312 /* tool_writeout.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
 		22F6A25D20683F8600E618F9 /* tool_xattr.c in Sources */ = {isa = PBXBuildFile; fileRef = 225781181FDB4D380050F312 /* tool_xattr.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
 		22F6A25E20683F9B00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
+		D212F98B25B066E9007F5D2D /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F98A25B066E9007F5D2D /* libssh2.xcframework */; };
+		D212F98C25B066E9007F5D2D /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F98A25B066E9007F5D2D /* libssh2.xcframework */; };
+		D212F99625B06810007F5D2D /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F99525B06810007F5D2D /* openssl.xcframework */; };
+		D212F99725B06810007F5D2D /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D212F99525B06810007F5D2D /* openssl.xcframework */; };
+		D285143225B1D7CD003405B4 /* sshkey.h in Headers */ = {isa = PBXBuildFile; fileRef = D285143125B1D7CD003405B4 /* sshkey.h */; };
+		D285144425B1DE19003405B4 /* cipher.h in Headers */ = {isa = PBXBuildFile; fileRef = D285144325B1DE19003405B4 /* cipher.h */; };
+		D285145625B1DE61003405B4 /* ssherr.h in Headers */ = {isa = PBXBuildFile; fileRef = D285145525B1DE61003405B4 /* ssherr.h */; };
+		D285147025B1E4BF003405B4 /* freezero.c in Sources */ = {isa = PBXBuildFile; fileRef = D285146F25B1E4BF003405B4 /* freezero.c */; };
+		D285147A25B1E4DC003405B4 /* openbsd-compat.h in Headers */ = {isa = PBXBuildFile; fileRef = D285147925B1E4DC003405B4 /* openbsd-compat.h */; };
+		D285149C25B200B9003405B4 /* openssl-compat.h in Headers */ = {isa = PBXBuildFile; fileRef = D285149B25B200B9003405B4 /* openssl-compat.h */; };
+		D28514A625B20351003405B4 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = D28514A525B20351003405B4 /* config.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2209215524B3AD7700D3327B /* libssh2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssh2.xcframework; path = "/Users/holzschu/Library/Developer/Xcode/DerivedData/ios_system-casnnthccszagwbhuwonmdqyriod/SourcePackages/artifacts/openssl/libssh2.xcframework"; sourceTree = "<absolute>"; };
-		2209215724B3AD8600D3327B /* openssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = openssl.xcframework; path = "/Users/holzschu/Library/Developer/Xcode/DerivedData/ios_system-casnnthccszagwbhuwonmdqyriod/SourcePackages/artifacts/openssl/openssl.xcframework"; sourceTree = "<absolute>"; };
 		22122E2A21BC129000D8FE74 /* say.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = say.m; sourceTree = "<group>"; };
 		2217ECD321CBA5F40049B382 /* entropy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = entropy.c; path = ssh_keygen/entropy.c; sourceTree = "<group>"; };
 		2217ECD521CBA6240049B382 /* openssl-compat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "openssl-compat.c"; path = "ssh_keygen/openbsd-compat/openssl-compat.c"; sourceTree = "<group>"; };
@@ -1026,6 +1031,15 @@
 		22F6A16920683D5200E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		22F6A1AF20683F4100E618F9 /* curl_ios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = curl_ios.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		22F6A1B220683F4100E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../curl_ios/Info.plist; sourceTree = "<group>"; };
+		D212F98A25B066E9007F5D2D /* libssh2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssh2.xcframework; path = xcfs/.build/artifacts/xcfs/libssh2.xcframework; sourceTree = "<group>"; };
+		D212F99525B06810007F5D2D /* openssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = openssl.xcframework; path = xcfs/.build/artifacts/xcfs/openssl.xcframework; sourceTree = "<group>"; };
+		D285143125B1D7CD003405B4 /* sshkey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sshkey.h; path = ssh_keygen/sshkey.h; sourceTree = "<group>"; };
+		D285144325B1DE19003405B4 /* cipher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cipher.h; path = ssh_keygen/cipher.h; sourceTree = "<group>"; };
+		D285145525B1DE61003405B4 /* ssherr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ssherr.h; path = ssh_keygen/ssherr.h; sourceTree = "<group>"; };
+		D285146F25B1E4BF003405B4 /* freezero.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = freezero.c; path = "ssh_keygen/openbsd-compat/freezero.c"; sourceTree = "<group>"; };
+		D285147925B1E4DC003405B4 /* openbsd-compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "openbsd-compat.h"; path = "ssh_keygen/openbsd-compat/openbsd-compat.h"; sourceTree = "<group>"; };
+		D285149B25B200B9003405B4 /* openssl-compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "openssl-compat.h"; path = "ssh_keygen/openbsd-compat/openssl-compat.h"; sourceTree = "<group>"; };
+		D28514A525B20351003405B4 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ssh_keygen/config.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1087,8 +1101,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				22F6A1A920683E5700E618F9 /* libz.tbd in Frameworks */,
-				2209215E24B3B5BA00D3327B /* libssh2.xcframework in Frameworks */,
-				2209216124B3B5BC00D3327B /* openssl.xcframework in Frameworks */,
+				D212F98B25B066E9007F5D2D /* libssh2.xcframework in Frameworks */,
+				D212F99625B06810007F5D2D /* openssl.xcframework in Frameworks */,
 				22F6A1A820683E5000E618F9 /* libresolv.9.tbd in Frameworks */,
 				22F6A16E20683D6F00E618F9 /* ios_system.framework in Frameworks */,
 			);
@@ -1098,9 +1112,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D212F98C25B066E9007F5D2D /* libssh2.xcframework in Frameworks */,
 				22F6A25E20683F9B00E618F9 /* ios_system.framework in Frameworks */,
-				2209215924B3AD9300D3327B /* libssh2.xcframework in Frameworks */,
-				2209215A24B3AD9300D3327B /* openssl.xcframework in Frameworks */,
+				D212F99725B06810007F5D2D /* openssl.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1183,11 +1197,11 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D212F99525B06810007F5D2D /* openssl.xcframework */,
+				D212F98A25B066E9007F5D2D /* libssh2.xcframework */,
 				227F87D6202EFA68001751C6 /* libncurses.tbd */,
 				2253BA1D201942B10019CB39 /* libresolv.9.tbd */,
-				2209215724B3AD8600D3327B /* openssl.xcframework */,
 				22F568222020C42F009850FD /* libxml2.tbd */,
-				2209215524B3AD7700D3327B /* libssh2.xcframework */,
 				22F567DD2020BAD9009850FD /* libz.tbd */,
 				22CF27AC1FDB42AF0087DDAD /* libbz2.tbd */,
 			);
@@ -1240,6 +1254,9 @@
 		224AAC5821CB930100F8C22F /* openbsd-compat */ = {
 			isa = PBXGroup;
 			children = (
+				D285149B25B200B9003405B4 /* openssl-compat.h */,
+				D285147925B1E4DC003405B4 /* openbsd-compat.h */,
+				D285146F25B1E4BF003405B4 /* freezero.c */,
 				2217ECDF21CBBA700049B382 /* bcrypt_pbkdf.c */,
 				2217ECE121CBBA970049B382 /* blowfish.c */,
 				228D204C21CB9E5F00A9B528 /* bsd-misc.c */,
@@ -1899,6 +1916,10 @@
 		22878D4B2036212E00286AF1 /* ssh */ = {
 			isa = PBXGroup;
 			children = (
+				D28514A525B20351003405B4 /* config.h */,
+				D285145525B1DE61003405B4 /* ssherr.h */,
+				D285144325B1DE19003405B4 /* cipher.h */,
+				D285143125B1D7CD003405B4 /* sshkey.h */,
 				224AAC5821CB930100F8C22F /* openbsd-compat */,
 				223A5CC321CB8DB90022B5D5 /* log.c */,
 				228D205021CBA02900A9B528 /* atomicio.c */,
@@ -2269,6 +2290,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				22F6A16A20683D5200E618F9 /* ssh_cmd.h in Headers */,
+				D285149C25B200B9003405B4 /* openssl-compat.h in Headers */,
+				D285145625B1DE61003405B4 /* ssherr.h in Headers */,
+				D285143225B1D7CD003405B4 /* sshkey.h in Headers */,
+				D285144425B1DE19003405B4 /* cipher.h in Headers */,
+				D285147A25B1E4DC003405B4 /* openbsd-compat.h in Headers */,
+				D28514A625B20351003405B4 /* config.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2487,7 +2514,6 @@
 			);
 			mainGroup = 223496A11FD5FC71007ED1A9;
 			packageReferences = (
-				2209214E24B3AC7600D3327B /* XCRemoteSwiftPackageReference "libssh2-for-iOS" */,
 			);
 			productRefGroup = 223496AC1FD5FC71007ED1A9 /* Products */;
 			projectDirPath = "";
@@ -2912,6 +2938,7 @@
 				22A3736821CB983500230846 /* uuencode.c in Sources */,
 				2261379121F0E5860097B3A0 /* port-tun.c in Sources */,
 				2217ECE821CBBBBD0049B382 /* verify.c in Sources */,
+				D285147025B1E4BF003405B4 /* freezero.c in Sources */,
 				226137A021F0E7870097B3A0 /* blocks.c in Sources */,
 				2217ECD821CBA7520049B382 /* sshbuf-misc.c in Sources */,
 				228D203F21CB9C9000A9B528 /* ssh-pkcs11.c in Sources */,
@@ -3262,7 +3289,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Acube.ios-system";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -3306,7 +3335,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Acube.ios-system";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -3702,6 +3733,7 @@
 		22F6A1B520683F4100E618F9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
@@ -3751,6 +3783,7 @@
 		22F6A1B620683F4100E618F9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
@@ -3881,17 +3914,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		2209214E24B3AC7600D3327B /* XCRemoteSwiftPackageReference "libssh2-for-iOS" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/holzschu/libssh2-for-iOS";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 223496A21FD5FC71007ED1A9 /* Project object */;
 }
