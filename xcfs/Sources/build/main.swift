@@ -11,9 +11,7 @@ let platforms: [Platform] = [.iPhoneOS, .iPhoneSimulator]
 
 let allSchemes = [
     "ios_system",
-
     "awk",
-    "tar",
     "curl_ios", 
     "files",
     "shell",
