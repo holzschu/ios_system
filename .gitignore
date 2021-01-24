@@ -60,3 +60,5 @@ dkms.conf
 
 # Xcode
 xcuserdata/
+.build
+.DS_Store
