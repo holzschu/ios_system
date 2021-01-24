@@ -69,5 +69,6 @@ let package = Package(
     | ssh_cmd.xcframework.zip | 1edef1e1ee49ee8585eb732ab9904243f5a5e1effdd7d147540d6a53fc9ea93e |
     | tar.xcframework.zip | e99ca965f981ecd3e149791419e552f03ac4711a9e45dbec56d23a06f983f87c |
     | text.xcframework.zip | b3182206ebceadf71a8e288112afd4d852b5360426bb469e79b3bac0e143fd44 |
+
 */
 
