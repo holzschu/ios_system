@@ -452,6 +452,13 @@ static char* parseArgument(char* argument, char* command) {
     // expand all environment variables, convert "~" to $HOME (only if localFile)
     // we also pass the shell command for some specific behaviour (don't do this for that command)
     NSString* argumentString = [NSString stringWithCString:argument encoding:NSUTF8StringEncoding];
+    // If command == "export", first extract the value string here.
+    NSString* variableName;
+    if (strcmp(command, "export") == 0) {
+        NSArray<NSString*>* components = [argumentString componentsSeparatedByString:@"="];
+        variableName = components[0];
+        argumentString = [argumentString substringFromIndex:(variableName.length + 1)];
+    }
     // 1) expand environment variables, + "~" (not wildcards ? and *)
     bool cannotExpand = false;
     while ([argumentString containsString:@"$"] && !cannotExpand) {
@@ -477,7 +484,8 @@ static char* parseArgument(char* argument, char* command) {
     }
     // 2) Tilde conversion: replace "~" with $HOME
     // If there are multiple users on iOS, this code will need to be changed.
-    // (old behaviour, kept as is for compatibility)
+    // We also expand ~bookmarkName to the path for that bookmark.
+    // 2a) ~ expansion. (old behaviour, kept as is for compatibility)
     if([argumentString hasPrefix:@"~"]) {
         // So it begins with "~". We can't use stringByExpandingTildeInPath because apps redefine HOME
         NSString* replacement_string;
@@ -488,7 +496,7 @@ static char* parseArgument(char* argument, char* command) {
             NSString* test_string = @"~";
             argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange(0, 1)];
         } else {
-            // 2a) expand "~something" with the content of userPreference dictionary (to be set by each app)
+            // 2b) expand "~something" with the content of userPreference dictionary (to be set by each app)
             NSDictionary *tildeExpansionDictionary = [[NSUserDefaults standardUserDefaults] dictionaryForKey:ios_bookmarkDictionaryName];
             if (tildeExpansionDictionary != nil) {
                 NSCharacterSet* separators = [NSCharacterSet characterSetWithCharactersInString:@":/"];
@@ -503,8 +511,8 @@ static char* parseArgument(char* argument, char* command) {
     }
     // Also convert ":~something" in PATH style variables
     // We don't use these yet, but we could.
-    // We do this expansion only for setenv
-    if (strcmp(command, "setenv") == 0) {
+    // We do this expansion only for setenv and export
+    if ((strcmp(command, "setenv") == 0) || (strcmp(command, "export") == 0)) {
         // This is something we need to avoid if the command is "scp" or "sftp"
         if ([argumentString containsString:@":~"]) {
             NSString* homeDir;
@@ -525,7 +533,30 @@ static char* parseArgument(char* argument, char* command) {
                     argumentString = [argumentString stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange([argumentString length] - 2, 2)];
                 }
             }
+            NSDictionary *tildeExpansionDictionary = [[NSUserDefaults standardUserDefaults] dictionaryForKey:ios_bookmarkDictionaryName];
+            if (tildeExpansionDictionary != nil) {
+                // TODO: add :~bookmarkName/ :~bookmarkName
+                NSArray<NSString*>* components = [argumentString componentsSeparatedByString:@":~"];
+                NSString* result = components[0];
+                for (int i = 1; i < components.count; i++) {
+                    NSString* stringToAdd = components[i];
+                    NSArray<NSString*>* names = [components[i] componentsSeparatedByString:@"/"];
+                    NSString* test_string = names[0];
+                    NSString* replacement_string = tildeExpansionDictionary[names[0]];
+                    if (replacement_string != nil) {
+                        // we found a name to expand
+                        stringToAdd = [stringToAdd stringByReplacingOccurrencesOfString:test_string withString:replacement_string];
+                        result = [[result stringByAppendingString:@":"] stringByAppendingString:stringToAdd];
+                    } else {
+                        result = [[result stringByAppendingString:@":~"] stringByAppendingString:stringToAdd];
+                    }
+                }
+                argumentString = result;
+            }
         }
+    }
+    if (strcmp(command, "export") == 0) {
+        argumentString = [[variableName stringByAppendingString:@"="] stringByAppendingString:argumentString];
     }
     const char* newArgument = [argumentString UTF8String];
     if (strcmp(argument, newArgument) == 0) return argument; // nothing changed
@@ -1073,9 +1104,32 @@ int alias_main(int argc, char** argv) {
             before = [before stringByAppendingString: @" "];
         }
     }
+    before = [before stringByTrimmingCharactersInSet: [NSCharacterSet whitespaceCharacterSet]];
+    after = [after stringByTrimmingCharactersInSet: [NSCharacterSet whitespaceCharacterSet]];
     NSArray<NSString *> *result = @[before, after, position];
     aliasDictionary[command] = result;
     return 0;
+}
+
+NSString* aliasedCommand(NSString* command) {
+    if ([command hasPrefix:@"\\"]) {
+        // \command = cancel aliasing
+        return [command substringFromIndex:1];
+    }
+    if (aliasDictionary == nil) {
+        return command;
+    }
+    NSArray<NSString*>* aliasArray = aliasDictionary[command];
+    if (aliasArray == nil) {
+        return command;
+    }
+    NSString* result = aliasArray[0];
+    if ([aliasArray[2] isEqualToString: @"afterFirst"]) {
+        result = [[result stringByAppendingString:@" !^ "] stringByAppendingString: aliasArray[1]];
+    } else if ([aliasArray[2] isEqualToString: @"afterLast"]) {
+        result = [[result stringByAppendingString:@" !* "] stringByAppendingString: aliasArray[1]];
+    }
+    return result;
 }
 
 int unalias_main(int argc, char** argv) {
@@ -1716,7 +1770,8 @@ int ios_system(const char* inputCmd) {
     } else command = cmd;
     // fprintf(thread_stderr, "Command sent: %s \n", command);
     // alias expansion *before* input, output and error redirection.
-    if (aliasDictionary != nil) {
+    if ((command[0] != '\\') && (aliasDictionary != nil)) {
+        // \command = cancel aliasing, get the original command
         char* commandForParsing = strdup(command);
         char* firstSpace = strstrquoted(commandForParsing, " ");
         if (firstSpace != NULL) { *firstSpace = 0; }

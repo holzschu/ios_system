@@ -49,6 +49,7 @@ void ios_setWindowSize(int width, int height, const void* sessionId);
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays
+extern NSString* aliasedCommand(NSString* command); // if the command is aliased, return the command it points to
 extern NSString* getoptString(NSString* command);
 extern NSString* operatesOn(NSString* command);
 extern void initializeEnvironment(void);
