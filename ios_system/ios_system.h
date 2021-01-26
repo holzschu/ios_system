@@ -49,12 +49,14 @@ void ios_setWindowSize(int width, int height, const void* sessionId);
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArrays
+extern NSString* aliasedCommand(NSString* command); // if the command is aliased, return the command it points to
 extern NSString* getoptString(NSString* command);
 extern NSString* operatesOn(NSString* command);
 extern void initializeEnvironment(void);
 extern int ios_setMiniRoot(NSString*);  // restricts operations to a certain hierarchy
 extern int ios_setMiniRootURL(NSURL*);  // restricts operations to a certain hierarchy
 extern int ios_setAllowedPaths(NSArray<NSString *> *paths);  // restricts operations to a certain hierarchy
+extern void ios_setBookmarkDictionaryName(NSString*);  // name of the dictionary in user preferences, holding the bookmarks.
 extern void ios_switchSession(const void* sessionid);
 extern void ios_closeSession(const void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);

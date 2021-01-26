@@ -181,12 +181,22 @@ inline void ios_storeThreadId(pthread_t thread) {
 char* libc_getenv(const char* variableName) {
     if (numVariablesSet[current_pid] > 0) {
         char** envp = environment[current_pid];
+        int varNameLen = strlen(variableName);
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
-            char* position = strstr(envp[i],"=");
+            if (strncmp(variableName, envp[i], varNameLen) == 0) {
+                if (strlen(envp[i]) > varNameLen) {
+                    if (envp[i][varNameLen] == '=') {
+                        return envp[i] + varNameLen + 1;
+                    }
+                }
+            }
+            /*
+            char* position = strchr(envp[i],'=');
             if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
                 char* value = position + 1;
                 return value;
             }
+             */
         }
         return NULL;
     } else {
@@ -194,30 +204,35 @@ char* libc_getenv(const char* variableName) {
     }
 }
 
+extern void set_session_errno(int n);
 int ios_setenv(const char* variableName, const char* value, int overwrite) {
     if (numVariablesSet[current_pid] > 0) {
         if (variableName == NULL) {
-            errno = EINVAL;
+            set_session_errno(EINVAL);
             return -1;
         }
         if (strlen(variableName) == 0) {
-            errno = EINVAL;
+            set_session_errno(EINVAL);
             return -1;
         }
-        char* position = strstr(variableName,"=");
+        char* position = strchr(variableName,'=');
         if (position != NULL) {
-            errno = EINVAL;
+            set_session_errno(EINVAL);
             return -1;
         }
         char** envp = environment[current_pid];
+        int varNameLen = strlen(variableName);
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
-            char* position = strstr(envp[i],"=");
-            if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
-                // This variable is defined in the current environment:
-                if (overwrite == 0) { return 0; }
-                envp[i] = realloc(envp[i], strlen(variableName) + strlen(value) + 2);
-                sprintf(envp[i], "%s=%s", variableName, value);
-                return 0;
+            if (strncmp(variableName, envp[i], varNameLen) == 0) {
+                if (strlen(envp[i]) > varNameLen) {
+                    if (envp[i][varNameLen] == '=') {
+                        // This variable is defined in the current environment:
+                        if (overwrite == 0) { return 0; }
+                        envp[i] = realloc(envp[i], strlen(variableName) + strlen(value) + 2);
+                        sprintf(envp[i], "%s=%s", variableName, value);
+                        return 0;
+                    }
+                }
             }
         }
         // Not found so far, add it to the list:
@@ -236,36 +251,46 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
 int ios_unsetenv(const char* variableName) {
     if (numVariablesSet[current_pid] > 0) {
         if (variableName == NULL) {
-            errno = EINVAL;
+            set_session_errno(EINVAL);
             return -1;
         }
         if (strlen(variableName) == 0) {
-            errno = EINVAL;
+            set_session_errno(EINVAL);
             return -1;
         }
-        char* position = strstr(variableName,"=");
+        char* position = strchr(variableName,'=');
         if (position != NULL) {
-            errno = EINVAL;
+            set_session_errno(EINVAL);
             return -1;
         }
         char** envp = environment[current_pid];
+        int varNameLen = strlen(variableName);
+        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+            if (strncmp(variableName, envp[i], varNameLen) == 0) {
+                if (strlen(envp[i]) > varNameLen) {
+                    if (envp[i][varNameLen] == '=') {
+                        // This variable is defined in the current environment:
+                        free(envp[i]);
+                        envp[i] = NULL;
+                        if (i < numVariablesSet[current_pid] - 1) {
+                            for (int j = i; j < numVariablesSet[current_pid] - 2; j++) {
+                                envp[j] = envp[j+1];
+                            }
+                            envp[numVariablesSet[current_pid] - 1] = NULL;
+                        }
+                        numVariablesSet[current_pid] -= 1;
+                        envp = realloc(envp, (numVariablesSet[current_pid] + 1) * sizeof(char*));
+                        return 0;
+                    }
+                }
+            }
+        }
+        /*
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
             char* position = strstr(envp[i],"=");
             if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
-                // This variable is defined in the current environment:
-                free(envp[i]);
-                envp[i] = NULL;
-                if (i < numVariablesSet[current_pid] - 1) {
-                    for (int j = i; j < numVariablesSet[current_pid] - 2; j++) {
-                        envp[j] = envp[j+1];
-                    }
-                    envp[numVariablesSet[current_pid] - 1] = NULL;
-                }
-                numVariablesSet[current_pid] -= 1;
-                envp = realloc(envp, (numVariablesSet[current_pid] + 1) * sizeof(char*));
-                return 0;
             }
-        }
+        } */
         // Not found:
         return 0;
     } else {

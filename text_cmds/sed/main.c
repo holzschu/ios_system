@@ -222,7 +222,7 @@ usage(void)
 char *
 cu_fgets(char *buf, int n, int *more)
 {
-	static enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
+	static __thread enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
 	static FILE *f;		/* Current open file */
 	static char *s;		/* Current pointer inside string */
 	static char string_ident[30];
@@ -350,7 +350,10 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			return (0);
 		}
 		if (infile != NULL) {
-			if (infile != thread_stdin) fclose(infile);
+            if (infile != thread_stdin) {
+                    fclose(infile);
+                    infile = NULL;
+            }
 			if (*oldfname != '\0') {
 				if (rename(fname, oldfname) != 0) {
                     warn("rename()");

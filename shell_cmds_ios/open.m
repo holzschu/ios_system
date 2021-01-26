@@ -120,7 +120,8 @@ int open_main(int argc, char *argv[]) {
     return -1;
   }
   
-  NSURL *fileURL = [NSURL fileURLWithPath:[@(argv[1]) stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet] relativeToURL:[NSURL fileURLWithPath:NSFileManager.defaultManager.currentDirectoryPath]];
+    NSURL *fileURL = [NSURL fileURLWithPath:@(argv[1]) relativeToURL:[NSURL fileURLWithPath:NSFileManager.defaultManager.currentDirectoryPath]];
+  // NSURL *fileURL = [NSURL fileURLWithPath:[@(argv[1]) stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet] relativeToURL:[NSURL fileURLWithPath:NSFileManager.defaultManager.currentDirectoryPath]];
   
   if (fileURL && [NSFileManager.defaultManager fileExistsAtPath:fileURL.path]) {
     dispatch_async(dispatch_get_main_queue(), ^{
