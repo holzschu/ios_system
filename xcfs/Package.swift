@@ -2,27 +2,13 @@
 import PackageDescription
 
 _ = Package(
-    name: "deps",
+    name: "xcfs",
     platforms: [.macOS("11")],
     dependencies: [
-        // .package(path: "../../libssh2-spm"),
-        // .package(path: "../../openssl-spm"),
-        .package(url: "https://github.com/yury/FMake", from: "0.0.8")
+        .package(url: "https://github.com/yury/FMake", from: "0.0.14")
     ],
     
     targets: [
-        /*
-        .binaryTarget(
-            name: "libssh2",
-            url: "https://github.com/holzschu/libssh2-for-iOS/releases/download/v1.2/libssh2.xcframework.zip",
-            checksum: "47015c95d80a6e6b222698682ea09db1d97f9e7c4936481b4a53fae68fdc33f5"
-        ),
-        .binaryTarget(
-            name: "openssl",
-            url: "https://github.com/holzschu/libssh2-for-iOS/releases/download/v1.2/openssl.xcframework.zip",
-            checksum: "b13ab2943ebe5ced0048fb917dd36dd9756ab20da9c50b1f667eebac39c689ed"
-        ),
-        */
         // ssh_cmd, curl_ios
         .binaryTarget(
             name: "libssh2",

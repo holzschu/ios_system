@@ -1,8 +1,8 @@
 // use it from root folder:
 // `swift run --package-path xcfs build [all, awk, tar, ios_system, ...]`
 
-import Foundation
-import FMake 
+import FMake
+import class Foundation.ProcessInfo
 
 OutputLevel.default = .error
 
@@ -18,7 +18,6 @@ let allSchemes = [
     "files",
     "shell",
     "ssh_cmd",
-    "tar",
     "text",
     ]
 
@@ -31,7 +30,7 @@ if args.count > 1 && args[1] != "all" {
     schemes = allSchemes 
 }
 
-var checksums: [(file: String, value: String)] = []
+var checksums: [[String?]] = []
 
 for scheme in schemes {
     try xcxcf(
@@ -45,7 +44,7 @@ for scheme in schemes {
         let zip = "\(scheme).xcframework.zip"
         try sh("zip -r \(zip) \(scheme).xcframework")
         let chksum = try sha(path: zip)
-        checksums.append((file: zip, value: chksum))
+        checksums.append([zip, chksum])
     }
 }
 
@@ -53,13 +52,8 @@ var releaseNotes =
 """
 Release notes:
 
-    | File                            | SHA 256                                             |
-    | ------------------------------- |:---------------------------------------------------:|
-\(checksums.map {
-    "    | \($0.file) | \($0.value) |"
-}.joined(separator: "\n"))
+\( checksums.markdown(headers: "File", "SHA 256") )
 
 """
 
 try write(content: releaseNotes, atPath: ".build/release.md")
-

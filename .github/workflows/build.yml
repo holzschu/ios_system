@@ -101,16 +101,6 @@ jobs:
         asset_path: .build/ssh_cmd.xcframework.zip
         asset_name: ssh_cmd.xcframework.zip
         asset_content_type: application/zip
-    - name: Upload tar.xcframework
-      id: upload-tar
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/tar.xcframework.zip
-        asset_name: tar.xcframework.zip
-        asset_content_type: application/zip
     - name: Upload text.xcframework
       id: upload-text
       uses: actions/upload-release-asset@v1
