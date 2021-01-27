@@ -92,7 +92,7 @@ jobs:
         asset_name: shell.xcframework.zip
         asset_content_type: application/zip
     - name: Upload ssh_cmd.xcframework
-      id: upload-shell
+      id: upload-ssh
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
