@@ -3,10 +3,10 @@
 
 <p align="center">
 <img src="https://img.shields.io/badge/Platform-iOS%2014.0+-lightgrey.svg" alt="Platform: iOS">
-<a href="https://travis-ci.org/holzschu/ios_system"><img src="https://travis-ci.org/holzschu/ios_system.svg?branch=master" alt="Build Status"/></a>
 <br>
 <a href="http://twitter.com/nholzschuch"><img src="https://img.shields.io/badge/Twitter-@nholzschuch-blue.svg?style=flat" alt="Twitter"/></a>
 </p>
+![CI](https://github.com/holzschu/ios_system/workflows/CI/badge.svg)
 
 
 When porting Unix utilities to iOS (vim, TeX, python...), sometimes the source code executes system commands, using `system()` calls. These calls are rejected at compile time, with: 
