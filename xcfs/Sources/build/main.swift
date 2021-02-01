@@ -7,7 +7,7 @@ import class Foundation.ProcessInfo
 OutputLevel.default = .error
 
 // TODO: We can add more platforms here
-let platforms: [Platform] = [.iPhoneOS, .iPhoneSimulator]
+let platforms: [Platform] = [.iPhoneOS, .iPhoneSimulator, .Catalyst]
 
 let allSchemes = [
     "ios_system",

@@ -2200,7 +2200,7 @@ bell()
  * Clear the screen.
  */
 	public void
-clear()
+clear_()
 {
 #if !MSDOS_COMPILER
     putstr(sc_clear);
