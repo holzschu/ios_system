@@ -528,6 +528,7 @@ struct wchar_range_table
 #define	time_type	long
 #endif
 
+
 #include "funcs.h"
 
 /* Functions not included in funcs.h */

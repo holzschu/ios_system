@@ -173,7 +173,7 @@ forw(n, pos, force, only_last, nblank)
 			add_forw_pos(pos);
 			force = 1;
 			if (!unix2003_compat) {
-				clear();
+				clear_();
 				home();
 			}
 		}
@@ -190,7 +190,7 @@ forw(n, pos, force, only_last, nblank)
 			force = 1;
 			if (top_scroll)
 			{
-				clear();
+				clear_();
 				home();
 			} else if (!first_time)
 			{

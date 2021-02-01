@@ -87,10 +87,10 @@ stop(type)
  */
 	/* ARGSUSED*/
 	public RETSIGTYPE
-winch(type)
+winch_(type)
 	int type;
 {
-	LSIGNAL(SIGWINCH, winch);
+	LSIGNAL(SIGWINCH, winch_);
 	sigs |= S_WINCH;
 	if (reading)
 		intread();
@@ -102,7 +102,7 @@ winch(type)
  */
 	/* ARGSUSED*/
 	public RETSIGTYPE
-winch(type)
+winch_(type)
 	int type;
 {
 	LSIGNAL(SIGWIND, winch);
@@ -156,7 +156,7 @@ init_signals(on)
 		(void) LSIGNAL(SIGTSTP, stop);
 #endif
 #ifdef SIGWINCH
-		(void) LSIGNAL(SIGWINCH, winch);
+		(void) LSIGNAL(SIGWINCH, winch_);
 #endif
 #ifdef SIGWIND
 		(void) LSIGNAL(SIGWIND, winch);
