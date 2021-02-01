@@ -324,7 +324,7 @@ jump_loc(pos, sline)
 		}
 		lastmark();
 		if (!top_scroll)
-			clear();
+			clear_();
 		else
 			home();
 		screen_trashed = 0;

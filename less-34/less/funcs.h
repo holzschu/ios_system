@@ -19,7 +19,7 @@
 	public void goto_line (int slinenum);
 	public void vbell (void);
 	public void bell (void);
-	public void clear (void);
+	public void clear_ (void);
 	public void clear_eol (void);
 	public void clear_bot (void);
 	public void at_enter (int attr);
@@ -282,7 +282,7 @@
 	public void prep_hilite (POSITION spos, POSITION epos, int maxlines);
 	public void set_filter_pattern (char *pattern, int search_type);
 	public int is_filtering (void);
-	public RETSIGTYPE winch (int type);
+	public RETSIGTYPE winch_ (int type);
 	public void init_signals (int on);
 	public void psignals (void);
 	public void cleantags (void);
