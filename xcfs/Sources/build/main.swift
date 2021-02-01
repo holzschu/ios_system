@@ -56,3 +56,49 @@ Release notes:
 """
 
 try write(content: releaseNotes, atPath: ".build/release.md")
+
+var package = 
+"""
+// swift-tools-version:5.3
+
+import PackageDescription
+
+let package = Package(
+    name: "ios_system",
+    products: [
+        .library(name: "ios_system", targets: ["ios_system", "awk", "curl_ios", "files", "shell", "ssh_cmd", "tar", "text", "mandoc"])
+    ],
+    dependencies: [
+    ],
+    targets: [
+
+"""
+
+for sum in checksums {
+    let checksum = sum[1]!
+    let fileName = sum[0]!
+    let components = fileName.components(separatedBy:".")
+    package += 
+"""
+        .binaryTarget(
+            name: \"\(components[0])\",
+            url: \"https://github.com/holzschu/ios_system/releases/download/v2.7.0/\(fileName)\",
+            checksum: \"\(checksum)\",
+        ),
+
+"""
+}
+package += 
+"""
+        .binaryTarget(
+            name: \"mandoc\",
+            url: \"https://github.com/holzschu/ios_system/releases/download/2.7/mandoc.xcframework.zip\",
+            checksum: \"428eadde2515ad58ede9943a54e0bd56f8cd2980cf89a7b1762c7f36594737f5\"
+        )
+    ]
+)
+"""
+
+try write(content: package, atPath: "Package.swift")
+
+
