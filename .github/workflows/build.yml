@@ -31,6 +31,16 @@ jobs:
         draft: false
         prerelease: false
 
+    - name: Upload ios_error.h
+      id: upload_ios_error
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: ios_error.h
+        asset_name: ios_error.h
+
     - name: Upload ios_system
       id: upload-ios_system
       uses: actions/upload-release-asset@v1
