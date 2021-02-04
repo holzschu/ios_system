@@ -41,7 +41,7 @@ for scheme in schemes {
 
     try cd(".build") {
         let zip = "\(scheme).xcframework.zip"
-        try sh("zip -r \(zip) \(scheme).xcframework")
+        try sh("zip --symlinks -r \(zip) \(scheme).xcframework")
         let chksum = try sha(path: zip)
         checksums.append([zip, chksum])
     }
