@@ -40,6 +40,7 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }} 
         asset_path: ios_error.h
         asset_name: ios_error.h
+        asset_content_type: text/plain
 
     - name: Upload ios_system
       id: upload-ios_system
