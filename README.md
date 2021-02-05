@@ -4,7 +4,6 @@
 <p align="center">
 <img src="https://img.shields.io/badge/Platform-iOS%2014.0+-lightgrey.svg" alt="Platform: iOS">
 <a href="https://github.com/holzschu/ios_system/actions"><img src="https://github.com/holzschu/ios_system/workflows/CI/badge.svg" alt="Build Status"/></a>
-<br>
 <a href="http://twitter.com/nholzschuch"><img src="https://img.shields.io/badge/Twitter-@nholzschuch-blue.svg?style=flat" alt="Twitter"/></a>
 </p>
 
