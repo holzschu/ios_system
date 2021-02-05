@@ -12,13 +12,13 @@ _ = Package(
         // ssh_cmd, curl_ios
         .binaryTarget(
             name: "libssh2",
-            url: "https://github.com/blinksh/libssh2-apple/releases/download/v1.9.0/libssh2-dynamic.xcframework.zip",
-            checksum: "79b18673040a51e7c62259965c2310b5df2a686de83b9cc94c54db944621c32c"
+            url: "https://github.com/blinksh/libssh2-apple/releases/download/v1.9.0/libssh2-static.xcframework.zip",
+            checksum: "bcf240b14e5b0d982bde81419dbdf45d9155aea7401669f0c4bfd74db976d50a"
         ),
         .binaryTarget(
             name: "openssl",
-            url: "https://github.com/blinksh/openssl-apple/releases/download/v1.1.1i/openssl-dynamic.xcframework.zip",
-            checksum: "7f7e7cf7a1717dde6fdc71ef62c24e782f3c0ca1a2621e9376699362da990993"
+            url: "https://github.com/blinksh/openssl-apple/releases/download/v1.1.1i/openssl-static.xcframework.zip",
+            checksum: "6ab47a85acb5d70318877b11bf38b9154b25faab3c78cbade384dc23d870bf34"
         ),
 
         .target(
