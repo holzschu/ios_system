@@ -186,6 +186,7 @@ char* libc_getenv(const char* variableName) {
         if (varNameLen == 0) { return NULL; }
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
             if (envp[i] == NULL) { continue; }
+            if (strlen(envp[i]) < varNameLen) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
                 if (strlen(envp[i]) > varNameLen) {
                     if (envp[i][varNameLen] == '=') {
@@ -240,10 +241,10 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
         }
         // Not found so far, add it to the list:
         int pos = numVariablesSet[current_pid];
-        envp = realloc(envp, (numVariablesSet[current_pid] + 2) * sizeof(char*));
-        envp[pos] = malloc(strlen(variableName) + strlen(value) + 2);
-        envp[pos + 1] = NULL;
-        sprintf(envp[pos], "%s=%s", variableName, value);
+        environment[current_pid] = realloc(envp, (numVariablesSet[current_pid] + 2) * sizeof(char*));
+        environment[current_pid][pos] = malloc(strlen(variableName) + strlen(value) + 2);
+        environment[current_pid][pos + 1] = NULL;
+        sprintf(environment[current_pid][pos], "%s=%s", variableName, value);
         numVariablesSet[current_pid] += 1;
         return 0;
     } else {
