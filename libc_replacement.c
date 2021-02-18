@@ -180,9 +180,12 @@ inline void ios_storeThreadId(pthread_t thread) {
 
 char* libc_getenv(const char* variableName) {
     if (numVariablesSet[current_pid] > 0) {
+        if (variableName == NULL) { return NULL; }
         char** envp = environment[current_pid];
         int varNameLen = strlen(variableName);
+        if (varNameLen == 0) { return NULL; }
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+            if (envp[i] == NULL) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
                 if (strlen(envp[i]) > varNameLen) {
                     if (envp[i][varNameLen] == '=') {
