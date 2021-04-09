@@ -52,7 +52,10 @@
 #endif
 
 #include "log.h"
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
 #include "ios_error.h"
+#endif
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
@@ -175,7 +178,7 @@ sigdie(const char *fmt,...)
 	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
 	va_end(args);
 #endif
-	_exit(1);
+    cleanup_exit(1);
 }
 
 /* void
@@ -273,7 +276,7 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 	default:
 		fprintf(thread_stderr, "Unrecognized internal syslog level code %d\n",
 		    (int) level);
-		exit(1);
+		cleanup_exit(1);
 	}
 
 	log_handler = NULL;
@@ -328,7 +331,7 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 		fprintf(thread_stderr,
 		    "Unrecognized internal syslog facility code %d\n",
 		    (int) facility);
-		exit(1);
+            cleanup_exit(1);
 	}
 
 	/*
@@ -369,7 +372,7 @@ log_redirect_stderr_to(const char *logfile)
 	if ((fd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600)) == -1) {
 		fprintf(thread_stderr, "Couldn't open logfile %s: %s\n", logfile,
 		     strerror(errno));
-		exit(1);
+        cleanup_exit(1);
 	}
 	log_stderr_fd = fd;
 }
@@ -469,9 +472,14 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		syslog_r(pri, &sdata, "%.500s", fmtbuf);
 		closelog_r(&sdata);
 #else
-		openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
+#if !TARGET_OS_IPHONE
+        openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
 		syslog(pri, "%.500s", fmtbuf);
 		closelog();
+#else
+        fprintf(thread_stderr, "%s (%s): ", argv0 ? argv0 : ssh_progname, log_facilities[log_facility].name);
+        fprintf(thread_stderr, "%.500s", fmtbuf);
+#endif
 #endif
 	}
 	errno = saved_errno;

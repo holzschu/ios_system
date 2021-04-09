@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include "log.h"
 
 #ifndef HAVE___PROGNAME
 char *ssh_progname;
@@ -57,7 +58,7 @@ char *ssh_get_progname(char *argv0)
 #endif
 	if ((q = strdup(p)) == NULL) {
 		perror("strdup");
-		exit(1);
+		cleanup_exit(1);
 	}
 	return q;
 }
