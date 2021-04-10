@@ -376,10 +376,8 @@ put_host_port(const char *host, u_short port)
 
 	if (port == 0 || port == SSH_DEFAULT_PORT)
 		return(xstrdup(host));
-    if (asprintf(&hoststr, "[%s]:%d", host, (int)port) < 0) {
-        fprintf(thread_stderr, "put_host_port: asprintf: %s", strerror(errno));
-        pthread_exit(NULL);
-    }
+    if (asprintf(&hoststr, "[%s]:%d", host, (int)port) < 0)
+        fatal("put_host_port: asprintf: %s", strerror(errno));
 	debug3("put_host_port: %s", hoststr);
 	return hoststr;
 }
@@ -532,10 +530,8 @@ addargs(arglist *args, char *fmt, ...)
 	va_start(ap, fmt);
 	r = vasprintf(&cp, fmt, ap);
 	va_end(ap);
-    if (r == -1) {
-        fprintf(thread_stderr, "addargs: argument too long");
-        pthread_exit(NULL);
-    }
+    if (r == -1)
+        fatal("addargs: argument too long");
 
 	nalloc = args->nalloc;
 	if (args->list == NULL) {
@@ -560,16 +556,12 @@ replacearg(arglist *args, u_int which, char *fmt, ...)
 	va_start(ap, fmt);
 	r = vasprintf(&cp, fmt, ap);
 	va_end(ap);
-    if (r == -1) {
-        fprintf(thread_stderr, "replacearg: argument too long");
-        pthread_exit(NULL);
-    }
+    if (r == -1)
+        fatal("replacearg: argument too long");
 
-    if (which >= args->num) {
-        fprintf(thread_stderr, "replacearg: tried to replace invalid arg %d >= %d",
+    if (which >= args->num)
+        fatal("replacearg: tried to replace invalid arg %d >= %d",
                 which, args->num);
-        pthread_exit(NULL);
-    }
     free(args->list[which]);
     args->list[which] = cp;
 }
@@ -607,20 +599,14 @@ tilde_expand_filename(const char *filename, uid_t uid)
 	path = strchr(filename, '/');
 	if (path != NULL && path > filename) {		/* ~user/path */
 		slash = path - filename;
-        if (slash > sizeof(user) - 1) {
-            fprintf(thread_stderr, "tilde_expand_filename: ~username too long");
-            pthread_exit(NULL);
-        }
+        if (slash > sizeof(user) - 1)
+            fatal("tilde_expand_filename: ~username too long");
         memcpy(user, filename, slash);
 		user[slash] = '\0';
-        if ((pw = getpwnam(user)) == NULL) {
-            fprintf(thread_stderr, "tilde_expand_filename: No such user %s", user);
-            pthread_exit(NULL);
-        }
-    } else if ((pw = getpwuid(uid)) == NULL) {	 /* ~/path */
-		fprintf(thread_stderr, "tilde_expand_filename: No such uid %ld", (long)uid);
-        pthread_exit(NULL);
-    }
+        if ((pw = getpwnam(user)) == NULL)
+            fatal("tilde_expand_filename: No such user %s", user);
+    } else if ((pw = getpwuid(uid)) == NULL)	 /* ~/path */
+		fatal("tilde_expand_filename: No such uid %ld", (long)uid);
 
 	/* Make sure directory has a trailing '/' */
 	len = strlen(getenv("SSH_HOME"));
@@ -633,10 +619,8 @@ tilde_expand_filename(const char *filename, uid_t uid)
 	if (path != NULL)
 		filename = path + 1;
 
-    if (xasprintf(&ret, "%s%s%s", getenv("SSH_HOME"), sep, filename) >= PATH_MAX) {
-        fprintf(thread_stderr, "tilde_expand_filename: Path too long");
-        pthread_exit(NULL);
-    }
+    if (xasprintf(&ret, "%s%s%s", getenv("SSH_HOME"), sep, filename) >= PATH_MAX)
+        fatal("tilde_expand_filename: Path too long");
 
 	return (ret);
 }
@@ -666,15 +650,11 @@ percent_expand(const char *string, ...)
 		if (keys[num_keys].key == NULL)
 			break;
 		keys[num_keys].repl = va_arg(ap, char *);
-        if (keys[num_keys].repl == NULL) {
-            fprintf(thread_stderr, "%s: NULL replacement", __func__);
-            pthread_exit(NULL);
-        }
+        if (keys[num_keys].repl == NULL)
+            fatal("%s: NULL replacement", __func__);
     }
-    if (num_keys == EXPAND_MAX_KEYS && va_arg(ap, char *) != NULL) {
-        fprintf(thread_stderr, "%s: too many keys", __func__);
-        pthread_exit(NULL);
-    }
+    if (num_keys == EXPAND_MAX_KEYS && va_arg(ap, char *) != NULL)
+        fatal("%s: too many keys", __func__);
     va_end(ap);
 
 	/* Expand string */
@@ -683,10 +663,8 @@ percent_expand(const char *string, ...)
 		if (*string != '%') {
  append:
 			buf[i++] = *string;
-            if (i >= sizeof(buf)) {
-                fprintf(thread_stderr, "%s: string too long", __func__);
-                pthread_exit(NULL);
-            }
+            if (i >= sizeof(buf))
+                fatal("%s: string too long", __func__);
             buf[i] = '\0';
 			continue;
 		}
@@ -694,24 +672,18 @@ percent_expand(const char *string, ...)
 		/* %% case */
 		if (*string == '%')
 			goto append;
-        if (*string == '\0') {
-            fprintf(thread_stderr, "%s: invalid format", __func__);
-            pthread_exit(NULL);
-        }
+        if (*string == '\0')
+            fatal("%s: invalid format", __func__);
         for (j = 0; j < num_keys; j++) {
             if (strchr(keys[j].key, *string) != NULL) {
 				i = strlcat(buf, keys[j].repl, sizeof(buf));
-                if (i >= sizeof(buf)) {
-					fprintf(thread_stderr, "%s: string too long", __func__);
-                    pthread_exit(NULL);
-                }
+                if (i >= sizeof(buf))
+					fatal("%s: string too long", __func__);
                 break;
             }
         }
-        if (j >= num_keys) {
-			fprintf(thread_stderr, "%s: unknown key %%%c", __func__, *string);
-            pthread_exit(NULL);
-        }
+        if (j >= num_keys)
+			fatal("%s: unknown key %%%c", __func__, *string);
     }
 	return (xstrdup(buf));
 #undef EXPAND_MAX_KEYS
@@ -1106,10 +1078,8 @@ mktemp_proto(char *s, size_t len)
 			return;
 	}
 	r = snprintf(s, len, "/tmp/ssh-XXXXXXXXXXXX");
-    if (r < 0 || (size_t)r >= len) {
-        fprintf(thread_stderr, "%s: template string too short", __func__);
-        pthread_exit(NULL);
-    }
+    if (r < 0 || (size_t)r >= len)
+        fatal("%s: template string too short", __func__);
 }
 
 static const struct {

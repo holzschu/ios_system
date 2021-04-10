@@ -86,19 +86,13 @@ get_random_bytes_prngd(unsigned char *buf, int len,
 	mysig_t old_sigpipe;
 
 	/* Sanity checks */
-    if (socket_path == NULL && tcp_port == 0) {
-        fprintf(thread_stderr, "You must specify a port or a socket");
-        pthread_exit(NULL);
-    }
+    if (socket_path == NULL && tcp_port == 0)
+        fatal("You must specify a port or a socket");
     if (socket_path != NULL &&
-        strlen(socket_path) >= sizeof(addr_un->sun_path)) {
-        fprintf(thread_stderr, "Random pool path is too long");
-        pthread_exit(NULL);
-    }
-    if (len <= 0 || len > 255) {
-        fprintf(thread_stderr, "Too many bytes (%d) to read from PRNGD", len);
-        pthread_exit(NULL);
-    }
+        strlen(socket_path) >= sizeof(addr_un->sun_path))
+        fatal("Random pool path is too long");
+    if (len <= 0 || len > 255)
+        fatal("Too many bytes (%d) to read from PRNGD", len);
 
 	memset(&addr, '\0', sizeof(addr));
 
@@ -220,11 +214,9 @@ seed_rng(void)
 #ifndef OPENSSL_PRNG_ONLY
 	unsigned char buf[RANDOM_SEED_SIZE];
 #endif
-    if (!ssh_compatible_openssl(OPENSSL_VERSION_NUMBER, OpenSSL_version_num())) {
-        fprintf(thread_stderr, "OpenSSL version mismatch. Built against %lx, you "
+    if (!ssh_compatible_openssl(OPENSSL_VERSION_NUMBER, OpenSSL_version_num()))
+        fatal("OpenSSL version mismatch. Built against %lx, you "
                 "have %lx", (u_long)OPENSSL_VERSION_NUMBER, OpenSSL_version_num());
-        pthread_exit(NULL);
-    }
 
 #ifndef OPENSSL_PRNG_ONLY
 	if (RAND_status() == 1) {
@@ -232,18 +224,14 @@ seed_rng(void)
 		return;
 	}
 
-    if (seed_from_prngd(buf, sizeof(buf)) == -1) {
-        fprintf(thread_stderr, "Could not obtain seed from PRNGd");
-        pthread_exit(NULL);
-    }
+    if (seed_from_prngd(buf, sizeof(buf)) == -1)
+        fatal("Could not obtain seed from PRNGd");
 	RAND_add(buf, sizeof(buf), sizeof(buf));
 	memset(buf, '\0', sizeof(buf));
 
 #endif /* OPENSSL_PRNG_ONLY */
-    if (RAND_status() != 1) {
-        fprintf(thread_stderr, "PRNG is not seeded");
-        pthread_exit(NULL);
-    }
+    if (RAND_status() != 1)
+        fatal("PRNG is not seeded");
 }
 
 #else /* WITH_OPENSSL */

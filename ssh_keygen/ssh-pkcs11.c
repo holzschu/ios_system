@@ -331,7 +331,7 @@ pkcs11_rsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
 	}
   k11->rsa_method = RSA_meth_dup(def);
   if (k11->rsa_method == NULL)
-    fprintf(thread_stderr, "%s: RSA_meth_dup failed", __func__);
+    fatal("%s: RSA_meth_dup failed", __func__);
   k11->orig_finish = RSA_meth_get_finish(def);
   if (!RSA_meth_set1_name(k11->rsa_method, "pkcs11") ||
      !RSA_meth_set_priv_enc(k11->rsa_method,
@@ -339,7 +339,7 @@ pkcs11_rsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
      !RSA_meth_set_priv_dec(k11->rsa_method,
      pkcs11_rsa_private_decrypt) ||
      !RSA_meth_set_finish(k11->rsa_method, pkcs11_rsa_finish))
-    fprintf(thread_stderr, "%s: setup pkcs11 method failed", __func__);
+    fatal("%s: setup pkcs11 method failed", __func__);
   RSA_set_method(rsa, k11->rsa_method);
 	RSA_set_app_data(rsa, k11);
 	return (0);
@@ -535,11 +535,10 @@ pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
             attribs[1].ulValueLen, NULL);
 				rsa_e = BN_bin2bn(attribs[2].pValue,
 				    attribs[2].ulValueLen, NULL);
-        
         if (rsa_n != NULL && rsa_e != NULL) {
            if (!RSA_set0_key(rsa,
                rsa_n, rsa_e, NULL))
-             fprintf(thread_stderr, "%s: set key", __func__);
+             fatal("%s: set key", __func__);
            rsa_n = rsa_e = NULL; /* transferred */
          }
          BN_free(rsa_n);

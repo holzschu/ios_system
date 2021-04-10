@@ -141,17 +141,13 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 	if ((ctx = ssh_hmac_start(SSH_DIGEST_SHA1)) == NULL ||
 	    ssh_hmac_init(ctx, salt, len) < 0 ||
 	    ssh_hmac_update(ctx, host, strlen(host)) < 0 ||
-        ssh_hmac_final(ctx, result, sizeof(result))) {
-        fprintf(thread_stderr, "%s: ssh_hmac failed", __func__);
-        pthread_exit(NULL);
-    }
+        ssh_hmac_final(ctx, result, sizeof(result)))
+        fatal("%s: ssh_hmac failed", __func__);
     ssh_hmac_free(ctx);
 
 	if (__b64_ntop(salt, len, uu_salt, sizeof(uu_salt)) == -1 ||
-        __b64_ntop(result, len, uu_result, sizeof(uu_result)) == -1) {
-        fprintf(thread_stderr, "%s: __b64_ntop failed", __func__);
-        pthread_exit(NULL);
-    }
+        __b64_ntop(result, len, uu_result, sizeof(uu_result)) == -1)
+        fatal("%s: __b64_ntop failed", __func__);
 
 	snprintf(encoded, sizeof(encoded), "%s%s%c%s", HASH_MAGIC, uu_salt,
 	    HASH_DELIM, uu_result);
@@ -406,10 +402,8 @@ HostStatus
 check_key_in_hostkeys(struct hostkeys *hostkeys, struct sshkey *key,
     const struct hostkey_entry **found)
 {
-    if (key == NULL) {
-        fprintf(thread_stderr, "no key to look up");
-        pthread_exit(NULL);
-    }
+    if (key == NULL)
+        fatal("no key to look up");
     return check_hostkeys_by_key_or_type(hostkeys, key, 0, found);
 }
 
