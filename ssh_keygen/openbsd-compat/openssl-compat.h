@@ -38,15 +38,15 @@ void ssh_libcrypto_init(void);
 #endif
 
 #ifndef OPENSSL_VERSION
-# define OPENSSL_VERSION  SSLEAY_VERSION
+# define OPENSSL_VERSION	SSLEAY_VERSION
 #endif
 
 #ifndef HAVE_OPENSSL_VERSION
-# define OpenSSL_version(x)  SSLeay_version(x)
+# define OpenSSL_version(x)	SSLeay_version(x)
 #endif
 
 #ifndef HAVE_OPENSSL_VERSION_NUM
-# define OpenSSL_version_num  SSLeay
+# define OpenSSL_version_num	SSLeay
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10000001L
@@ -56,10 +56,10 @@ void ssh_libcrypto_init(void);
 #endif
 
 #ifndef OPENSSL_RSA_MAX_MODULUS_BITS
-# define OPENSSL_RSA_MAX_MODULUS_BITS  16384
+# define OPENSSL_RSA_MAX_MODULUS_BITS	16384
 #endif
 #ifndef OPENSSL_DSA_MAX_MODULUS_BITS
-# define OPENSSL_DSA_MAX_MODULUS_BITS  10000
+# define OPENSSL_DSA_MAX_MODULUS_BITS	10000
 #endif
 
 #ifdef LIBRESSL_VERSION_NUMBER
@@ -113,8 +113,12 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
 #endif /* HAVE_DSA_SET0_KEY */
 
 #ifndef HAVE_EVP_CIPHER_CTX_GET_IV
+# ifdef HAVE_EVP_CIPHER_CTX_GET_UPDATED_IV
+#  define EVP_CIPHER_CTX_get_iv EVP_CIPHER_CTX_get_updated_iv
+# else /* HAVE_EVP_CIPHER_CTX_GET_UPDATED_IV */
 int EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx,
     unsigned char *iv, size_t len);
+# endif /* HAVE_EVP_CIPHER_CTX_GET_UPDATED_IV */
 #endif /* HAVE_EVP_CIPHER_CTX_GET_IV */
 
 #ifndef HAVE_EVP_CIPHER_CTX_SET_IV

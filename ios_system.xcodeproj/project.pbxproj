@@ -32,6 +32,19 @@
 		223496B71FD5FC89007ED1A9 /* ios_system.m in Sources */ = {isa = PBXBuildFile; fileRef = 223496B61FD5FC89007ED1A9 /* ios_system.m */; };
 		223A5CC221CB82B70022B5D5 /* ssh-keygen.c in Sources */ = {isa = PBXBuildFile; fileRef = 223A5CC121CB82B70022B5D5 /* ssh-keygen.c */; };
 		223A5CC421CB8DB90022B5D5 /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 223A5CC321CB8DB90022B5D5 /* log.c */; };
+		224A4B282624399D00C399A5 /* monitor_fdpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B272624399D00C399A5 /* monitor_fdpass.c */; };
+		224A4B3226243A3700C399A5 /* glob.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B3126243A3700C399A5 /* glob.c */; };
+		224A4B3C26243C1D00C399A5 /* fmt_scaled.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B3B26243C1D00C399A5 /* fmt_scaled.c */; };
+		224A4B4626243CAF00C399A5 /* platform-pledge.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B4526243CAF00C399A5 /* platform-pledge.c */; };
+		224A4B5026243CF800C399A5 /* kexgen.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B4F26243CF800C399A5 /* kexgen.c */; };
+		224A4B5A26243D2C00C399A5 /* kexgexc.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B5926243D2C00C399A5 /* kexgexc.c */; };
+		224A4B6426243DC800C399A5 /* dh.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B6326243DC800C399A5 /* dh.c */; };
+		224A4B6E26243E1400C399A5 /* kexgex.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B6D26243E1400C399A5 /* kexgex.c */; };
+		224A4B7826243E6200C399A5 /* kexecdh.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B7726243E6200C399A5 /* kexecdh.c */; };
+		224A4B8226243E8600C399A5 /* kexdh.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B8126243E8600C399A5 /* kexdh.c */; };
+		224A4B8C26243EA000C399A5 /* kexc25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B8B26243EA000C399A5 /* kexc25519.c */; };
+		224A4B9626243ECE00C399A5 /* kexsntrup761x25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B9526243ECE00C399A5 /* kexsntrup761x25519.c */; };
+		224A4BA8262441C100C399A5 /* smult_curve25519_ref.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4BA7262441C100C399A5 /* smult_curve25519_ref.c */; };
 		224AAC5521CB917E00F8C22F /* ssherr.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5421CB917D00F8C22F /* ssherr.c */; };
 		224AAC5721CB920500F8C22F /* xmalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5621CB920500F8C22F /* xmalloc.c */; };
 		224AAC5C21CB931300F8C22F /* reallocarray.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5B21CB931300F8C22F /* reallocarray.c */; };
@@ -40,14 +53,10 @@
 		225782911FDB4D390050F312 /* curl_config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257811A1FDB4D380050F312 /* curl_config.h */; };
 		225E1B6F2067F39F005AC151 /* tar.h in Headers */ = {isa = PBXBuildFile; fileRef = 225E1B6D2067F39F005AC151 /* tar.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		225F06102016751900466685 /* getopt_long.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060F2016751800466685 /* getopt_long.c */; };
-		2261379121F0E5860097B3A0 /* port-tun.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261378F21F0E5860097B3A0 /* port-tun.c */; };
 		2261379421F0E59E0097B3A0 /* explicit_bzero.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261379221F0E59D0097B3A0 /* explicit_bzero.c */; };
 		2261379621F0E5C40097B3A0 /* bsd-setres_id.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261379521F0E5C40097B3A0 /* bsd-setres_id.c */; };
 		2261379821F0E5DE0097B3A0 /* vis.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261379721F0E5DE0097B3A0 /* vis.c */; };
 		2261379A21F0E5FE0097B3A0 /* readpassphrase.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261379921F0E5FE0097B3A0 /* readpassphrase.c */; };
-		2261379C21F0E70F0097B3A0 /* uidswap.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261379B21F0E70F0097B3A0 /* uidswap.c */; };
-		2261379E21F0E7400097B3A0 /* rsa.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261379D21F0E7400097B3A0 /* rsa.c */; };
-		226137A021F0E7870097B3A0 /* blocks.c in Sources */ = {isa = PBXBuildFile; fileRef = 2261379F21F0E7870097B3A0 /* blocks.c */; };
 		226378751FDB3EE400AE8827 /* termcap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2263780D1FDB3EE100AE8827 /* termcap.h */; };
 		226378781FDB3EE400AE8827 /* pathnames.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378111FDB3EE100AE8827 /* pathnames.h */; };
 		2263787D1FDB3EE400AE8827 /* extern.h in Headers */ = {isa = PBXBuildFile; fileRef = 226378181FDB3EE200AE8827 /* extern.h */; };
@@ -145,12 +154,44 @@
 		228D205521CBA0AD00A9B528 /* cipher-chachapoly.c in Sources */ = {isa = PBXBuildFile; fileRef = 228D205421CBA0AC00A9B528 /* cipher-chachapoly.c */; };
 		228D205721CBA0D400A9B528 /* chacha.c in Sources */ = {isa = PBXBuildFile; fileRef = 228D205621CBA0D400A9B528 /* chacha.c */; };
 		228D205921CBA0F100A9B528 /* poly1305.c in Sources */ = {isa = PBXBuildFile; fileRef = 228D205821CBA0F100A9B528 /* poly1305.c */; };
+		2298761D2620C16C002D3690 /* fatal.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298761C2620C16C002D3690 /* fatal.c */; };
+		2298764F2621A0E8002D3690 /* sshsig.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298764E2621A0E8002D3690 /* sshsig.c */; };
+		229876592621A134002D3690 /* authfd.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876582621A134002D3690 /* authfd.c */; };
+		229876642621A2D8002D3690 /* ssh-sk-client.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876622621A2D7002D3690 /* ssh-sk-client.c */; };
+		229876652621A2D8002D3690 /* ssh-sk.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876632621A2D7002D3690 /* ssh-sk.c */; };
+		2298766F2621A3B2002D3690 /* platform-misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298766E2621A3B2002D3690 /* platform-misc.c */; };
+		229876792621A408002D3690 /* port-net.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876782621A408002D3690 /* port-net.c */; };
+		229876832621A861002D3690 /* libressl-api-compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876822621A861002D3690 /* libressl-api-compat.c */; };
+		2298768D2621AB04002D3690 /* ssh-ecdsa-sk.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298768C2621AB04002D3690 /* ssh-ecdsa-sk.c */; };
+		229876972621AB57002D3690 /* ssh-ed25519-sk.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876962621AB57002D3690 /* ssh-ed25519-sk.c */; };
+		229876A12621ACFA002D3690 /* addr.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876A02621ACFA002D3690 /* addr.c */; };
+		229876AB2621B139002D3690 /* msg.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876AA2621B138002D3690 /* msg.c */; };
+		229876B52621B232002D3690 /* sshbuf-io.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876B42621B232002D3690 /* sshbuf-io.c */; };
+		229876BF2621E947002D3690 /* recallocarray.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876BE2621E947002D3690 /* recallocarray.c */; };
+		229876D126234317002D3690 /* ssh.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876D026234317002D3690 /* ssh.c */; };
+		229876DB26234459002D3690 /* clientloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876DA26234459002D3690 /* clientloop.c */; };
+		229876E52623449C002D3690 /* packet.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876E42623449C002D3690 /* packet.c */; };
+		229876EF26234582002D3690 /* sshconnect.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876EE26234582002D3690 /* sshconnect.c */; };
+		229876F9262345B9002D3690 /* channels.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876F8262345B9002D3690 /* channels.c */; };
+		2298770326234649002D3690 /* sshtty.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298770226234649002D3690 /* sshtty.c */; };
+		2298770D26234678002D3690 /* ttymodes.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298770C26234678002D3690 /* ttymodes.c */; };
+		22987717262346DB002D3690 /* dispatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22987716262346DB002D3690 /* dispatch.c */; };
+		2298772126234732002D3690 /* kex.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298772026234732002D3690 /* kex.c */; };
+		2298772B26234791002D3690 /* mux.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298772A26234791002D3690 /* mux.c */; };
+		2298773526237FC3002D3690 /* nchan.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298773426237FC2002D3690 /* nchan.c */; };
+		2298773F2623800A002D3690 /* mac.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298773E2623800A002D3690 /* mac.c */; };
+		229877492623809B002D3690 /* canohost.c in Sources */ = {isa = PBXBuildFile; fileRef = 229877482623809B002D3690 /* canohost.c */; };
+		229877532623810D002D3690 /* umac128.c in Sources */ = {isa = PBXBuildFile; fileRef = 229877522623810D002D3690 /* umac128.c */; };
+		2298776E2623814E002D3690 /* umac.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298775C26238112002D3690 /* umac.c */; };
+		2298777826238188002D3690 /* sshconnect2.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298777726238188002D3690 /* sshconnect2.c */; };
+		22987792262382EE002D3690 /* gss-genr.c in Sources */ = {isa = PBXBuildFile; fileRef = 22987791262382EE002D3690 /* gss-genr.c */; };
+		2298779C2623834E002D3690 /* readconf.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298779B2623834E002D3690 /* readconf.c */; };
+		229877A626238C04002D3690 /* compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 229877A526238C04002D3690 /* compat.c */; };
 		22A3735C21CB959D00230846 /* moduli.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3735B21CB959D00230846 /* moduli.c */; };
 		22A3735E21CB961900230846 /* strtonum.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3735D21CB961900230846 /* strtonum.c */; };
 		22A3736021CB96FC00230846 /* sshbuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3735F21CB96FC00230846 /* sshbuf.c */; };
 		22A3736421CB97B200230846 /* sshbuf-getput-basic.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3736321CB97B200230846 /* sshbuf-getput-basic.c */; };
 		22A3736621CB97E600230846 /* ssh-rsa.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3736521CB97E600230846 /* ssh-rsa.c */; };
-		22A3736821CB983500230846 /* uuencode.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3736721CB983400230846 /* uuencode.c */; };
 		22A3736A21CB986900230846 /* sshkey.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3736921CB986900230846 /* sshkey.c */; };
 		22A3736C21CB99EB00230846 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 22A3736B21CB99EB00230846 /* misc.c */; };
 		22AFD0172067F78200881B2A /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
@@ -324,7 +365,6 @@
 		22F6A16020683BDC00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
 		22F6A16A20683D5200E618F9 /* ssh_cmd.h in Headers */ = {isa = PBXBuildFile; fileRef = 22F6A16820683D5200E618F9 /* ssh_cmd.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22F6A16E20683D6F00E618F9 /* ios_system.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 223496AB1FD5FC71007ED1A9 /* ios_system.framework */; };
-		22F6A1A720683E1200E618F9 /* ssh_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F061120171B4300466685 /* ssh_main.c */; settings = {COMPILER_FLAGS = "-F Frameworks/ -I ssh_keygen/"; }; };
 		22F6A1A820683E5000E618F9 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2253BA1D201942B10019CB39 /* libresolv.9.tbd */; };
 		22F6A1A920683E5700E618F9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22F567DD2020BAD9009850FD /* libz.tbd */; };
 		22F6A1B720683F6700E618F9 /* amigaos.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577F9F1FDB4D370050F312 /* amigaos.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I curl/curl/include/ -I curl/curl/lib/ -DBUILDING_LIBCURL -I ./Frameworks/libssh2.framework/Headers"; }; };
@@ -558,6 +598,19 @@
 		2248DB212004F82700F2944C /* tran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tran.c; path = "awk-23.30.1/src/tran.c"; sourceTree = SOURCE_ROOT; };
 		2248DB232004F82700F2944C /* proctab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = proctab.c; path = "awk-23.30.1/src/proctab.c"; sourceTree = SOURCE_ROOT; };
 		2248DB242004F82700F2944C /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = "awk-23.30.1/src/main.c"; sourceTree = SOURCE_ROOT; };
+		224A4B272624399D00C399A5 /* monitor_fdpass.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = monitor_fdpass.c; path = ssh_keygen/monitor_fdpass.c; sourceTree = "<group>"; };
+		224A4B3126243A3700C399A5 /* glob.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glob.c; path = "ssh_keygen/openbsd-compat/glob.c"; sourceTree = "<group>"; };
+		224A4B3B26243C1D00C399A5 /* fmt_scaled.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fmt_scaled.c; path = "ssh_keygen/openbsd-compat/fmt_scaled.c"; sourceTree = "<group>"; };
+		224A4B4526243CAF00C399A5 /* platform-pledge.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "platform-pledge.c"; path = "ssh_keygen/platform-pledge.c"; sourceTree = "<group>"; };
+		224A4B4F26243CF800C399A5 /* kexgen.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexgen.c; path = ssh_keygen/kexgen.c; sourceTree = "<group>"; };
+		224A4B5926243D2C00C399A5 /* kexgexc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexgexc.c; path = ssh_keygen/kexgexc.c; sourceTree = "<group>"; };
+		224A4B6326243DC800C399A5 /* dh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dh.c; path = ssh_keygen/dh.c; sourceTree = "<group>"; };
+		224A4B6D26243E1400C399A5 /* kexgex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexgex.c; path = ssh_keygen/kexgex.c; sourceTree = "<group>"; };
+		224A4B7726243E6200C399A5 /* kexecdh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexecdh.c; path = ssh_keygen/kexecdh.c; sourceTree = "<group>"; };
+		224A4B8126243E8600C399A5 /* kexdh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexdh.c; path = ssh_keygen/kexdh.c; sourceTree = "<group>"; };
+		224A4B8B26243EA000C399A5 /* kexc25519.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexc25519.c; path = ssh_keygen/kexc25519.c; sourceTree = "<group>"; };
+		224A4B9526243ECE00C399A5 /* kexsntrup761x25519.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexsntrup761x25519.c; path = ssh_keygen/kexsntrup761x25519.c; sourceTree = "<group>"; };
+		224A4BA7262441C100C399A5 /* smult_curve25519_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = smult_curve25519_ref.c; path = ssh_keygen/smult_curve25519_ref.c; sourceTree = "<group>"; };
 		224AAC5421CB917D00F8C22F /* ssherr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ssherr.c; path = ssh_keygen/ssherr.c; sourceTree = "<group>"; };
 		224AAC5621CB920500F8C22F /* xmalloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xmalloc.c; path = ssh_keygen/xmalloc.c; sourceTree = "<group>"; };
 		224AAC5B21CB931300F8C22F /* reallocarray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = reallocarray.c; path = "ssh_keygen/openbsd-compat/reallocarray.c"; sourceTree = "<group>"; };
@@ -845,14 +898,10 @@
 		225F060A20163C2000466685 /* tee.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tee.c; path = shell_cmds/tee/tee.c; sourceTree = SOURCE_ROOT; };
 		225F060F2016751800466685 /* getopt_long.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = getopt_long.c; sourceTree = "<group>"; };
 		225F061120171B4300466685 /* ssh_main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ssh_main.c; sourceTree = "<group>"; };
-		2261378F21F0E5860097B3A0 /* port-tun.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "port-tun.c"; path = "ssh_keygen/openbsd-compat/port-tun.c"; sourceTree = "<group>"; };
 		2261379221F0E59D0097B3A0 /* explicit_bzero.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = explicit_bzero.c; path = "ssh_keygen/openbsd-compat/explicit_bzero.c"; sourceTree = "<group>"; };
 		2261379521F0E5C40097B3A0 /* bsd-setres_id.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "bsd-setres_id.c"; path = "ssh_keygen/openbsd-compat/bsd-setres_id.c"; sourceTree = "<group>"; };
 		2261379721F0E5DE0097B3A0 /* vis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vis.c; path = "ssh_keygen/openbsd-compat/vis.c"; sourceTree = "<group>"; };
 		2261379921F0E5FE0097B3A0 /* readpassphrase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = readpassphrase.c; path = "ssh_keygen/openbsd-compat/readpassphrase.c"; sourceTree = "<group>"; };
-		2261379B21F0E70F0097B3A0 /* uidswap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uidswap.c; path = ssh_keygen/uidswap.c; sourceTree = "<group>"; };
-		2261379D21F0E7400097B3A0 /* rsa.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rsa.c; path = ssh_keygen/rsa.c; sourceTree = "<group>"; };
-		2261379F21F0E7870097B3A0 /* blocks.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = blocks.c; path = ssh_keygen/blocks.c; sourceTree = "<group>"; };
 		2263780C1FDB3EE100AE8827 /* rmdir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rmdir.c; sourceTree = "<group>"; };
 		2263780D1FDB3EE100AE8827 /* termcap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = termcap.h; sourceTree = SOURCE_ROOT; };
 		226378101FDB3EE100AE8827 /* mv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mv.c; sourceTree = "<group>"; };
@@ -950,12 +999,44 @@
 		228D205421CBA0AC00A9B528 /* cipher-chachapoly.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "cipher-chachapoly.c"; path = "ssh_keygen/cipher-chachapoly.c"; sourceTree = "<group>"; };
 		228D205621CBA0D400A9B528 /* chacha.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = chacha.c; path = ssh_keygen/chacha.c; sourceTree = "<group>"; };
 		228D205821CBA0F100A9B528 /* poly1305.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = poly1305.c; path = ssh_keygen/poly1305.c; sourceTree = "<group>"; };
+		2298761C2620C16C002D3690 /* fatal.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fatal.c; path = ssh_keygen/fatal.c; sourceTree = "<group>"; };
+		2298764E2621A0E8002D3690 /* sshsig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshsig.c; path = ssh_keygen/sshsig.c; sourceTree = "<group>"; };
+		229876582621A134002D3690 /* authfd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = authfd.c; path = ssh_keygen/authfd.c; sourceTree = "<group>"; };
+		229876622621A2D7002D3690 /* ssh-sk-client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-sk-client.c"; path = "ssh_keygen/ssh-sk-client.c"; sourceTree = "<group>"; };
+		229876632621A2D7002D3690 /* ssh-sk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-sk.c"; path = "ssh_keygen/ssh-sk.c"; sourceTree = "<group>"; };
+		2298766E2621A3B2002D3690 /* platform-misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "platform-misc.c"; path = "ssh_keygen/platform-misc.c"; sourceTree = "<group>"; };
+		229876782621A408002D3690 /* port-net.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "port-net.c"; path = "ssh_keygen/openbsd-compat/port-net.c"; sourceTree = "<group>"; };
+		229876822621A861002D3690 /* libressl-api-compat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "libressl-api-compat.c"; path = "ssh_keygen/openbsd-compat/libressl-api-compat.c"; sourceTree = "<group>"; };
+		2298768C2621AB04002D3690 /* ssh-ecdsa-sk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-ecdsa-sk.c"; path = "ssh_keygen/ssh-ecdsa-sk.c"; sourceTree = "<group>"; };
+		229876962621AB57002D3690 /* ssh-ed25519-sk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-ed25519-sk.c"; path = "ssh_keygen/ssh-ed25519-sk.c"; sourceTree = "<group>"; };
+		229876A02621ACFA002D3690 /* addr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = addr.c; path = ssh_keygen/addr.c; sourceTree = "<group>"; };
+		229876AA2621B138002D3690 /* msg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = msg.c; path = ssh_keygen/msg.c; sourceTree = "<group>"; };
+		229876B42621B232002D3690 /* sshbuf-io.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "sshbuf-io.c"; path = "ssh_keygen/sshbuf-io.c"; sourceTree = "<group>"; };
+		229876BE2621E947002D3690 /* recallocarray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = recallocarray.c; path = "ssh_keygen/openbsd-compat/recallocarray.c"; sourceTree = "<group>"; };
+		229876D026234317002D3690 /* ssh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ssh.c; path = ssh_keygen/ssh.c; sourceTree = "<group>"; };
+		229876DA26234459002D3690 /* clientloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientloop.c; path = ssh_keygen/clientloop.c; sourceTree = "<group>"; };
+		229876E42623449C002D3690 /* packet.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = packet.c; path = ssh_keygen/packet.c; sourceTree = "<group>"; };
+		229876EE26234582002D3690 /* sshconnect.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshconnect.c; path = ssh_keygen/sshconnect.c; sourceTree = "<group>"; };
+		229876F8262345B9002D3690 /* channels.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = channels.c; path = ssh_keygen/channels.c; sourceTree = "<group>"; };
+		2298770226234649002D3690 /* sshtty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshtty.c; path = ssh_keygen/sshtty.c; sourceTree = "<group>"; };
+		2298770C26234678002D3690 /* ttymodes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ttymodes.c; path = ssh_keygen/ttymodes.c; sourceTree = "<group>"; };
+		22987716262346DB002D3690 /* dispatch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dispatch.c; path = ssh_keygen/dispatch.c; sourceTree = "<group>"; };
+		2298772026234732002D3690 /* kex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kex.c; path = ssh_keygen/kex.c; sourceTree = "<group>"; };
+		2298772A26234791002D3690 /* mux.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mux.c; path = ssh_keygen/mux.c; sourceTree = "<group>"; };
+		2298773426237FC2002D3690 /* nchan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = nchan.c; path = ssh_keygen/nchan.c; sourceTree = "<group>"; };
+		2298773E2623800A002D3690 /* mac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mac.c; path = ssh_keygen/mac.c; sourceTree = "<group>"; };
+		229877482623809B002D3690 /* canohost.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = canohost.c; path = ssh_keygen/canohost.c; sourceTree = "<group>"; };
+		229877522623810D002D3690 /* umac128.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = umac128.c; path = ssh_keygen/umac128.c; sourceTree = "<group>"; };
+		2298775C26238112002D3690 /* umac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = umac.c; path = ssh_keygen/umac.c; sourceTree = "<group>"; };
+		2298777726238188002D3690 /* sshconnect2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshconnect2.c; path = ssh_keygen/sshconnect2.c; sourceTree = "<group>"; };
+		22987791262382EE002D3690 /* gss-genr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "gss-genr.c"; path = "ssh_keygen/gss-genr.c"; sourceTree = "<group>"; };
+		2298779B2623834E002D3690 /* readconf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = readconf.c; path = ssh_keygen/readconf.c; sourceTree = "<group>"; };
+		229877A526238C04002D3690 /* compat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compat.c; path = ssh_keygen/compat.c; sourceTree = "<group>"; };
 		22A3735B21CB959D00230846 /* moduli.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = moduli.c; path = ssh_keygen/moduli.c; sourceTree = "<group>"; };
 		22A3735D21CB961900230846 /* strtonum.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strtonum.c; path = "ssh_keygen/openbsd-compat/strtonum.c"; sourceTree = "<group>"; };
 		22A3735F21CB96FC00230846 /* sshbuf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshbuf.c; path = ssh_keygen/sshbuf.c; sourceTree = "<group>"; };
 		22A3736321CB97B200230846 /* sshbuf-getput-basic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "sshbuf-getput-basic.c"; path = "ssh_keygen/sshbuf-getput-basic.c"; sourceTree = "<group>"; };
 		22A3736521CB97E600230846 /* ssh-rsa.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-rsa.c"; path = "ssh_keygen/ssh-rsa.c"; sourceTree = "<group>"; };
-		22A3736721CB983400230846 /* uuencode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uuencode.c; path = ssh_keygen/uuencode.c; sourceTree = "<group>"; };
 		22A3736921CB986900230846 /* sshkey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshkey.c; path = ssh_keygen/sshkey.c; sourceTree = "<group>"; };
 		22A3736B21CB99EB00230846 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = ssh_keygen/misc.c; sourceTree = "<group>"; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
@@ -1256,19 +1337,23 @@
 			children = (
 				D285149B25B200B9003405B4 /* openssl-compat.h */,
 				D285147925B1E4DC003405B4 /* openbsd-compat.h */,
+				229876822621A861002D3690 /* libressl-api-compat.c */,
+				224A4B3B26243C1D00C399A5 /* fmt_scaled.c */,
 				D285146F25B1E4BF003405B4 /* freezero.c */,
 				2217ECDF21CBBA700049B382 /* bcrypt_pbkdf.c */,
 				2217ECE121CBBA970049B382 /* blowfish.c */,
 				228D204C21CB9E5F00A9B528 /* bsd-misc.c */,
+				224A4B3126243A3700C399A5 /* glob.c */,
 				2261379921F0E5FE0097B3A0 /* readpassphrase.c */,
+				229876BE2621E947002D3690 /* recallocarray.c */,
 				2261379721F0E5DE0097B3A0 /* vis.c */,
 				2261379521F0E5C40097B3A0 /* bsd-setres_id.c */,
 				228D204E21CB9EE600A9B528 /* getrrsetbyname.c */,
 				224AAC5B21CB931300F8C22F /* reallocarray.c */,
 				2217ECD521CBA6240049B382 /* openssl-compat.c */,
 				22A3735D21CB961900230846 /* strtonum.c */,
-				2261378F21F0E5860097B3A0 /* port-tun.c */,
 				2261379221F0E59D0097B3A0 /* explicit_bzero.c */,
+				229876782621A408002D3690 /* port-net.c */,
 			);
 			name = "openbsd-compat";
 			sourceTree = "<group>";
@@ -1924,46 +2009,83 @@
 				223A5CC321CB8DB90022B5D5 /* log.c */,
 				228D205021CBA02900A9B528 /* atomicio.c */,
 				228D204621CB9D6A00A9B528 /* authfile.c */,
+				229876582621A134002D3690 /* authfd.c */,
+				229876A02621ACFA002D3690 /* addr.c */,
 				228D204821CB9DCB00A9B528 /* addrmatch.c */,
 				228D203C21CB9C5700A9B528 /* bitmap.c */,
-				2261379F21F0E7870097B3A0 /* blocks.c */,
+				229877482623809B002D3690 /* canohost.c */,
 				228D205221CBA08900A9B528 /* cipher.c */,
 				228D205421CBA0AC00A9B528 /* cipher-chachapoly.c */,
 				228D205621CBA0D400A9B528 /* chacha.c */,
+				229876F8262345B9002D3690 /* channels.c */,
+				229876DA26234459002D3690 /* clientloop.c */,
+				229877A526238C04002D3690 /* compat.c */,
+				224A4B6326243DC800C399A5 /* dh.c */,
+				22987716262346DB002D3690 /* dispatch.c */,
 				2217ECDB21CBA79B0049B382 /* ed25519.c */,
 				2217ECE521CBBB620049B382 /* ge25519.c */,
 				2217ECE921CBBBEF0049B382 /* sc25519.c */,
 				2217ECEB21CBBC190049B382 /* fe25519.c */,
 				2217ECE721CBBBBD0049B382 /* verify.c */,
 				2217ECD321CBA5F40049B382 /* entropy.c */,
+				2298761C2620C16C002D3690 /* fatal.c */,
+				22987791262382EE002D3690 /* gss-genr.c */,
 				223A5CC121CB82B70022B5D5 /* ssh-keygen.c */,
 				228D203E21CB9C9000A9B528 /* ssh-pkcs11.c */,
 				2217ECD921CBA7730049B382 /* ssh-ed25519.c */,
 				22A3736521CB97E600230846 /* ssh-rsa.c */,
 				228D204421CB9D3E00A9B528 /* ssh-ecdsa.c */,
+				2298768C2621AB04002D3690 /* ssh-ecdsa-sk.c */,
+				229876962621AB57002D3690 /* ssh-ed25519-sk.c */,
 				228D204A21CB9DFA00A9B528 /* dns.c */,
 				228D203621CB9B9400A9B528 /* digest-openssl.c */,
 				2217ECE321CBBACD0049B382 /* hash.c */,
 				228D203221CB9B2100A9B528 /* hostfile.c */,
+				2298772026234732002D3690 /* kex.c */,
+				224A4B8B26243EA000C399A5 /* kexc25519.c */,
+				224A4B8126243E8600C399A5 /* kexdh.c */,
+				224A4B7726243E6200C399A5 /* kexecdh.c */,
+				224A4B4F26243CF800C399A5 /* kexgen.c */,
+				224A4B6D26243E1400C399A5 /* kexgex.c */,
+				224A4B5926243D2C00C399A5 /* kexgexc.c */,
+				224A4B9526243ECE00C399A5 /* kexsntrup761x25519.c */,
 				228D203A21CB9C2100A9B528 /* krl.c */,
 				228D203421CB9B5D00A9B528 /* hmac.c */,
+				2298773E2623800A002D3690 /* mac.c */,
 				228D204021CB9CD000A9B528 /* match.c */,
 				22A3735B21CB959D00230846 /* moduli.c */,
 				22A3736B21CB99EB00230846 /* misc.c */,
+				229876AA2621B138002D3690 /* msg.c */,
+				224A4B272624399D00C399A5 /* monitor_fdpass.c */,
+				2298772A26234791002D3690 /* mux.c */,
+				2298773426237FC2002D3690 /* nchan.c */,
+				229876E42623449C002D3690 /* packet.c */,
+				2298766E2621A3B2002D3690 /* platform-misc.c */,
+				224A4B4526243CAF00C399A5 /* platform-pledge.c */,
 				228D205821CBA0F100A9B528 /* poly1305.c */,
+				2298779B2623834E002D3690 /* readconf.c */,
 				224AAC5F21CB93AE00F8C22F /* readpass.c */,
-				2261379D21F0E7400097B3A0 /* rsa.c */,
+				224A4BA7262441C100C399A5 /* smult_curve25519_ref.c */,
+				229876D026234317002D3690 /* ssh.c */,
 				2217ECDD21CBA7EA0049B382 /* ssh-dss.c */,
+				229876622621A2D7002D3690 /* ssh-sk-client.c */,
+				229876632621A2D7002D3690 /* ssh-sk.c */,
 				224AAC5421CB917D00F8C22F /* ssherr.c */,
 				22A3735F21CB96FC00230846 /* sshbuf.c */,
 				22A3736921CB986900230846 /* sshkey.c */,
+				2298764E2621A0E8002D3690 /* sshsig.c */,
+				229876B42621B232002D3690 /* sshbuf-io.c */,
 				22A3736321CB97B200230846 /* sshbuf-getput-basic.c */,
 				228D204221CB9D1300A9B528 /* sshbuf-getput-crypto.c */,
 				2217ECD721CBA7510049B382 /* sshbuf-misc.c */,
+				229876EE26234582002D3690 /* sshconnect.c */,
+				2298777726238188002D3690 /* sshconnect2.c */,
+				2298770226234649002D3690 /* sshtty.c */,
 				225F061120171B4300466685 /* ssh_main.c */,
-				2261379B21F0E70F0097B3A0 /* uidswap.c */,
+				2298770C26234678002D3690 /* ttymodes.c */,
+				229877522623810D002D3690 /* umac128.c */,
+				2298775C26238112002D3690 /* umac.c */,
 				224AAC5D21CB935100F8C22F /* utf8.c */,
-				22A3736721CB983400230846 /* uuencode.c */,
 				224AAC5621CB920500F8C22F /* xmalloc.c */,
 			);
 			name = ssh;
@@ -2885,63 +3007,103 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				229876D126234317002D3690 /* ssh.c in Sources */,
 				2261379421F0E59E0097B3A0 /* explicit_bzero.c in Sources */,
 				228D204B21CB9DFA00A9B528 /* dns.c in Sources */,
+				2298772B26234791002D3690 /* mux.c in Sources */,
+				229876EF26234582002D3690 /* sshconnect.c in Sources */,
+				229876A12621ACFA002D3690 /* addr.c in Sources */,
 				224AAC5E21CB935100F8C22F /* utf8.c in Sources */,
 				228D203B21CB9C2100A9B528 /* krl.c in Sources */,
+				224A4B282624399D00C399A5 /* monitor_fdpass.c in Sources */,
 				22A3735E21CB961900230846 /* strtonum.c in Sources */,
 				2217ECD421CBA5F40049B382 /* entropy.c in Sources */,
 				228D203721CB9B9400A9B528 /* digest-openssl.c in Sources */,
+				2298773F2623800A002D3690 /* mac.c in Sources */,
 				228D204921CB9DCC00A9B528 /* addrmatch.c in Sources */,
 				224AAC5C21CB931300F8C22F /* reallocarray.c in Sources */,
 				228D204121CB9CD000A9B528 /* match.c in Sources */,
 				224AAC5721CB920500F8C22F /* xmalloc.c in Sources */,
+				229876792621A408002D3690 /* port-net.c in Sources */,
+				2298773526237FC3002D3690 /* nchan.c in Sources */,
 				228D205721CBA0D400A9B528 /* chacha.c in Sources */,
 				228D204721CB9D6A00A9B528 /* authfile.c in Sources */,
+				224A4B9626243ECE00C399A5 /* kexsntrup761x25519.c in Sources */,
 				2217ECE621CBBB620049B382 /* ge25519.c in Sources */,
+				2298779C2623834E002D3690 /* readconf.c in Sources */,
+				2298777826238188002D3690 /* sshconnect2.c in Sources */,
 				228D205321CBA08900A9B528 /* cipher.c in Sources */,
+				229876972621AB57002D3690 /* ssh-ed25519-sk.c in Sources */,
 				223A5CC421CB8DB90022B5D5 /* log.c in Sources */,
 				228D204321CB9D1300A9B528 /* sshbuf-getput-crypto.c in Sources */,
 				228D205921CBA0F100A9B528 /* poly1305.c in Sources */,
 				2217ECEC21CBBC190049B382 /* fe25519.c in Sources */,
+				229877532623810D002D3690 /* umac128.c in Sources */,
 				228D204521CB9D3E00A9B528 /* ssh-ecdsa.c in Sources */,
 				22A3736421CB97B200230846 /* sshbuf-getput-basic.c in Sources */,
 				2217ECD621CBA6240049B382 /* openssl-compat.c in Sources */,
+				2298764F2621A0E8002D3690 /* sshsig.c in Sources */,
 				224AAC5521CB917E00F8C22F /* ssherr.c in Sources */,
-				22F6A1A720683E1200E618F9 /* ssh_main.c in Sources */,
+				224A4B3C26243C1D00C399A5 /* fmt_scaled.c in Sources */,
+				229876832621A861002D3690 /* libressl-api-compat.c in Sources */,
+				224A4B8C26243EA000C399A5 /* kexc25519.c in Sources */,
+				229876652621A2D8002D3690 /* ssh-sk.c in Sources */,
+				229876BF2621E947002D3690 /* recallocarray.c in Sources */,
 				2261379621F0E5C40097B3A0 /* bsd-setres_id.c in Sources */,
 				2261379821F0E5DE0097B3A0 /* vis.c in Sources */,
 				22A3736621CB97E600230846 /* ssh-rsa.c in Sources */,
+				224A4B7826243E6200C399A5 /* kexecdh.c in Sources */,
 				228D204F21CB9EE600A9B528 /* getrrsetbyname.c in Sources */,
+				229876642621A2D8002D3690 /* ssh-sk-client.c in Sources */,
+				224A4B6E26243E1400C399A5 /* kexgex.c in Sources */,
 				22A3736021CB96FC00230846 /* sshbuf.c in Sources */,
 				228D205521CBA0AD00A9B528 /* cipher-chachapoly.c in Sources */,
 				2217ECE421CBBACD0049B382 /* hash.c in Sources */,
 				2217ECDE21CBA7EA0049B382 /* ssh-dss.c in Sources */,
+				2298776E2623814E002D3690 /* umac.c in Sources */,
 				2217ECE021CBBA700049B382 /* bcrypt_pbkdf.c in Sources */,
+				229877A626238C04002D3690 /* compat.c in Sources */,
 				224AAC6021CB93AE00F8C22F /* readpass.c in Sources */,
 				2217ECDA21CBA7740049B382 /* ssh-ed25519.c in Sources */,
+				2298766F2621A3B2002D3690 /* platform-misc.c in Sources */,
+				229876F9262345B9002D3690 /* channels.c in Sources */,
 				228D203321CB9B2100A9B528 /* hostfile.c in Sources */,
-				2261379E21F0E7400097B3A0 /* rsa.c in Sources */,
 				22A3736A21CB986900230846 /* sshkey.c in Sources */,
+				224A4B8226243E8600C399A5 /* kexdh.c in Sources */,
 				228D204D21CB9E5F00A9B528 /* bsd-misc.c in Sources */,
-				2261379C21F0E70F0097B3A0 /* uidswap.c in Sources */,
 				228D203521CB9B5D00A9B528 /* hmac.c in Sources */,
+				2298772126234732002D3690 /* kex.c in Sources */,
 				2217ECE221CBBA970049B382 /* blowfish.c in Sources */,
+				229876E52623449C002D3690 /* packet.c in Sources */,
+				224A4B6426243DC800C399A5 /* dh.c in Sources */,
 				2217ECDC21CBA79B0049B382 /* ed25519.c in Sources */,
+				229876592621A134002D3690 /* authfd.c in Sources */,
+				2298768D2621AB04002D3690 /* ssh-ecdsa-sk.c in Sources */,
+				22987717262346DB002D3690 /* dispatch.c in Sources */,
+				224A4B5A26243D2C00C399A5 /* kexgexc.c in Sources */,
 				228D205121CBA02900A9B528 /* atomicio.c in Sources */,
+				229876B52621B232002D3690 /* sshbuf-io.c in Sources */,
+				224A4B4626243CAF00C399A5 /* platform-pledge.c in Sources */,
 				22A3736C21CB99EB00230846 /* misc.c in Sources */,
+				229876DB26234459002D3690 /* clientloop.c in Sources */,
 				2261379A21F0E5FE0097B3A0 /* readpassphrase.c in Sources */,
+				224A4B5026243CF800C399A5 /* kexgen.c in Sources */,
+				224A4BA8262441C100C399A5 /* smult_curve25519_ref.c in Sources */,
 				2217ECEA21CBBBEF0049B382 /* sc25519.c in Sources */,
 				228D203D21CB9C5700A9B528 /* bitmap.c in Sources */,
 				223A5CC221CB82B70022B5D5 /* ssh-keygen.c in Sources */,
+				229877492623809B002D3690 /* canohost.c in Sources */,
 				22A3735C21CB959D00230846 /* moduli.c in Sources */,
-				22A3736821CB983500230846 /* uuencode.c in Sources */,
-				2261379121F0E5860097B3A0 /* port-tun.c in Sources */,
+				2298761D2620C16C002D3690 /* fatal.c in Sources */,
 				2217ECE821CBBBBD0049B382 /* verify.c in Sources */,
 				D285147025B1E4BF003405B4 /* freezero.c in Sources */,
-				226137A021F0E7870097B3A0 /* blocks.c in Sources */,
+				229876AB2621B139002D3690 /* msg.c in Sources */,
+				2298770D26234678002D3690 /* ttymodes.c in Sources */,
 				2217ECD821CBA7520049B382 /* sshbuf-misc.c in Sources */,
+				22987792262382EE002D3690 /* gss-genr.c in Sources */,
+				2298770326234649002D3690 /* sshtty.c in Sources */,
 				228D203F21CB9C9000A9B528 /* ssh-pkcs11.c in Sources */,
+				224A4B3226243A3700C399A5 /* glob.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

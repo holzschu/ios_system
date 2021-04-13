@@ -1,4 +1,4 @@
-/* $OpenBSD: dns.c,v 1.35 2015/08/20 22:32:42 deraadt Exp $ */
+/* $OpenBSD: dns.c,v 1.39 2020/10/18 11:32:01 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -34,7 +34,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 #include <stdlib.h>
 
 #include "xmalloc.h"
@@ -43,7 +42,6 @@
 #include "dns.h"
 #include "log.h"
 #include "digest.h"
-#include "ios_error.h"
 
 static const char *errset_text[] = {
 	"success",		/* 0 ERRSET_SUCCESS */
@@ -106,6 +104,11 @@ dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
 		if (!*digest_type)
 			*digest_type = SSHFP_HASH_SHA256;
 		break;
+	case KEY_XMSS:
+		*algorithm = SSHFP_KEY_XMSS;
+		if (!*digest_type)
+			*digest_type = SSHFP_HASH_SHA256;
+		break;
 	default:
 		*algorithm = SSHFP_KEY_RESERVED; /* 0 */
 		*digest_type = SSHFP_HASH_RESERVED; /* 0 */
@@ -124,10 +127,9 @@ dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
 
 	if (*algorithm && *digest_type) {
 		if ((r = sshkey_fingerprint_raw(key, fp_alg, digest,
-                                        digest_len)) != 0)
-			fatal("%s: sshkey_fingerprint_raw: %s", __func__,
-			   ssh_err(r));
-        success = 1;
+		    digest_len)) != 0)
+			fatal_fr(r, "sshkey_fingerprint_raw");
+		success = 1;
 	} else {
 		*digest = NULL;
 		*digest_len = 0;
@@ -222,8 +224,8 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 	*flags = 0;
 
 	debug3("verify_host_key_dns");
-    if (hostkey == NULL)
-        fatal("No key to look up!");
+	if (hostkey == NULL)
+		fatal("No key to look up!");
 
 	if (is_numeric_hostname(hostname)) {
 		debug("skipped DNS lookup for numerical hostname");
@@ -345,7 +347,7 @@ export_dns_rr(const char *hostname, struct sshkey *key, FILE *f, int generic)
 
 	/* No SSHFP record was generated at all */
 	if (success == 0) {
-		error("%s: unsupported algorithm and/or digest_type", __func__);
+		error_f("unsupported algorithm and/or digest_type");
 	}
 
 	return success;

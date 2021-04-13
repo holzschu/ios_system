@@ -131,7 +131,8 @@
 #define DISABLE_WTMPX 1
 
 /* Enable for PKCS#11 support */
-#define ENABLE_PKCS11 /**/
+// iOS: relies on dlopen(), so no.
+#undef ENABLE_PKCS11
 
 /* File names may not contain backslash characters */
 /* #undef FILESYSTEM_NO_BACKSLASH */
@@ -251,7 +252,13 @@
 #define HAVE_BSM_AUDIT_H 1
 
 /* Define to 1 if you have the <bstring.h> header file. */
-/* #undef HAVE_BSTRING_H */
+#undef HAVE_BSTRING_H
+
+/* Define to 1 if you have the `bzero' function. */
+#define HAVE_BZERO 1
+
+/* calloc(0, x) returns NULL */
+#undef HAVE_CALLOC
 
 /* Define to 1 if you have the `cap_rights_limit' function. */
 /* #undef HAVE_CAP_RIGHTS_LIMIT */
@@ -295,7 +302,15 @@
 
 /* Define to 1 if you have the declaration of `authenticate', and to 0 if you
    don't. */
-/* #undef HAVE_DECL_AUTHENTICATE */
+#undef HAVE_DECL_AUTHENTICATE
+
+/* Define to 1 if you have the declaration of `bzero', and to 0 if you don't.
+   */
+#undef HAVE_DECL_BZERO
+
+/* Define to 1 if you have the declaration of `getpeereid', and to 0 if you
+   don't. */
+#undef HAVE_DECL_GETPEEREID
 
 /* Define to 1 if you have the declaration of `GLOB_NOMATCH', and to 0 if you
    don't. */
@@ -372,7 +387,22 @@
 #define HAVE_DEV_PTMX 1
 
 /* Define if you have /dev/ptc */
-/* #undef HAVE_DEV_PTS_AND_PTC */
+#undef HAVE_DEV_PTS_AND_PTC
+
+/* Define to 1 if you have the `DH_get0_key' function. */
+#define HAVE_DH_GET0_KEY 1
+
+/* Define to 1 if you have the `DH_get0_pqg' function. */
+#define HAVE_DH_GET0_PQG 1
+
+/* Define to 1 if you have the `DH_set0_key' function. */
+#define HAVE_DH_SET0_KEY 1
+
+/* Define to 1 if you have the `DH_set0_pqg' function. */
+#define HAVE_DH_SET0_PQG 1
+
+/* Define to 1 if you have the `DH_set_length' function. */
+#define HAVE_DH_SET_LENGTH 1
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
@@ -384,7 +414,34 @@
 #define HAVE_DIRNAME 1
 
 /* Define to 1 if you have the `DSA_generate_parameters_ex' function. */
-#define HAVE_DSA_GENERATE_PARAMETERS_EX 1
+#undef HAVE_DSA_GENERATE_PARAMETERS_EX
+
+/* Define to 1 if you have the `DSA_get0_key' function. */
+#define HAVE_DSA_GET0_KEY 1
+
+/* Define to 1 if you have the `DSA_get0_pqg' function. */
+#define HAVE_DSA_GET0_PQG 1
+
+/* Define to 1 if you have the `DSA_set0_key' function. */
+#define HAVE_DSA_SET0_KEY 1
+
+/* Define to 1 if you have the `DSA_set0_pqg' function. */
+#define HAVE_DSA_SET0_PQG &
+
+/* Define to 1 if you have the `DSA_SIG_get0' function. */
+#define HAVE_DSA_SIG_GET0 1
+
+/* Define to 1 if you have the `DSA_SIG_set0' function. */
+#define HAVE_DSA_SIG_SET0 1
+
+/* Define to 1 if you have the `ECDSA_SIG_get0' function. */
+#define HAVE_ECDSA_SIG_GET0 1
+
+/* Define to 1 if you have the `ECDSA_SIG_set0' function. */
+#define HAVE_ECDSA_SIG_SET0 1
+
+/* Define to 1 if you have the `EC_KEY_METHOD_new' function. */
+#undef HAVE_EC_KEY_METHOD_NEW
 
 /* Define to 1 if you have the <elf.h> header file. */
 /* #undef HAVE_ELF_H */
@@ -438,16 +495,28 @@
 #define HAVE_EVP_MD_CTX_CLEANUP 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_copy_ex' function. */
-#define HAVE_EVP_MD_CTX_COPY_EX 1
+#undef HAVE_EVP_MD_CTX_COPY_EX
+
+/* Define to 1 if you have the `EVP_MD_CTX_free' function. */
+#define HAVE_EVP_MD_CTX_FREE 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_init' function. */
-#define HAVE_EVP_MD_CTX_INIT 1
+#undef HAVE_EVP_MD_CTX_INIT
 
-/* Define to 1 if you have the `EVP_ripemd160' function. */
-#define HAVE_EVP_RIPEMD160 1
+/* Define to 1 if you have the `EVP_MD_CTX_new' function. */
+#define HAVE_EVP_MD_CTX_NEW 1
+
+/* Define to 1 if you have the `EVP_PKEY_get0_RSA' function. */
+#define HAVE_EVP_PKEY_GET0_RSA 1
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #define HAVE_EVP_SHA256 1
+
+/* Define to 1 if you have the `EVP_sha384' function. */
+#define HAVE_EVP_SHA384 1
+
+/* Define to 1 if you have the `EVP_sha512' function. */
+#define HAVE_EVP_SHA512 1
 
 /* Define if you have ut_exit in utmp.h */
 /* #undef HAVE_EXIT_IN_UTMP */
@@ -609,16 +678,16 @@
 /* #undef HAVE_GSSAPI_GENERIC_H */
 
 /* Define to 1 if you have the <gssapi/gssapi_generic.h> header file. */
-#define HAVE_GSSAPI_GSSAPI_GENERIC_H 1
+#undef HAVE_GSSAPI_GSSAPI_GENERIC_H
 
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
-#define HAVE_GSSAPI_GSSAPI_H 1
+#undef HAVE_GSSAPI_GSSAPI_H
 
 /* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
 #define HAVE_GSSAPI_GSSAPI_KRB5_H 1
 
 /* Define to 1 if you have the <gssapi.h> header file. */
-#define HAVE_GSSAPI_H 1
+#undef HAVE_GSSAPI_H
 
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 /* #undef HAVE_GSSAPI_KRB5_H */
@@ -904,7 +973,10 @@
 /* #undef HAVE_PUTUTLINE */
 
 /* Define to 1 if you have the `pututxline' function. */
-#define HAVE_PUTUTXLINE 1
+#undef HAVE_PUTUTXLINE
+
+/* Define to 1 if you have the `raise' function. */
+#define HAVE_RAISE 1
 
 /* Define to 1 if you have the `readpassphrase' function. */
 // iOS: we have it, but it's useless
@@ -932,10 +1004,49 @@
 #define HAVE_RRESVPORT_AF 1
 
 /* Define to 1 if you have the `RSA_generate_key_ex' function. */
-#define HAVE_RSA_GENERATE_KEY_EX 1
+#undef HAVE_RSA_GENERATE_KEY_EX
+
+/* Define to 1 if you have the `RSA_get0_crt_params' function. */
+#define HAVE_RSA_GET0_CRT_PARAMS 1
+
+/* Define to 1 if you have the `RSA_get0_factors' function. */
+#define HAVE_RSA_GET0_FACTORS 1
+
+/* Define to 1 if you have the `RSA_get0_key' function. */
+#define HAVE_RSA_GET0_KEY 1
 
 /* Define to 1 if you have the `RSA_get_default_method' function. */
-#define HAVE_RSA_GET_DEFAULT_METHOD 1
+#undef HAVE_RSA_GET_DEFAULT_METHOD
+
+/* Define to 1 if you have the `RSA_meth_dup' function. */
+#define HAVE_RSA_METH_DUP 1
+
+/* Define to 1 if you have the `RSA_meth_free' function. */
+#define HAVE_RSA_METH_FREE 1
+
+/* Define to 1 if you have the `RSA_meth_get_finish' function. */
+#define HAVE_RSA_METH_GET_FINISH 1
+
+/* Define to 1 if you have the `RSA_meth_set1_name' function. */
+#define HAVE_RSA_METH_SET1_NAME 1
+
+/* Define to 1 if you have the `RSA_meth_set_finish' function. */
+#define HAVE_RSA_METH_SET_FINISH 1
+
+/* Define to 1 if you have the `RSA_meth_set_priv_dec' function. */
+#define HAVE_RSA_METH_SET_PRIV_DEC 1
+
+/* Define to 1 if you have the `RSA_meth_set_priv_enc' function. */
+#define HAVE_RSA_METH_SET_PRIV_ENC 1
+
+/* Define to 1 if you have the `RSA_set0_crt_params' function. */
+#define HAVE_RSA_SET0_CRT_PARAMS 1
+
+/* Define to 1 if you have the `RSA_set0_factors' function. */
+#define HAVE_RSA_SET0_FACTORS 1
+
+/* Define to 1 if you have the `RSA_set0_key' function. */
+#define HAVE_RSA_SET0_KEY 1
 
 /* Define to 1 if you have the <sandbox.h> header file. */
 #define HAVE_SANDBOX_H 1

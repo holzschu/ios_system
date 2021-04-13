@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.49 2017/03/10 03:15:58 djm Exp $ */
+/* $OpenBSD: log.c,v 1.56 2020/12/04 02:25:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,6 +35,10 @@
  */
 
 #include "includes.h"
+#if TARGET_OS_IPHONE
+#undef STDERR_FILENO
+#define STDERR_FILENO 2
+#endif
 
 #include <sys/types.h>
 
@@ -46,24 +50,22 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <errno.h>
-
 #if defined(HAVE_STRNVIS) && defined(HAVE_VIS_H) && !defined(BROKEN_STRNVIS)
 # include <vis.h>
 #endif
 
 #include "log.h"
-#include <TargetConditionals.h>
-#if TARGET_OS_IPHONE
-#include "ios_error.h"
-#endif
+#include "match.h"
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
-static int log_stderr_fd; 
+static int log_stderr_fd = STDERR_FILENO;
 static int log_facility = LOG_AUTH;
-static char *argv0;
+static const char *argv0;
 static log_handler_fn *log_handler;
 static void *log_handler_ctx;
+static char **log_verbose;
+static size_t nlog_verbose;
 
 extern char *ssh_progname;
 
@@ -109,6 +111,12 @@ static struct {
 	{ "DEBUG3",	SYSLOG_LEVEL_DEBUG3 },
 	{ NULL,		SYSLOG_LEVEL_NOT_SET }
 };
+
+LogLevel
+log_level_get(void)
+{
+	return log_level;
+}
 
 SyslogFacility
 log_facility_number(char *name)
@@ -156,96 +164,30 @@ log_level_name(LogLevel level)
 	return NULL;
 }
 
-/* Error messages that should be logged. */
-
 void
-error(const char *fmt,...)
+log_verbose_add(const char *s)
 {
-	va_list args;
+	char **tmp;
 
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_ERROR, fmt, args);
-	va_end(args);
+	/* Ignore failures here */
+	if ((tmp = recallocarray(log_verbose, nlog_verbose, nlog_verbose + 1,
+	    sizeof(*log_verbose))) != NULL) {
+		log_verbose = tmp;
+		if ((log_verbose[nlog_verbose] = strdup(s)) != NULL)
+			nlog_verbose++;
+	}
 }
 
 void
-sigdie(const char *fmt,...)
+log_verbose_reset(void)
 {
-#ifdef DO_LOG_SAFE_IN_SIGHAND
-	va_list args;
+	size_t i;
 
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
-	va_end(args);
-#endif
-    cleanup_exit(1);
-}
-
-/* void
-logdie(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_INFO, fmt, args);
-	va_end(args);
-	cleanup_exit(255);
-} */
-
-/* Log this message (information that usually should go to the log). */
-
-void
-logit(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_INFO, fmt, args);
-	va_end(args);
-}
-
-/* More detailed messages (information that does not need to go to the log). */
-
-void
-verbose(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_VERBOSE, fmt, args);
-	va_end(args);
-}
-
-/* Debugging messages that should not be logged during normal operation. */
-
-void
-debug(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_DEBUG1, fmt, args);
-	va_end(args);
-}
-
-void
-debug2(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_DEBUG2, fmt, args);
-	va_end(args);
-}
-
-void
-debug3(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_DEBUG3, fmt, args);
-	va_end(args);
+	for (i = 0; i < nlog_verbose; i++)
+		free(log_verbose[i]);
+	free(log_verbose);
+	log_verbose = NULL;
+	nlog_verbose = 0;
 }
 
 /*
@@ -253,40 +195,31 @@ debug3(const char *fmt,...)
  */
 
 void
-log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
+log_init(const char *av0, LogLevel level, SyslogFacility facility,
+    int on_stderr)
 {
 #if defined(HAVE_OPENLOG_R) && defined(SYSLOG_DATA_INIT)
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 #endif
 
-    log_stderr_fd = fileno(thread_stderr);
 	argv0 = av0;
 
-	switch (level) {
-	case SYSLOG_LEVEL_QUIET:
-	case SYSLOG_LEVEL_FATAL:
-	case SYSLOG_LEVEL_ERROR:
-	case SYSLOG_LEVEL_INFO:
-	case SYSLOG_LEVEL_VERBOSE:
-	case SYSLOG_LEVEL_DEBUG1:
-	case SYSLOG_LEVEL_DEBUG2:
-	case SYSLOG_LEVEL_DEBUG3:
-		log_level = level;
-		break;
-	default:
-		fprintf(thread_stderr, "Unrecognized internal syslog level code %d\n",
+	if (log_change_level(level) != 0) {
+		fprintf(stderr, "Unrecognized internal syslog level code %d\n",
 		    (int) level);
-		cleanup_exit(1);
+		exit(1);
 	}
 
 	log_handler = NULL;
 	log_handler_ctx = NULL;
 
 	log_on_stderr = on_stderr;
-    if (on_stderr) {
-        log_stderr_fd = fileno(thread_stderr);
+#if TARGET_OS_IPHONE
+    log_stderr_fd = fileno(thread_stderr);
+#endif
+
+	if (on_stderr)
 		return;
-    }
 
 	switch (facility) {
 	case SYSLOG_FACILITY_DAEMON:
@@ -328,10 +261,10 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 		log_facility = LOG_LOCAL7;
 		break;
 	default:
-		fprintf(thread_stderr,
+		fprintf(stderr,
 		    "Unrecognized internal syslog facility code %d\n",
 		    (int) facility);
-            cleanup_exit(1);
+		exit(1);
 	}
 
 	/*
@@ -348,13 +281,27 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 #endif
 }
 
-void
+int
 log_change_level(LogLevel new_log_level)
 {
 	/* no-op if log_init has not been called */
 	if (argv0 == NULL)
-		return;
-	log_init(argv0, new_log_level, log_facility, log_on_stderr);
+		return 0;
+
+	switch (new_log_level) {
+	case SYSLOG_LEVEL_QUIET:
+	case SYSLOG_LEVEL_FATAL:
+	case SYSLOG_LEVEL_ERROR:
+	case SYSLOG_LEVEL_INFO:
+	case SYSLOG_LEVEL_VERBOSE:
+	case SYSLOG_LEVEL_DEBUG1:
+	case SYSLOG_LEVEL_DEBUG2:
+	case SYSLOG_LEVEL_DEBUG3:
+		log_level = new_log_level;
+		return 0;
+	default:
+		return -1;
+	}
 }
 
 int
@@ -363,16 +310,24 @@ log_is_on_stderr(void)
 	return log_on_stderr && log_stderr_fd == fileno(thread_stderr);
 }
 
-/* redirect what would usually get written to thread_stderr to specified file */
+/* redirect what would usually get written to stderr to specified file */
 void
 log_redirect_stderr_to(const char *logfile)
 {
 	int fd;
 
+	if (logfile == NULL) {
+		if (log_stderr_fd != fileno(thread_stderr)) {
+			close(log_stderr_fd);
+			log_stderr_fd = fileno(thread_stderr);
+		}
+		return;
+	}
+
 	if ((fd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600)) == -1) {
-		fprintf(thread_stderr, "Couldn't open logfile %s: %s\n", logfile,
+		fprintf(stderr, "Couldn't open logfile %s: %s\n", logfile,
 		     strerror(errno));
-        cleanup_exit(1);
+		exit(1);
 	}
 	log_stderr_fd = fd;
 }
@@ -386,32 +341,21 @@ set_log_handler(log_handler_fn *handler, void *ctx)
 	log_handler_ctx = ctx;
 }
 
-void
-do_log2(LogLevel level, const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(level, fmt, args);
-	va_end(args);
-}
-
-void
-do_log(LogLevel level, const char *fmt, va_list args)
+static void
+do_log(const char *file, const char *func, int line, LogLevel level,
+    int force, const char *suffix, const char *fmt, va_list args)
 {
 #if defined(HAVE_OPENLOG_R) && defined(SYSLOG_DATA_INIT)
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 #endif
 	char msgbuf[MSGBUFSIZ];
 	char fmtbuf[MSGBUFSIZ];
-    explicit_bzero(fmtbuf, MSGBUFSIZ);
-    explicit_bzero(msgbuf, MSGBUFSIZ);
 	char *txt = NULL;
 	int pri = LOG_INFO;
 	int saved_errno = errno;
 	log_handler_fn *tmp_handler;
 
-	if (level > log_level)
+	if (!force && level > log_level)
 		return;
 
 	switch (level) {
@@ -454,13 +398,17 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	} else {
 		vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
 	}
+	if (suffix != NULL) {
+		snprintf(fmtbuf, sizeof(fmtbuf), "%s: %s", msgbuf, suffix);
+		strlcpy(msgbuf, fmtbuf, sizeof(msgbuf));
+	}
 	strnvis(fmtbuf, msgbuf, sizeof(fmtbuf),
 	    log_on_stderr ? LOG_STDERR_VIS : LOG_SYSLOG_VIS);
 	if (log_handler != NULL) {
 		/* Avoid recursion */
 		tmp_handler = log_handler;
 		log_handler = NULL;
-		tmp_handler(level, fmtbuf, log_handler_ctx);
+		tmp_handler(file, func, line, level, fmtbuf, log_handler_ctx);
 		log_handler = tmp_handler;
 	} else if (log_on_stderr) {
 		snprintf(msgbuf, sizeof msgbuf, "%.*s\r\n",
@@ -473,14 +421,79 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		closelog_r(&sdata);
 #else
 #if !TARGET_OS_IPHONE
-        openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
+		openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
 		syslog(pri, "%.500s", fmtbuf);
 		closelog();
 #else
         fprintf(thread_stderr, "%s (%s): ", argv0 ? argv0 : ssh_progname, log_facilities[log_facility].name);
-        fprintf(thread_stderr, "%.500s", fmtbuf);
+        fprintf(thread_stderr, "%.500s\n", fmtbuf);
 #endif
 #endif
 	}
 	errno = saved_errno;
+}
+
+void
+sshlog(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sshlogv(file, func, line, showfunc, level, suffix, fmt, args);
+	va_end(args);
+}
+
+void
+sshlogdie(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sshlogv(file, func, line, showfunc, SYSLOG_LEVEL_INFO,
+	    suffix, fmt, args);
+	va_end(args);
+	cleanup_exit(255);
+}
+
+void
+sshsigdie(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sshlogv(file, func, line, showfunc, SYSLOG_LEVEL_FATAL,
+	    suffix, fmt, args);
+	va_end(args);
+	_exit(1);
+}
+
+void
+sshlogv(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, va_list args)
+{
+	char tag[128], fmt2[MSGBUFSIZ + 128];
+	int forced = 0;
+	const char *cp;
+	size_t i;
+
+	snprintf(tag, sizeof(tag), "%.48s:%.48s():%d",
+	    (cp = strrchr(file, '/')) == NULL ? file : cp + 1, func, line);
+	for (i = 0; i < nlog_verbose; i++) {
+		if (match_pattern_list(tag, log_verbose[i], 0) == 1) {
+			forced = 1;
+			break;
+		}
+	}
+
+	if (log_handler == NULL && forced)
+		snprintf(fmt2, sizeof(fmt2), "%s: %s", tag, fmt);
+	else if (showfunc)
+		snprintf(fmt2, sizeof(fmt2), "%s: %s", func, fmt);
+	else
+		strlcpy(fmt2, fmt, sizeof(fmt2));
+
+	do_log(file, func, line, level, forced, suffix, fmt2, args);
 }

@@ -25,28 +25,29 @@
 # include <sys/time.h>
 #endif
 
+#include <fcntl.h>
 #include <string.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-#include "log.h"
 
 #ifndef HAVE___PROGNAME
 char *ssh_progname;
 #endif
 
 /*
- * NB. duplicate ssh_progname in case it is an alias for argv[0]
+ * NB. duplicate __progname in case it is an alias for argv[0]
  * Otherwise it may get clobbered by setproctitle()
  */
 char *ssh_get_progname(char *argv0)
 {
 	char *p, *q;
 #ifdef HAVE___PROGNAME
-	extern char *ssh_progname;
+	extern char *__progname;
 
-	p = ssh_progname;
+	p = __progname;
 #else
 	if (argv0 == NULL)
 		return ("unknown");	/* XXX */
@@ -58,7 +59,7 @@ char *ssh_get_progname(char *argv0)
 #endif
 	if ((q = strdup(p)) == NULL) {
 		perror("strdup");
-		cleanup_exit(1);
+		exit(1);
 	}
 	return q;
 }
@@ -114,6 +115,108 @@ int utimes(char *filename, struct timeval *tvp)
 	ub.modtime = tvp[1].tv_sec;
 
 	return (utime(filename, &ub));
+}
+#endif
+
+#ifndef HAVE_UTIMENSAT
+/*
+ * A limited implementation of utimensat() that only implements the
+ * functionality used by OpenSSH, currently only AT_FDCWD and
+ * AT_SYMLINK_NOFOLLOW.
+ */
+int
+utimensat(int fd, const char *path, const struct timespec times[2],
+    int flag)
+{
+	struct timeval tv[2];
+# ifdef HAVE_FUTIMES
+	int ret, oflags = O_WRONLY;
+# endif
+
+	tv[0].tv_sec = times[0].tv_sec;
+	tv[0].tv_usec = times[0].tv_nsec / 1000;
+	tv[1].tv_sec = times[1].tv_sec;
+	tv[1].tv_usec = times[1].tv_nsec / 1000;
+
+	if (fd != AT_FDCWD) {
+		errno = ENOSYS;
+		return -1;
+	}
+# ifndef HAVE_FUTIMES
+	return utimes(path, tv);
+# else
+#  ifdef O_NOFOLLOW
+	if (flag & AT_SYMLINK_NOFOLLOW)
+		oflags |= O_NOFOLLOW;
+#  endif /* O_NOFOLLOW */
+	if ((fd = open(path, oflags)) == -1)
+		return -1;
+	ret = futimes(fd, tv);
+	close(fd);
+	return ret;
+# endif
+}
+#endif
+
+#ifndef HAVE_FCHOWNAT
+/*
+ * A limited implementation of fchownat() that only implements the
+ * functionality used by OpenSSH, currently only AT_FDCWD and
+ * AT_SYMLINK_NOFOLLOW.
+ */
+int
+fchownat(int fd, const char *path, uid_t owner, gid_t group, int flag)
+{
+	int ret, oflags = O_WRONLY;
+
+	if (fd != AT_FDCWD) {
+		errno = ENOSYS;
+		return -1;
+	}
+# ifndef HAVE_FCHOWN
+	return chown(path, owner, group);
+# else
+#  ifdef O_NOFOLLOW
+	if (flag & AT_SYMLINK_NOFOLLOW)
+		oflags |= O_NOFOLLOW;
+#  endif /* O_NOFOLLOW */
+	if ((fd = open(path, oflags)) == -1)
+		return -1;
+	ret = fchown(fd, owner, group);
+	close(fd);
+	return ret;
+# endif
+}
+#endif
+
+#ifndef HAVE_FCHMODAT
+/*
+ * A limited implementation of fchmodat() that only implements the
+ * functionality used by OpenSSH, currently only AT_FDCWD and
+ * AT_SYMLINK_NOFOLLOW.
+ */
+int
+fchmodat(int fd, const char *path, mode_t mode, int flag)
+{
+	int ret, oflags = O_WRONLY;
+
+	if (fd != AT_FDCWD) {
+		errno = ENOSYS;
+		return -1;
+	}
+# ifndef HAVE_FCHMOD
+	return chmod(path, mode);
+# else
+#  ifdef O_NOFOLLOW
+	if (flag & AT_SYMLINK_NOFOLLOW)
+		oflags |= O_NOFOLLOW;
+#  endif /* O_NOFOLLOW */
+	if ((fd = open(path, oflags)) == -1)
+		return -1;
+	ret = fchmod(fd, mode);
+	close(fd);
+	return ret;
+# endif
 }
 #endif
 
@@ -212,33 +315,6 @@ tcsendbreak(int fd, int duration)
 }
 #endif /* HAVE_TCSENDBREAK */
 
-mysig_t
-mysignal(int sig, mysig_t act)
-{
-#ifdef HAVE_SIGACTION
-	struct sigaction sa, osa;
-
-	if (sigaction(sig, NULL, &osa) == -1)
-		return (mysig_t) -1;
-	if (osa.sa_handler != act) {
-		memset(&sa, 0, sizeof(sa));
-		sigemptyset(&sa.sa_mask);
-		sa.sa_flags = 0;
-#ifdef SA_INTERRUPT
-		if (sig == SIGALRM)
-			sa.sa_flags |= SA_INTERRUPT;
-#endif
-		sa.sa_handler = act;
-		if (sigaction(sig, &sa, NULL) == -1)
-			return (mysig_t) -1;
-	}
-	return (osa.sa_handler);
-#else
-	#undef signal
-	return (signal(sig, act));
-#endif
-}
-
 #ifndef HAVE_STRDUP
 char *
 strdup(const char *str)
@@ -266,7 +342,7 @@ isblank(int c)
 pid_t
 getpgid(pid_t pid)
 {
-#if defined(HAVE_GETPGRP) && !defined(GETPGRP_VOID)
+#if defined(HAVE_GETPGRP) && !defined(GETPGRP_VOID) && GETPGRP_VOID == 0
 	return getpgrp(pid);
 #elif defined(HAVE_GETPGRP)
 	if (pid == 0)
@@ -308,5 +384,57 @@ long long
 llabs(long long j)
 {
 	return (j < 0 ? -j : j);
+}
+#endif
+
+#ifndef HAVE_BZERO
+void
+bzero(void *b, size_t n)
+{
+	(void)memset(b, 0, n);
+}
+#endif
+
+#ifndef HAVE_RAISE
+int
+raise(int sig)
+{
+	kill(getpid(), sig);
+}
+#endif
+
+#ifndef HAVE_GETSID
+pid_t
+getsid(pid_t pid)
+{
+	errno = ENOSYS;
+	return -1;
+}
+#endif
+
+#ifdef FFLUSH_NULL_BUG
+#undef fflush
+int _ssh_compat_fflush(FILE *f)
+{
+	int r1, r2;
+
+	if (f == NULL) {
+		r1 = fflush(stdout);
+		r2 = fflush(stderr);
+		if (r1 == -1 || r2 == -1)
+			return -1;
+		return 0;
+	}
+	return fflush(f);
+}
+#endif
+
+#ifndef HAVE_LOCALTIME_R
+struct tm *
+localtime_r(const time_t *timep, struct tm *result)
+{
+	struct tm *tm = localtime(timep);
+	*result = *tm;
+	return result;
 }
 #endif

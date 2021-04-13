@@ -1,4 +1,4 @@
-/* $OpenBSD: digest-openssl.c,v 1.6 2017/03/10 02:59:51 dtucker Exp $ */
+/* $OpenBSD: digest-openssl.c,v 1.9 2020/10/29 02:52:43 djm Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  *
@@ -32,14 +32,15 @@
 #include "digest.h"
 #include "ssherr.h"
 
-#ifndef HAVE_EVP_RIPEMD160
-# define EVP_ripemd160 NULL
-#endif /* HAVE_EVP_RIPEMD160 */
 #ifndef HAVE_EVP_SHA256
 # define EVP_sha256 NULL
+#endif
+#ifndef HAVE_EVP_SHA384
 # define EVP_sha384 NULL
+#endif
+#ifndef HAVE_EVP_SHA512
 # define EVP_sha512 NULL
-#endif /* HAVE_EVP_SHA256 */
+#endif
 
 struct ssh_digest_ctx {
 	int alg;
@@ -55,12 +56,11 @@ struct ssh_digest {
 
 /* NB. Indexed directly by algorithm number */
 const struct ssh_digest digests[] = {
-	{ SSH_DIGEST_MD5,	"MD5",	 	16,	EVP_md5 },
-	{ SSH_DIGEST_RIPEMD160,	"RIPEMD160",	20,	EVP_ripemd160 },
-	{ SSH_DIGEST_SHA1,	"SHA1",	 	20,	EVP_sha1 },
-	{ SSH_DIGEST_SHA256,	"SHA256", 	32,	EVP_sha256 },
+	{ SSH_DIGEST_MD5,	"MD5",		16,	EVP_md5 },
+	{ SSH_DIGEST_SHA1,	"SHA1",		20,	EVP_sha1 },
+	{ SSH_DIGEST_SHA256,	"SHA256",	32,	EVP_sha256 },
 	{ SSH_DIGEST_SHA384,	"SHA384",	48,	EVP_sha384 },
-	{ SSH_DIGEST_SHA512,	"SHA512", 	64,	EVP_sha512 },
+	{ SSH_DIGEST_SHA512,	"SHA512",	64,	EVP_sha512 },
 	{ -1,			NULL,		0,	NULL },
 };
 
@@ -119,14 +119,14 @@ ssh_digest_start(int alg)
 	if (digest == NULL || ((ret = calloc(1, sizeof(*ret))) == NULL))
 		return NULL;
 	ret->alg = alg;
-  if ((ret->mdctx = EVP_MD_CTX_new()) == NULL) {
+	if ((ret->mdctx = EVP_MD_CTX_new()) == NULL) {
 		free(ret);
 		return NULL;
 	}
-  if (EVP_DigestInit_ex(ret->mdctx, digest->mdfunc(), NULL) != 1) {
-    ssh_digest_free(ret);
-    return NULL;
-  }
+	if (EVP_DigestInit_ex(ret->mdctx, digest->mdfunc(), NULL) != 1) {
+		ssh_digest_free(ret);
+		return NULL;
+	}
 	return ret;
 }
 
@@ -175,11 +175,10 @@ ssh_digest_final(struct ssh_digest_ctx *ctx, u_char *d, size_t dlen)
 void
 ssh_digest_free(struct ssh_digest_ctx *ctx)
 {
-  if (ctx == NULL)
-       return;
-  EVP_MD_CTX_free(ctx->mdctx);
-  explicit_bzero(ctx, sizeof(*ctx));
-  free(ctx);
+	if (ctx == NULL)
+		return;
+	EVP_MD_CTX_free(ctx->mdctx);
+	freezero(ctx, sizeof(*ctx));
 }
 
 int

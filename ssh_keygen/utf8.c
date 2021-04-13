@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.5 2017/02/19 00:10:57 djm Exp $ */
+/* $OpenBSD: utf8.c,v 1.11 2020/05/01 06:28:52 djm Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -40,11 +40,9 @@
 #endif
 
 #include "utf8.h"
-#include "ios_error.h"
 
 static int	 dangerous_locale(void);
 static int	 grow_dst(char **, size_t *, size_t, char **, size_t);
-static int	 vasnmprintf(char **, size_t, int *, const char *, va_list);
 
 
 /*
@@ -54,6 +52,8 @@ static int	 vasnmprintf(char **, size_t, int *, const char *, va_list);
  * For state-dependent encodings, recovery is impossible.
  * For arbitrary encodings, replacement of non-printable
  * characters would be non-trivial and too fragile.
+ * The comments indicate what nl_langinfo(CODESET)
+ * returns for US-ASCII on various operating systems.
  */
 
 static int
@@ -61,8 +61,12 @@ dangerous_locale(void) {
 	char	*loc;
 
 	loc = nl_langinfo(CODESET);
-	return strcmp(loc, "US-ASCII") != 0 && strcmp(loc, "UTF-8") != 0 &&
-	    strcmp(loc, "ANSI_X3.4-1968") != 0 && strcmp(loc, "646") != 0;
+	return strcmp(loc, "UTF-8") != 0 &&
+	    strcmp(loc, "US-ASCII") != 0 &&		/* OpenBSD */
+	    strcmp(loc, "ANSI_X3.4-1968") != 0 &&	/* Linux */
+	    strcmp(loc, "ISO8859-1") != 0 &&		/* AIX */
+	    strcmp(loc, "646") != 0 &&			/* Solaris, NetBSD */
+	    strcmp(loc, "") != 0;			/* Solaris 6 */
 }
 
 static int
@@ -76,7 +80,7 @@ grow_dst(char **dst, size_t *sz, size_t maxsz, char **dp, size_t need)
 	tsz = *sz + 128;
 	if (tsz > maxsz)
 		tsz = maxsz;
-	if ((tp = realloc(*dst, tsz)) == NULL)
+	if ((tp = recallocarray(*dst, *sz, tsz, 1)) == NULL)
 		return -1;
 	*dp = tp + (*dp - *dst);
 	*dst = tp;
@@ -96,7 +100,7 @@ grow_dst(char **dst, size_t *sz, size_t maxsz, char **dp, size_t need)
  * written is returned in *wp.
  */
 
-static int
+int
 vasnmprintf(char **str, size_t maxsz, int *wp, const char *fmt, va_list ap)
 {
 	char	*src;	/* Source string returned from vasprintf. */
@@ -236,7 +240,7 @@ int
 snmprintf(char *str, size_t sz, int *wp, const char *fmt, ...)
 {
 	va_list	 ap;
-	char	*cp;
+	char	*cp = NULL;
 	int	 ret;
 
 	va_start(ap, fmt);
@@ -250,6 +254,20 @@ snmprintf(char *str, size_t sz, int *wp, const char *fmt, ...)
 	return ret;
 }
 
+int
+asmprintf(char **outp, size_t sz, int *wp, const char *fmt, ...)
+{
+	va_list	 ap;
+	int	 ret;
+
+	*outp = NULL;
+	va_start(ap, fmt);
+	ret = vasnmprintf(outp, sz, wp, fmt, ap);
+	va_end(ap);
+
+	return ret;
+}
+
 /*
  * To stay close to the standard interfaces, the following functions
  * return the number of non-NUL bytes written.
@@ -258,11 +276,13 @@ snmprintf(char *str, size_t sz, int *wp, const char *fmt, ...)
 int
 vfmprintf(FILE *stream, const char *fmt, va_list ap)
 {
-	char	*str;
+	char	*str = NULL;
 	int	 ret;
 
-	if ((ret = vasnmprintf(&str, INT_MAX, NULL, fmt, ap)) < 0)
+	if ((ret = vasnmprintf(&str, INT_MAX, NULL, fmt, ap)) < 0) {
+		free(str);
 		return -1;
+	}
 	if (fputs(str, stream) == EOF)
 		ret = -1;
 	free(str);
@@ -288,7 +308,7 @@ mprintf(const char *fmt, ...)
 	int	 ret;
 
 	va_start(ap, fmt);
-	ret = vfmprintf(thread_stdout, fmt, ap);
+	ret = vfmprintf(stdout, fmt, ap);
 	va_end(ap);
 	return ret;
 }

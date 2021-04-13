@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.h,v 1.83 2015/12/11 03:19:09 djm Exp $ */
+/* $OpenBSD: ssh.h,v 1.90 2020/07/14 23:57:01 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -31,13 +31,6 @@
 #define SSH_MAX_IDENTITY_FILES		100
 
 /*
- * Maximum length of lines in authorized_keys file.
- * Current value permits 16kbit RSA and RSA1 keys and 8kbit DSA keys, with
- * some room for options and comments.
- */
-#define SSH_MAX_PUBKEY_BYTES		16384
-
-/*
  * Major protocol version.  Different version indicates major incompatibility
  * that prevents communication.
  *
@@ -47,7 +40,7 @@
 #define PROTOCOL_MAJOR_1	1
 #define PROTOCOL_MINOR_1	5
 
-/* We support both SSH1 and SSH2 */
+/* We support only SSH2 */
 #define PROTOCOL_MAJOR_2	2
 #define PROTOCOL_MINOR_2	0
 
@@ -75,6 +68,11 @@
 #define SSH_ASKPASS_ENV		"SSH_ASKPASS"
 
 /*
+ * Environment variable to control whether or not askpass is used.
+ */
+#define SSH_ASKPASS_REQUIRE_ENV		"SSH_ASKPASS_REQUIRE"
+
+/*
  * Force host key length and server key length to differ by at least this
  * many bits.  This is to make double encryption with rsaref work.
  */
@@ -98,8 +96,9 @@
 #define SSH_PRIVSEP_USER		"sshd"
 #endif
 
-/* Minimum modulus size (n) for RSA keys. */
-#define SSH_RSA_MINIMUM_MODULUS_SIZE	768
-
 /* Listen backlog for sshd, ssh-agent and forwarding sockets */
 #define SSH_LISTEN_BACKLOG		128
+
+/* Limits for banner exchange */
+#define SSH_MAX_BANNER_LEN		8192
+#define SSH_MAX_PRE_BANNER_LINES	1024

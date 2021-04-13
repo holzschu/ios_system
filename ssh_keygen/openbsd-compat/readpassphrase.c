@@ -35,7 +35,6 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include "ios_error.h"
 
 #ifndef TCSASOFT
 /* If we don't have TCSASOFT define it so that ORing it it below is a no-op. */
@@ -45,14 +44,6 @@
 /* SunOS 4.x which lacks _POSIX_VDISABLE, but has VDISABLE */
 #if !defined(_POSIX_VDISABLE) && defined(VDISABLE)
 #  define _POSIX_VDISABLE       VDISABLE
-#endif
-
-#ifndef _NSIG
-# ifdef NSIG
-#  define _NSIG NSIG
-# else
-#  define _NSIG 128
-# endif
 #endif
 
 static volatile sig_atomic_t signo[_NSIG];
@@ -85,22 +76,29 @@ restart:
 	 * Read and write to /dev/tty if available.  If not, read from
 	 * stdin and write to stderr unless a tty is required.
 	 */
+#if !TARGET_OS_IPHONE
 	if ((flags & RPP_STDIN) ||
 	    (input = output = open(_PATH_TTY, O_RDWR)) == -1) {
 		if (flags & RPP_REQUIRE_TTY) {
 			errno = ENOTTY;
 			return(NULL);
 		}
-        input = fileno(thread_stdin); // STDIN_FILENO;
-        output = fileno(thread_stderr); // STDERR_FILENO;
+		input = STDIN_FILENO;
+		output = STDERR_FILENO;
 	}
+#else
+    input = STDIN_FILENO;
+    output = STDERR_FILENO;
+    fflush(thread_stdout);
+    fflush(thread_stderr);
+#endif
 
 	/*
 	 * Turn off echo if possible.
 	 * If we are using a tty but are not the foreground pgrp this will
 	 * generate SIGTTOU, so do it *before* installing the signal handlers.
 	 */
-	if (input != fileno(thread_stdin) && tcgetattr(input, &oterm) == 0) {
+	if (input != STDIN_FILENO && tcgetattr(input, &oterm) == 0) {
 		memcpy(&term, &oterm, sizeof(term));
 		if (!(flags & RPP_ECHO_ON))
 			term.c_lflag &= ~(ECHO | ECHONL);
@@ -140,6 +138,30 @@ restart:
 	p = buf;
 	while ((nr = read(input, &ch, 1)) == 1 && ch != '\n' && ch != '\r') {
 		if (p < end) {
+#if TARGET_OS_IPHONE
+            if (flags & RPP_ECHO_ON) {
+                fputc(ch, thread_stdout);
+                fflush(thread_stdout);
+            }
+            if (ch == 127) {
+                // delete key
+                if (flags & RPP_ECHO_ON) {
+                    fputc('\b', thread_stdout); // Move back one char
+                    // \x1b[0J: delete everything after cursor
+                    fputs("\x1b[0J", thread_stdout);
+                    fflush(thread_stdout);
+                }
+                if (p > buf)
+                    p--;
+                continue;
+            }
+            if (ch == 8) {
+                // ctrl-H
+                if (p > buf)
+                    p--;
+                continue;
+            }
+#endif
 			if ((flags & RPP_SEVENBIT))
 				ch &= 0x7f;
 			if (isalpha((unsigned char)ch)) {
@@ -153,6 +175,11 @@ restart:
 	}
 	*p = '\0';
 	save_errno = errno;
+#if TARGET_OS_IPHONE
+    // Put a carriage return both with and without echo on
+    fputc('\n', thread_stdout);
+    fflush(thread_stdout);
+#endif
 	if (!(term.c_lflag & ECHO))
 		(void)write(output, "\n", 1);
 
@@ -175,7 +202,7 @@ restart:
 	(void)sigaction(SIGTSTP, &savetstp, NULL);
 	(void)sigaction(SIGTTIN, &savettin, NULL);
 	(void)sigaction(SIGTTOU, &savettou, NULL);
-	if (input != fileno(thread_stdin))
+	if (input != STDIN_FILENO)
 		(void)close(input);
 
 	/*

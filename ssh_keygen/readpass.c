@@ -25,95 +25,247 @@
 
 #include "includes.h"
 #include "xmalloc.h"
-/* #include "misc.h"
- #include "pathnames.h"
- #include "log.h"
- #include "ssh.h"
- #include "uidswap.h" */
-#include "ios_error.h"
+#include "misc.h"
+// #include "pathnames.h"
+#include "log.h"
+// #include "ssh.h"
+// #include "uidswap.h"
 #import <UIKit/UIKit.h>
 
-UIViewController *
-__topViewController(void)
-{
-  // Get root controller of first window (First window on UIScreen.mainScreen)
-  UIViewController *ctrl = [[[[UIApplication sharedApplication] windows] firstObject] rootViewController];
-  
-  while (ctrl.presentedViewController) {
-    ctrl = ctrl.presentedViewController;
-  }
-  
-  return ctrl;
-}
+extern char *ssh_progname;
+
+/* private/internal read_passphrase flags */
+#define RP_ASK_PERMISSION    0x8000 /* pass hint to askpass for confirm UI */
+
 
 /*
- * Reads a passphrase using an iOS alert with secureTextEntry
- * Only way to prevent password to be in the terminal.
+ * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
+ * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
+ * RP_ALLOW_STDIN is set, the passphrase will be read from stdin if no
+ * tty is available
  */
 char *
 read_passphrase(const char *prompt, int flags)
 {
-  dispatch_semaphore_t dsema = dispatch_semaphore_create(0);
-  
-  __block NSString *result = @"";
-  
-  // alerts have to go to the main queue:
-  dispatch_async(dispatch_get_main_queue(), ^ {
-    UIViewController *topViewController = __topViewController();
-    
-    if (!topViewController) {
-      dispatch_semaphore_signal(dsema);
-      return;
+    char cr = '\r', *askpass = NULL, *ret, buf[1024];
+    int rppflags, ttyfd, use_askpass = 0, allow_askpass = 0;
+    const char *askpass_hint = NULL;
+    const char *s;
+
+#if !TARGET_OS_IPHONE // askpass is not going to work here.
+    if ((s = getenv("DISPLAY")) != NULL)
+        allow_askpass = *s != '\0';
+    if ((s = getenv(SSH_ASKPASS_REQUIRE_ENV)) != NULL) {
+        if (strcasecmp(s, "force") == 0) {
+            use_askpass = 1;
+            allow_askpass = 1;
+        } else if (strcasecmp(s, "prefer") == 0)
+            use_askpass = allow_askpass;
+        else if (strcasecmp(s, "never") == 0)
+            allow_askpass = 0;
     }
+#endif
     
-    NSString *title = [NSString stringWithUTF8String:prompt];
-    UIAlertController* alertController = [UIAlertController
-                                          alertControllerWithTitle: title
-                                          message:nil
-                                          preferredStyle:UIAlertControllerStyleAlert];
+    rppflags = (flags & RP_ECHO) ? RPP_ECHO_ON : RPP_ECHO_OFF;
+#if !TARGET_OS_IPHONE // askpass is not going to work here.
+    if (use_askpass)
+        debug_f("requested to askpass");
+    else if (flags & RP_USE_ASKPASS)
+        use_askpass = 1;
+    else if (flags & RP_ALLOW_STDIN) {
+        if (!isatty(STDIN_FILENO)) {
+            debug("read_passphrase: stdin is not a tty");
+            use_askpass = 1;
+        }
+    } else {
+        rppflags |= RPP_REQUIRE_TTY;
+        ttyfd = open(_PATH_TTY, O_RDWR);
+        if (ttyfd >= 0) {
+            /*
+             * If we're on a tty, ensure that show the prompt at
+             * the beginning of the line. This will hopefully
+             * clobber any password characters the user has
+             * optimistically typed before echo is disabled.
+             */
+            (void)write(ttyfd, &cr, 1);
+            close(ttyfd);
+        } else {
+            debug("read_passphrase: can't open %s: %s", _PATH_TTY,
+                strerror(errno));
+            use_askpass = 1;
+        }
+    }
+
+    if ((flags & RP_USE_ASKPASS) && !allow_askpass)
+        return (flags & RP_ALLOW_EOF) ? NULL : xstrdup("");
+
+    if (use_askpass && allow_askpass) {
+        if (getenv(SSH_ASKPASS_ENV))
+            askpass = getenv(SSH_ASKPASS_ENV);
+        else
+            askpass = _PATH_SSH_ASKPASS_DEFAULT;
+        if ((flags & RP_ASK_PERMISSION) != 0)
+            askpass_hint = "confirm";
+        if ((ret = ssh_askpass(askpass, prompt, askpass_hint)) == NULL)
+            if (!(flags & RP_ALLOW_EOF))
+                return xstrdup("");
+        return ret;
+    }
+#endif
     
-    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-     textField.placeholder = @"passphrase";
-     textField.textColor = [UIColor blueColor];
-     textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-     textField.borderStyle = UITextBorderStyleRoundedRect;
-     textField.secureTextEntry = YES;
-     }];
-    
-    [alertController addAction:[UIAlertAction actionWithTitle:@"OK"
-                                                        style:UIAlertActionStyleDefault
-                                                      handler:^(UIAlertAction *action) {
-                                UITextField *passwordField = alertController.textFields.firstObject;
-                                result = passwordField.text ?: @"";
-                                dispatch_semaphore_signal(dsema);
-                                // TODO: explicit_bzero of passwordField -- impossible?
-                                }]];
-    
-    [topViewController presentViewController:alertController animated:YES completion:nil];
-  });
-  
-  dispatch_semaphore_wait(dsema, DISPATCH_TIME_FOREVER);
-  return xstrdup(result.UTF8String);
+    if (readpassphrase(prompt, buf, sizeof buf, rppflags) == NULL) {
+        if (flags & RP_ALLOW_EOF)
+            return NULL;
+        return xstrdup("");
+    }
+
+    ret = xstrdup(buf);
+    explicit_bzero(buf, sizeof(buf));
+    return ret;
 }
 
-void systemAlert(char* prompt) {
-  dispatch_semaphore_t dsema = dispatch_semaphore_create(0);
-  
-  dispatch_async(dispatch_get_main_queue(), ^ {
-    UIViewController *topViewController = __topViewController();
-    
-    NSString *title = [NSString stringWithUTF8String:prompt];
-    UIAlertController* alertController = [UIAlertController alertControllerWithTitle:title
-                                                                             message:nil preferredStyle:UIAlertControllerStyleAlert];
-    
-    [alertController addAction:[UIAlertAction actionWithTitle:@"OK"
-                                                        style:UIAlertActionStyleDefault
-                                                      handler:^(UIAlertAction *action) {
-                                dispatch_semaphore_signal(dsema);
-                                }]];
-    
-    [topViewController presentViewController:alertController animated:YES completion:nil];
-  });
-  
-  dispatch_semaphore_wait(dsema, DISPATCH_TIME_FOREVER);
+int
+ask_permission(const char *fmt, ...)
+{
+    va_list args;
+    char *p, prompt[1024];
+    int allowed = 0;
+
+    va_start(args, fmt);
+    vsnprintf(prompt, sizeof(prompt), fmt, args);
+    va_end(args);
+
+#if !TARGET_OS_IPHONE
+    p = read_passphrase(prompt, RP_USE_ASKPASS|RP_ALLOW_EOF|RP_ASK_PERMISSION);
+#else
+    p = read_passphrase(prompt, RP_ECHO);
+#endif
+    if (p != NULL) {
+        /*
+         * Accept empty responses and responses consisting
+         * of the word "yes" as affirmative.
+         */
+        if (*p == '\0' || *p == '\n' ||
+            strcasecmp(p, "yes") == 0)
+            allowed = 1;
+        free(p);
+    }
+
+    return (allowed);
+}
+
+
+static void
+writemsg(const char *msg)
+{
+	(void)write(STDERR_FILENO, "\r", 1);
+	(void)write(STDERR_FILENO, msg, strlen(msg));
+	(void)write(STDERR_FILENO, "\r\n", 2);
+}
+
+struct notifier_ctx {
+	pid_t pid;
+	void (*osigchld)(int);
+};
+
+struct notifier_ctx *
+notify_start(int force_askpass, const char *fmt, ...)
+{
+	va_list args;
+	char *prompt = NULL;
+	pid_t pid = -1;
+	void (*osigchld)(int) = NULL;
+	const char *askpass, *s;
+	struct notifier_ctx *ret = NULL;
+
+	va_start(args, fmt);
+	xvasprintf(&prompt, fmt, args);
+	va_end(args);
+
+	if (fflush(NULL) != 0)
+		error_f("fflush: %s", strerror(errno));
+	if (!force_askpass && isatty(STDERR_FILENO)) {
+		writemsg(prompt);
+		goto out_ctx;
+	}
+#if TARGET_OS_IPHONE
+	writemsg(prompt);
+    fflush(thread_stderr);
+#else
+	if ((askpass = getenv("SSH_ASKPASS")) == NULL)
+		askpass = _PATH_SSH_ASKPASS_DEFAULT;
+	if (*askpass == '\0') {
+		debug3_f("cannot notify: no askpass");
+		goto out;
+	}
+	if (getenv("DISPLAY") == NULL &&
+	    ((s = getenv(SSH_ASKPASS_REQUIRE_ENV)) == NULL ||
+	    strcmp(s, "force") != 0)) {
+		debug3_f("cannot notify: no display");
+		goto out;
+	}
+	osigchld = ssh_signal(SIGCHLD, SIG_DFL);
+	if ((pid = fork()) == -1) {
+		error_f("fork: %s", strerror(errno));
+		ssh_signal(SIGCHLD, osigchld);
+		free(prompt);
+		return NULL;
+	}
+	if (pid == 0) {
+		if (stdfd_devnull(1, 1, 0) == -1)
+			fatal_f("stdfd_devnull failed");
+		closefrom(STDERR_FILENO + 1);
+		setenv("SSH_ASKPASS_PROMPT", "none", 1); /* hint to UI */
+		execlp(askpass, askpass, prompt, (char *)NULL);
+		error_f("exec(%s): %s", askpass, strerror(errno));
+		_exit(1);
+		/* NOTREACHED */
+	}
+#endif
+ out_ctx:
+	if ((ret = calloc(1, sizeof(*ret))) == NULL) {
+		kill(pid, SIGTERM);
+		fatal_f("calloc failed");
+	}
+	ret->pid = pid;
+	ret->osigchld = osigchld;
+ out:
+	free(prompt);
+	return ret;
+}
+
+void
+notify_complete(struct notifier_ctx *ctx, const char *fmt, ...)
+{
+	int ret;
+	char *msg = NULL;
+	va_list args;
+
+	if (ctx != NULL && fmt != NULL && ctx->pid == -1) {
+		/*
+		 * notify_start wrote to stderr, so send conclusion message
+		 * there too
+		*/
+		va_start(args, fmt);
+		xvasprintf(&msg, fmt, args);
+		va_end(args);
+		writemsg(msg);
+		free(msg);
+	}
+
+	if (ctx == NULL || ctx->pid <= 0) {
+		free(ctx);
+		return;
+	}
+#if !TARGET_OS_IPHONE
+	kill(ctx->pid, SIGTERM);
+	while ((ret = waitpid(ctx->pid, NULL, 0)) == -1) {
+		if (errno != EINTR)
+			break;
+	}
+	if (ret == -1)
+		fatal_f("waitpid: %s", strerror(errno));
+	ssh_signal(SIGCHLD, ctx->osigchld);
+#endif
+	free(ctx);
 }

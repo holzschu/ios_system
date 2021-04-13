@@ -93,6 +93,9 @@
 #ifdef HAVE_SYS_SYSMACROS_H
 # include <sys/sysmacros.h> /* For MIN, MAX, etc */
 #endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h> /* for timespeccmp if present */
+#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h> /* for MAP_ANONYMOUS */
 #endif
@@ -172,5 +175,23 @@
 #include "openbsd-compat/bsd-nextstep.h"
 
 #include "entropy.h"
+
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#include "ios_error.h"
+#undef stderr
+#define stderr thread_stderr
+#undef stdout
+#define stdout thread_stdout
+#undef stdin
+#define stdin thread_stdin
+#undef STDIN_FILENO
+#define STDIN_FILENO fileno(thread_stdin)
+#undef STDERR_FILENO
+#define STDERR_FILENO fileno(thread_stderr)
+#undef STDOUT_FILENO
+#define STDOUT_FILENO fileno(thread_stdout)
+#define isatty ios_isatty
+#endif
 
 #endif /* INCLUDES_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pathnames.h,v 1.25 2016/03/31 05:24:06 dtucker Exp $ */
+/* $OpenBSD: pathnames.h,v 1.31 2019/11/12 19:33:08 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,10 +36,10 @@
  */
 #define _PATH_SERVER_CONFIG_FILE	SSHDIR "/sshd_config"
 #define _PATH_HOST_CONFIG_FILE		SSHDIR "/ssh_config"
-#define _PATH_HOST_KEY_FILE		SSHDIR "/ssh_host_key"
 #define _PATH_HOST_DSA_KEY_FILE		SSHDIR "/ssh_host_dsa_key"
 #define _PATH_HOST_ECDSA_KEY_FILE	SSHDIR "/ssh_host_ecdsa_key"
 #define _PATH_HOST_ED25519_KEY_FILE	SSHDIR "/ssh_host_ed25519_key"
+#define _PATH_HOST_XMSS_KEY_FILE	SSHDIR "/ssh_host_xmss_key"
 #define _PATH_HOST_RSA_KEY_FILE		SSHDIR "/ssh_host_rsa_key"
 #define _PATH_DH_MODULI			SSHDIR "/moduli"
 
@@ -57,7 +57,11 @@
  * The directory in user's home directory in which the files reside. The
  * directory should be world-readable (though not all files are).
  */
+#if !TARGET_OS_IPHONE
 #define _PATH_SSH_USER_DIR		".ssh"
+#else
+#define _PATH_SSH_USER_DIR		"Documents/.ssh"
+#endif 
 
 /*
  * Per-user file containing host keys of known hosts.  This file need not be
@@ -72,11 +76,13 @@
  * Name of the default file containing client-side authentication key. This
  * file should only be readable by the user him/herself.
  */
-#define _PATH_SSH_CLIENT_IDENTITY	_PATH_SSH_USER_DIR "/identity"
 #define _PATH_SSH_CLIENT_ID_DSA		_PATH_SSH_USER_DIR "/id_dsa"
 #define _PATH_SSH_CLIENT_ID_ECDSA	_PATH_SSH_USER_DIR "/id_ecdsa"
 #define _PATH_SSH_CLIENT_ID_RSA		_PATH_SSH_USER_DIR "/id_rsa"
 #define _PATH_SSH_CLIENT_ID_ED25519	_PATH_SSH_USER_DIR "/id_ed25519"
+#define _PATH_SSH_CLIENT_ID_XMSS	_PATH_SSH_USER_DIR "/id_xmss"
+#define _PATH_SSH_CLIENT_ID_ECDSA_SK	_PATH_SSH_USER_DIR "/id_ecdsa_sk"
+#define _PATH_SSH_CLIENT_ID_ED25519_SK	_PATH_SSH_USER_DIR "/id_ed25519_sk"
 
 /*
  * Configuration file in user's home directory.  This file need not be
@@ -130,6 +136,11 @@
 /* Location of ssh-pkcs11-helper to support keys in tokens */
 #ifndef _PATH_SSH_PKCS11_HELPER
 #define _PATH_SSH_PKCS11_HELPER		"/usr/libexec/ssh-pkcs11-helper"
+#endif
+
+/* Location of ssh-sk-helper to support keys in security keys */
+#ifndef _PATH_SSH_SK_HELPER
+#define _PATH_SSH_SK_HELPER		"/usr/libexec/ssh-sk-helper"
 #endif
 
 /* xauth for X11 forwarding */

@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.h,v 1.117 2016/07/15 00:24:30 djm Exp $ */
+/* $OpenBSD: readconf.h,v 1.140 2021/02/15 20:43:15 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,7 +18,6 @@
 
 /* Data structure for representing option data. */
 
-#define MAX_SEND_ENV		256
 #define SSH_MAX_HOSTS_FILES	32
 #define MAX_CANON_DOMAINS	32
 #define PATH_MAX_SUN		(sizeof((struct sockaddr_un *)0)->sun_path)
@@ -30,16 +29,13 @@ struct allowed_cname {
 
 typedef struct {
 	int     forward_agent;	/* Forward authentication agent. */
+	char   *forward_agent_sock_path; /* Optional path of the agent. */
 	int     forward_x11;	/* Forward X11 display. */
 	int     forward_x11_timeout;	/* Expiration for Cookies */
 	int     forward_x11_trusted;	/* Trust Forward X11 display. */
 	int     exit_on_forward_failure;	/* Exit if bind(2) fails for -L/-R */
 	char   *xauth_location;	/* Location for xauth program */
 	struct ForwardOptions fwd_opts;	/* forwarding options */
-	int     use_privileged_port;	/* Don't use privileged port if false. */
-	int     rhosts_rsa_authentication;	/* Try rhosts with RSA
-						 * authentication. */
-	int     rsa_authentication;	/* Try RSA authentication. */
 	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
 	int     hostbased_authentication;	/* ssh2's rhosts_rsa */
 	int     challenge_response_authentication;
@@ -54,13 +50,13 @@ typedef struct {
 	int     check_host_ip;	/* Also keep track of keys for IP address */
 	int     strict_host_key_checking;	/* Strict host key checking. */
 	int     compression;	/* Compress packets in both directions. */
-	int     compression_level;	/* Compression level 1 (fast) to 9
-					 * (best). */
 	int     tcp_keep_alive;	/* Set SO_KEEPALIVE. */
 	int	ip_qos_interactive;	/* IP ToS/DSCP/class for interactive */
 	int	ip_qos_bulk;		/* IP ToS/DSCP/class for bulk traffic */
+	SyslogFacility log_facility;	/* Facility for system logging. */
 	LogLevel log_level;	/* Level for logging. */
-
+	u_int	num_log_verbose;	/* Verbose log overrides */
+	char   **log_verbose;
 	int     port;		/* Port to connect. */
 	int     address_family;
 	int     connection_attempts;	/* Max attempts (seconds) before
@@ -69,12 +65,11 @@ typedef struct {
 					 * aborting connection attempt */
 	int     number_of_password_prompts;	/* Max number of password
 						 * prompts. */
-	int     cipher;		/* Cipher to use. */
 	char   *ciphers;	/* SSH2 ciphers in order of preference. */
 	char   *macs;		/* SSH2 macs in order of preference. */
 	char   *hostkeyalgorithms;	/* SSH2 server key types in order of preference. */
 	char   *kex_algorithms;	/* SSH2 kex methods in order of preference. */
-	int	protocol;	/* Protocol in order of preference. */
+	char   *ca_sign_algorithms;	/* Allowed CA signature algorithms */
 	char   *hostname;	/* Real host to connect. */
 	char   *host_key_alias;	/* hostname alias for .ssh/known_hosts */
 	char   *proxy_command;	/* Proxy command for connecting the host. */
@@ -87,7 +82,9 @@ typedef struct {
 	char   *user_hostfiles[SSH_MAX_HOSTS_FILES];
 	char   *preferred_authentications;
 	char   *bind_address;	/* local socket address for connection to sshd */
+	char   *bind_interface;	/* local interface for bind address */
 	char   *pkcs11_provider; /* PKCS#11 provider */
+	char   *sk_provider; /* Security key provider */
 	int	verify_host_key_dns;	/* Verify host key using DNS */
 
 	int     num_identity_files;	/* Number of files for RSA/DSA identities. */
@@ -101,6 +98,7 @@ typedef struct {
 	struct sshkey *certificates[SSH_MAX_CERTIFICATE_FILES];
 
 	int	add_keys_to_agent;
+	int	add_keys_to_agent_lifespan;
 	char   *identity_agent;		/* Optional path to ssh-agent socket */
 
 	/* Local TCP/IP forward requests. */
@@ -111,6 +109,10 @@ typedef struct {
 	int     num_remote_forwards;
 	struct Forward *remote_forwards;
 	int	clear_forwardings;
+
+	/* Restrict remote dynamic forwarding */
+	char  **permitted_remote_opens;
+	u_int	num_permitted_remote_opens;
 
 	/* stdio forwarding (-W) host and port */
 	char   *stdio_forward_host;
@@ -125,7 +127,9 @@ typedef struct {
 	int	server_alive_count_max;
 
 	int     num_send_env;
-	char   *send_env[MAX_SEND_ENV];
+	char   **send_env;
+	int     num_setenv;
+	char   **setenv;
 
 	char	*control_path;
 	int	control_master;
@@ -140,11 +144,8 @@ typedef struct {
 
 	char	*local_command;
 	int	permit_local_command;
+	char	*remote_command;
 	int	visual_host_key;
-
-#ifdef __APPLE_KEYCHAIN__
-	int	use_keychain;
-#endif
 
 	int	request_tty;
 
@@ -164,13 +165,15 @@ typedef struct {
 
 	int	 update_hostkeys; /* one of SSH_UPDATE_HOSTKEYS_* */
 
-	char   *hostbased_key_types;
-	char   *pubkey_key_types;
+	char   *hostbased_accepted_algos;
+	char   *pubkey_accepted_algos;
 
 	char   *jump_user;
 	char   *jump_host;
 	int	jump_port;
 	char   *jump_extra;
+
+	char   *known_hosts_command;
 
 	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
 }       Options;
@@ -192,22 +195,32 @@ typedef struct {
 
 #define SSHCONF_CHECKPERM	1  /* check permissions on config file */
 #define SSHCONF_USERCONF	2  /* user provided config file not system */
-#define SSHCONF_POSTCANON	4  /* After hostname canonicalisation */
+#define SSHCONF_FINAL		4  /* Final pass over config, after canon. */
 #define SSHCONF_NEVERMATCH	8  /* Match/Host never matches; internal only */
 
 #define SSH_UPDATE_HOSTKEYS_NO	0
 #define SSH_UPDATE_HOSTKEYS_YES	1
 #define SSH_UPDATE_HOSTKEYS_ASK	2
 
+#define SSH_STRICT_HOSTKEY_OFF	0
+#define SSH_STRICT_HOSTKEY_NEW	1
+#define SSH_STRICT_HOSTKEY_YES	2
+#define SSH_STRICT_HOSTKEY_ASK	3
+
+const char *kex_default_pk_alg(void);
+char	*ssh_connection_hash(const char *thishost, const char *host,
+    const char *portstr, const char *user);
 void     initialize_options(Options *);
-void     fill_default_options(Options *);
+int      fill_default_options(Options *);
 void	 fill_default_options_for_canonicalization(Options *);
+void	 free_options(Options *o);
 int	 process_config_line(Options *, struct passwd *, const char *,
     const char *, char *, const char *, int, int *, int);
 int	 read_config_file(const char *, struct passwd *, const char *,
-    const char *, Options *, int);
+    const char *, Options *, int, int *);
 int	 parse_forward(struct Forward *, const char *, int, int);
 int	 parse_jump(const char *, Options *, int);
+int	 parse_ssh_uri(const char *, char **, char **, int *);
 int	 default_ssh_port(void);
 int	 option_clear_or_none(const char *);
 void	 dump_client_config(Options *o, const char *host);

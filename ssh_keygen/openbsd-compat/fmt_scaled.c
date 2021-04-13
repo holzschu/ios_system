@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.13 2017/03/11 23:37:23 djm Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.17 2018/05/14 04:39:04 djm Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -125,22 +125,30 @@ scan_scaled(char *scaled, long long *result)
 				/* ignore extra fractional digits */
 				continue;
 			fract_digits++;		/* for later scaling */
-			if (fpart >= LLONG_MAX / 10) {
+			if (fpart > LLONG_MAX / 10) {
 				errno = ERANGE;
 				return -1;
 			}
 			fpart *= 10;
+			if (i > LLONG_MAX - fpart) {
+				errno = ERANGE;
+				return -1;
+			}
 			fpart += i;
 		} else {				/* normal digit */
 			if (++ndigits >= MAX_DIGITS) {
 				errno = ERANGE;
 				return -1;
 			}
-			if (whole >= LLONG_MAX / 10) {
+			if (whole > LLONG_MAX / 10) {
 				errno = ERANGE;
 				return -1;
 			}
 			whole *= 10;
+			if (i > LLONG_MAX - whole) {
+				errno = ERANGE;
+				return -1;
+			}
 			whole += i;
 		}
 	}
@@ -170,7 +178,9 @@ scan_scaled(char *scaled, long long *result)
 			}
 			scale_fact = scale_factors[i];
 
-			if (whole >= LLONG_MAX / scale_fact) {
+			/* check for overflow and underflow after scaling */
+			if (whole > LLONG_MAX / scale_fact ||
+			    whole < LLONG_MIN / scale_fact) {
 				errno = ERANGE;
 				return -1;
 			}
@@ -178,7 +188,7 @@ scan_scaled(char *scaled, long long *result)
 			/* scale whole part */
 			whole *= scale_fact;
 
-			/* truncate fpart so it does't overflow.
+			/* truncate fpart so it doesn't overflow.
 			 * then scale fractional part.
 			 */
 			while (fpart >= LLONG_MAX / scale_fact) {
@@ -236,11 +246,14 @@ fmt_scaled(long long number, char *result)
 
 	fract = (10 * fract + 512) / 1024;
 	/* if the result would be >= 10, round main number */
-	if (fract == 10) {
+	if (fract >= 10) {
 		if (number >= 0)
 			number++;
 		else
 			number--;
+		fract = 0;
+	} else if (fract < 0) {
+		/* shouldn't happen */
 		fract = 0;
 	}
 
