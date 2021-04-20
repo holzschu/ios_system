@@ -42,6 +42,17 @@ jobs:
         asset_name: ios_error.h
         asset_content_type: text/plain
 
+    - name: Upload commandDictionary.plist 
+      id: upload_commandDictionary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: ./Resources/commandDictionary.plist
+        asset_name: commandDictionary.plist
+        asset_content_type: text/plain
+
     - name: Upload ios_system
       id: upload-ios_system
       uses: actions/upload-release-asset@v1
