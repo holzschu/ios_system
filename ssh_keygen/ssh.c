@@ -113,7 +113,7 @@
 #include "ssh-pkcs11.h"
 #endif
 
-extern char *ssh_progname;
+extern __thread char *ssh_progname;
 
 /* Saves a copy of argv for setproctitle emulation */
 #ifndef HAVE_SETPROCTITLE
@@ -837,7 +837,7 @@ ssh_main(int ac, char **av)
 			}
 			if (cp == NULL)
 				fatal("Unsupported query \"%s\"", optarg);
-			printf("%s\n", cp);
+			fprintf(thread_stdout, "%s\n", cp);
 			free(cp);
 			exit(0);
 			break;

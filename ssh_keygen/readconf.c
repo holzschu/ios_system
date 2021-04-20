@@ -535,14 +535,20 @@ execute_in_shell(const char *cmd)
 	debug("Executing command: '%.500s'", cmd);
 
 	/* Fork and execute the command. */
+#if TARGET_OS_IPHONE
+    // iOS: first execute the command, then get back:
+    pid = fork();
+    char *argv[2];
+    argv[0] = xstrdup(cmd);
+    argv[1] = NULL;
+    execv(argv[0], argv);
+#else
 	if ((pid = fork()) == 0) {
 		char *argv[4];
 
 		if (stdfd_devnull(1, 1, 0) == -1)
 			fatal_f("stdfd_devnull failed");
-#if !TARGET_OS_IPHONE
         closefrom(STDERR_FILENO + 1);
-#endif
 
 		argv[0] = shell;
 		argv[1] = "-c";
@@ -556,6 +562,7 @@ execute_in_shell(const char *cmd)
 		kill(getpid(), SIGTERM);
 		_exit(1);
 	}
+#endif
 	/* Parent. */
 	if (pid == -1)
 		fatal_f("fork: %.100s", strerror(errno));
@@ -2989,13 +2996,13 @@ lookup_opcode_name(OpCodes code)
 static void
 dump_cfg_int(OpCodes code, int val)
 {
-	printf("%s %d\n", lookup_opcode_name(code), val);
+	fprintf(thread_stdout, "%s %d\n", lookup_opcode_name(code), val);
 }
 
 static void
 dump_cfg_fmtint(OpCodes code, int val)
 {
-	printf("%s %s\n", lookup_opcode_name(code), fmt_intarg(code, val));
+	fprintf(thread_stdout, "%s %s\n", lookup_opcode_name(code), fmt_intarg(code, val));
 }
 
 static void
@@ -3003,7 +3010,7 @@ dump_cfg_string(OpCodes code, const char *val)
 {
 	if (val == NULL)
 		return;
-	printf("%s %s\n", lookup_opcode_name(code), val);
+	fprintf(thread_stdout, "%s %s\n", lookup_opcode_name(code), val);
 }
 
 static void
@@ -3012,7 +3019,7 @@ dump_cfg_strarray(OpCodes code, u_int count, char **vals)
 	u_int i;
 
 	for (i = 0; i < count; i++)
-		printf("%s %s\n", lookup_opcode_name(code), vals[i]);
+		fprintf(thread_stdout, "%s %s\n", lookup_opcode_name(code), vals[i]);
 }
 
 static void
@@ -3020,10 +3027,10 @@ dump_cfg_strarray_oneline(OpCodes code, u_int count, char **vals)
 {
 	u_int i;
 
-	printf("%s", lookup_opcode_name(code));
+	fprintf(thread_stdout, "%s", lookup_opcode_name(code));
 	for (i = 0; i < count; i++)
-		printf(" %s",  vals[i]);
-	printf("\n");
+		fprintf(thread_stdout, " %s",  vals[i]);
+	fprintf(thread_stdout, "\n");
 }
 
 static void
@@ -3041,26 +3048,26 @@ dump_cfg_forwards(OpCodes code, u_int count, const struct Forward *fwds)
 		if (code == oLocalForward && fwd->connect_host != NULL &&
 		    strcmp(fwd->connect_host, "socks") == 0)
 			continue;
-		printf("%s", lookup_opcode_name(code));
+		fprintf(thread_stdout, "%s", lookup_opcode_name(code));
 		if (fwd->listen_port == PORT_STREAMLOCAL)
-			printf(" %s", fwd->listen_path);
+			fprintf(thread_stdout, " %s", fwd->listen_path);
 		else if (fwd->listen_host == NULL)
-			printf(" %d", fwd->listen_port);
+			fprintf(thread_stdout, " %d", fwd->listen_port);
 		else {
-			printf(" [%s]:%d",
+			fprintf(thread_stdout, " [%s]:%d",
 			    fwd->listen_host, fwd->listen_port);
 		}
 		if (code != oDynamicForward) {
 			if (fwd->connect_port == PORT_STREAMLOCAL)
-				printf(" %s", fwd->connect_path);
+				fprintf(thread_stdout, " %s", fwd->connect_path);
 			else if (fwd->connect_host == NULL)
-				printf(" %d", fwd->connect_port);
+				fprintf(thread_stdout, " %d", fwd->connect_port);
 			else {
-				printf(" [%s]:%d",
+				fprintf(thread_stdout, " [%s]:%d",
 				    fwd->connect_host, fwd->connect_port);
 			}
 		}
-		printf("\n");
+		fprintf(thread_stdout, "\n");
 	}
 }
 
@@ -3180,7 +3187,7 @@ dump_client_config(Options *o, const char *host)
 
 	/* PermitRemoteOpen */
 	if (o->num_permitted_remote_opens == 0)
-		printf("%s any\n", lookup_opcode_name(oPermitRemoteOpen));
+		fprintf(thread_stdout, "%s any\n", lookup_opcode_name(oPermitRemoteOpen));
 	else
 		dump_cfg_strarray_oneline(oPermitRemoteOpen,
 		    o->num_permitted_remote_opens, o->permitted_remote_opens);
@@ -3189,7 +3196,7 @@ dump_client_config(Options *o, const char *host)
 	if (o->add_keys_to_agent_lifespan <= 0)
 		dump_cfg_fmtint(oAddKeysToAgent, o->add_keys_to_agent);
 	else {
-		printf("addkeystoagent%s %d\n",
+		fprintf(thread_stdout, "addkeystoagent%s %d\n",
 		    o->add_keys_to_agent == 3 ? " confirm" : "",
 		    o->add_keys_to_agent_lifespan);
 	}
@@ -3202,30 +3209,30 @@ dump_client_config(Options *o, const char *host)
 
 	/* oConnectTimeout */
 	if (o->connection_timeout == -1)
-		printf("connecttimeout none\n");
+		fprintf(thread_stdout, "connecttimeout none\n");
 	else
 		dump_cfg_int(oConnectTimeout, o->connection_timeout);
 
 	/* oTunnelDevice */
-	printf("tunneldevice");
+	fprintf(thread_stdout, "tunneldevice");
 	if (o->tun_local == SSH_TUNID_ANY)
-		printf(" any");
+		fprintf(thread_stdout, " any");
 	else
-		printf(" %d", o->tun_local);
+		fprintf(thread_stdout, " %d", o->tun_local);
 	if (o->tun_remote == SSH_TUNID_ANY)
-		printf(":any");
+		fprintf(thread_stdout, ":any");
 	else
-		printf(":%d", o->tun_remote);
-	printf("\n");
+		fprintf(thread_stdout, ":%d", o->tun_remote);
+	fprintf(thread_stdout, "\n");
 
 	/* oCanonicalizePermittedCNAMEs */
 	if ( o->num_permitted_cnames > 0) {
-		printf("canonicalizePermittedcnames");
+		fprintf(thread_stdout, "canonicalizePermittedcnames");
 		for (i = 0; i < o->num_permitted_cnames; i++) {
-			printf(" %s:%s", o->permitted_cnames[i].source_list,
+			fprintf(thread_stdout, " %s:%s", o->permitted_cnames[i].source_list,
 			    o->permitted_cnames[i].target_list);
 		}
-		printf("\n");
+		fprintf(thread_stdout, "\n");
 	}
 
 	/* oControlPersist */
@@ -3236,26 +3243,26 @@ dump_client_config(Options *o, const char *host)
 
 	/* oEscapeChar */
 	if (o->escape_char == SSH_ESCAPECHAR_NONE)
-		printf("escapechar none\n");
+		fprintf(thread_stdout, "escapechar none\n");
 	else {
 		vis(buf, o->escape_char, VIS_WHITE, 0);
-		printf("escapechar %s\n", buf);
+		fprintf(thread_stdout, "escapechar %s\n", buf);
 	}
 
 	/* oIPQoS */
-	printf("ipqos %s ", iptos2str(o->ip_qos_interactive));
-	printf("%s\n", iptos2str(o->ip_qos_bulk));
+	fprintf(thread_stdout, "ipqos %s ", iptos2str(o->ip_qos_interactive));
+	fprintf(thread_stdout, "%s\n", iptos2str(o->ip_qos_bulk));
 
 	/* oRekeyLimit */
-	printf("rekeylimit %llu %d\n",
+	fprintf(thread_stdout, "rekeylimit %llu %d\n",
 	    (unsigned long long)o->rekey_limit, o->rekey_interval);
 
 	/* oStreamLocalBindMask */
-	printf("streamlocalbindmask 0%o\n",
+	fprintf(thread_stdout, "streamlocalbindmask 0%o\n",
 	    o->fwd_opts.streamlocal_bind_mask);
 
 	/* oLogFacility */
-	printf("syslogfacility %s\n", log_facility_name(o->log_facility));
+	fprintf(thread_stdout, "syslogfacility %s\n", log_facility_name(o->log_facility));
 
 	/* oProxyCommand / oProxyJump */
 	if (o->jump_host == NULL)
@@ -3265,7 +3272,7 @@ dump_client_config(Options *o, const char *host)
 		i = strchr(o->jump_host, ':') != NULL ||
 		    strspn(o->jump_host, "1234567890.") == strlen(o->jump_host);
 		snprintf(buf, sizeof(buf), "%d", o->jump_port);
-		printf("proxyjump %s%s%s%s%s%s%s%s%s\n",
+		fprintf(thread_stdout, "proxyjump %s%s%s%s%s%s%s%s%s\n",
 		    /* optional additional jump spec */
 		    o->jump_extra == NULL ? "" : o->jump_extra,
 		    o->jump_extra == NULL ? "" : ",",

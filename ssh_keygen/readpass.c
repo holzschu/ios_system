@@ -32,7 +32,7 @@
 // #include "uidswap.h"
 #import <UIKit/UIKit.h>
 
-extern char *ssh_progname;
+extern __thread char *ssh_progname;
 
 /* private/internal read_passphrase flags */
 #define RP_ASK_PERMISSION    0x8000 /* pass hint to askpass for confirm UI */

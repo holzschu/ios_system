@@ -1062,16 +1062,16 @@ qprintf(const char *str, Char *s)
 {
 	Char *p;
 
-	(void)printf("%s:\n", str);
+	(void)fprintf(thread_stdout, "%s:\n", str);
 	for (p = s; *p; p++)
-		(void)printf("%c", CHAR(*p));
-	(void)printf("\n");
+		(void)fprintf(thread_stdout, "%c", CHAR(*p));
+	(void)fprintf(thread_stdout, "\n");
 	for (p = s; *p; p++)
-		(void)printf("%c", *p & M_PROTECT ? '"' : ' ');
-	(void)printf("\n");
+		(void)fprintf(thread_stdout, "%c", *p & M_PROTECT ? '"' : ' ');
+	(void)fprintf(thread_stdout, "\n");
 	for (p = s; *p; p++)
-		(void)printf("%c", ismeta(*p) ? '_' : ' ');
-	(void)printf("\n");
+		(void)fprintf(thread_stdout, "%c", ismeta(*p) ? '_' : ' ');
+	(void)fprintf(thread_stdout, "\n");
 }
 #endif
 

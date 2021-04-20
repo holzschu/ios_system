@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #ifndef HAVE___PROGNAME
-char *ssh_progname;
+__thread char *ssh_progname;
 #endif
 
 /*

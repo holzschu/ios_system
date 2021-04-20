@@ -45,6 +45,12 @@
 		224A4B8C26243EA000C399A5 /* kexc25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B8B26243EA000C399A5 /* kexc25519.c */; };
 		224A4B9626243ECE00C399A5 /* kexsntrup761x25519.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B9526243ECE00C399A5 /* kexsntrup761x25519.c */; };
 		224A4BA8262441C100C399A5 /* smult_curve25519_ref.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4BA7262441C100C399A5 /* smult_curve25519_ref.c */; };
+		224A4BEC26273A8B00C399A5 /* scp.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4BEA26273A8B00C399A5 /* scp.c */; };
+		224A4BED26273A8B00C399A5 /* sftp.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4BEB26273A8B00C399A5 /* sftp.c */; };
+		224A4BF726273AE000C399A5 /* progressmeter.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4BF626273AE000C399A5 /* progressmeter.c */; };
+		224A4C0126273B2600C399A5 /* sftp-client.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4C0026273B2600C399A5 /* sftp-client.c */; };
+		224A4C0B26273B5800C399A5 /* sftp-common.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4C0A26273B5800C399A5 /* sftp-common.c */; };
+		224A4C1526273B7F00C399A5 /* sftp-glob.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4C1426273B7F00C399A5 /* sftp-glob.c */; };
 		224AAC5521CB917E00F8C22F /* ssherr.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5421CB917D00F8C22F /* ssherr.c */; };
 		224AAC5721CB920500F8C22F /* xmalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5621CB920500F8C22F /* xmalloc.c */; };
 		224AAC5C21CB931300F8C22F /* reallocarray.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5B21CB931300F8C22F /* reallocarray.c */; };
@@ -157,7 +163,6 @@
 		2298761D2620C16C002D3690 /* fatal.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298761C2620C16C002D3690 /* fatal.c */; };
 		2298764F2621A0E8002D3690 /* sshsig.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298764E2621A0E8002D3690 /* sshsig.c */; };
 		229876592621A134002D3690 /* authfd.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876582621A134002D3690 /* authfd.c */; };
-		229876642621A2D8002D3690 /* ssh-sk-client.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876622621A2D7002D3690 /* ssh-sk-client.c */; };
 		229876652621A2D8002D3690 /* ssh-sk.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876632621A2D7002D3690 /* ssh-sk.c */; };
 		2298766F2621A3B2002D3690 /* platform-misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2298766E2621A3B2002D3690 /* platform-misc.c */; };
 		229876792621A408002D3690 /* port-net.c in Sources */ = {isa = PBXBuildFile; fileRef = 229876782621A408002D3690 /* port-net.c */; };
@@ -611,6 +616,12 @@
 		224A4B8B26243EA000C399A5 /* kexc25519.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexc25519.c; path = ssh_keygen/kexc25519.c; sourceTree = "<group>"; };
 		224A4B9526243ECE00C399A5 /* kexsntrup761x25519.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = kexsntrup761x25519.c; path = ssh_keygen/kexsntrup761x25519.c; sourceTree = "<group>"; };
 		224A4BA7262441C100C399A5 /* smult_curve25519_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = smult_curve25519_ref.c; path = ssh_keygen/smult_curve25519_ref.c; sourceTree = "<group>"; };
+		224A4BEA26273A8B00C399A5 /* scp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = scp.c; path = ssh_keygen/scp.c; sourceTree = "<group>"; };
+		224A4BEB26273A8B00C399A5 /* sftp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sftp.c; path = ssh_keygen/sftp.c; sourceTree = "<group>"; };
+		224A4BF626273AE000C399A5 /* progressmeter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = progressmeter.c; path = ssh_keygen/progressmeter.c; sourceTree = "<group>"; };
+		224A4C0026273B2600C399A5 /* sftp-client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "sftp-client.c"; path = "ssh_keygen/sftp-client.c"; sourceTree = "<group>"; };
+		224A4C0A26273B5800C399A5 /* sftp-common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "sftp-common.c"; path = "ssh_keygen/sftp-common.c"; sourceTree = "<group>"; };
+		224A4C1426273B7F00C399A5 /* sftp-glob.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "sftp-glob.c"; path = "ssh_keygen/sftp-glob.c"; sourceTree = "<group>"; };
 		224AAC5421CB917D00F8C22F /* ssherr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ssherr.c; path = ssh_keygen/ssherr.c; sourceTree = "<group>"; };
 		224AAC5621CB920500F8C22F /* xmalloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xmalloc.c; path = ssh_keygen/xmalloc.c; sourceTree = "<group>"; };
 		224AAC5B21CB931300F8C22F /* reallocarray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = reallocarray.c; path = "ssh_keygen/openbsd-compat/reallocarray.c"; sourceTree = "<group>"; };
@@ -2063,10 +2074,16 @@
 				2298766E2621A3B2002D3690 /* platform-misc.c */,
 				224A4B4526243CAF00C399A5 /* platform-pledge.c */,
 				228D205821CBA0F100A9B528 /* poly1305.c */,
+				224A4BF626273AE000C399A5 /* progressmeter.c */,
 				2298779B2623834E002D3690 /* readconf.c */,
 				224AAC5F21CB93AE00F8C22F /* readpass.c */,
 				224A4BA7262441C100C399A5 /* smult_curve25519_ref.c */,
 				229876D026234317002D3690 /* ssh.c */,
+				224A4BEA26273A8B00C399A5 /* scp.c */,
+				224A4BEB26273A8B00C399A5 /* sftp.c */,
+				224A4C0026273B2600C399A5 /* sftp-client.c */,
+				224A4C0A26273B5800C399A5 /* sftp-common.c */,
+				224A4C1426273B7F00C399A5 /* sftp-glob.c */,
 				2217ECDD21CBA7EA0049B382 /* ssh-dss.c */,
 				229876622621A2D7002D3690 /* ssh-sk-client.c */,
 				229876632621A2D7002D3690 /* ssh-sk.c */,
@@ -3023,8 +3040,10 @@
 				228D204921CB9DCC00A9B528 /* addrmatch.c in Sources */,
 				224AAC5C21CB931300F8C22F /* reallocarray.c in Sources */,
 				228D204121CB9CD000A9B528 /* match.c in Sources */,
+				224A4C1526273B7F00C399A5 /* sftp-glob.c in Sources */,
 				224AAC5721CB920500F8C22F /* xmalloc.c in Sources */,
 				229876792621A408002D3690 /* port-net.c in Sources */,
+				224A4C0B26273B5800C399A5 /* sftp-common.c in Sources */,
 				2298773526237FC3002D3690 /* nchan.c in Sources */,
 				228D205721CBA0D400A9B528 /* chacha.c in Sources */,
 				228D204721CB9D6A00A9B528 /* authfile.c in Sources */,
@@ -3038,6 +3057,7 @@
 				228D204321CB9D1300A9B528 /* sshbuf-getput-crypto.c in Sources */,
 				228D205921CBA0F100A9B528 /* poly1305.c in Sources */,
 				2217ECEC21CBBC190049B382 /* fe25519.c in Sources */,
+				224A4BF726273AE000C399A5 /* progressmeter.c in Sources */,
 				229877532623810D002D3690 /* umac128.c in Sources */,
 				228D204521CB9D3E00A9B528 /* ssh-ecdsa.c in Sources */,
 				22A3736421CB97B200230846 /* sshbuf-getput-basic.c in Sources */,
@@ -3049,18 +3069,19 @@
 				224A4B8C26243EA000C399A5 /* kexc25519.c in Sources */,
 				229876652621A2D8002D3690 /* ssh-sk.c in Sources */,
 				229876BF2621E947002D3690 /* recallocarray.c in Sources */,
+				224A4BED26273A8B00C399A5 /* sftp.c in Sources */,
 				2261379621F0E5C40097B3A0 /* bsd-setres_id.c in Sources */,
 				2261379821F0E5DE0097B3A0 /* vis.c in Sources */,
 				22A3736621CB97E600230846 /* ssh-rsa.c in Sources */,
 				224A4B7826243E6200C399A5 /* kexecdh.c in Sources */,
 				228D204F21CB9EE600A9B528 /* getrrsetbyname.c in Sources */,
-				229876642621A2D8002D3690 /* ssh-sk-client.c in Sources */,
 				224A4B6E26243E1400C399A5 /* kexgex.c in Sources */,
 				22A3736021CB96FC00230846 /* sshbuf.c in Sources */,
 				228D205521CBA0AD00A9B528 /* cipher-chachapoly.c in Sources */,
 				2217ECE421CBBACD0049B382 /* hash.c in Sources */,
 				2217ECDE21CBA7EA0049B382 /* ssh-dss.c in Sources */,
 				2298776E2623814E002D3690 /* umac.c in Sources */,
+				224A4BEC26273A8B00C399A5 /* scp.c in Sources */,
 				2217ECE021CBBA700049B382 /* bcrypt_pbkdf.c in Sources */,
 				229877A626238C04002D3690 /* compat.c in Sources */,
 				224AAC6021CB93AE00F8C22F /* readpass.c in Sources */,
@@ -3092,6 +3113,7 @@
 				2217ECEA21CBBBEF0049B382 /* sc25519.c in Sources */,
 				228D203D21CB9C5700A9B528 /* bitmap.c in Sources */,
 				223A5CC221CB82B70022B5D5 /* ssh-keygen.c in Sources */,
+				224A4C0126273B2600C399A5 /* sftp-client.c in Sources */,
 				229877492623809B002D3690 /* canohost.c in Sources */,
 				22A3735C21CB959D00230846 /* moduli.c in Sources */,
 				2298761D2620C16C002D3690 /* fatal.c in Sources */,

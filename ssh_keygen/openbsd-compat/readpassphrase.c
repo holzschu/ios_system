@@ -87,7 +87,8 @@ restart:
 		output = STDERR_FILENO;
 	}
 #else
-    input = STDIN_FILENO;
+    // iOS: input must be ios_getty, because scp starts ssh and ssh asks for password.
+    input = ios_opentty();
     output = STDERR_FILENO;
     fflush(thread_stdout);
     fflush(thread_stderr);
@@ -136,20 +137,21 @@ restart:
 		(void)write(output, prompt, strlen(prompt));
 	end = buf + bufsiz - 1;
 	p = buf;
+
 	while ((nr = read(input, &ch, 1)) == 1 && ch != '\n' && ch != '\r') {
 		if (p < end) {
 #if TARGET_OS_IPHONE
             if (flags & RPP_ECHO_ON) {
-                fputc(ch, thread_stdout);
-                fflush(thread_stdout);
+                fputc(ch, thread_stderr);
+                fflush(thread_stderr);
             }
             if (ch == 127) {
                 // delete key
                 if (flags & RPP_ECHO_ON) {
-                    fputc('\b', thread_stdout); // Move back one char
-                    // \x1b[0J: delete everything after cursor
-                    fputs("\x1b[0J", thread_stdout);
-                    fflush(thread_stdout);
+                    fputc('\b', thread_stderr); // Move back one char
+                    // \x1b[0J: delete everything on screen after cursor
+                    fputs("\x1b[0J", thread_stderr);
+                    fflush(thread_stderr);
                 }
                 if (p > buf)
                     p--;
@@ -177,8 +179,8 @@ restart:
 	save_errno = errno;
 #if TARGET_OS_IPHONE
     // Put a carriage return both with and without echo on
-    fputc('\n', thread_stdout);
-    fflush(thread_stdout);
+    fputc('\n', thread_stderr);
+    fflush(thread_stderr);
 #endif
 	if (!(term.c_lflag & ECHO))
 		(void)write(output, "\n", 1);
@@ -202,8 +204,12 @@ restart:
 	(void)sigaction(SIGTSTP, &savetstp, NULL);
 	(void)sigaction(SIGTTIN, &savettin, NULL);
 	(void)sigaction(SIGTTOU, &savettou, NULL);
-	if (input != STDIN_FILENO)
+#if !TARGET_OS_IPHONE
+    if (input != STDIN_FILENO)
 		(void)close(input);
+#else
+    ios_closetty();
+#endif
 
 	/*
 	 * If we were interrupted by a signal, resend it to ourselves

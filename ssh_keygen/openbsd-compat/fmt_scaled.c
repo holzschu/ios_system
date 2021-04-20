@@ -287,12 +287,12 @@ main(int argc, char **argv)
 	long long ninput = 10483892, result;
 
 	if (scan_scaled(cinput, &result) == 0)
-		printf("\"%s\" -> %lld\n", cinput, result);
+		fprintf(thread_stdout, "\"%s\" -> %lld\n", cinput, result);
 	else
 		perror(cinput);
 
 	if (fmt_scaled(ninput, buf) == 0)
-		printf("%lld -> \"%s\"\n", ninput, buf);
+		fprintf(thread_stdout, "%lld -> \"%s\"\n", ninput, buf);
 	else
 		fprintf(stderr, "%lld invalid (%s)\n", ninput, strerror(errno));
 

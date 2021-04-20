@@ -320,8 +320,8 @@ void crash_handler(int sig) {
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     ios_storeThreadId(pthread_self());
-    // NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
-    NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
+    NSLog(@"Storing thread_id: %x isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
+    // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
     optind = 1;
@@ -723,6 +723,50 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
     // go back to where we were before:
     [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
   }
+}
+// For some Unix commands that call chdir:
+int chdir(const char* path) {
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSString* newDir = @(path);
+    BOOL isDir;
+    // Check for permission and existence:
+    if (![fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
+        errno = ENOENT; // No such file or directory
+        return -1;
+    }
+    if (!isDir) {
+        errno = ENOTDIR; // Not a directory
+        return -1;
+    }
+    if (![fileManager isReadableFileAtPath:newDir] ||
+        ![fileManager changeCurrentDirectoryPath:newDir]) {
+        errno = EACCES; // Permission denied
+        return -1;
+    }
+    
+    // We managed to change the directory.
+    // Was that allowed?
+    // Allowed "cd" = below miniRoot *or* below localMiniRoot
+    NSString* resultDir = [fileManager currentDirectoryPath];
+
+    if (__allowed_cd_to_path(resultDir)) {
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+        strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        errno = 0;
+        return 0;
+    }
+    
+    errno = EACCES; // Permission denied
+    // If the user tried to go above the miniRoot, set it to miniRoot
+    if ([miniRoot hasPrefix:resultDir]) {
+        [fileManager changeCurrentDirectoryPath:miniRoot];
+        strcpy(currentSession->currentDir, [miniRoot UTF8String]);
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+    } else {
+        // go back to where we were before:
+        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+    }
+    return -1;
 }
 
 int cd_main(int argc, char** argv) {
@@ -1373,9 +1417,9 @@ int ios_dup2(int fd1, int fd2)
             case 2: child_stderr = stream1; return fd2;
         }
     }
-    if (fd2 == 0) { child_stdin = fdopen(fd1, "rb"); }
-    else if (fd2 == 1) { child_stdout = fdopen(fd1, "wb"); }
-    else if (fd2 == 2) {
+    if ((fd2 == 0) || (fd2 == fileno(thread_stdin))) { child_stdin = fdopen(fd1, "rb"); }
+    else if ((fd2 == 1) || (fd2 == fileno(thread_stdout))) { child_stdout = fdopen(fd1, "wb"); }
+    else if ((fd2 == 2) || (fd2 == fileno(thread_stderr))) {
         if ((child_stdout != NULL) && (fileno(child_stdout) == fd1)) child_stderr = child_stdout;
         else child_stderr = fdopen(fd1, "wb"); }
     else if (fd1 != fd2) {
@@ -1427,7 +1471,6 @@ void ios_switchSession(const void* sessionId) {
             return;
         }
     }
-    // NSLog(@"ios_switchSession to %s\n", sessionName);
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = @((NSUInteger)sessionId);
     if (sessionList == nil) {
@@ -1446,6 +1489,7 @@ void ios_switchSession(const void* sessionId) {
         if (![currentSessionDir isEqualToString:[fileManager currentDirectoryPath]]) {
             [fileManager changeCurrentDirectoryPath:currentSessionDir];
         }
+        // Da fuck???? Yeah, that would hurt. Why is it there?
         currentSession->stdin = stdin;
         currentSession->stdout = stdout;
         currentSession->stderr = stderr;
@@ -1503,18 +1547,43 @@ void ios_settty(FILE* _tty) {
 }
 
 int ios_gettty() {
-    if (currentSession == NULL) return NULL;
+    if (currentSession == NULL) return -1;
     if (currentSession->tty == NULL) return -1;
     return fileno(currentSession->tty);
 }
 
+// Allows commands that are not usually tty-based to get the tty (for password input in ssh/scp/sftp):
+int ios_opentty() {
+    if (currentSession == nil) { return -1; }
+    currentSession->activePager = true;
+    if (currentSession->tty == NULL) return -1;
+    return fileno(currentSession->tty);
+}
+
+void ios_closetty() {
+    if (currentSession == nil) { return; }
+    currentSession->activePager = false;
+}
+
 int ios_activePager() {
+    // All commands that read from tty instead of stdin:
     if (currentSession == nil) { return 0; }
-    if ((strcmp(currentSession->commandName, "less") == 0) || (strcmp(currentSession->commandName, "more") == 0)) {
+    if ((strcmp(currentSession->commandName, "less") == 0) ||
+        (strcmp(currentSession->commandName, "more") == 0)) {
         return 1;
     }
     if (currentSession->activePager) { return 1; }
     return 0;
+}
+
+void ios_stopInteractive() {
+    // Some commands, like sftp, start as "interactive" (they handle all input), then become non-interactive (they let the shell handle input)
+    // This could be merged with opentty / closetty above, but stopInteractive involves one more trip to WKWebView->evaluateJS, so it's better not to call it too often.
+    void (*function)() = NULL;
+    function = dlsym(RTLD_MAIN_ONLY, "stopInteractive");
+    if (function != NULL) {
+        function();
+    }
 }
 
 void ios_setContext(const void *context) {

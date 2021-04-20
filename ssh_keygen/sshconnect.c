@@ -77,9 +77,13 @@ static __thread int matching_host_key_dns = 0;
 static __thread pid_t proxy_command_pid = 0;
 
 /* import */
-extern int debug_flag;
+extern __thread int debug_flag;
 extern Options options;
+#if !TARGET_OS_IPHONE
 extern char *__progname;
+#else
+extern __thread char *ssh_progname;
+#endif
 
 static int show_other_keys(struct hostkeys *, struct sshkey *);
 static void warn_changed_key(struct sshkey *);

@@ -1399,7 +1399,14 @@ tun_open(int tun, int mode, char **ifname)
 void
 sanitise_stdfd(void)
 {
-	int nullfd, dupfd;
+#if TARGET_OS_IPHONE
+    // The key assumption here is that stdin, stdout, stderr are 0-1-2.
+    // This is not the case in iOS-system, and we can have opened file descriptors
+    // smaller than fileno(stderr). On the other hand, ios_system has opened all fds
+    // before calling the command.
+    return;
+#endif
+    int nullfd, dupfd;
 
 	if ((nullfd = dupfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
 		fprintf(stderr, "Couldn't open /dev/null: %s\n",
@@ -2643,7 +2650,12 @@ subprocess(const char *tag, const char *command,
 		}
 		/* stdin is pointed to /dev/null at this point */
 		if ((flags & SSH_SUBPROCESS_STDOUT_DISCARD) != 0 &&
-		    dup2(STDIN_FILENO, STDERR_FILENO) == -1) {
+#if !TARGET_OS_IPHONE
+            dup2(STDIN_FILENO, STDERR_FILENO) == -1) {
+#else
+            // We have redefined STDIN_FILENO & STDERR_FILENO in includes.h, but need the original version here:
+            dup2(0, 2) == -1) {
+#endif
 			error("%s: dup2: %s", tag, strerror(errno));
 			_exit(1);
 		}

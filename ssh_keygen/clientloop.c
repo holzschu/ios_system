@@ -116,13 +116,15 @@
 extern Options options;
 
 /* Flag indicating that stdin should be redirected from /dev/null. */
-extern int stdin_null_flag;
+extern __thread int stdin_null_flag;
 
 /* Flag indicating that no shell has been requested */
-extern int no_shell_flag;
+extern __thread int no_shell_flag;
 
 /* Flag indicating that ssh should daemonise after authentication is complete */
+#if !TARGET_OS_IPHONE
 extern int fork_after_authentication_flag;
+#endif
 
 /* Control socket */
 extern int muxserver_sock; /* XXX use mux_client_cleanup() instead */
@@ -132,13 +134,13 @@ extern int muxserver_sock; /* XXX use mux_client_cleanup() instead */
  * command line, or the Hostname specified for the user-supplied name in a
  * configuration file.
  */
-extern char *host;
+extern __thread char *host;
 
 /*
  * If this field is not NULL, the ForwardAgent socket is this path and different
  * instead of SSH_AUTH_SOCK.
  */
-extern char *forward_agent_sock_path;
+extern __thread char *forward_agent_sock_path;
 
 /*
  * Flag to indicate that we have received a window change signal which has
@@ -146,26 +148,26 @@ extern char *forward_agent_sock_path;
  * window size to be sent to the server a little later.  This is volatile
  * because this is updated in a signal handler.
  */
-static volatile sig_atomic_t received_window_change_signal = 0;
-static volatile sig_atomic_t received_signal = 0;
+static __thread volatile sig_atomic_t received_window_change_signal = 0;
+static __thread volatile sig_atomic_t received_signal = 0;
 
 /* Time when backgrounded control master using ControlPersist should exit */
-static time_t control_persist_exit_time = 0;
+static __thread time_t control_persist_exit_time = 0;
 
 /* Common data for the client loop code. */
-volatile sig_atomic_t quit_pending; /* Set non-zero to quit the loop. */
-static int last_was_cr;		/* Last character was a newline. */
-static int exit_status;		/* Used to store the command exit status. */
-static struct sshbuf *stderr_buffer;	/* Used for final exit message. */
-static int connection_in;	/* Connection to server (input). */
-static int connection_out;	/* Connection to server (output). */
-static int need_rekeying;	/* Set to non-zero if rekeying is requested. */
-static int session_closed;	/* In SSH2: login session closed. */
-static u_int x11_refuse_time;	/* If >0, refuse x11 opens after this time. */
-static time_t server_alive_time;	/* Time to do server_alive_check */
+volatile __thread sig_atomic_t quit_pending; /* Set non-zero to quit the loop. */
+static __thread int last_was_cr;		/* Last character was a newline. */
+static __thread int exit_status;		/* Used to store the command exit status. */
+static __thread struct sshbuf *stderr_buffer;	/* Used for final exit message. */
+static __thread int connection_in;	/* Connection to server (input). */
+static __thread int connection_out;	/* Connection to server (output). */
+static __thread int need_rekeying;	/* Set to non-zero if rekeying is requested. */
+static __thread int session_closed;	/* In SSH2: login session closed. */
+static __thread u_int x11_refuse_time;	/* If >0, refuse x11 opens after this time. */
+static __thread time_t server_alive_time;	/* Time to do server_alive_check */
 
 static void client_init_dispatch(struct ssh *ssh);
-int	session_ident = -1;
+__thread int	session_ident = -1;
 
 /* Track escape per proto2 channel */
 struct escape_filter_ctx {
@@ -620,6 +622,7 @@ client_process_net_input(struct ssh *ssh, fd_set *readset)
 		schedule_server_alive_check();
 		/* Read as much as possible. */
 		len = read(connection_in, buf, sizeof(buf));
+
 		if (len == 0) {
 			/*
 			 * Received EOF.  The remote host has closed the
@@ -2221,7 +2224,7 @@ client_input_hostkeys(struct ssh *ssh)
 	int r;
 	char *fp;
 	static int hostkeys_seen = 0; /* XXX use struct ssh */
-	extern struct sockaddr_storage hostaddr; /* XXX from ssh.c */
+	extern __thread struct sockaddr_storage hostaddr; /* XXX from ssh.c */
 	struct hostkeys_update_ctx *ctx = NULL;
 	u_int want;
 

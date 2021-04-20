@@ -173,7 +173,7 @@ static char *openssh_format_cipher = NULL;
 static int rounds = 0;
 
 /* argv0 */
-extern char *ssh_progname;
+extern __thread char *ssh_progname;
 
 static char hostname[NI_MAXHOST];
 

@@ -69,13 +69,13 @@
 #include "ssherr.h"
 
 /* from ssh.c */
-extern int tty_flag;
+extern __thread int tty_flag;
 extern Options options;
-extern int stdin_null_flag;
-extern char *host;
-extern int subsystem_flag;
-extern struct sshbuf *command;
-extern volatile sig_atomic_t quit_pending;
+extern __thread int stdin_null_flag;
+extern __thread char *host;
+extern __thread int subsystem_flag;
+extern __thread struct sshbuf *command;
+extern __thread volatile sig_atomic_t quit_pending;
 
 /* Context for session open confirmation callback */
 struct mux_session_confirm_ctx {

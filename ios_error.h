@@ -101,6 +101,9 @@ extern    int ios_fputc(int c, FILE *stream);
 extern int ios_putw(int w, FILE *stream);
 extern int ios_fflush(FILE *stream);
 extern int ios_gettty(void);
+extern int ios_opentty(void);
+extern void ios_closetty(void);
+extern void ios_stopInteractive(void);
 
 #ifdef __cplusplus
 }
