@@ -42,15 +42,6 @@ setenv SSL_CERT_FILE = $HOME/Documents/cacert.pem
 ```
 Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`. 
 
-## scp and sftp:
-
-`scp`and `sftp` are implemented by rewriting them as `curl` commands. For example, `scp user@host:~/distantfile localfile` becomes (internally) `curl scp://user@host/~/distantFile -o localFile`. This was done to keep the size of the framework as small as possible. It will work for most of the users and most of the commands. However, it has consequences:
-- `scp` from distant file to distant file probably won't work, only from local to distant or distant to local. 
-- The flags are those from `curl`, not `scp`. Except `-q` (quiet) which I remapped to `-s` (silent). 
-- The config file is `.curlrc`, not `.ssh/config`. 
-- The library used internally is `libssh2`, not `OpenSSH`.
-
-
 ## Installation:
 
 **The easy way:** (Xcode 12 and above) `ios_system` is available as a set of binary frameworks. Add this project as "Swift Package dependency", and link and embed the frameworks as you need them. 
@@ -135,8 +126,6 @@ To add a command:
 - `ping`, `nslookup`, `telnet`: now provided in the [network_ios](https://github.com/holzschu/network_ios) package.
 - `traceroute` and most network analysis tools: require root privilege, so impossible inside a sandbox.
 - `unzip`: use `tar -xz`. 
-- `nano`, `ed`: require user interaction, so currently impossible.
-- `vim`: like `ed`, but even more difficult (needs to access the entire screen, need to add lines to the keyboard for Escape, Tab... iVim is on the App Store, and can be accessed from inside OpenTerm using the `share` command. My fork of [iVim](https://github.com/holzschu/iVim) can launch shell commands with `:!`. It's easier to make an editor start commands than to make a terminal run an editor.
 - `sh`, `bash`, `zsh`: shells are hard to compile, even without the sandbox/API limitations. They also tend to take a lot of memory, which is a limited asset.
 - `git`: [WorkingCopy](https://workingcopyapp.com) does it very well, and you can transfer directories to your app, then transfer back to WorkingCopy. Also difficult to compile. 
 
