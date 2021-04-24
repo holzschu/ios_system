@@ -613,7 +613,7 @@ scp_main(int argc, char **argv)
 		    (void) close(remin);
 		if (remout != -1)
 		    (void) close(remout);
-#if !TARGET_OS_IPHONE
+//#if !TARGET_OS_IPHONE
         // Experimental: don't wait for ssh to finish because ssh waits for scp to finish.
         if (waitpid(do_cmd_pid, &status, 0) == -1)
 			errs = 1;
@@ -621,7 +621,7 @@ scp_main(int argc, char **argv)
 			if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 				errs = 1;
 		}
-#endif
+//#endif
 	}
 	exit(errs != 0);
 }

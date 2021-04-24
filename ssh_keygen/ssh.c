@@ -1716,11 +1716,6 @@ ssh_main(int ac, char **av)
 
 	/* Kill ProxyCommand if it is running. */
 	ssh_kill_proxy_command();
-#if TARGET_OS_IPHONE
-    if (fileno(thread_stdout) != fileno(thread_stderr))
-        fclose(thread_stderr);
-    fclose(thread_stdout);
-#endif
 	return exit_status;
 }
 

@@ -2229,6 +2229,10 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 	setvbuf(infile, NULL, _IOLBF, 0);
 
 	interactive = !batchmode && isatty(STDIN_FILENO);
+#if TARGET_OS_IPHONE
+    if (interactive)
+        ios_stopInteractive();
+#endif
 
 	err = 0;
 	for (;;) {
@@ -2600,10 +2604,6 @@ sftp_main(int argc, char **argv)
         
 	}
     
-#if TARGET_OS_IPHONE
-    ios_stopInteractive();
-#endif
-
 	err = interactive_loop(conn, file1, file2);
 
 #if !defined(USE_PIPES)
@@ -2617,11 +2617,11 @@ sftp_main(int argc, char **argv)
 		fclose(infile);
 
 // ssh waits for sftp in ios_system::cleanup_function, so this ends in an infinite loop
-#if !TARGET_OS_IPHONE
+//#if !TARGET_OS_IPHONE
     while (waitpid(sshpid, NULL, 0) == -1 && sshpid > 1)
 		if (errno != EINTR)
 			fatal("Couldn't wait for ssh process: %s",
 			    strerror(errno));
-#endif
+//#endif
 	exit(err == 0 ? 0 : 1);
 }
