@@ -222,13 +222,15 @@ static void cleanup_function(void* parameters) {
         }
         currentSession->activePager = FALSE;
     }
-    if ((!joinMainThread) && p->isPipeOut) {
+    // If the command was started as a pipe, we wait for the first command to finish sending data
+    // There is an exception for ssh, which can be started by scp or sftp. They will wait for it.
+    if ((!joinMainThread) && p->isPipeOut && (strcmp(commandName, "ssh") != 0)) {
         if (currentSession->current_command_root_thread != 0) {
             if (currentSession->current_command_root_thread != pthread_self()) {
-                // NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", pthread_self(), currentSession->current_command_root_thread);
+                NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", pthread_self(), currentSession->current_command_root_thread);
                 while (currentSession->current_command_root_thread != 0) { }
             } else {
-                // NSLog(@"Terminating root_thread of currentSession %x \n", pthread_self());
+                NSLog(@"Terminating root_thread of currentSession %x \n", pthread_self());
                 currentSession->current_command_root_thread = 0;
             }
         }
@@ -272,7 +274,7 @@ static void cleanup_function(void* parameters) {
         }
     }
     if (mustCloseStderr) {
-        // NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
+        NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
         fclose(p->stderr);
     }
     bool mustCloseStdout = fileno(p->stdout) != fileno(stdout);
@@ -283,7 +285,7 @@ static void cleanup_function(void* parameters) {
         }
     }
     if (mustCloseStdout) {
-        // NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
+        NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
         fclose(p->stdout);
     }
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
@@ -291,10 +293,10 @@ static void cleanup_function(void* parameters) {
         dlclose(p->dlHandle);
     free(parameters); // This was malloc'ed in ios_system
     if (isLastThread) {
-        // NSLog(@"Terminating lastthread of currentSession %x lastThreadId %x\n", pthread_self(), currentSession->lastThreadId);
+        NSLog(@"Terminating lastthread of currentSession %x lastThreadId %x\n", pthread_self(), currentSession->lastThreadId);
         currentSession->lastThreadId = 0;
     } else {
-        // NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
+        NSLog(@"Current thread %x lastthread %x \n", pthread_self(), currentSession->lastThreadId);
     }
     ios_releaseThread(pthread_self());
     if (currentSession->current_command_root_thread == pthread_self()) {
@@ -1583,7 +1585,33 @@ void ios_stopInteractive() {
     function = dlsym(RTLD_MAIN_ONLY, "stopInteractive");
     if (function != NULL) {
         function();
+    } else {
+        NSLog(@"Could not find function stopInteractive");
     }
+}
+
+void ios_startInteractive() {
+    // With aliasing, we can have commands that are interactive and not detected by the command-line interpreter.
+    void (*function)() = NULL;
+    function = dlsym(RTLD_MAIN_ONLY, "startInteractive");
+    if (function != NULL) {
+        function();
+    } else {
+        NSLog(@"Could not find function startInteractive");
+    }
+}
+
+static int isInteractive(const char* command) {
+    // let interactiveRegexp = /^vim|^ipython|^less|^more|^ssh|^scp|^sftp|^jump|\|&? *less|\|&? *more|^man/;
+    if (strncmp(command, "vim", 3) == 0) return true;
+    if (strncmp(command, "ipython", 7) == 0) return true;
+    if (strncmp(command, "less", 4) == 0) return true;
+    if (strncmp(command, "more", 4) == 0) return true;
+    if (strncmp(command, "scp", 3) == 0) return true;
+    if (strncmp(command, "man", 3) == 0) return true;
+    if (strncmp(command, "sftp", 4) == 0) return true;
+    if (strncmp(command, "jump", 4) == 0) return true;
+    return false;
 }
 
 void ios_setContext(const void *context) {
@@ -1899,6 +1927,11 @@ int ios_system(const char* inputCmd) {
                 originalCommand = newCommand;
                 cmd = newCommand;
                 command = newCommand;
+                // Maybe we aliased to an interactive command (vim, ssh, less, more, man, scp, sftp)
+                // We need to tell the command line editor:
+                if (isInteractive(newCommand)) {
+                    ios_startInteractive();
+                }
             }
         }
         free(commandForParsing);

@@ -104,6 +104,7 @@ extern int ios_gettty(void);
 extern int ios_opentty(void);
 extern void ios_closetty(void);
 extern void ios_stopInteractive(void);
+extern void ios_startInteractive(void);
 
 #ifdef __cplusplus
 }
