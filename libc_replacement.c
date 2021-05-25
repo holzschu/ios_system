@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sys/param.h>
 
 #include "ios_error.h"
 #undef write
@@ -126,36 +127,57 @@ int ios_putw(int w, FILE *stream) {
 static pthread_t thread_ids[IOS_MAX_THREADS];
 static int numVariablesSet[IOS_MAX_THREADS];
 static char** environment[IOS_MAX_THREADS];
+static char previousDirectory[IOS_MAX_THREADS][MAXPATHLEN];
+static int previousPid[IOS_MAX_THREADS];
 
 static int pid_overflow = 0;
 static pid_t current_pid = 0;
+static pid_t last_allocated_pid = 0;
 
 inline pthread_t ios_getThreadId(pid_t pid) {
     // return ios_getLastThreadId(); // previous behaviour
     return thread_ids[pid];
 }
 
-// We do not recycle process ids too quickly to avoid collisions.
+void newPreviousDirectory() {
+    // Called when a command calls "cd". Actually changes the directory for that command.
+    getwd(previousDirectory[current_pid]);
+}
 
+// We do not recycle process ids too quickly to avoid collisions.
+void storeEnvironment(char* envp[]);
 static inline const pid_t ios_nextAvailablePid() {
-    if (!pid_overflow && (current_pid < IOS_MAX_THREADS - 1)) {
-        current_pid += 1;
+    char** currentEnvironment = environmentVariables(current_pid);
+    int previousPidId = current_pid;
+    if (!pid_overflow && (last_allocated_pid < IOS_MAX_THREADS - 1)
+        && (thread_ids[last_allocated_pid+1] == 0)) {
+        current_pid = last_allocated_pid + 1;
         thread_ids[current_pid] = -1; // Not yet started
         numVariablesSet[current_pid] = 0;
         environment[current_pid] = NULL;
+        storeEnvironment(currentEnvironment); // duplicate the environment variables
+        getwd(previousDirectory[current_pid]); // store current working directory
+        previousPid[current_pid] = previousPidId;
         return current_pid;
     }
     // We've already started more than IOS_MAX_THREADS threads.
     if (!pid_overflow) current_pid = 0; // first time over the limit
     pid_overflow = 1;
     while (1) {
-        current_pid += 1;
-        if (current_pid >= IOS_MAX_THREADS) current_pid = 1;
+        current_pid = last_allocated_pid + 1;
+        last_allocated_pid = current_pid;
+        if (current_pid >= IOS_MAX_THREADS) {
+            current_pid = 1;
+            last_allocated_pid = 1;
+        }
         pthread_t thread_pid = ios_getThreadId(current_pid);
         if (thread_pid == 0) { // We found a not-active pid
             thread_ids[current_pid] = -1; // Not yet started
             numVariablesSet[current_pid] = 0;
             environment[current_pid] = NULL;
+            storeEnvironment(currentEnvironment); // duplicate the environment variables
+            getwd(previousDirectory[current_pid]); // store current working directory
+            previousPid[current_pid] = previousPidId;
             return current_pid;
         }
         // Dangerous: if the process is already killed, this wil crash
@@ -227,6 +249,7 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
         char** envp = environment[current_pid];
         int varNameLen = strlen(variableName);
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+            if (envp[i] == NULL) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
                 if (strlen(envp[i]) > varNameLen) {
                     if (envp[i][varNameLen] == '=') {
@@ -270,6 +293,7 @@ int ios_unsetenv(const char* variableName) {
         char** envp = environment[current_pid];
         int varNameLen = strlen(variableName);
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+            if (envp[i] == NULL) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
                 if (strlen(envp[i]) > varNameLen) {
                     if (envp[i][varNameLen] == '=') {
@@ -277,13 +301,13 @@ int ios_unsetenv(const char* variableName) {
                         free(envp[i]);
                         envp[i] = NULL;
                         if (i < numVariablesSet[current_pid] - 1) {
-                            for (int j = i; j < numVariablesSet[current_pid] - 2; j++) {
+                            for (int j = i; j < numVariablesSet[current_pid] - 1; j++) {
                                 envp[j] = envp[j+1];
                             }
                             envp[numVariablesSet[current_pid] - 1] = NULL;
                         }
                         numVariablesSet[current_pid] -= 1;
-                        envp = realloc(envp, (numVariablesSet[current_pid] + 1) * sizeof(char*));
+                        environment[current_pid] = realloc(envp, (numVariablesSet[current_pid] + 1) * sizeof(char*));
                         return 0;
                     }
                 }
@@ -306,7 +330,12 @@ int ios_unsetenv(const char* variableName) {
 // store environment variables (called from execve)
 // Copy the entire environment:
 extern char** environ;
+void resetEnvironment(pid_t pid);
 void storeEnvironment(char* envp[]) {
+    if (numVariablesSet[current_pid] > 0) {
+        // We already allocated one environment. Let's clean it:
+        resetEnvironment(current_pid);
+    }
     int i = 0;
     while (envp[i] != NULL) {
         i++;
@@ -314,7 +343,10 @@ void storeEnvironment(char* envp[]) {
     numVariablesSet[current_pid] = i;
     environment[current_pid] = malloc((numVariablesSet[current_pid] + 1) * sizeof(char*));
     for (int i = 0; i < numVariablesSet[current_pid]; i++) {
-        environment[current_pid][i] = strdup(envp[i]);
+        if (envp[i] != NULL)
+            environment[current_pid][i] = strdup(envp[i]);
+        else
+            environment[current_pid][i] = NULL;
     }
     // Keep NULL-termination:
     environment[current_pid][numVariablesSet[current_pid]] = NULL;
@@ -325,6 +357,7 @@ void resetEnvironment(pid_t pid) {
     if (numVariablesSet[pid] > 0) {
         // Free the variables allocated:
         for (int i = 0; i < numVariablesSet[pid]; i++) {
+            if (environment[pid][i] == NULL) { continue; }
             free(environment[pid][i]);
             environment[pid][i] = NULL;
         }
@@ -344,12 +377,14 @@ char** environmentVariables(pid_t pid) {
 
 void ios_releaseThread(pthread_t thread) {
     // TODO: this is inefficient. Replace with NSMutableArray?
-    // fprintf(stderr, "Releasing thread %x\n", thread);
     for (int p = 0; p < IOS_MAX_THREADS; p++) {
         if (thread_ids[p] == thread) {
             // fprintf(stderr, "Found Id %d\n", p);
-            resetEnvironment(p);
-            thread_ids[p] = 0;
+            // Don't reset the environment; sometimes, commands try to change the environment while it is being erased.
+            // resetEnvironment(p);
+            chdir(previousDirectory[p]);
+            current_pid = previousPid[p];
+            thread_ids[p] = NULL;
             return;
         }
     }
@@ -358,7 +393,10 @@ void ios_releaseThread(pthread_t thread) {
 
 
 void ios_releaseThreadId(pid_t pid) {
-    resetEnvironment(pid);
+    // Don't reset the environment; sometimes, commands try to change the environment while it is being erased.
+    // resetEnvironment(pid);
+    chdir(previousDirectory[pid]);
+    current_pid = previousPid[pid];
     thread_ids[pid] = 0;
 }
 

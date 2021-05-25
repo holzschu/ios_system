@@ -153,6 +153,8 @@ usage(void)
 	exit(1);
 }
 
+#undef setenv
+#undef unsetenv
 
 int setenv_main(int argc, char** argv) {
     if (argc <= 1) return env_main(argc, argv);
@@ -161,6 +163,10 @@ int setenv_main(int argc, char** argv) {
         return 0;
     }
     // setenv VARIABLE value
+    // First in the process environment (if it exists):
+    if (argv[2] != NULL) ios_setenv(argv[1], argv[2], 1);
+    else ios_setenv(argv[1], "", 1); // if there's no value, pass an empty string instead of a null pointer
+    // and also in the main environment:
     if (argv[2] != NULL) setenv(argv[1], argv[2], 1);
     else setenv(argv[1], "", 1); // if there's no value, pass an empty string instead of a null pointer
     return 0;
@@ -178,6 +184,9 @@ int export_main(int argc, char** argv) {
         return 0;
     }
     *position = 0;
+    // First in the process environment (if it exists):
+    ios_setenv(argument, position+1, 1);
+    // and also in the main environment:
     int returnValue = setenv(argument, position+1, 1);
     free(argument);
     return returnValue;
@@ -188,7 +197,9 @@ int unsetenv_main(int argc, char** argv) {
         fprintf(thread_stderr, "unsetenv: Too few arguments. Usage: unsetenv variable\n"); fflush(thread_stderr);
         return 0;
     }
-    // unsetenv acts on all parameters
+    // unsetenv acts on all parameters. First in the process environment:
+    for (int i = 1; i < argc; i++) ios_unsetenv(argv[i]);
+    // also unset in the main environment:
     for (int i = 1; i < argc; i++) unsetenv(argv[i]);
     return 0;
 }

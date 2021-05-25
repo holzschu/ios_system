@@ -257,11 +257,6 @@ static int ssh_client_loop(LIBSSH2_SESSION *_session, LIBSSH2_CHANNEL *_channel,
     while ((rc = libssh2_channel_close(_channel)) == LIBSSH2_ERROR_EAGAIN)
         ssh_waitsocket(_sock, _session);
 
-    // close files if it's not a pipe. Could move to ios_system.
-    // if (fileno(thread_stdin) != fileno(stdin)) { fclose(thread_stdin);}
-    // if (fileno(thread_stdout) != fileno(stdout)) { fclose(thread_stdout);}
-    // if (fileno(thread_stderr) != fileno(stderr)) { fclose(thread_stderr);}
-
     if (rc < 0) {
         return -1;
     }
