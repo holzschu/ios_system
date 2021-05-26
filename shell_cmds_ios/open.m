@@ -153,3 +153,35 @@ int open_main(int argc, char *argv[]) {
   
   return openurl_main(argc, argv);
 }
+
+void display_alert(NSString* title, NSString* message) {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    
+    if (!window) {
+      return;
+    }
+    
+    UIViewController *topController = window.rootViewController;
+    
+    while (topController.presentedViewController) {
+      topController = topController.presentedViewController;
+    }
+    
+    if (topController == NULL) {
+      return;
+    }
+    
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:title
+                                   message:message
+                                   preferredStyle:UIAlertControllerStyleAlert];
+     
+    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+       handler:^(UIAlertAction * action) {}];
+     
+    [alert addAction:defaultAction];
+    [topController presentViewController:alert animated:YES completion:nil];
+  });
+  return;
+}
