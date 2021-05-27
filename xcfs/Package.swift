@@ -20,7 +20,6 @@ _ = Package(
             url: "https://github.com/blinksh/openssl-apple/releases/download/v1.1.1k/openssl-static.xcframework.zip",
             checksum: "cf969ea17dc0f5740eb0a55902a71cdf8464440c3dda4f3d55df3f8084a655ba"
         ),
-
         .target(
             name: "build",
             dependencies: ["FMake"]
