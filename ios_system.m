@@ -750,8 +750,45 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
     [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
   }
 }
+
+// For some Unix commands that call fchdir (including vim:
+#undef fchdir
+int ios_fchdir(const int fd) {
+    int result = fchdir(fd);
+    if (result < 0) {
+        return result;
+    }
+    // We managed to change the directory. Update currentSession as well:
+    // Was that allowed?
+    // Allowed "cd" = below miniRoot *or* below localMiniRoot
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSString* resultDir = [fileManager currentDirectoryPath];
+
+    if (__allowed_cd_to_path(resultDir)) {
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+        strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        errno = 0;
+        return 0;
+    }
+    
+    errno = EACCES; // Permission denied
+    // If the user tried to go above the miniRoot, set it to miniRoot
+    if ([miniRoot hasPrefix:resultDir]) {
+        [fileManager changeCurrentDirectoryPath:miniRoot];
+        strcpy(currentSession->currentDir, [miniRoot UTF8String]);
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+    } else {
+        // go back to where we were before:
+        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+    }
+    return -1;
+}
+
+
+
 // For some Unix commands that call chdir:
 int chdir(const char* path) {
+    // NSLog(@"Inside chdir, path: %s for session: %s\n", path, (char*)currentSession->context);
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     NSString* newDir = @(path);
     BOOL isDir;
@@ -1545,6 +1582,12 @@ void ios_switchSession(const void* sessionId) {
             return;
         }
     }
+    
+    if ((currentSession != nil) && (currentSession->context != NULL) && (strcmp(currentSession->context, sessionName) == 0)) {
+        // Already inside this session: do nothing
+        return;
+    }
+
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = @((NSUInteger)sessionId);
     if (sessionList == nil) {
@@ -1856,6 +1899,7 @@ static char* getLastCharacterOfArgument(const char* argument) {
         }
         return NULL;
     }
+    // TODO: the last character of the argument could also be '<' or '>' (vim does that, with no space after file name)
     else return nextUnescapedCharacter(argument + 1, ' ');
 }
 
@@ -1967,9 +2011,9 @@ int ios_system(const char* inputCmd) {
         command = cmd + 1;
         char* endCmd = strstrquoted(command, ")"); // remove closing parenthesis
         if (endCmd) {
-            endCmd[0] = 0x0;
+            endCmd[0] = ' ';
             assert(endCmd < maxPointer);
-            inputFileMarker = endCmd + 1;
+            // inputFileMarker = endCmd + 1;
         }
     } else command = cmd;
     // fprintf(thread_stderr, "Command sent: %s \n", command);
