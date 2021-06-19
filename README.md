@@ -22,11 +22,11 @@ link with the `ios_system.framework`, and your calls to `system()` will be handl
 
 The commands available are defined in two dictionaries, `Resources/commandDictionary.plist` and `Resources/extraCommandsDictionary.plist`. At startup time, `ios_system` loads these dictionaries and enables the commands defined inside. You will need to add these two dictionaries to the "Copy Bundle Resources" step in your Xcode project.
 
-Each command is defined inside a framework. The framework is loaded when the command is called, and released after the command exits. Frameworks for small commands are in this project. Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). Some commands (`curl`, `python`) require `OpenSSH` and `libssl2`, which you will have to download and compile separately (see https://github.com/holzschu/libssh2-for-iOS, for example).
+Each command is defined inside a framework. The framework is loaded when the command is called, and released after the command exits. Frameworks for small commands are in this project. Frameworks for interpreted languages are larger, and available separately: [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios) and [TeX](https://github.com/holzschu/lib-tex). 
 
 Network-based commands (nslookup, dig, host, ping, telnet) are also available as a separate framework, [network_ios](https://github.com/holzschu/network_ios). Place the compiled library with the other libraries and add it to the embedded libraries of your application.
 
-This `ios_system` framework has been successfully integrated into four shells, [Blink](https://github.com/blinksh/blink/), [OpenTerm](https://github.com/louisdh/terminal), [Pisth](https://github.com/ColdGrub1384/Pisth) and [LibTerm](https://github.com/ColdGrub1384/LibTerm) as well as an editor, [iVim](https://github.com/holzschu/iVim). Each time, it provides a Unix look-and-feel (well, mostly feel). 
+This `ios_system` framework has been successfully integrated into four shells, [Blink](https://github.com/blinksh/blink/), [OpenTerm](https://github.com/louisdh/terminal), [Pisth](https://github.com/ColdGrub1384/Pisth) and [LibTerm](https://github.com/ColdGrub1384/LibTerm), an editor, [iVim](https://github.com/holzschu/iVim) and a TeX-writing app, [TeXable](https://texable.io). Each time, it provides a Unix look-and-feel (well, mostly feel). 
 
 **Issues:** In iOS, you cannot write in the `~` directory, only in `~/Documents/`, `~/Library/` and `~/tmp`. Most Unix programs assume the configuration files are in `$HOME`. 
 So either you redefine `$HOME` to `~/Documents/` or you set configuration variables (using `setenv`) to some other place. This is done in the `initializeEnvironment()` function. 
@@ -45,6 +45,10 @@ Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`.
 ## Installation:
 
 **The easy way:** (Xcode 12 and above) `ios_system` is available as a set of binary frameworks. Add this project as "Swift Package dependency", and link and embed the frameworks as you need them. 
+
+**The semi-hard way:**
+
+Type `swift run --package-path xcfs build`. This will download all the requirements (`libssh2` and `openssl`) and build all the ios_system XcFrameworks, in the `.build` directory.
 
 **The hard way:**
 
@@ -95,7 +99,7 @@ Example:
 
 **ios_execv(const char *path, char* const argv[])**: executes the command in `argv[0]` with the arguments `argv` (it doesn't use `path`). It is *not* a drop-in replacement for `execv` because it does not terminate the current process. `execv` is usually called after `fork()`, and `execv` terminates the child process. This is not possible in iOS. If `dup2` was called before `execv` to set stdin and stdout, `ios_execv` tries to do the right thing and pass these streams to the process started by `execv`. 
 
-`ios_execve` also exists, but is just a pointer to `ios_execv` (we don't do anything with the environment for now). 
+`ios_execve` also exists, and stores the environment.
 
 ## Adding more commands:
 
