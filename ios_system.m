@@ -59,6 +59,7 @@ typedef struct _sessionParameters {
     char localMiniRoot[MAXPATHLEN];
     pthread_t current_command_root_thread; // thread ID of first command
     pthread_t lastThreadId; // thread ID of last command
+    pthread_t mainThreadId; // thread ID of parent command, if any (e.g. vim, which starts "sh -c cd dir && flake8 file")
     FILE* stdin;
     FILE* stdout;
     FILE* stderr;
@@ -76,6 +77,7 @@ static void initSessionParameters(sessionParameters* sp) {
     sp->isMainThread = TRUE;
     sp->current_command_root_thread = 0;
     sp->lastThreadId = 0;
+    sp->mainThreadId = 0;
     NSString* currentDirectory = [fileManager currentDirectoryPath];
     strcpy(sp->currentDir, [currentDirectory UTF8String]);
     strcpy(sp->previousDirectory, [currentDirectory UTF8String]);
@@ -94,6 +96,46 @@ static void initSessionParameters(sessionParameters* sp) {
 
 void ios_setBookmarkDictionaryName(NSString* name) {
     ios_bookmarkDictionaryName = name;
+}
+
+void ios_printBookmarkedVersion(char* p) {
+    // p is a directory. See if there is a bookmark that can make it shorter:
+    NSString* pathString = [NSString stringWithUTF8String:p];
+    if ([pathString hasPrefix:@"/private"]) {
+        pathString = [pathString stringByReplacingOccurrencesOfString:@"/private" withString:@""];
+    }
+    NSString *homePath;
+    homePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByDeletingLastPathComponent];
+    if ([homePath hasPrefix:@"/private"]) {
+        homePath = [homePath stringByReplacingOccurrencesOfString:@"/private" withString:@""];
+    }
+    NSLog(@"ios_printBookmarkedVersion: %s %s", homePath.UTF8String, pathString.UTF8String);
+    if ([pathString hasPrefix:homePath]) {
+        pathString = [pathString stringByReplacingOccurrencesOfString:homePath withString:@""];
+        fprintf(thread_stdout, "~%s\n", pathString.UTF8String);
+        return;
+    }
+    if (ios_bookmarkDictionaryName == nil) {
+        fprintf(thread_stdout, "%s\n", p);
+        return;
+    }
+    NSDictionary *tildeExpansionDictionary = [[NSUserDefaults standardUserDefaults] dictionaryForKey:ios_bookmarkDictionaryName];
+    if (tildeExpansionDictionary == nil) {
+        fprintf(thread_stdout, "%s\n", p);
+        return;
+    }
+    for (NSString* bookmark in tildeExpansionDictionary) {
+        NSString* bookmarkPath = tildeExpansionDictionary[bookmark];
+        if ([bookmarkPath hasPrefix:@"/private"]) {
+            bookmarkPath = [bookmarkPath stringByReplacingOccurrencesOfString:@"/private" withString:@""];
+        }
+        if ([pathString hasPrefix:bookmarkPath]) {
+            pathString = [pathString stringByReplacingOccurrencesOfString:bookmarkPath withString:bookmark];
+            fprintf(thread_stdout, "~%s\n", pathString.UTF8String);
+            return;
+        }
+    }
+    fprintf(thread_stdout, "%s\n", p);
 }
 
 static NSMutableDictionary* sessionList;
@@ -145,6 +187,8 @@ void _exit(int n) {
 //
 
 void ios_signal(int signal) {
+    // This function is probably obsolete now. If we keep using it, remember that currentSession is not necessarily the currentSession
+    // (if currentSession started sh_session, then we might be sending the signal to the wrong session).
     // Signals the threads of the current session:
     if (currentSession != NULL) {
         if (currentSession->current_command_root_thread != NULL) {
@@ -152,6 +196,9 @@ void ios_signal(int signal) {
         }
         if (currentSession->lastThreadId != NULL) {
             pthread_kill(currentSession->lastThreadId, signal);
+        }
+        if (currentSession->mainThreadId != NULL) {
+            pthread_kill(currentSession->mainThreadId, signal);
         }
     }
 }
@@ -173,6 +220,16 @@ void ios_setWindowSize(int width, int height, const void* sessionId) {
 
     sprintf(resizedSession->columns, "%d", width);
     sprintf(resizedSession->lines, "%d",height);
+    // Also send SIGWINCH to the main thread of resizedSession:
+    if (resizedSession->current_command_root_thread != NULL) {
+        pthread_kill(resizedSession->current_command_root_thread, SIGWINCH);
+    }
+    if (resizedSession->lastThreadId != NULL) {
+        pthread_kill(resizedSession->lastThreadId, SIGWINCH);
+    }
+    if (resizedSession->mainThreadId != NULL) {
+        pthread_kill(resizedSession->mainThreadId, SIGWINCH);
+    }
 }
 
 extern char* libc_getenv(const char* variableName);
@@ -324,6 +381,9 @@ static void cleanup_function(void* parameters) {
     ios_releaseThread(pthread_self());
     if (currentSession->current_command_root_thread == pthread_self()) {
         currentSession->current_command_root_thread = 0;
+    }
+    if (currentSession->mainThreadId == pthread_self()) {
+        currentSession->mainThreadId = 0;
     }
 }
 
@@ -1380,7 +1440,6 @@ int sh_main(int argc, char** argv) {
         // Only one command left
         argv[0][0] = 'h';  // prevent termination?
         pid_t pid = ios_fork();
-        NSLog(@"Starting single command in sh -c, stored last_thread= %x pid: %d, command= %s", currentSession->lastThreadId, pid, newCommand);
         int returnValue = ios_system(newCommand);
         ios_waitpid(pid);
         free(newCommand);
@@ -1388,7 +1447,7 @@ int sh_main(int argc, char** argv) {
     }
     // If we reach this point, we have multiple commands to execute.
     // Store current sesssion, create a new session specific for this, execute commands
-    id sessionKey = @((NSUInteger)&sh_session);
+    id sessionKey = @((NSUInteger)sh_session);
     if (sessionList != nil) {
         sessionParameters* runningShellSession = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
         if (runningShellSession != NULL) {
@@ -1411,7 +1470,7 @@ int sh_main(int argc, char** argv) {
         parentSession = currentSession;
         parentDir = [fileManager currentDirectoryPath];
     }
-    ios_switchSession(&sh_session); // create a new session
+    ios_switchSession(sh_session); // create a new session
     // NSLog(@"after switchSession, currentDir = %s\n", [fileManager currentDirectoryPath].UTF8String);
     currentSession->isMainThread = false;
     currentSession->context = sh_session;
@@ -1420,6 +1479,7 @@ int sh_main(int argc, char** argv) {
     currentSession->stderr = thread_stderr;
     currentSession->current_command_root_thread = NULL;
     currentSession->lastThreadId = NULL;
+    currentSession->mainThreadId = parentSession->mainThreadId;
     // Need to loop twice: over each argument, and inside each argument.
     // &&: keep computing until one command is in error
     // ||: keep computing until one command is not in error
@@ -1453,7 +1513,7 @@ int sh_main(int argc, char** argv) {
         // NSLog(@"Reset current Dir to= %s instead of %s", parentDir.UTF8String, [fileManager currentDirectoryPath].UTF8String);
         [fileManager changeCurrentDirectoryPath:parentDir];
     }
-    ios_closeSession(&sh_session);
+    ios_closeSession(sh_session);
     currentSession = parentSession;
     parentSession = NULL;
     return returnValue;
@@ -2696,6 +2756,7 @@ int ios_system(const char* inputCmd) {
                         while (_tid == NULL) { }
                         // ios_storeThreadId(_tid);
                         currentSession->current_command_root_thread = _tid;
+                        if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
                         // Wait for this process to finish:
 						if (joinMainThread) {
 							pthread_join(_tid, NULL);
@@ -2715,6 +2776,7 @@ int ios_system(const char* inputCmd) {
                     while (_tid == NULL) { }
                     // ios_storeThreadId(_tid);
                     currentSession->current_command_root_thread = _tid;
+                    if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
                     // Wait for this process to finish:
 					if (joinMainThread) {
 						pthread_join(_tid, NULL);

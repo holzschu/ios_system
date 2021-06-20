@@ -55,6 +55,7 @@ __FBSDID("$FreeBSD: src/bin/pwd/pwd.c,v 1.25 2005/02/09 17:37:38 ru Exp $");
 
 static char *getcwd_logical(void);
 static void usage(void);
+extern void ios_printBookmarkedVersion(char* p);
 
 int
 pwd_main(int argc, char *argv[])
@@ -92,9 +93,14 @@ pwd_main(int argc, char *argv[])
 	 * fail if the path is too long (errno == ENAMETOOLONG).
 	 */
 	if ((!physical && (p = getcwd_logical()) != NULL) ||
-	    ((physical || errno == ENOENT) && (p = getcwd(NULL, 0)) != NULL))
-		fprintf(thread_stdout, "%s\n", p);
-    else {
+        ((physical || errno == ENOENT) && (p = getcwd(NULL, 0)) != NULL)) {
+        // p is the directory found by getcwd() (most likely)
+        if (physical) {
+            fprintf(thread_stdout, "%s\n", p);
+        } else {
+            ios_printBookmarkedVersion(p);
+        }
+    } else {
 		err(1, ".");
     }
     
