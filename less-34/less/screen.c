@@ -736,9 +736,11 @@ ltgetstr(capname, pp)
     if (strcmp(capname, "ke") == 0) // end keypad mode
         return NULL;
     if (strcmp(capname, "ti") == 0) // Startup terminal initialization
-        return NULL;
+    	return "\033[?47h";
+        // return NULL;
     if (strcmp(capname, "te") == 0) // End terminal initialization
-        return NULL;
+    	return "\033[?47l";
+        // return NULL;
     if (strcmp(capname, "ce") == 0) // Clear to end of line
         return "\033[K";
     if (strcmp(capname, "cd") == 0) // Clear to end of screen
