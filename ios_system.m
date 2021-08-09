@@ -101,13 +101,14 @@ void ios_setBookmarkDictionaryName(NSString* name) {
 void ios_printBookmarkedVersion(char* p) {
     // p is a directory. See if there is a bookmark that can make it shorter:
     NSString* pathString = [NSString stringWithUTF8String:p];
-    if ([pathString hasPrefix:@"/private"]) {
-        pathString = [pathString stringByReplacingOccurrencesOfString:@"/private" withString:@""];
+    NSString* privatePrefix = @"/private";
+    if ([pathString hasPrefix:privatePrefix]) {
+        pathString = [pathString substringFromIndex:[privatePrefix length]];
     }
     NSString *homePath;
     homePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByDeletingLastPathComponent];
-    if ([homePath hasPrefix:@"/private"]) {
-        homePath = [homePath stringByReplacingOccurrencesOfString:@"/private" withString:@""];
+    if ([homePath hasPrefix:privatePrefix]) {
+        homePath = [homePath substringFromIndex:[privatePrefix length]];
     }
     NSLog(@"ios_printBookmarkedVersion: %s %s", homePath.UTF8String, pathString.UTF8String);
     if ([pathString hasPrefix:homePath]) {
@@ -126,8 +127,8 @@ void ios_printBookmarkedVersion(char* p) {
     }
     for (NSString* bookmark in tildeExpansionDictionary) {
         NSString* bookmarkPath = tildeExpansionDictionary[bookmark];
-        if ([bookmarkPath hasPrefix:@"/private"]) {
-            bookmarkPath = [bookmarkPath stringByReplacingOccurrencesOfString:@"/private" withString:@""];
+        if ([bookmarkPath hasPrefix:privatePrefix]) {
+            bookmarkPath = [bookmarkPath substringFromIndex:[privatePrefix length]];
         }
         if ([pathString hasPrefix:bookmarkPath]) {
             pathString = [pathString stringByReplacingOccurrencesOfString:bookmarkPath withString:bookmark];
@@ -203,6 +204,18 @@ void ios_signal(int signal) {
     }
 }
 
+NSString *ios_getLogicalPWD(const void* sessionId) {
+    id sessionKey = @((NSUInteger)sessionId);
+    if (sessionList == nil) {
+        return nil;
+    }
+    sessionParameters *session = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
+    if (session == nil) {
+        return nil;
+    }
+    return @(session->currentDir);
+}
+
 #undef getenv
 void ios_setWindowSize(int width, int height, const void* sessionId) {
     // You can set the window size for a session that is not currently running (e.g. because "sh_session" is running).
@@ -243,6 +256,9 @@ char * ios_getenv(const char *name) {
     }
     if (strcmp(name, "ROWS") == 0) {
         return currentSession->lines;
+    }
+    if (strcmp(name, "PWD") == 0) {
+        return currentSession->currentDir;
     }
     return libc_getenv(name);
 }
@@ -534,6 +550,8 @@ void initializeEnvironment() {
     getrlimit(RLIMIT_NOFILE, &limitFilesOpen);
 }
 
+NSString * pathJoin(NSString * segmentA, NSString * segmentB);
+
 static char* parseArgument(char* argument, char* command) {
     // expand all environment variables, convert "~" to $HOME (only if localFile)
     // we also pass the shell command for some specific behaviour (don't do this for that command)
@@ -645,6 +663,9 @@ static char* parseArgument(char* argument, char* command) {
                 argumentString = result;
             }
         }
+    }
+    if ([argumentString hasPrefix:@"../"] || [argumentString hasPrefix:@"./.."] || [argumentString isEqualToString:@".."]) {
+        argumentString = pathJoin(@(currentSession->currentDir), argumentString);
     }
     if (strcmp(command, "export") == 0) {
         argumentString = [[variableName stringByAppendingString:@"="] stringByAppendingString:argumentString];
@@ -801,6 +822,7 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
 
   if (__allowed_cd_to_path(resultDir)) {
     strcpy(currentSession->previousDirectory, currentSession->currentDir);
+    strcpy(currentSession->currentDir, [newDir UTF8String]);
     return;
   }
   
@@ -907,29 +929,32 @@ int command_not_found(int argc, char** argv) {
 }
 
 extern void newPreviousDirectory(void);
+
 int cd_main(int argc, char** argv) {
     if (currentSession == NULL) {
       return 1;
     }
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-
+  
     if (argc > 1) {
         NSString* newDir = @(argv[1]);
         if (strcmp(argv[1], "-") == 0) {
             // "cd -" option to pop back to previous directory
-            newDir = [NSString stringWithCString:currentSession->previousDirectory encoding:NSUTF8StringEncoding];
+            newDir = @(currentSession->previousDirectory);
         }
+        newDir = pathJoin(@(currentSession->currentDir), newDir);
         __cd_to_dir(newDir, fileManager);
     } else { // [cd] Help, I'm lost, bring me back home
-        strcpy(currentSession->previousDirectory, [[fileManager currentDirectoryPath] UTF8String]);
-
         if (miniRoot != nil) {
             [fileManager changeCurrentDirectoryPath:miniRoot];
         } else {
             [fileManager changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
         }
+
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+        strcpy(currentSession->currentDir, fileManager.currentDirectoryPath.UTF8String);
     }
-    strcpy(currentSession->currentDir, [[fileManager currentDirectoryPath] UTF8String]);
+
     newPreviousDirectory(); // If a command is running, this changes the directory it goes back to.
     return 0;
 }
@@ -2839,4 +2864,66 @@ int ios_system(const char* inputCmd) {
     fflush(thread_stdout);
     fflush(thread_stderr);
     return currentSession->global_errno;
+}
+
+NSArray<NSString *> * pathNormalizeArray(NSArray<NSString *> * parts, BOOL allowAboveRoot) {
+  NSMutableArray<NSString *> * res = [[NSMutableArray alloc] init];
+  for (NSString * p in parts) {
+    // ignore empty parts
+    if (p.length == 0 || [p isEqualToString:@"."] || [p isEqualToString:@"/"]) {
+      continue;
+    }
+    
+    if ([p isEqualToString: @".."]) {
+      if (res.count && ![@".." isEqualToString: [res lastObject]]) {
+        [res removeLastObject];
+      } else if (allowAboveRoot) {
+        [res addObject: p];
+      }
+     } else {
+      [res addObject: p];
+    }
+  }
+  
+  return res;
+}
+
+NSString * pathNormalize(NSString *path) {
+  BOOL isAbsolute = [path hasPrefix:@"/"];
+  BOOL trailingSlash = [path hasSuffix:@"/"];
+  
+  NSString * result = [pathNormalizeArray([path pathComponents], !isAbsolute) componentsJoinedByString: @"/"];
+  
+  if (!result.length && !isAbsolute) {
+    result = @".";
+  }
+  
+  if (result.length && trailingSlash) {
+    result = [result stringByAppendingString:@"/"];
+  }
+  
+  return [(isAbsolute ? @"/" : @"") stringByAppendingString:result];
+}
+
+
+NSString * pathJoin(NSString * segmentA, NSString * segmentB) {
+  NSMutableString *path = [[NSMutableString alloc] init];
+  NSString * a = segmentA ?: @"";
+  NSString * b = segmentB ?: @"";
+  
+  if ([b hasPrefix:@"/"]) {
+    return pathNormalize(b);
+  }
+  
+  if (a.length) {
+    [path appendString: a];
+    if (b.length) {
+      [path appendString:@"/"];
+      [path appendString:b];
+    }
+  } else if (b.length) {
+    [path appendString: b];
+  }
+  
+  return pathNormalize(path);
 }

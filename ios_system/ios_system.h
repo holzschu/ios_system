@@ -47,7 +47,8 @@ extern NSArray* environmentAsArray(void);
 extern void storeEnvironment(char* envp[]);
 extern pid_t ios_fork(void);
 extern void ios_waitpid(pid_t pid);
-extern void ios_signal(int signal); 
+extern void ios_signal(int signal);
+extern NSString *ios_getLogicalPWD(const void* sessionId);
 void ios_setWindowSize(int width, int height, const void* sessionId);
 
 extern NSString* commandsAsString(void);
