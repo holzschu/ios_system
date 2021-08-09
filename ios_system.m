@@ -543,7 +543,12 @@ static char* parseArgument(char* argument, char* command) {
     if (strcmp(command, "export") == 0) {
         NSArray<NSString*>* components = [argumentString componentsSeparatedByString:@"="];
         variableName = components[0];
-        argumentString = [argumentString substringFromIndex:(variableName.length + 1)];
+        if (components.count > 1) {
+            argumentString = [argumentString substringFromIndex:(variableName.length + 1)];
+        } else {
+            // No equal sign, no change. export_main will reject this.
+            return argument;
+        }
     }
     // 1) expand environment variables, + "~" (not wildcards ? and *)
     bool cannotExpand = false;
@@ -847,6 +852,7 @@ int ios_fchdir(const int fd) {
 
 
 // For some Unix commands that call chdir:
+// Is also called at the end of the execution of each command
 int chdir(const char* path) {
     // NSLog(@"Inside chdir, path: %s for session: %s\n", path, (char*)currentSession->context);
     NSFileManager *fileManager = [[NSFileManager alloc] init];
@@ -873,7 +879,6 @@ int chdir(const char* path) {
     NSString* resultDir = [fileManager currentDirectoryPath];
 
     if (__allowed_cd_to_path(resultDir)) {
-        strcpy(currentSession->previousDirectory, currentSession->currentDir);
         strcpy(currentSession->currentDir, [resultDir UTF8String]);
         errno = 0;
         return 0;
@@ -901,7 +906,7 @@ int command_not_found(int argc, char** argv) {
     // TODO: this should also raise an exception, for python scripts
 }
 
-extern void newPreviousDirectory();
+extern void newPreviousDirectory(void);
 int cd_main(int argc, char** argv) {
     if (currentSession == NULL) {
       return 1;
