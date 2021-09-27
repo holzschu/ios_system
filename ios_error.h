@@ -64,6 +64,7 @@ extern __thread FILE* thread_stderr;
 #define getenv ios_getenv
 #define setenv ios_setenv
 #define unsetenv ios_unsetenv
+#define putenv ios_putenv
 #define fchdir ios_fchdir
 
 extern int ios_executable(const char* cmd); // is this command part of the "shell" commands?
@@ -79,6 +80,7 @@ extern int ios_dup2(int fd1, int fd2);
 extern char * ios_getenv(const char *name);
 extern int ios_setenv(const char* variableName, const char* value, int overwrite);
 int ios_unsetenv(const char* variableName);
+extern int ios_putenv(char *string);
 extern char** environmentVariables(pid_t pid);
 
 extern int ios_isatty(int fd);

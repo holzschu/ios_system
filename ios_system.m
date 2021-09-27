@@ -288,6 +288,7 @@ typedef struct _functionParameters {
     sessionParameters* session;
 } functionParameters;
 
+extern pthread_mutex_t pid_mtx;
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     functionParameters *p = (functionParameters *) parameters;
@@ -369,6 +370,11 @@ static void cleanup_function(void* parameters) {
             mustCloseStderr &= fileno(p->stderr) != fileno(currentSession->stdout);
         }
     }
+    // Some programs stop waiting as soon as stdout/stderr close (which makes sense)
+    if (isLastThread) {
+        NSLog(@"Locking for thread %x in cleanup_function\n", pthread_self());
+        pthread_mutex_lock(&pid_mtx); // Avoid multi-lock when several commands end together (for ls | grep)
+    }
     if (mustCloseStderr) {
         NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
         fclose(p->stderr);
@@ -400,6 +406,9 @@ static void cleanup_function(void* parameters) {
     }
     if (currentSession->mainThreadId == pthread_self()) {
         currentSession->mainThreadId = 0;
+    }
+    if (isLastThread) {
+        pthread_mutex_unlock(&pid_mtx);
     }
 }
 
@@ -841,8 +850,14 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
 // For some Unix commands that call fchdir (including vim:
 #undef fchdir
 int ios_fchdir(const int fd) {
+    NSLog(@"Locking for thread %x in ios_fchdir\n", pthread_self());
+    // We cannot have someone change the current directory while a command is starting or terminating.
+    // hence the mutex_lock here.
+    pthread_mutex_lock(&pid_mtx);
     int result = fchdir(fd);
     if (result < 0) {
+        NSLog(@"Unlocking for thread %x in ios_fchdir\n", pthread_self());
+        pthread_mutex_unlock(&pid_mtx);
         return result;
     }
     // We managed to change the directory. Update currentSession as well:
@@ -850,11 +865,14 @@ int ios_fchdir(const int fd) {
     // Allowed "cd" = below miniRoot *or* below localMiniRoot
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     NSString* resultDir = [fileManager currentDirectoryPath];
+    NSLog(@"Inside fchdir, path: %s for session: %s\n", resultDir.UTF8String, (char*)currentSession->context);
 
     if (__allowed_cd_to_path(resultDir)) {
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
         strcpy(currentSession->currentDir, [resultDir UTF8String]);
         errno = 0;
+        NSLog(@"Unlocking for thread %x in ios_fchdir\n", pthread_self());
+        pthread_mutex_unlock(&pid_mtx);
         return 0;
     }
     
@@ -868,15 +886,14 @@ int ios_fchdir(const int fd) {
         // go back to where we were before:
         [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
     }
+    NSLog(@"Unlocking for thread %x in ios_fchdir\n", pthread_self());
+    pthread_mutex_unlock(&pid_mtx);
     return -1;
 }
 
 
-
-// For some Unix commands that call chdir:
-// Is also called at the end of the execution of each command
-int chdir(const char* path) {
-    // NSLog(@"Inside chdir, path: %s for session: %s\n", path, (char*)currentSession->context);
+int chdir_nolock(const char* path) {
+    // Same function as chdir, except it does not lock. To be called from ios_releaseThread*()
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     NSString* newDir = @(path);
     BOOL isDir;
@@ -916,6 +933,65 @@ int chdir(const char* path) {
         // go back to where we were before:
         [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
     }
+    return -1;
+}
+
+// For some Unix commands that call chdir:
+// Is also called at the end of the execution of each command
+int chdir(const char* path) {
+    NSLog(@"Locking for thread %x in chdir, cd %s, stdin= %d\n", pthread_self(), path, fileno(thread_stdin));
+    // We cannot have someone change the current directory while a command is starting or terminating.
+    // hence the mutex_lock here.
+    pthread_mutex_lock(&pid_mtx);
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSString* newDir = @(path);
+    BOOL isDir;
+    // Check for permission and existence:
+    if (![fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
+        errno = ENOENT; // No such file or directory
+        NSLog(@"Unlocking for thread %x in chdir\n", pthread_self());
+        pthread_mutex_unlock(&pid_mtx);
+        return -1;
+    }
+    if (!isDir) {
+        errno = ENOTDIR; // Not a directory
+        NSLog(@"Unlocking for thread %x in chdir\n", pthread_self());
+        pthread_mutex_unlock(&pid_mtx);
+        return -1;
+    }
+    if (![fileManager isReadableFileAtPath:newDir] ||
+        ![fileManager changeCurrentDirectoryPath:newDir]) {
+        errno = EACCES; // Permission denied
+        NSLog(@"Unlocking for thread %x in chdir\n", pthread_self());
+        pthread_mutex_unlock(&pid_mtx);
+        return -1;
+    }
+    
+    // We managed to change the directory.
+    // Was that allowed?
+    // Allowed "cd" = below miniRoot *or* below localMiniRoot
+    NSString* resultDir = [fileManager currentDirectoryPath];
+
+    if (__allowed_cd_to_path(resultDir)) {
+        strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        NSLog(@"Unlocking for thread %x in chdir\n", pthread_self());
+        pthread_mutex_unlock(&pid_mtx);
+        errno = 0;
+        return 0;
+    }
+    
+    errno = EACCES; // Permission denied
+    // If the user tried to go above the miniRoot, set it to miniRoot
+    if ([miniRoot hasPrefix:resultDir]) {
+        [fileManager changeCurrentDirectoryPath:miniRoot];
+        strcpy(currentSession->currentDir, [miniRoot UTF8String]);
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+    } else {
+        // go back to where we were before:
+        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+    }
+    NSLog(@"Unlocking for thread %x in chdir\n", pthread_self());
+    pthread_mutex_unlock(&pid_mtx);
     return -1;
 }
 
@@ -2048,6 +2124,7 @@ static int isRealCommand(const char* fileName) {
 }
 
 int ios_system(const char* inputCmd) {
+    NSLog(@"command= %s pid= %d\n", inputCmd, ios_currentPid());
     char* command;
     // The names of the files for stdin, stdout, stderr
     char* inputFileName = 0;
@@ -2061,7 +2138,6 @@ int ios_system(const char* inputCmd) {
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
-    NSLog(@"command= %s\n", inputCmd);
     // NSLog(@"ios_system, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
     // NSLog(@"ios_system, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
     if (currentSession == NULL) {
@@ -2282,7 +2358,7 @@ int ios_system(const char* inputCmd) {
     // scan until first ">"
     bool appendToFileName = false;
     if (!sharedErrorOutput) {
-        // output and append
+        // output and append.
         outputFileMarker = strstrquoted(outputFileMarker, ">");
         if (outputFileMarker) {
             if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '>')) { // >>
@@ -2293,7 +2369,8 @@ int ios_system(const char* inputCmd) {
             }
         }
     } else {
-        outputFileMarker = NULL;
+        if (outputFileName == NULL)
+            outputFileMarker = NULL;
     }
     if (outputFileName) {
         while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
@@ -2546,18 +2623,20 @@ int ios_system(const char* inputCmd) {
                             cmdIsReal = true;
                             NSData *data = [NSData dataWithContentsOfFile:locationName]; // You have the data. Conversion to String probably failed.
                             NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+                            if ((fileContent == nil) && (data.length > 0)) {
+                                // Conversion to string failed with UTF8. Try with Ascii as a backup:
+                                fileContent =  [[NSString alloc]initWithData:data encoding:NSASCIIStringEncoding];
+                            }
                             NSString* firstLine;
                             if (fileContent != nil) {
                                 NSRange firstLineRange = [fileContent rangeOfString:@"\n"];
-                                firstLineRange.length = firstLineRange.location;
+                                if (firstLineRange.length > 0) {
+                                    firstLineRange.length = firstLineRange.location;
+                                } else {
+                                    firstLineRange.length = fileContent.length;
+                                }
                                 firstLineRange.location = 0;
                                 firstLine = [fileContent substringWithRange:firstLineRange];
-                            }
-                            // Detect WebAssembly file signature: '\0asm' (begins with 0, so not a string)
-                            if ((firstLine == nil) && (data.length >0) && (((char*)data.bytes)[0] == 0)) {
-                                fileContent = [[NSString alloc]initWithData:data encoding:NSASCIIStringEncoding];
-                                NSRange signatureRange = NSMakeRange(1, 3);
-                                firstLine = [fileContent substringWithRange:signatureRange];
                             }
                             if ([firstLine hasPrefix:@"#!"]) {
                                 // 1) get script language name
@@ -2599,19 +2678,27 @@ int ios_system(const char* inputCmd) {
                                     // TODO: need to loop back if scriptName is itself a file.
                                     break;
                                 }
-                            } else if ([firstLine isEqualToString:@"asm"]) {
-                                // WebAssembly file, identified by signature:
-                                // Same code as above, but single command:
-                                argc += 1;
-                                argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
-                                // Move everything numComponents step up
-                                for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
-                                // Change the location of the file (from "command" to "/actual/full/path/command"):
-                                // This pointer existed before
-                                argv[1] = realloc(argv[1], locationName.length + 1);
-                                strcpy(argv[1], locationName.UTF8String);
-                                // Copy all arguments without change (except the first):
-                                argv[0] = strdup("wasm"); // creates new pointer
+                            } else {
+                                // Detect WebAssembly file signature: '\0asm' (begins with 0, so not a string)
+                                if ((data.length >0) && (((char*)data.bytes)[0] == 0)) {
+                                    // fileContent = [[NSString alloc]initWithData:data encoding:NSASCIIStringEncoding];
+                                    NSRange signatureRange = NSMakeRange(1, 3);
+                                    firstLine = [fileContent substringWithRange:signatureRange];
+                                }
+                                if ([firstLine isEqualToString:@"asm"]) {
+                                    // WebAssembly file, identified by signature:
+                                    // Same code as above, but single command:
+                                    argc += 1;
+                                    argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
+                                    // Move everything numComponents step up
+                                    for (int i = argc; i >= 1; i--) { argv[i] = argv[i-1]; }
+                                    // Change the location of the file (from "command" to "/actual/full/path/command"):
+                                    // This pointer existed before
+                                    argv[1] = realloc(argv[1], locationName.length + 1);
+                                    strcpy(argv[1], locationName.UTF8String);
+                                    // Copy all arguments without change (except the first):
+                                    argv[0] = strdup("wasm"); // creates new pointer
+                                }
                             }
                         } else {
                             cmdIsReal = false;
@@ -2721,14 +2808,16 @@ int ios_system(const char* inputCmd) {
             else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_GLOBAL); // commands defined in dynamic library
             if (handle == NULL) {
                 NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
-                if (sideLoading) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+                // if (sideLoading)
+                fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
                 NSString* fileLocation = [[NSBundle mainBundle] pathForResource:libraryName ofType:nil];
             } else {
                 NSString* functionName = commandStructure[1];
                 function = dlsym(handle, functionName.UTF8String);
                 if (function == NULL) {
                     NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
-                    if (sideLoading) fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, dlerror());
+                    // if (sideLoading)
+                    fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", functionName.UTF8String, libraryName.UTF8String, dlerror());
                 }
             }
         }

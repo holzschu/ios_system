@@ -68,6 +68,7 @@ int scanf (const char *format, ...) {
     return (count);
 }
 int ios_fflush(FILE *stream) {
+    if (stream == NULL) return 0;
     if (thread_stdout == NULL) thread_stdout = stdout;
     if (thread_stderr == NULL) thread_stderr = stderr;
 
@@ -132,6 +133,8 @@ static int previousPid[IOS_MAX_THREADS];
 
 static int pid_overflow = 0;
 static pid_t current_pid = 0;
+// We need to lock current_pid during operations
+pthread_mutex_t pid_mtx = PTHREAD_MUTEX_INITIALIZER;
 static pid_t last_allocated_pid = 0;
 
 inline pthread_t ios_getThreadId(pid_t pid) {
@@ -147,17 +150,21 @@ void newPreviousDirectory() {
 // We do not recycle process ids too quickly to avoid collisions.
 void storeEnvironment(char* envp[]);
 static inline const pid_t ios_nextAvailablePid() {
+    // fprintf(stderr, "Locking in ios_nextAvailablePid\n");
+    pthread_mutex_lock(&pid_mtx);
     char** currentEnvironment = environmentVariables(current_pid);
     int previousPidId = current_pid;
     if (!pid_overflow && (last_allocated_pid < IOS_MAX_THREADS - 1)
         && (thread_ids[last_allocated_pid+1] == 0)) {
         current_pid = last_allocated_pid + 1;
+        last_allocated_pid = current_pid;
         thread_ids[current_pid] = -1; // Not yet started
         numVariablesSet[current_pid] = 0;
         environment[current_pid] = NULL;
         storeEnvironment(currentEnvironment); // duplicate the environment variables
         getwd(previousDirectory[current_pid]); // store current working directory
         previousPid[current_pid] = previousPidId;
+        // fprintf(stderr, "Unlocking in ios_nextAvailablePid, pid= %d\n", current_pid);
         return current_pid;
     }
     // We've already started more than IOS_MAX_THREADS threads.
@@ -178,6 +185,7 @@ static inline const pid_t ios_nextAvailablePid() {
             storeEnvironment(currentEnvironment); // duplicate the environment variables
             getwd(previousDirectory[current_pid]); // store current working directory
             previousPid[current_pid] = previousPidId;
+            // fprintf(stderr, "Unlocking in ios_nextAvailablePid, pid= %d\n", current_pid);
             return current_pid;
         }
         // Dangerous: if the process is already killed, this wil crash
@@ -194,6 +202,7 @@ inline void ios_storeThreadId(pthread_t thread) {
     // To avoid issues when a command starts a command without forking,
     // we only store thread IDs for the first thread of the "process".
     // fprintf(stderr, "Storing thread %x to pid %d current value: %x\n", thread, current_pid, thread_ids[current_pid]);
+    pthread_mutex_unlock(&pid_mtx);
     if (thread_ids[current_pid] == -1) {
         thread_ids[current_pid] = thread;
         return;
@@ -275,7 +284,50 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
     }
 }
 
+int ios_putenv(char* string) {
+    if (numVariablesSet[current_pid] > 0) {
+        unsigned length;
+        char     *temp;
+
+        /*  Find the length of the "NAME="  */
+        temp = strchr(string,'=');
+        if ( temp == 0 ) {
+            set_session_errno(EINVAL);
+            return( -1 );
+        }
+        length = (unsigned) (temp - string + 1);
+
+        /*  Scan through the environment looking for "NAME="  */
+        char** envp = environment[current_pid];
+
+        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+            if (envp[i] == NULL) { continue; }
+            if ( strncmp( string, envp[i], length ) == 0 ) {
+                // Found it. Copy in place.
+                envp[i] = realloc(envp[i], strlen(string) + 1);
+                memcpy(envp[i], string, strlen(string) + 1);
+                return 0;
+            }
+        }
+        // Not found so far, add it to the list:
+        int pos = numVariablesSet[current_pid];
+        environment[current_pid] = realloc(envp, (numVariablesSet[current_pid] + 2) * sizeof(char*));
+        environment[current_pid][pos] = malloc(strlen(string) + 1);
+        environment[current_pid][pos + 1] = NULL;
+        memcpy(environment[current_pid][pos], string, strlen(string) + 1);
+        numVariablesSet[current_pid] += 1;
+        return 0;
+    } else {
+        return putenv(string);
+    }
+}
+
 int ios_unsetenv(const char* variableName) {
+    // Someone calls unsetenv once the process has been terminated.
+    // Best thing to do is erase the environment and return
+    /*if (thread_ids[current_pid] <= 0) {
+        return -1;
+    } */
     if (numVariablesSet[current_pid] > 0) {
         if (variableName == NULL) {
             set_session_errno(EINVAL);
@@ -375,6 +427,7 @@ char** environmentVariables(pid_t pid) {
     }
 }
 
+extern int chdir_nolock(const char* path); // defined in ios_system.m
 void ios_releaseThread(pthread_t thread) {
     // TODO: this is inefficient. Replace with NSMutableArray?
     for (int p = 0; p < IOS_MAX_THREADS; p++) {
@@ -382,9 +435,10 @@ void ios_releaseThread(pthread_t thread) {
             // fprintf(stderr, "Found Id %d\n", p);
             // Don't reset the environment; sometimes, commands try to change the environment while it is being erased.
             // resetEnvironment(p);
-            chdir(previousDirectory[p]);
+            // fprintf(stderr, "Reset current directory to %s because process %d terminates\n", previousDirectory[p], p);
             current_pid = previousPid[p];
             thread_ids[p] = NULL;
+            chdir_nolock(previousDirectory[p]);
             return;
         }
     }
@@ -395,9 +449,16 @@ void ios_releaseThread(pthread_t thread) {
 void ios_releaseThreadId(pid_t pid) {
     // Don't reset the environment; sometimes, commands try to change the environment while it is being erased.
     // resetEnvironment(pid);
-    chdir(previousDirectory[pid]);
-    current_pid = previousPid[pid];
-    thread_ids[pid] = 0;
+    if (thread_ids[pid] != 0) {
+        // fprintf(stderr, "Locking for pid %d in ios_releaseThreadId\n", pid);
+        // fprintf(stderr, "Reset current directory to %s because process %d terminates\n", previousDirectory[pid], pid);
+        chdir_nolock(previousDirectory[pid]);
+        current_pid = previousPid[pid];
+        thread_ids[pid] = 0;
+        // fprintf(stderr, "Unlocking for pid %d in ios_releaseThreadId\n", pid);
+    } else {
+        // fprintf(stderr, "ios_releaseThreadId: pid %d was already terminated.\n", pid);
+    }
 }
 
 pid_t ios_currentPid() {
@@ -427,6 +488,7 @@ __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
         // -1: not started, >0 started, not finished, 0: finished
         threadToWaitFor = ios_getThreadId(pid);
     }
+    // fprintf(stderr, "Returning from ios_waitpid for %d \n", pid);
     return;
 }
 
