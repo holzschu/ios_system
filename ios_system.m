@@ -1694,9 +1694,9 @@ int ios_dup2(int fd1, int fd2)
             case 2: child_stderr = stream1; return fd2;
         }
     }
-    if ((fd2 == 0) || (fd2 == fileno(thread_stdin))) { child_stdin = fdopen(fd1, "rb"); }
-    else if ((fd2 == 1) || (fd2 == fileno(thread_stdout))) { child_stdout = fdopen(fd1, "wb"); }
-    else if ((fd2 == 2) || (fd2 == fileno(thread_stderr))) {
+    if ((fd2 == 0) || (thread_stdin != NULL && fd2 == fileno(thread_stdin))) { child_stdin = fdopen(fd1, "rb"); }
+    else if ((fd2 == 1) || (thread_stdout != NULL && fd2 == fileno(thread_stdout))) { child_stdout = fdopen(fd1, "wb"); }
+    else if ((fd2 == 2) || (thread_stderr != NULL && fd2 == fileno(thread_stderr))) {
         if ((child_stdout != NULL) && (fileno(child_stdout) == fd1)) child_stderr = child_stdout;
         else child_stderr = fdopen(fd1, "wb"); }
     else if (fd1 != fd2) {
