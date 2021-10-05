@@ -150,7 +150,9 @@ lsystem(cmd, donemsg)
 		else
 			p = save(cmd);
 	}
+	pid_t pid = ios_fork();
 	ios_system(p);
+	ios_waitpid(pid);
 	free(p);
 #else
 #if MSDOS_COMPILER==DJGPPC

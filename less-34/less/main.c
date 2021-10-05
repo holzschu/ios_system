@@ -237,6 +237,7 @@ less_main(argc, argv)
 #endif
     sc_width = 0;
     sc_height = 0;
+    quitting = 0;
     secure = 0;
     dohelp = 0;
     // from output.c:

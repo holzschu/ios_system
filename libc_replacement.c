@@ -135,6 +135,7 @@ static int pid_overflow = 0;
 static pid_t current_pid = 0;
 // We need to lock current_pid during operations
 pthread_mutex_t pid_mtx = PTHREAD_MUTEX_INITIALIZER;
+_Atomic(int) cleanup_counter = 0;
 static pid_t last_allocated_pid = 0;
 
 inline pthread_t ios_getThreadId(pid_t pid) {
@@ -150,6 +151,7 @@ void newPreviousDirectory() {
 // We do not recycle process ids too quickly to avoid collisions.
 void storeEnvironment(char* envp[]);
 static inline const pid_t ios_nextAvailablePid() {
+    while (cleanup_counter > 0) { } // Don't start a command while another is ending.
     // fprintf(stderr, "Locking in ios_nextAvailablePid\n");
     pthread_mutex_lock(&pid_mtx);
     char** currentEnvironment = environmentVariables(current_pid);
@@ -164,7 +166,7 @@ static inline const pid_t ios_nextAvailablePid() {
         storeEnvironment(currentEnvironment); // duplicate the environment variables
         getwd(previousDirectory[current_pid]); // store current working directory
         previousPid[current_pid] = previousPidId;
-        // fprintf(stderr, "Unlocking in ios_nextAvailablePid, pid= %d\n", current_pid);
+        // fprintf(stderr, "Returning from ios_nextAvailablePid, pid= %d\n", current_pid);
         return current_pid;
     }
     // We've already started more than IOS_MAX_THREADS threads.
@@ -185,7 +187,7 @@ static inline const pid_t ios_nextAvailablePid() {
             storeEnvironment(currentEnvironment); // duplicate the environment variables
             getwd(previousDirectory[current_pid]); // store current working directory
             previousPid[current_pid] = previousPidId;
-            // fprintf(stderr, "Unlocking in ios_nextAvailablePid, pid= %d\n", current_pid);
+            // fprintf(stderr, "Returning from ios_nextAvailablePid, pid= %d\n", current_pid);
             return current_pid;
         }
         // Dangerous: if the process is already killed, this wil crash
@@ -201,16 +203,15 @@ static inline const pid_t ios_nextAvailablePid() {
 inline void ios_storeThreadId(pthread_t thread) {
     // To avoid issues when a command starts a command without forking,
     // we only store thread IDs for the first thread of the "process".
-    // fprintf(stderr, "Storing thread %x to pid %d current value: %x\n", thread, current_pid, thread_ids[current_pid]);
-    pthread_mutex_unlock(&pid_mtx);
+    // fprintf(stderr, "Unlocking pid %x, storing thread %x current value: %x\n", current_pid, thread,  thread_ids[current_pid]);
     if (thread_ids[current_pid] == -1) {
         thread_ids[current_pid] = thread;
-        return;
     }
+    pthread_mutex_unlock(&pid_mtx);
 }
 
 char* libc_getenv(const char* variableName) {
-    if (numVariablesSet[current_pid] > 0) {
+    if (environment[current_pid] != NULL) {
         if (variableName == NULL) { return NULL; }
         char** envp = environment[current_pid];
         int varNameLen = strlen(variableName);
@@ -241,7 +242,7 @@ char* libc_getenv(const char* variableName) {
 
 extern void set_session_errno(int n);
 int ios_setenv(const char* variableName, const char* value, int overwrite) {
-    if (numVariablesSet[current_pid] > 0) {
+    if (environment[current_pid] != NULL) {
         if (variableName == NULL) {
             set_session_errno(EINVAL);
             return -1;
@@ -285,7 +286,7 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
 }
 
 int ios_putenv(char* string) {
-    if (numVariablesSet[current_pid] > 0) {
+    if (environment[current_pid] != NULL) {
         unsigned length;
         char     *temp;
 
@@ -325,10 +326,7 @@ int ios_putenv(char* string) {
 int ios_unsetenv(const char* variableName) {
     // Someone calls unsetenv once the process has been terminated.
     // Best thing to do is erase the environment and return
-    /*if (thread_ids[current_pid] <= 0) {
-        return -1;
-    } */
-    if (numVariablesSet[current_pid] > 0) {
+    if (environment[current_pid] != NULL) {
         if (variableName == NULL) {
             set_session_errno(EINVAL);
             return -1;
@@ -384,7 +382,7 @@ int ios_unsetenv(const char* variableName) {
 extern char** environ;
 void resetEnvironment(pid_t pid);
 void storeEnvironment(char* envp[]) {
-    if (numVariablesSet[current_pid] > 0) {
+    if (environment[current_pid] != NULL) {
         // We already allocated one environment. Let's clean it:
         resetEnvironment(current_pid);
     }
@@ -406,7 +404,7 @@ void storeEnvironment(char* envp[]) {
 
 // when the command is terminated, release the environment variables that were added.
 void resetEnvironment(pid_t pid) {
-    if (numVariablesSet[pid] > 0) {
+    if (environment[pid] != NULL) {
         // Free the variables allocated:
         for (int i = 0; i < numVariablesSet[pid]; i++) {
             if (environment[pid][i] == NULL) { continue; }
@@ -420,7 +418,7 @@ void resetEnvironment(pid_t pid) {
 }
 
 char** environmentVariables(pid_t pid) {
-    if (numVariablesSet[pid] > 0) {
+    if (environment[pid] != NULL) {
         return environment[pid];
     } else {
         return environ;

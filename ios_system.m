@@ -289,14 +289,17 @@ typedef struct _functionParameters {
 } functionParameters;
 
 extern pthread_mutex_t pid_mtx;
+extern _Atomic(int) cleanup_counter;
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     functionParameters *p = (functionParameters *) parameters;
     char* commandName = p->argv[0];
     NSLog(@"cleanup_function: %s thread_id %x pid: %d stdin %d stdout %d stderr %d isPipeOut %d", commandName, pthread_self(), ios_currentPid(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
+    NSLog(@"currentSession->commandName: %s", currentSession->commandName);
     if ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0)) {
-        if ((strcmp(currentSession->commandName, "less") != 0) && (strcmp(currentSession->commandName, "more") != 0)) {
+        if ((strlen(currentSession->commandName) > 0) && (strcmp(currentSession->commandName, "less") != 0) && (strcmp(currentSession->commandName, "more") != 0)) {
             // Command was "root_command | sthg | less". We need to kill root command.
+            // If less itself started another command, then currentSession->commandName is "".
             // Unless less / more was started as a pager, in which case don't kill root command (e.g. for man).
             pthread_kill(currentSession->current_command_root_thread, SIGINT);
             while (fgetc(thread_stdin) != EOF) { } // flush input, otherwise previous command gets blocked.
@@ -371,13 +374,12 @@ static void cleanup_function(void* parameters) {
         }
     }
     // Some programs stop waiting as soon as stdout/stderr close (which makes sense)
-    if (isLastThread) {
-        NSLog(@"Locking for thread %x in cleanup_function\n", pthread_self());
-        pthread_mutex_lock(&pid_mtx); // Avoid multi-lock when several commands end together (for ls | grep)
-    }
+    cleanup_counter++;
+    while (pthread_mutex_trylock(&pid_mtx) != 0) { } // Someone else has the lock, so we wait.
+    pthread_mutex_unlock(&pid_mtx);
     if (mustCloseStderr) {
         NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
-        fclose(p->stderr);
+        int res = fclose(p->stderr);
     }
     bool mustCloseStdout = fileno(p->stdout) != fileno(stdout);
     if (!isSh) {
@@ -388,7 +390,7 @@ static void cleanup_function(void* parameters) {
     }
     if (mustCloseStdout) {
         NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
-        fclose(p->stdout);
+        int res = fclose(p->stdout);
     }
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
@@ -407,9 +409,7 @@ static void cleanup_function(void* parameters) {
     if (currentSession->mainThreadId == pthread_self()) {
         currentSession->mainThreadId = 0;
     }
-    if (isLastThread) {
-        pthread_mutex_unlock(&pid_mtx);
-    }
+    cleanup_counter--;
 }
 
 // Avoir calling crash_handler several times:
@@ -429,8 +429,8 @@ void crash_handler(int sig) {
 
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
-    ios_storeThreadId(pthread_self());
     NSLog(@"Storing thread_id: %x pid: %d isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), ios_currentPid(), p->isPipeOut, p->isPipeErr, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->argv[0]);
+    ios_storeThreadId(pthread_self());
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
     // TODO: move to __thread variable for optind too
@@ -851,6 +851,7 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
 #undef fchdir
 int ios_fchdir(const int fd) {
     NSLog(@"Locking for thread %x in ios_fchdir\n", pthread_self());
+    while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
     // We cannot have someone change the current directory while a command is starting or terminating.
     // hence the mutex_lock here.
     pthread_mutex_lock(&pid_mtx);
@@ -939,6 +940,7 @@ int chdir_nolock(const char* path) {
 // For some Unix commands that call chdir:
 // Is also called at the end of the execution of each command
 int chdir(const char* path) {
+    while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
     NSLog(@"Locking for thread %x in chdir, cd %s, stdin= %d\n", pthread_self(), path, fileno(thread_stdin));
     // We cannot have someone change the current directory while a command is starting or terminating.
     // hence the mutex_lock here.
@@ -1537,7 +1539,7 @@ int sh_main(int argc, char** argv) {
         NSLog(@"prevent termination in cleanup_function");
         argv[0][0] = 'h'; // prevent termination in cleanup_function
     }
-    // If there is a single command (no && or ||), no need to create a new session. I think. Let's try:
+    // If there is a single command (no && or ||), no need to create a new session.
     int i = 0;
     while ((command[i] != NULL) && (strstrquoted(command[i], "&&") == NULL) && (strstrquoted(command[i], "||") == NULL)) i++;
     if (command[i] == NULL) {
