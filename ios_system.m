@@ -592,7 +592,7 @@ static char* parseArgument(char* argument, char* command) {
         
         NSRange  rSub = NSMakeRange(r1.location + r1.length, r2.location - r1.location - r1.length);
         NSString *variable_string = [argumentString substringWithRange:rSub];
-        const char* variable = getenv([variable_string UTF8String]);
+        const char* variable = ios_getenv([variable_string UTF8String]);
         if (variable) {
             // Okay, so this one exists.
             NSString* replacement_string = [NSString stringWithCString:variable encoding:NSUTF8StringEncoding];
@@ -847,7 +847,7 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
   }
 }
 
-// For some Unix commands that call fchdir (including vim:
+// For some Unix commands that call fchdir (including vim):
 #undef fchdir
 int ios_fchdir(const int fd) {
     NSLog(@"Locking for thread %x in ios_fchdir\n", pthread_self());
@@ -892,6 +892,38 @@ int ios_fchdir(const int fd) {
     return -1;
 }
 
+int ios_fchdir_nolock(const int fd) {
+    // Same function as fchdir, except it does not lock. To be called when resetting directory after fork().
+    while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
+    int result = fchdir(fd);
+    if (result < 0) {
+        return result;
+    }
+    // We managed to change the directory. Update currentSession as well:
+    // Was that allowed?
+    // Allowed "cd" = below miniRoot *or* below localMiniRoot
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSString* resultDir = [fileManager currentDirectoryPath];
+
+    if (__allowed_cd_to_path(resultDir)) {
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+        strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        errno = 0;
+        return 0;
+    }
+    
+    errno = EACCES; // Permission denied
+    // If the user tried to go above the miniRoot, set it to miniRoot
+    if ([miniRoot hasPrefix:resultDir]) {
+        [fileManager changeCurrentDirectoryPath:miniRoot];
+        strcpy(currentSession->currentDir, [miniRoot UTF8String]);
+        strcpy(currentSession->previousDirectory, currentSession->currentDir);
+    } else {
+        // go back to where we were before:
+        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+    }
+    return -1;
+}
 
 int chdir_nolock(const char* path) {
     // Same function as chdir, except it does not lock. To be called from ios_releaseThread*()
@@ -1521,12 +1553,17 @@ int sh_main(int argc, char** argv) {
     // Anything after "sh" that contains an equal sign must be an environment variable. Pass it to ios_setenv.
     while (command[0] != NULL) {
         char* position = strstrquoted(command[0],"=");
-        char* firstSpace = strstrquoted(command[0]," ");
         if (position == NULL) { break; }
+        char* firstSpace = strstrquoted(command[0]," ");
         if (firstSpace < position) { break; }
+        firstSpace = strstrquoted(position," ");
+        if (firstSpace != NULL) { *firstSpace = 0; }
         *position = 0;
         ios_setenv(command[0], position+1, 1);
-        command++;
+        if (firstSpace != NULL) {
+            command[0] = firstSpace + 1;
+        }
+        else { command++; }
     }
     if (command[0] == NULL) {
         argv[0][0] = 'h'; // prevent termination in cleanup_function
@@ -2185,6 +2222,21 @@ int ios_system(const char* inputCmd) {
         }
     } else command = cmd;
     // fprintf(thread_stderr, "Command sent: %s \n", command);
+    // Environment variables before alias expansion:
+    char* commandForParsing = strdup(command);
+    char* commandForParsingFree = commandForParsing;
+    char* firstSpace = strstrquoted(commandForParsing, " ");
+    while (firstSpace != NULL) {
+        *firstSpace = 0;
+        char* equalSign = strchr(commandForParsing, '=');
+        if (equalSign == NULL) break;
+        *equalSign = 0;
+        ios_setenv(commandForParsing, equalSign+1, 1);
+        command += (firstSpace - commandForParsing) + 1;
+        commandForParsing = firstSpace + 1;
+        firstSpace = strstrquoted(commandForParsing, " ");
+    }
+    free(commandForParsingFree);
     // alias expansion *before* input, output and error redirection.
     if ((command[0] != '\\') && (aliasDictionary != nil)) {
         // \command = cancel aliasing, get the original command
@@ -2728,8 +2780,6 @@ int ios_system(const char* inputCmd) {
         NSString* commandName = [NSString stringWithCString:argv[0] encoding:NSUTF8StringEncoding];
         // hasPrefix covers python, python3, python3.9.
         if ([commandName hasPrefix: @"python"]) {
-            // Tell Python that we are running Python3.
-            setenv("PYTHONEXECUTABLE", "python3", 1);
             // Ability to start multiple python3 scripts (required for Jupyter notebooks):
             // start by increasing the number of the interpreter, until we're out.
             int numInterpreter = 0;
@@ -2745,6 +2795,8 @@ int ios_system(const char* inputCmd) {
                     display_alert(@"Too many Python scripts", @"There are too many Python interpreters running at the same time. Try closing some of them.");
                     NSLog(@"%@", @"Too many python scripts running simultaneously. Try closing some notebooks.\n");
                     commandName = @"notAValidCommand";
+                } else {
+                    currentPythonInterpreter = numInterpreter;
                 }
             }
             if ((numInterpreter == 0) && (strlen(argv[0]) > 7)) {
@@ -2986,6 +3038,7 @@ NSString * pathNormalize(NSString *path) {
   NSString * result = [pathNormalizeArray([path pathComponents], !isAbsolute) componentsJoinedByString: @"/"];
   
   if (!result.length && !isAbsolute) {
+      // Same function as chdir, except it does not lock. To be called from ios_releaseThread*()
     result = @".";
   }
   
@@ -3017,4 +3070,52 @@ NSString * pathJoin(NSString * segmentA, NSString * segmentB) {
   }
   
   return pathNormalize(path);
+}
+
+//
+char* ios_getPythonLibraryName() {
+    // Ability to start multiple python3 scripts, expanded for commands that start python3 as a dynamic library.
+    // (mostly vim, right now)
+    // start by increasing the number of the interpreter, until we're out.
+    int numInterpreter = 0;
+    if (currentPythonInterpreter < numPythonInterpreters) {
+        numInterpreter = currentPythonInterpreter;
+        currentPythonInterpreter++;
+    } else {
+        while  (numInterpreter < numPythonInterpreters) {
+            if (PythonIsRunning[numInterpreter] == false) break;
+            numInterpreter++;
+        }
+        if (numInterpreter >= numPythonInterpreters) {
+            // NSLog(@"ios_getPythonLibraryName: returning NULL\n");
+            return NULL;
+        } else {
+            currentPythonInterpreter = numInterpreter;
+        }
+    }
+    char* libraryName = NULL;
+    if ((numInterpreter >= 0) && (numInterpreter < numPythonInterpreters)) {
+        PythonIsRunning[numInterpreter] = true;
+        if (numInterpreter > 0) {
+            libraryName = strdup("pythonA");
+            libraryName[6] = 'A' + (numInterpreter - 1);
+        } else {
+            libraryName = strdup("python3_ios");
+        }
+        // NSLog(@"ios_getPythonLibraryName: returning %s\n", libraryName);
+        return libraryName;
+    }
+    // NSLog(@"ios_getPythonLibraryName: returning NULL\n");
+    return NULL;
+}
+
+void ios_releasePythonLibraryName(char* name) {
+    char libNumber = name[6];
+    if (libNumber == '3') PythonIsRunning[0] = false;
+    else {
+        libNumber -= 'A' - 1;
+        if ((libNumber > 0) && (libNumber < MaxPythonInterpreters))
+            PythonIsRunning[libNumber] = false;
+    }
+    free(name);
 }

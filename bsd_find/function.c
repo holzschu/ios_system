@@ -65,6 +65,7 @@ __FBSDID("$FreeBSD$");
 #include <ctype.h>
 
 #include "find.h"
+#include <TargetConditionals.h>
 #include "ios_error.h"
 
 
@@ -614,6 +615,10 @@ c_empty(OPTION *option, char ***argvp __unused)
  *	The primary -ok differs from -exec in that it requests affirmation
  *	of the user before executing the utility.
  */
+// iOS addition: to reset the directory before execution of each command.
+// Not sure this is necessary anymore.
+extern int ios_fchdir_nolock(const int fd);
+
 int
 f_exec(PLAN *plan, FTSENT *entry)
 {
@@ -660,8 +665,6 @@ doexec:	if ((plan->flags & F_NEEDOK) && !queryuser(plan->e_argv))
 	fflush(stdout);
 	fflush(stderr);
 
-    char* pushDirectory = NULL;
-    pushDirectory = getcwd(pushDirectory, MAXPATHLEN);
 	switch (pid = fork()) {
 	case -1:
 		err(1, "fork");
@@ -670,7 +673,7 @@ doexec:	if ((plan->flags & F_NEEDOK) && !queryuser(plan->e_argv))
 	// case 0: {
 		/* change dir back from where we started */
 		if (!(plan->flags & F_EXECDIR) &&
-		    !(ftsoptions & FTS_NOCHDIR) && fchdir(dotfd)) {
+		    !(ftsoptions & FTS_NOCHDIR) && ios_fchdir_nolock(dotfd)) {
 			warn("chdir");
 			_exit(1);
 		}
@@ -680,8 +683,6 @@ doexec:	if ((plan->flags & F_NEEDOK) && !queryuser(plan->e_argv))
 			}
 	}
     pid = waitpid(pid, &status, 0);
-    chdir(pushDirectory);
-    free(pushDirectory);
 	if (plan->flags & F_EXECPLUS) {
 		while (--plan->e_ppos >= plan->e_pbnum)
 			free(plan->e_argv[plan->e_ppos]);

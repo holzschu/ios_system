@@ -39,6 +39,7 @@ const char	*version = "version 20070501";
 // #else
 #define COMPAT_MODE(func, mode) 1
 // #endif
+#include <TargetConditionals.h>
 #include "ios_error.h"
 
 extern	char	**environ;

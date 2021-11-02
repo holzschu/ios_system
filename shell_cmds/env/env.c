@@ -50,6 +50,7 @@ __FBSDID("$FreeBSD$");
 #include <unistd.h>
 
 #include "envopts.h"
+#include <TargetConditionals.h>
 #include "ios_error.h"
 
 extern char **environ;

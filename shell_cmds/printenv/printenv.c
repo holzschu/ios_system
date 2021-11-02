@@ -48,6 +48,7 @@ __FBSDID("$FreeBSD$");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <TargetConditionals.h>
 #include "ios_error.h"
 
 static void	usage(void);
