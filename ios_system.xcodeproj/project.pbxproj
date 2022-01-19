@@ -56,6 +56,7 @@
 		224AAC5C21CB931300F8C22F /* reallocarray.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5B21CB931300F8C22F /* reallocarray.c */; };
 		224AAC5E21CB935100F8C22F /* utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5D21CB935100F8C22F /* utf8.c */; };
 		224AAC6021CB93AE00F8C22F /* readpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5F21CB93AE00F8C22F /* readpass.c */; settings = {COMPILER_FLAGS = "-x objective-c"; }; };
+		224B48F4279491FE00D310A8 /* source.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224B48F3279491FE00D310A8 /* source.swift */; };
 		225782911FDB4D390050F312 /* curl_config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2257811A1FDB4D380050F312 /* curl_config.h */; };
 		225E1B6F2067F39F005AC151 /* tar.h in Headers */ = {isa = PBXBuildFile; fileRef = 225E1B6D2067F39F005AC151 /* tar.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		225F06102016751900466685 /* getopt_long.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060F2016751800466685 /* getopt_long.c */; };
@@ -626,6 +627,7 @@
 		224AAC5B21CB931300F8C22F /* reallocarray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = reallocarray.c; path = "ssh_keygen/openbsd-compat/reallocarray.c"; sourceTree = "<group>"; };
 		224AAC5D21CB935100F8C22F /* utf8.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = utf8.c; path = ssh_keygen/utf8.c; sourceTree = "<group>"; };
 		224AAC5F21CB93AE00F8C22F /* readpass.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = readpass.c; path = ssh_keygen/readpass.c; sourceTree = "<group>"; };
+		224B48F3279491FE00D310A8 /* source.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = source.swift; sourceTree = "<group>"; };
 		2253BA1D201942B10019CB39 /* libresolv.9.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.9.tbd; path = usr/lib/libresolv.9.tbd; sourceTree = SDKROOT; };
 		22577D451FDB47A90050F312 /* err.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = err.c; sourceTree = "<group>"; };
 		22577D461FDB47A90050F312 /* lafe_err.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lafe_err.h; sourceTree = "<group>"; };
@@ -1941,6 +1943,7 @@
 				22F0803620973712003C3BF0 /* sleep.c */,
 				221CD98D21E8B03D00F3B47C /* open.m */,
 				22484B022434C5BB00D6BDDA /* jsc.swift */,
+				224B48F3279491FE00D310A8 /* source.swift */,
 				222CC4D9218CBEED00D3A11C /* xarg */,
 				22C5057C209875E200FDDFA9 /* find */,
 				225F060920163BFC00466685 /* tee */,
@@ -2622,6 +2625,7 @@
 					};
 					22F6A10B2068390800E618F9 = {
 						CreatedOnToolsVersion = 9.3;
+						LastSwiftMigration = 1320;
 						ProvisioningStyle = Automatic;
 					};
 					22F6A127206839EF00E618F9 = {
@@ -2935,6 +2939,7 @@
 				22C5058C2098ADD800FDDFA9 /* main.c in Sources */,
 				22F6A1202068395B00E618F9 /* proc_compare.c in Sources */,
 				22F6A11B2068394E00E618F9 /* printenv.c in Sources */,
+				224B48F4279491FE00D310A8 /* source.swift in Sources */,
 				22F6A1152068393E00E618F9 /* echo.c in Sources */,
 				22F6A11C2068395200E618F9 /* pwd.c in Sources */,
 				22C505862098ADD800FDDFA9 /* find.c in Sources */,
@@ -3647,6 +3652,8 @@
 		22F6A1122068390800E618F9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
@@ -3670,6 +3677,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				STRIP_SWIFT_SYMBOLS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -3677,6 +3685,8 @@
 		22F6A1132068390800E618F9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;

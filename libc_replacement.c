@@ -128,6 +128,7 @@ int ios_putw(int w, FILE *stream) {
 static pthread_t thread_ids[IOS_MAX_THREADS];
 static int numVariablesSet[IOS_MAX_THREADS];
 static char** environment[IOS_MAX_THREADS];
+static char** copyEnvironment[IOS_MAX_THREADS];
 static char previousDirectory[IOS_MAX_THREADS][MAXPATHLEN];
 static int previousPid[IOS_MAX_THREADS];
 
@@ -138,12 +139,22 @@ pthread_mutex_t pid_mtx = PTHREAD_MUTEX_INITIALIZER;
 _Atomic(int) cleanup_counter = 0;
 static pid_t last_allocated_pid = 0;
 
+
+void makeGlobal(void) {
+    copyEnvironment[current_pid] = environment[current_pid];
+    environment[current_pid] = NULL;
+}
+void makeLocal(void) {
+    environment[current_pid] = copyEnvironment[current_pid];
+    copyEnvironment[current_pid] = NULL;
+}
+
 inline pthread_t ios_getThreadId(pid_t pid) {
     // return ios_getLastThreadId(); // previous behaviour
     return thread_ids[pid];
 }
 
-void newPreviousDirectory() {
+void newPreviousDirectory(void) {
     // Called when a command calls "cd". Actually changes the directory for that command.
     getwd(previousDirectory[current_pid]);
 }
