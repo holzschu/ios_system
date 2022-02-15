@@ -1206,9 +1206,11 @@ static char* concatenateArgv(char* const argv[]) {
     // So we rely on ios_system to break them into chunks.
     while(argv[argc] != NULL) { cmdLength += strlen(argv[argc]) + 1; argc++;}
     if (argc == 0) return NULL; // safeguard check
-    char* cmd = malloc((cmdLength  + 3 * argc) * sizeof(char)); // space for quotes
+    char* cmd = malloc((cmdLength  + 3 * argc + 1) * sizeof(char)); // space for quotes
+    NSLog(@"Command allocated: %d ", cmdLength  + 3 * argc + 1);
     strcpy(cmd, argv[0]);
     argc = 1;
+    char recordSeparator = 0x1e;
     while (argv[argc] != NULL) {
         if (strstrquoted(argv[argc], " ")) {
             // argument contains spaces. Enclose it into quotes:
@@ -1226,13 +1228,22 @@ static char* concatenateArgv(char* const argv[]) {
                 strcat(cmd, "'");
                 argc++;
                 continue;
+            } else if (strchr(argv[argc], recordSeparator) == NULL) {
+                // Argument contains spaces and double and single quotes. We use recordSeparator to mark begin and end:
+                strcat(cmd, " ");
+                strncat(cmd, &recordSeparator, 1);
+                strcat(cmd, argv[argc]);
+                strncat(cmd, &recordSeparator, 1);
+                argc++;
+                continue;
             }
-            // Argument contains spaces and double and single quotes. We just concatenate and hope for the best:
+            NSLog(@"Argument contains spaces, double quotes, single quotes and recordSeparator");
         }
         strcat(cmd, " ");
         strcat(cmd, argv[argc]);
         argc++;
     }
+    NSLog(@"Command length: %d ", strlen(cmd));
     return cmd;
 }
 
@@ -2063,6 +2074,7 @@ static char* getLastCharacterOfArgument(const char* argument) {
     // Problem: perl -e 'install([ from_to => {@ARGV}, verbose => '\''0'\'', uninstall_shadows => '\''0'\'', dir_mode => '\''755'\'' ]);'
     // Should become: "perl", "-e", "install([ from_to => {@ARGV}, verbose => '0', uninstall_shadows => '0', dir_mode => '755' ]);"
     // If there is no space after the end quote, keep concatenating the argument.
+    char recordSeparator = 0x1e;
     if (strlen(argument) == 0) return NULL; // be safe
     if (argument[0] == '"') {
         char* endquote = nextUnescapedCharacter(argument + 1, '"');
@@ -2103,6 +2115,9 @@ static char* getLastCharacterOfArgument(const char* argument) {
             return endquote + 1;
         }
         return NULL;
+    } else if (argument[0] == recordSeparator) {
+        char* endquote = strchr(argument + 1, recordSeparator);
+        return endquote + 1;
     }
     // TODO: the last character of the argument could also be '<' or '>' (vim does that, with no space after file name)
     else return nextUnescapedCharacter(argument + 1, ' ');
@@ -2118,6 +2133,13 @@ static char* unquoteArgument(char* argument) {
     }
     if (argument[0] == '\'') {
         if (argument[strlen(argument) - 1] == '\'') {
+            argument[strlen(argument) - 1] = 0x0;
+            return argument + 1;
+        }
+    }
+    char recordSeparator = 0x1e;
+    if (argument[0] == recordSeparator) {
+        if (argument[strlen(argument) - 1] == recordSeparator) {
             argument[strlen(argument) - 1] = 0x0;
             return argument + 1;
         }
@@ -2327,185 +2349,190 @@ int ios_system(const char* inputCmd) {
     child_stdin = child_stdout = child_stderr = NULL;
     params->argc = 0; params->argv = 0; params->argv_ref = 0;
     params->function = NULL; params->isPipeOut = false; params->isPipeErr = false;
-    // scan until first "<" (input file)
-    inputFileMarker = strstrquoted(inputFileMarker, "<");
-    // scan until first non-space character:
-    if (inputFileMarker) {
-        inputFileName = inputFileMarker + 1; // skip past '<'
-        // skip past all spaces
-        while ((inputFileName[0] == ' ') && strlen(inputFileName) > 0) inputFileName++;
-    }
-    // is there a pipe ("|", "&|" or "|&")
-    // We assume here a logical command order: < before pipe, pipe before >.
-    // TODO: check what happens for unlogical commands. Refuse them, but gently.
-    // TODO: implement tee, because that has been removed
-    char* pipeMarker = strstrquoted(outputFileMarker,"&|");
-    if (!pipeMarker) pipeMarker = strstrquoted(outputFileMarker,"|&"); // both seem to work
-    if (pipeMarker) {
-        bool pushMainThread = currentSession->isMainThread;
-        currentSession->isMainThread = false;
-        if (params->stdout != 0) thread_stdout = params->stdout;
-        if (params->stderr != 0) thread_stderr = params->stderr;
-        // if popen fails, don't start the command
-        params->stdout = ios_popen(pipeMarker+2, "w");
-        params->stderr = params->stdout;
-        currentSession->isMainThread = pushMainThread;
-        pipeMarker[0] = 0x0;
-        sharedErrorOutput = true;
-        if (params->stdout == NULL) { // pipe open failed, return before we start a command
-            NSLog(@"Failed launching pipe for %s\n", pipeMarker+2);
-            ios_storeThreadId(0);
-            free(params);
-            free(originalCommand); // releases cmd, which was a strdup of inputCommand
-            return currentSession->global_errno;
+    // Only scan for input / output if there is no argument marker
+    char recordSeparator = 0x1e;
+    char* recordSeparatorPosition = strchr(inputFileMarker, recordSeparator);
+    if (recordSeparatorPosition == NULL) {
+        // scan until first "<" (input file)
+        inputFileMarker = strstrquoted(inputFileMarker, "<");
+        // scan until first non-space character:
+        if (inputFileMarker) {
+            inputFileName = inputFileMarker + 1; // skip past '<'
+            // skip past all spaces
+            while ((inputFileName[0] == ' ') && strlen(inputFileName) > 0) inputFileName++;
         }
-    } else {
-        pipeMarker = strstrquoted(outputFileMarker,"|");
+        // is there a pipe ("|", "&|" or "|&")
+        // We assume here a logical command order: < before pipe, pipe before >.
+        // TODO: check what happens for unlogical commands. Refuse them, but gently.
+        // TODO: implement tee, because that has been removed
+        char* pipeMarker = strstrquoted(outputFileMarker,"&|");
+        if (!pipeMarker) pipeMarker = strstrquoted(outputFileMarker,"|&"); // both seem to work
         if (pipeMarker) {
             bool pushMainThread = currentSession->isMainThread;
             currentSession->isMainThread = false;
             if (params->stdout != 0) thread_stdout = params->stdout;
-            if (params->stderr != 0) thread_stderr = params->stderr; // ?????
+            if (params->stderr != 0) thread_stderr = params->stderr;
             // if popen fails, don't start the command
-            params->stdout = ios_popen(pipeMarker+1, "w");
+            params->stdout = ios_popen(pipeMarker+2, "w");
+            params->stderr = params->stdout;
             currentSession->isMainThread = pushMainThread;
             pipeMarker[0] = 0x0;
+            sharedErrorOutput = true;
             if (params->stdout == NULL) { // pipe open failed, return before we start a command
-                NSLog(@"Failed launching pipe for %s\n", pipeMarker+1);
+                NSLog(@"Failed launching pipe for %s\n", pipeMarker+2);
                 ios_storeThreadId(0);
                 free(params);
                 free(originalCommand); // releases cmd, which was a strdup of inputCommand
                 return currentSession->global_errno;
             }
-        }
-    }
-    // We have removed the pipe part. Still need to parse the rest of the command
-    // Must scan in strstr by reverse order of inclusion. So "2>&1" before "2>" before ">"
-    errorFileMarker = strstrquoted(outputFileMarker,"&>"); // both stderr/stdout sent to same file
-    // output file name will be after "&>"
-    if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
-    if (!errorFileMarker) {
-        // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
-        // ...except with a pipe.
-        // Currently, we don't check for that.
-        errorFileMarker = strstrquoted(outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
-        if (errorFileMarker) {
-            outputFileName = NULL;
-            if (params->stdout) params->stderr = params->stdout;
-            outputFileMarker = strstrquoted(outputFileMarker, ">");
-            if (outputFileMarker - errorFileMarker == 1) // the first '>' was the one from '2>&1'
-                outputFileMarker = strstrquoted(outputFileMarker + 2, ">"); // is there one after that?
-            if (outputFileMarker)
-                outputFileName = outputFileMarker + 1; // skip past '>'
-        }
-    }
-    if (errorFileMarker) { sharedErrorOutput = true; }
-    else {
-        // specific name for error file?
-        errorFileMarker = strstrquoted(outputFileMarker,"2>");
-        if (errorFileMarker) {
-            errorFileName = errorFileMarker + 2; // skip past "2>"
-            // skip past all spaces:
-            while ((errorFileName[0] == ' ') && strlen(errorFileName) > 0) errorFileName++;
-        }
-    }
-    // scan until first ">"
-    bool appendToFileName = false;
-    if (!sharedErrorOutput) {
-        // output and append.
-        outputFileMarker = strstrquoted(outputFileMarker, ">");
-        if (outputFileMarker) {
-            if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '>')) { // >>
-                outputFileName = outputFileMarker + 2; // skip past ">>"
-                appendToFileName = true;
-            } else {
-                outputFileName = outputFileMarker + 1; // skip past '>'
-            }
-        }
-    } else {
-        if (outputFileName == NULL)
-            outputFileMarker = NULL;
-    }
-    if (outputFileName) {
-        while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
-    }
-    if (errorFileName && (outputFileName == errorFileName)) {
-        // we got the same ">" twice, pick the next one ("2>" was before ">")
-        outputFileMarker = errorFileName;
-        outputFileMarker = strstrquoted(outputFileMarker, ">");
-        if (outputFileMarker) {
-            if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '>')) { // >>
-                outputFileName = outputFileMarker + 2; // skip past ">>"
-                appendToFileName = true;
-            } else {
-                outputFileName = outputFileMarker + 1; // skip past '>'
-            }
-            while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
-        } else outputFileName = NULL; // Only "2>", but no ">". It happens.
-    }
-    if (outputFileName) {
-        char* endFile = getLastCharacterOfArgument(outputFileName);
-        if (endFile) endFile[0] = 0x00; // end output file name at first space
-        assert(endFile <= maxPointer);
-    }
-    if (inputFileName) {
-        char* endFile = getLastCharacterOfArgument(inputFileName);
-        if (endFile) endFile[0] = 0x00; // end input file name at first space
-        assert(endFile <= maxPointer);
-    }
-    if (errorFileName) {
-        char* endFile = getLastCharacterOfArgument(errorFileName);
-        if (endFile) endFile[0] = 0x00; // end error file name at first space
-        assert(endFile <= maxPointer);
-    }
-    // insert chain termination elements at the beginning of each filename.
-    // Must be done after the parsing.
-    if (inputFileMarker) inputFileMarker[0] = 0x0;
-    // There was a test " && (params->stdout == NULL)" below. Why?
-    if (outputFileMarker) outputFileMarker[0] = 0x0; // There
-    if (errorFileMarker) errorFileMarker[0] = 0x0;
-    // strip filenames of quotes, if any:
-    if (outputFileName) outputFileName = unquoteArgument(outputFileName);
-    if (inputFileName) inputFileName = unquoteArgument(inputFileName);
-    if (errorFileName) errorFileName = unquoteArgument(errorFileName);
-    //
-    FILE* newStream;
-    if (inputFileName) {
-        newStream = fopen(inputFileName, "r");
-        if (newStream) params->stdin = newStream;
-    }
-    if (params->stdin == NULL) params->stdin = thread_stdin;
-    if (outputFileName) {
-        if (appendToFileName) {
-            newStream = fopen(outputFileName, "a"); // append
         } else {
-            newStream = fopen(outputFileName, "w");
-        }
-        if (newStream) {
-            if (params->stdout != NULL) {
-                if (fileno(params->stdout) != fileno(currentSession->stdout)) fclose(params->stdout);
+            pipeMarker = strstrquoted(outputFileMarker,"|");
+            if (pipeMarker) {
+                bool pushMainThread = currentSession->isMainThread;
+                currentSession->isMainThread = false;
+                if (params->stdout != 0) thread_stdout = params->stdout;
+                if (params->stderr != 0) thread_stderr = params->stderr; // ?????
+                // if popen fails, don't start the command
+                params->stdout = ios_popen(pipeMarker+1, "w");
+                currentSession->isMainThread = pushMainThread;
+                pipeMarker[0] = 0x0;
+                if (params->stdout == NULL) { // pipe open failed, return before we start a command
+                    NSLog(@"Failed launching pipe for %s\n", pipeMarker+1);
+                    ios_storeThreadId(0);
+                    free(params);
+                    free(originalCommand); // releases cmd, which was a strdup of inputCommand
+                    return currentSession->global_errno;
+                }
             }
-            params->stdout = newStream; 
         }
-    }
-    if (params->stdout == NULL) params->stdout = thread_stdout;
-    if (sharedErrorOutput && (params->stderr != params->stdout)) {
-        if (params->stderr != NULL) {
-            if (fileno(params->stderr) != fileno(currentSession->stderr)) fclose(params->stderr);
+        // We have removed the pipe part. Still need to parse the rest of the command
+        // Must scan in strstr by reverse order of inclusion. So "2>&1" before "2>" before ">"
+        errorFileMarker = strstrquoted(outputFileMarker,"&>"); // both stderr/stdout sent to same file
+        // output file name will be after "&>"
+        if (errorFileMarker) { outputFileName = errorFileMarker + 2; outputFileMarker = errorFileMarker; }
+        if (!errorFileMarker) {
+            // TODO: 2>&1 before > means redirect stderr to (current) stdout, then redirects stdout
+            // ...except with a pipe.
+            // Currently, we don't check for that.
+            errorFileMarker = strstrquoted(outputFileMarker,"2>&1"); // both stderr/stdout sent to same file
+            if (errorFileMarker) {
+                outputFileName = NULL;
+                if (params->stdout) params->stderr = params->stdout;
+                outputFileMarker = strstrquoted(outputFileMarker, ">");
+                if (outputFileMarker - errorFileMarker == 1) // the first '>' was the one from '2>&1'
+                    outputFileMarker = strstrquoted(outputFileMarker + 2, ">"); // is there one after that?
+                if (outputFileMarker)
+                    outputFileName = outputFileMarker + 1; // skip past '>'
+            }
         }
-        params->stderr = params->stdout;
-    }
-    else if (errorFileName) {
-        newStream = NULL;
-        newStream = fopen(errorFileName, "w");
-        if (newStream) {
+        if (errorFileMarker) { sharedErrorOutput = true; }
+        else {
+            // specific name for error file?
+            errorFileMarker = strstrquoted(outputFileMarker,"2>");
+            if (errorFileMarker) {
+                errorFileName = errorFileMarker + 2; // skip past "2>"
+                // skip past all spaces:
+                while ((errorFileName[0] == ' ') && strlen(errorFileName) > 0) errorFileName++;
+            }
+        }
+        // scan until first ">"
+        bool appendToFileName = false;
+        if (!sharedErrorOutput) {
+            // output and append.
+            outputFileMarker = strstrquoted(outputFileMarker, ">");
+            if (outputFileMarker) {
+                if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '>')) { // >>
+                    outputFileName = outputFileMarker + 2; // skip past ">>"
+                    appendToFileName = true;
+                } else {
+                    outputFileName = outputFileMarker + 1; // skip past '>'
+                }
+            }
+        } else {
+            if (outputFileName == NULL)
+                outputFileMarker = NULL;
+        }
+        if (outputFileName) {
+            while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
+        }
+        if (errorFileName && (outputFileName == errorFileName)) {
+            // we got the same ">" twice, pick the next one ("2>" was before ">")
+            outputFileMarker = errorFileName;
+            outputFileMarker = strstrquoted(outputFileMarker, ">");
+            if (outputFileMarker) {
+                if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '>')) { // >>
+                    outputFileName = outputFileMarker + 2; // skip past ">>"
+                    appendToFileName = true;
+                } else {
+                    outputFileName = outputFileMarker + 1; // skip past '>'
+                }
+                while ((outputFileName[0] == ' ') && strlen(outputFileName) > 0) outputFileName++;
+            } else outputFileName = NULL; // Only "2>", but no ">". It happens.
+        }
+        if (outputFileName) {
+            char* endFile = getLastCharacterOfArgument(outputFileName);
+            if (endFile) endFile[0] = 0x00; // end output file name at first space
+            assert(endFile <= maxPointer);
+        }
+        if (inputFileName) {
+            char* endFile = getLastCharacterOfArgument(inputFileName);
+            if (endFile) endFile[0] = 0x00; // end input file name at first space
+            assert(endFile <= maxPointer);
+        }
+        if (errorFileName) {
+            char* endFile = getLastCharacterOfArgument(errorFileName);
+            if (endFile) endFile[0] = 0x00; // end error file name at first space
+            assert(endFile <= maxPointer);
+        }
+        // insert chain termination elements at the beginning of each filename.
+        // Must be done after the parsing.
+        if (inputFileMarker) inputFileMarker[0] = 0x0;
+        // There was a test " && (params->stdout == NULL)" below. Why?
+        if (outputFileMarker) outputFileMarker[0] = 0x0; // There
+        if (errorFileMarker) errorFileMarker[0] = 0x0;
+        // strip filenames of quotes, if any:
+        if (outputFileName) outputFileName = unquoteArgument(outputFileName);
+        if (inputFileName) inputFileName = unquoteArgument(inputFileName);
+        if (errorFileName) errorFileName = unquoteArgument(errorFileName);
+        //
+        FILE* newStream;
+        if (inputFileName) {
+            newStream = fopen(inputFileName, "r");
+            if (newStream) params->stdin = newStream;
+        }
+        if (params->stdin == NULL) params->stdin = thread_stdin;
+        if (outputFileName) {
+            if (appendToFileName) {
+                newStream = fopen(outputFileName, "a"); // append
+            } else {
+                newStream = fopen(outputFileName, "w");
+            }
+            if (newStream) {
+                if (params->stdout != NULL) {
+                    if (fileno(params->stdout) != fileno(currentSession->stdout)) fclose(params->stdout);
+                }
+                params->stdout = newStream;
+            }
+        }
+        if (params->stdout == NULL) params->stdout = thread_stdout;
+        if (sharedErrorOutput && (params->stderr != params->stdout)) {
             if (params->stderr != NULL) {
                 if (fileno(params->stderr) != fileno(currentSession->stderr)) fclose(params->stderr);
             }
-            params->stderr = newStream;
+            params->stderr = params->stdout;
         }
-    }
-    if (params->stderr == NULL) params->stderr = thread_stderr;
+        else if (errorFileName) {
+            newStream = NULL;
+            newStream = fopen(errorFileName, "w");
+            if (newStream) {
+                if (params->stderr != NULL) {
+                    if (fileno(params->stderr) != fileno(currentSession->stderr)) fclose(params->stderr);
+                }
+                params->stderr = newStream;
+            }
+        }
+        if (params->stderr == NULL) params->stderr = thread_stderr;
+    } // recordSeparator != NULL
     int argc = 0;
     size_t numSpaces = 0;
     // the number of arguments is *at most* the number of spaces plus one
@@ -2522,7 +2549,7 @@ int ios_system(const char* inputCmd) {
         char* end = getLastCharacterOfArgument(str);
         bool mustBreak = (end == NULL) || (strlen(end) == 0);
         if (!mustBreak) end[0] = 0x0;
-        if ((str[0] == '\'') || (str[0] == '"')) {
+        if ((str[0] == '\'') || (str[0] == '"') || (str[0] == recordSeparator)) {
             dontExpand[argc-1] = true; // don't expand arguments in quotes
         }
         argv[argc-1] = unquoteArgument(argv[argc-1]);
@@ -2783,7 +2810,7 @@ int ios_system(const char* inputCmd) {
             // Ability to start multiple python3 scripts (required for Jupyter notebooks):
             // start by increasing the number of the interpreter, until we're out.
             int numInterpreter = 0;
-            if (currentPythonInterpreter < numPythonInterpreters) {
+            if ((currentPythonInterpreter < numPythonInterpreters) && (!PythonIsRunning[currentPythonInterpreter])) {
                 numInterpreter = currentPythonInterpreter;
                 currentPythonInterpreter++;
             } else {
@@ -3078,7 +3105,7 @@ char* ios_getPythonLibraryName() {
     // (mostly vim, right now)
     // start by increasing the number of the interpreter, until we're out.
     int numInterpreter = 0;
-    if (currentPythonInterpreter < numPythonInterpreters) {
+    if ((currentPythonInterpreter < numPythonInterpreters) && (!PythonIsRunning[currentPythonInterpreter])) {
         numInterpreter = currentPythonInterpreter;
         currentPythonInterpreter++;
     } else {

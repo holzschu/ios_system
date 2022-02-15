@@ -48,6 +48,10 @@ public func source(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<
     makeGlobal()  // setenv commands go global
     for i in 1..<args.count {
         let fileName = URL(fileURLWithPath: args[i])
+        // A bit specific for Python virtual environments, because we don't know where the file is at creation.
+        let virtualEnvDir = fileName.deletingLastPathComponent().deletingLastPathComponent().path
+        setenv("__VENV_DIR__", virtualEnvDir, 1)
+        //
         if (FileManager().fileExists(atPath: fileName.path)) {
             do {
                 let contentOfFile = try String(contentsOf: fileName, encoding: String.Encoding.utf8)
@@ -74,6 +78,7 @@ public func source(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<
             fputs("source: file \(fileName) not found.", thread_stderr)
         }
     }
+    unsetenv("__VENV_DIR__")
     makeLocal() // back to local
     newPreviousDirectory() // make directory changes permanent
     return 0
