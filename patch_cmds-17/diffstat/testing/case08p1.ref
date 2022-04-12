@@ -1,0 +1,9 @@
+ build/x11r6/XFree86-current/xc/programs/xterm/Imakefile   |   15 +++++++++
+ build/x11r6/XFree86-current/xc/programs/xterm/Tekproc.c   |    7 ++++
+ build/x11r6/XFree86-current/xc/programs/xterm/charproc.c  |   22 ++++++++++++++
+ build/x11r6/XFree86-current/xc/programs/xterm/data.c      |    4 ++
+ build/x11r6/XFree86-current/xc/programs/xterm/main.c      |   20 +++--!!!!!!
+ build/x11r6/XFree86-current/xc/programs/xterm/menu.c      |    6 !!!
+ build/x11r6/XFree86-current/xc/programs/xterm/misc.c      |    6 +++
+ build/x11r6/XFree86-current/xc/programs/xterm/scrollbar.c |    2 !
+ 8 files changed, 60 insertions(+), 2 deletions(-), 20 modifications(!)

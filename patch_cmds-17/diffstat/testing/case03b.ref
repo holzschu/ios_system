@@ -1,0 +1,4 @@
+ config.cache  |    1 !
+ config.h      |    1 +
+ configure.out |only
+ 3 files changed, 1 insertion(+), 1 modification(!)

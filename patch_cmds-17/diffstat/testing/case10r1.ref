@@ -1,0 +1,3 @@
+ /build/x11r6/XFree86-current/xc/programs/Xserver/include/XIstubs.h |   26 ++++++++++
+ xc/programs/Xserver/Xi/allowev.c                                   |    6 !!
+ 2 files changed, 27 insertions(+), 1 deletion(-), 4 modifications(!)

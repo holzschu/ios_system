@@ -1,0 +1,6 @@
+ Ada95/gen/gen.c                                  |    5 +++--
+ Ada95/gen/terminal_interface-curses-mouse.ads.m4 |    6 +++---
+ Ada95/gen/terminal_interface-curses.ads.m4       |   10 ++++------
+ Ada95/samples/ncurses2-acs_and_scroll.adb        |   15 +++++++--------
+ Ada95/samples/ncurses2-acs_display.adb           |   21 +++++++++------------
+ 5 files changed, 26 insertions(+), 31 deletions(-)

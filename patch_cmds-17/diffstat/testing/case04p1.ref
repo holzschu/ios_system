@@ -1,0 +1,41 @@
+ config.cache             |   16 ++--!!!!
+ config.h                 |    2 +
+ config.log               |   76 +++++++++--------------!!!!!!!!!!!!!!!!!!!!!!!
+ config.status            |   24 +++----!!!!!!
+ configure.out            |only
+ diffstat                 |binary
+ diffstat.o               |binary
+ makefile                 |    4 -
+ testing/Xlib-1.patch-    |only
+ testing/Xlib-1.ref       |only
+ testing/Xlib-2.patch-    |only
+ testing/Xlib-2.ref       |only
+ testing/Xlib-3.patch-    |only
+ testing/Xlib-3.ref       |only
+ testing/config-1.ref     |only
+ testing/nugent.ref       |only
+ testing/xserver-1.ref    |only
+ testing/xserver-2.patch- |only
+ testing/xserver-2.ref    |only
+ testing/xterm-1.patch-   |only
+ testing/xterm-1.ref      |only
+ testing/xterm-10.patch-  |only
+ testing/xterm-10.ref     |only
+ testing/xterm-11.patch-  |only
+ testing/xterm-11.ref     |only
+ testing/xterm-2.patch-   |only
+ testing/xterm-2.ref      |only
+ testing/xterm-3.patch-   |only
+ testing/xterm-3.ref      |only
+ testing/xterm-4.patch-   |only
+ testing/xterm-4.ref      |only
+ testing/xterm-5.patch-   |only
+ testing/xterm-5.ref      |only
+ testing/xterm-6.patch-   |only
+ testing/xterm-6.ref      |only
+ testing/xterm-7.ref      |only
+ testing/xterm-8.patch-   |only
+ testing/xterm-8.ref      |only
+ testing/xterm-9.patch-   |only
+ testing/xterm-9.ref      |only
+ 40 files changed, 28 insertions(+), 34 deletions(-), 60 modifications(!)

@@ -1,0 +1,39 @@
+ diffstat.orig/config.cache        |   16 ++--!!!!
+ diffstat.orig/config.h            |    2 +
+ diffstat.orig/config.log          |   76 +++++++------------!!!!!!!!!!!!!!!!!!
+ diffstat.orig/config.status       |   24 +++---!!!!!!
+ diffstat.orig/configure.out       |only
+ diffstat.orig/makefile            |    4 -
+ diffstat/testing/Xlib-1.patch-    |only
+ diffstat/testing/Xlib-1.ref       |only
+ diffstat/testing/Xlib-2.patch-    |only
+ diffstat/testing/Xlib-2.ref       |only
+ diffstat/testing/Xlib-3.patch-    |only
+ diffstat/testing/Xlib-3.ref       |only
+ diffstat/testing/config-1.ref     |only
+ diffstat/testing/nugent.ref       |only
+ diffstat/testing/xserver-1.ref    |only
+ diffstat/testing/xserver-2.patch- |only
+ diffstat/testing/xserver-2.ref    |only
+ diffstat/testing/xterm-1.patch-   |only
+ diffstat/testing/xterm-1.ref      |only
+ diffstat/testing/xterm-10.patch-  |only
+ diffstat/testing/xterm-10.ref     |only
+ diffstat/testing/xterm-11.patch-  |only
+ diffstat/testing/xterm-11.ref     |only
+ diffstat/testing/xterm-2.patch-   |only
+ diffstat/testing/xterm-2.ref      |only
+ diffstat/testing/xterm-3.patch-   |only
+ diffstat/testing/xterm-3.ref      |only
+ diffstat/testing/xterm-4.patch-   |only
+ diffstat/testing/xterm-4.ref      |only
+ diffstat/testing/xterm-5.patch-   |only
+ diffstat/testing/xterm-5.ref      |only
+ diffstat/testing/xterm-6.patch-   |only
+ diffstat/testing/xterm-6.ref      |only
+ diffstat/testing/xterm-7.ref      |only
+ diffstat/testing/xterm-8.patch-   |only
+ diffstat/testing/xterm-8.ref      |only
+ diffstat/testing/xterm-9.patch-   |only
+ diffstat/testing/xterm-9.ref      |only
+ 38 files changed, 28 insertions(+), 34 deletions(-), 60 modifications(!)

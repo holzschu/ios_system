@@ -1,0 +1,35 @@
+ tmp/KfNDqvamm0/flwm-1.01/Frame.C                                      |  294 +++++++---
+ tmp/KfNDqvamm0/flwm-1.01/Frame.H                                      |   21 
+ tmp/KfNDqvamm0/flwm-1.01/Hotkeys.C                                    |   32 +
+ tmp/KfNDqvamm0/flwm-1.01/Makefile                                     |    2 
+ tmp/KfNDqvamm0/flwm-1.01/Menu.C                                       |   70 +-
+ tmp/KfNDqvamm0/flwm-1.01/README                                       |   18 
+ tmp/KfNDqvamm0/flwm-1.01/Rotated.C                                    |   61 +-
+ tmp/KfNDqvamm0/flwm-1.01/config.h                                     |    6 
+ tmp/KfNDqvamm0/flwm-1.01/debian/changelog                             |   12 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/100_double_ampersand.dpatch   |    1 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/100_fl_filename_name.dpatch   |    2 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/101_visible_focus.dpatch      |    1 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/102_charstruct.dpatch         |    1 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/103_man_typo.dpatch           |    1 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/104_g++-4.1_warning.dpatch    |    3 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/105_double_ampersand.dpatch   |    1 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patched/201_background_color.dpatch   |    2 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/00list                        |    8 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/100_double_ampersand.dpatch   |   19 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/100_fl_filename_name.dpatch   |   20 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/101_visible_focus.dpatch      |   19 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/102_charstruct.dpatch         |   45 -
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/103_man_typo.dpatch           |   19 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/104_g++-4.1_warning.dpatch    |   58 -
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/105_double_ampersand.dpatch   |   48 -
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/200_Debian_menu.dpatch        |   14 
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/201_background_color.dpatch   |   57 -
+ tmp/KfNDqvamm0/flwm-1.01/debian/patches/202_background_color_2.dpatch |   92 ---
+ tmp/KfNDqvamm0/flwm-1.01/debian/watch                                 |    3 
+ tmp/KfNDqvamm0/flwm-1.01/flwm.1                                       |    4 
+ tmp/KfNDqvamm0/flwm-1.01/flwm_wmconfig                                |    4 
+ tmp/KfNDqvamm0/flwm-1.01/logo.fl                                      |   19 
+ tmp/KfNDqvamm0/flwm-1.01/main.C                                       |   99 ++-
+ tmp/KfNDqvamm0/flwm-1.01/patch-stamp                                  |   25 
+ 34 files changed, 498 insertions(+), 583 deletions(-)

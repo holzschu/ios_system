@@ -1,0 +1,4 @@
+ include/linux/sched.h |   11 	11 +	0 -	0 !
+ kernel/sched.c        |   47 	47 +	0 -	0 !
+ kernel/user.c         |    2 	2 +	0 -	0 !
+ 3 files changed, 60 insertions(+)

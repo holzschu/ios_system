@@ -1,0 +1,6 @@
+ diffstat.orig/configure.out |only
+ diffstat/config.cache       |    1 !
+ diffstat/config.h           |    1 -
+ diffstat/diffstat           |binary
+ diffstat/diffstat.o         |binary
+ 5 files changed, 1 deletion(-), 1 modification(!)

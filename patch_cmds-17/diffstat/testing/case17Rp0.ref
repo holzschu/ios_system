@@ -1,0 +1,4 @@
+ linux/include/linux/sched.h.user |   11 ---------
+ linux/kernel/sched.c.user        |   47 ---------------------------------------
+ linux/kernel/user.c.user         |    2 -
+ 3 files changed, 60 deletions(-)

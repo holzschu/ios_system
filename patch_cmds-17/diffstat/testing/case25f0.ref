@@ -1,0 +1,7 @@
+ CHANGES         |   58 	58 +	0 -	0 !
+ MANIFEST        |    3 	2 +	1 -	0 !
+ cmdtbl          |   15 	12 +	3 -	0 !
+ configure.in    |   16 	12 +	4 -	0 !
+ doc/filters.doc |   36 	34 +	2 -	0 !
+ doc/macros.doc  |   67 	41 +	26 -	0 !
+ 6 files changed, 159 insertions(+), 36 deletions(-)

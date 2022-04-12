@@ -1,0 +1,30 @@
+ Makefile.in          |   61 ++++----
+ README               |    5 
+ aclocal.m4           |    7 +
+ config.h.in          |    6 +
+ configure            |  386 ++++++++++++++++++++++++++++++++++-----------------
+ curses.h             |   37 ++++-
+ curspriv.h           |   12 +-
+ demos/testcurs.c     |    9 +
+ doc/intro.man        |   27 ++-
+ doc/x11.man          |  100 +++++++++----
+ dos/pdckbd.c         |   28 ++++
+ install-sh           |   26 +++-
+ os2/gccos2.mak       |   14 +-
+ os2/pdckbd.c         |   28 ++++
+ os2/pdcurses.def     |    8 +
+ pdcurses/Makefile.in |  120 ++++++++++------
+ pdcurses/border.c    |  168 +++++++++++++++++++++-
+ pdcurses/color.c     |   26 +++
+ pdcurses/getch.c     |   12 +-
+ pdcurses/initscr.c   |    6 
+ pdcurses/util.c      |    6 
+ win32/curses.def     |    3 
+ win32/pdckbd.c       |   10 +-
+ x11/README           |   15 ++
+ x11/ScrollBox.c      |   32 ++--
+ x11/pdcdisp.c        |    4 
+ x11/pdckbd.c         |    4 
+ x11/pdcscrn.c        |    3 
+ x11/pdcsetsc.c       |   11 +-
+ 29 files changed, 847 insertions(+), 327 deletions(-)

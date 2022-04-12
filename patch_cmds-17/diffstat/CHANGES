@@ -1,0 +1,373 @@
+-- $Id: CHANGES,v 1.73 2012/01/03 09:38:29 tom Exp $
+
+2012/01/03 (diffstat 1.55)
+	+ add -R option, like patch's, to reverse the order of the comparison.
+
+	+ FreeBSD ports/148604, ports/149500 reported that lzcat may not
+	  support extracting files compressed in xz format (patch by Frederic
+	  Culot, FreeBSD #149500).
+
+	+ address documentation issue raised in Novell #739210
+
+	+ correct typo s/Solaris/Solar/.
+
+	+ updated configure script macros:
+	  CF_ANSI_CC_CHECK CF_DISABLE_LEAKS CF_GCC_ATTRIBUTES CF_GCC_WARNINGS
+	  CF_MAKE_TAGS CF_MSG_LOG CF_PATH_PROG CF_WITH_INSTALL_PREFIX
+	  CF_XOPEN_SOURCE
+
+	+ update config.guess, config.sub
+
+2010/10/10 (diffstat 1.54)
+	+ change Debian package script to use native format.
+
+	+ correct counts used for new files when -S/-D options are used.
+
+	+ minor typography improvement to manpage (patch by Solar Designer)
+
+	+ remove the temporary directory on error, introduced in 1.48+ (patch
+	  by Solar Designer).
+
+2010/07/19 (diffstat 1.53)
+
+	+ add missing "break" statement which left "-c" option falling-through
+	  into "-C".
+
+2010/07/16 (diffstat 1.52)
+
+	+ add "-C" option to show the histogram using SGR colors.
+
+	+ add "-s" option to show only the summary line.
+
+	+ add configure check for "xz", using this in preference to "lzcat"
+	  (FreeBSD #148604).
+
+	+ also escape literal dashes used as part of the histogram in the
+	  manpage.
+
+	+ modify hyphens vs dashes in manpage per
+		http://lintian.debian.org/tags/hyphen-used-as-minus-sign.html
+	  (patch by Francois Marier).
+
+	+ drop mkdirs.sh, use "mkdir -p"
+
+	+ add configure checks for ctags and lint.
+
+	+ updated configure macros
+
+	+ reformat CHANGES to work with metrics script.
+
+	+ fix strict gcc warnings, e.g., using const.
+
+	+ improve a case where filenames have embedded blanks (patch by Reinier
+	  Post).
+
+	+ update config.guess, config.sub
+
+2009/11/07 (diffstat 1.51)
+
+	+ correct suffix-check for ".xz" files as command-line parameters
+	  rather than as piped input (report by Moritz Barsnick).
+
+2009/11/6 (diffstat 1.50)
+
+	+ build/test fixes for MSYS, i.e., MinGW.
+
+	+ improve configure check for get_unlocked function.
+
+	+ use $TMPDIR for path of temporary file used in decompression.
+	
+	+ correct else-condition for detecting compression type (patch by Zach
+	  Hirsch).
+
+2009/08/31 (diffstat 1.49)
+
+	+ improve lzma support, add support for xz (patch by Eric Blake).
+	
+	+ add special case for no-newline message from some diff's (Ubuntu
+	  #269895).
+
+	+ improve configure check for getopt header.
+
+	+ add configure special case for HPUX 11 with _XOPEN_SOURCE definition.
+
+	+ update config.guess, config.sub
+
+2009/08/11 (diffstat 1.48)
+
+	+ add decompression tests for lzma and pack file types.
+
+	+ check for zcat and uncompress in preference to "compress -dc".
+
+	+ modify to check the first few bytes of standard input, and use a
+	  corresponding decompression utility if the stream appears to be
+	  compressed.  This requires making a temporary copy of the data
+	  (Debian #491575).
+
+	+ add -N option, to truncate filenames.
+
+	+ use getc_unlocked() rather than fgetc_unlocked()
+
+	+ modify to recognize Perforce-style diffs (patch by Ed Schouten).
+
+	+ updated configure macros to improve compiler warning checks, use
+	  $PATH_SEPARATOR rather than $PATH_SEP (for consistency with some
+	  autoconf versions),
+
+	+ fix typo in configure --with-install-prefix option (report by
+	  Dagobert Michelsen).
+
+	+ update config.guess, config.sub
+
+2009/03/29 (diffstat 1.47)
+
+	modify to work with patch ".rej" files, which do not have a header to
+	tell which file is affected.
+
+	fix typo in usage message (reports by Moritz Barsnick, John McNamara,
+	Richard Quadling).
+
+2008-08-06 (diffstat 1.46)
+
+	+ add "-S", "-D" and "-m" options to provide a way to show the amount
+	  of difference relative to the total sizes of the files.
+
+	+ add "-q" option (Debian #488248, patch by Greg Norris).
+
+2007/09/04 (diffstat 1.45)
+
+	+ add "-b" option (Debian #379380, patch by Greg Norris).
+
+2007/08/26 (diffstat 1.44)
+
+	+ add a check for default-diff output, e.g., "diff foo bar|diffstat",
+	  which has no "diff" command in the output for diffstat to guess that
+	  a diff is beginning.
+
+	+ add a check after completing a chunk for unified diff to ensure that
+	  the next line either begins another chunk for the diff, or starts
+	  another diff, e.g., a context diff (report by Adrian Bunk).
+
+	+ add configure options for leak-checking valgrind, etc.
+
+	+ use install-sh rather than install.sh
+
+	+ updated config.guess and config.sub
+
+	+ updated configure macros CF_GCC_ATTRIBUTES CF_GCC_WARNINGS CF_MSG_LOG
+	  CF_PATH_SYNTAX CF_VERBOSE CF_XOPEN_SOURCE
+
+2006/07/16 (diffstat 1.43)
+
+	+ fix to avoid modifying data which is being used by tsearch() for
+	  ordering the binary tree (report by Adrian Bunk).
+
+2006/07/02 (diffstat 1.42)
+
+	+ do not ignore pathnames in /tmp/, since some tools create usable
+	  for both old/new files there (Debian #376086).
+
+	+ correct ifdef for fgetc_unlocked().
+
+	+ updated configure macros CF_GCC_VERSION, CF_PATH_SYNTAX and
+	  CF_XOPEN_SOURCE
+
+	+ add configure check for compress, gzip and bzip2 programs that may be
+	  used to decompress files.
+
+2005/08/24 (diffstat 1.41)
+
+	+ update usage message for options added in 1.40 (report by Eric Blake).
+
+2005-08-15 (diffstat 1.40)
+
+	+ add options -l, -r and -t.  add to -f option (patch, comments by
+	  Jean Delvare, Michael Burian).
+
+	+ improve I/O on Linux using fgetc_locked().
+
+	+ improve searching of long sorted lists using tsearch()
+
+	+ improve configure-script checks for Intel compiler warnings.
+
+2005-04-10 (diffstat 1.39)
+
+	+ change order of merging and prefix-stripping so stripping all prefixes,
+	  e.g., with -p9, will be sorted as expected (patch by Jean Delvare).
+
+	+ correct a reference to freed memory after merging found with valgrind.
+
+2005-01-16 (diffstat 1.38)
+
+	+ add makefile.wnt, etc., for win32 port.
+
+	+ fix "make check" to work even when PATH or the build directory has
+	  spaces in it (patch by Eric Blake).
+
+	+ add support for '--help' and '--version' command line arguments, for a
+	  consistent interface with GNU tools, and still compatible to POSIX
+	  requirements on utility options (patch by Eric Blake).
+
+2004-12-18
+
+	+ modify makefile.in and run_test.sh to allow "make check" to be run
+	  from a build directory which is not the same as the source directory,
+	  i.e., when the configure --srcdir option is used (request by Eric
+	  Blake).
+
+	+ modify distribution to include sample of regression tests, so a
+	  "make check" will work (request by Eric Blake).
+
+2004-12-16 (diffstat 1.37)
+
+	+ fix a different case for data beginning with "--" which was treated
+	  as a header line.
+
+2004-12-14 (diffstat 1.36)
+
+	+ Fix allocation problems.  Open files in binary mode for reading.
+	  Getopt returns -1, not necessarily EOF.  Add const where useful.  Use
+	  NO_IDENT where necessary.  malloc() comes from <stdlib.h> in standard
+	  systems (Patch by Eric Blake <ebb9@byu.net>.)
+
+2004-11-08 (diffstat 1.35)
+
+	+ modify makefile.in to work with configure --srcdir option (report by
+	  Eric Blake).
+
+	+ minor fix for resync of unified diffs checks for range (line beginning
+	  with '@' without header lines (successive lines beginning with "---"
+	  and "+++") (Debian #264098).
+
+	+ miscellaneous updates for configure script
+
+2003-11-09 (diffstat 1.34)
+
+	+ improve check for certain lines (not those that begin a chunk) that
+	  begin with '-', treating all except "---" as a delete (report by
+	  James Rowe <Jay@jnrowe.uklinux.net>).
+
+	+ minor updates to configure script.
+
+2003-02-14 (diffstat 1.33)
+
+	+ modified to work around a case where the filename+date was incomplete,
+	  i.e., missing one of the components such as the day of the month.
+	  While diffstat does not use the date directly, it helps distinguish
+	  some lines from non-patches (report by Moritz Barsnick
+	  <moritz@barsnick.net>).
+
+	+ add "-h" option (request by Moritz Barsnick).
+
+	+ fix a typo in usage message (report by Moritz Barsnick).
+
+	+ add "-e" and "-o" options to simplify testing on OS/2 EMX.
+
+2003-01-04 (diffstat 1.32)
+
+	+ modified to handle patches generated by makepatch-2.00_09, which uses
+	  both "Index" and "diff" lines (report by D Roland Walker).  As a side
+	  effect, the additional merging eliminates occasional reports with
+	  zero differences.
+
+	+ modified to avoid buffer overflows.
+
+	+ fixes for Debian #155000 (did not handle a '-' in first content-column
+	  of a unified diff) and #170947 (option to turn the progress messages
+	  off).
+
+	+ updated configure script using aclocal.m4 macros
+
+	+ update makefile.in to improve use of autoconf (report/patch by Nix
+	  <nix@esperi.demon.co.uk>).
+
+2002-08-20 (diffstat 1.31)
+
+	+ add -u, -k options to override diffstat's normal sorting (-u) and
+	  merging (-k) of identical filenames.  (-u requested by H Peter Anvin
+	  <hpa@zytor.com>).
+
+2002-08-09 (diffstat 1.30)
+
+	+ allow either '/' or '-' as delimiters in dates, to accommodate
+	  gendiff (report by Rik van Riel <riel@conectiva.com.br>).  This
+	  corresponds to the time format used in diffutils 2.8 whose changelog
+	  states that this is ISO 8601 (though online references differ).
+
+2001-10-10 (diffstat 1.29)
+
+	+ add bzip2 (.bz2) suffix (suggested by Gregory T Norris
+	  <haphazard@socket.net>, Debian #82969).
+
+	+ add check for diff from RCS archive where the "diff" lines do not
+	  reference a filename.
+
+2000-03-29 (diffstat 1.28)
+
+	+ Add -c option (to prefix output with '#' comment), eliminating a step
+	  in my script that combines diffstat output with a patch.  This is a
+	  workaround for OSF1's broken sed utility.
+
+	+ Check for compressed file suffixes .Z and .gz, read uncompressed data
+	  via pipe (Debian wishlist item #53975 by ch@lathspell.westend.com).
+
+	+ Simplified makefile based on comments by M Sweger
+	  <mikesw@whiterose.net>
+
+	+ Adapted changes from Troy Engel <tengel@sonic.net> as "-f" option.
+
+1998-05-27 (diffstat 1.27)
+
+	+ Debian diff's don't show dates on the lines where we expect to see
+	  filenames.
+
+1998-01-16 (diffstat 1.26, Patch 5)
+
+	+ Change copyright terms.
+
+ 	+ Accommodate patches w/o tabs in header lines (e.g., from cut/paste).
+	  Still prefer the tabs because otherwise we cannot have spaces in
+	  filenames.
+
+ 	+ Strip suffixes such as ".orig", to avoid confusing output.
+
+1996-03-16 (diffstat 1.24, Patch 4)
+
+	+ Corrected state-transition after "Binary".
+
+	+ Added testing subdirectory
+
+	+ Added -p option.
+
+	+ Handle differences from /tmp (e.g., for X11R5 patches).
+
+1995-05-06 (diffstat 1.17 Patch 3)
+
+	+ Repost whole program to comp.sources.misc (1.17)
+
+	+ Mods to scaling: limit to 1:1 if only a few changes were made; added
+	  logic to accumulate error across +/-/!  calls.
+
+	+ added logic to recognize 'rcsdiff -u' output.
+
+1994-12-26 (diffstat 1.15, Patch 2)
+
+	+ Strip common pathname prefix (1.15)
+
+1994-11-13 (diffstat 1.14, Patch 1)
+
+	+ Test for <string.h> vs <strings.h>
+
+	+ Corrected error in 'match()' that didn't handle properly the case
+	  when an argument was a null string (i.e., blank lines in a unified
+	  diff).
+
+	+ Added options '-n' and '-V'
+
+	+ Added patchlev.h, CHANGES files.
+
+	+ Added install.sh, for autoconf 2.1
+
+1994-06-13 (diffstat 1.12, Patch 0)
+
+	+ Initial release of 'diffstat' (1.12).

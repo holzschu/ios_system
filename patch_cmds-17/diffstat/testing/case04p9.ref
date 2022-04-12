@@ -1,0 +1,41 @@
+ Xlib-1.patch-    |only
+ Xlib-1.ref       |only
+ Xlib-2.patch-    |only
+ Xlib-2.ref       |only
+ Xlib-3.patch-    |only
+ Xlib-3.ref       |only
+ config-1.ref     |only
+ config.cache     |   16 ++---!!!!
+ config.h         |    2 +
+ config.log       |   76 ++++++++++-----------------!!!!!!!!!!!!!!!!!!!!!!!!!!
+ config.status    |   24 ++++----!!!!!!!!
+ configure.out    |only
+ diffstat         |binary
+ diffstat.o       |binary
+ makefile         |    4 -
+ nugent.ref       |only
+ xserver-1.ref    |only
+ xserver-2.patch- |only
+ xserver-2.ref    |only
+ xterm-1.patch-   |only
+ xterm-1.ref      |only
+ xterm-10.patch-  |only
+ xterm-10.ref     |only
+ xterm-11.patch-  |only
+ xterm-11.ref     |only
+ xterm-2.patch-   |only
+ xterm-2.ref      |only
+ xterm-3.patch-   |only
+ xterm-3.ref      |only
+ xterm-4.patch-   |only
+ xterm-4.ref      |only
+ xterm-5.patch-   |only
+ xterm-5.ref      |only
+ xterm-6.patch-   |only
+ xterm-6.ref      |only
+ xterm-7.ref      |only
+ xterm-8.patch-   |only
+ xterm-8.ref      |only
+ xterm-9.patch-   |only
+ xterm-9.ref      |only
+ 40 files changed, 28 insertions(+), 34 deletions(-), 60 modifications(!)

@@ -1,0 +1,398 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		FDDB0E80109661D2003751DE /* Default */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = FDDB0E8B109661DB003751DE /* Build configuration list for PBXAggregateTarget "Default" */;
+			buildPhases = (
+			);
+			dependencies = (
+				FD50541B10A4CAEA0060248B /* PBXTargetDependency */,
+				FDDB0F00109665B7003751DE /* PBXTargetDependency */,
+			);
+			name = Default;
+			productName = Default;
+		};
+		FDDB0EFB1096659F003751DE /* Open Source Info */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = FDDB0F0A109665C3003751DE /* Build configuration list for PBXAggregateTarget "Open Source Info" */;
+			buildPhases = (
+				FDDB0EFA1096659F003751DE /* OpenSourceVersions */,
+				FDDB0F09109665C3003751DE /* OpenSourceLicenses */,
+			);
+			dependencies = (
+			);
+			name = "Open Source Info";
+			productName = "Open Source Info";
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		FD50541D10A4CB1F0060248B /* diffstat.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = FD5052B210A4CABA0060248B /* diffstat.1 */; };
+		FD50541E10A4CB210060248B /* diffstat.c in Sources */ = {isa = PBXBuildFile; fileRef = FD5052B310A4CABA0060248B /* diffstat.c */; };
+		FDDB0E9D10966219003751DE /* backupfile.c in Sources */ = {isa = PBXBuildFile; fileRef = FDDB0E90109661FE003751DE /* backupfile.c */; };
+		FDDB0E9E10966219003751DE /* inp.c in Sources */ = {isa = PBXBuildFile; fileRef = FDDB0E93109661FE003751DE /* inp.c */; };
+		FDDB0E9F10966219003751DE /* mkpath.c in Sources */ = {isa = PBXBuildFile; fileRef = FDDB0E95109661FE003751DE /* mkpath.c */; };
+		FDDB0EA010966219003751DE /* patch.c in Sources */ = {isa = PBXBuildFile; fileRef = FDDB0E97109661FE003751DE /* patch.c */; };
+		FDDB0EA110966219003751DE /* pch.c in Sources */ = {isa = PBXBuildFile; fileRef = FDDB0E99109661FE003751DE /* pch.c */; };
+		FDDB0EA210966219003751DE /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = FDDB0E9B109661FE003751DE /* util.c */; };
+		FDDB0ED710966403003751DE /* patch.1 in Install man1 */ = {isa = PBXBuildFile; fileRef = FDDB0E96109661FE003751DE /* patch.1 */; };
+		FDDB0F01109665BB003751DE /* patch_cmds.plist in OpenSourceVersions */ = {isa = PBXBuildFile; fileRef = FDDB0EF710966590003751DE /* patch_cmds.plist */; };
+		FDDB0F03109665C2003751DE /* patch_cmds.txt in OpenSourceLicenses */ = {isa = PBXBuildFile; fileRef = FDDB0EF810966590003751DE /* patch_cmds.txt */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FD50541A10A4CAEA0060248B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FDDB0E77109661C0003751DE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FD50541610A4CAE40060248B;
+			remoteInfo = diffstat;
+		};
+		FDDB0EFF109665B7003751DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FDDB0E77109661C0003751DE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FDDB0EFB1096659F003751DE;
+			remoteInfo = "Open Source Info";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FD50541F10A4CB270060248B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1;
+			dstSubfolderSpec = 0;
+			files = (
+				FD50541D10A4CB1F0060248B /* diffstat.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		FDDB0EDB10966409003751DE /* Install man1 */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1;
+			dstSubfolderSpec = 0;
+			files = (
+				FDDB0ED710966403003751DE /* patch.1 in Install man1 */,
+			);
+			name = "Install man1";
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		FDDB0EFA1096659F003751DE /* OpenSourceVersions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/local/OpenSourceVersions;
+			dstSubfolderSpec = 0;
+			files = (
+				FDDB0F01109665BB003751DE /* patch_cmds.plist in OpenSourceVersions */,
+			);
+			name = OpenSourceVersions;
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		FDDB0F09109665C3003751DE /* OpenSourceLicenses */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/local/OpenSourceLicenses;
+			dstSubfolderSpec = 0;
+			files = (
+				FDDB0F03109665C2003751DE /* patch_cmds.txt in OpenSourceLicenses */,
+			);
+			name = OpenSourceLicenses;
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		FD5052B210A4CABA0060248B /* diffstat.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; path = diffstat.1; sourceTree = "<group>"; };
+		FD5052B310A4CABA0060248B /* diffstat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = diffstat.c; sourceTree = "<group>"; };
+		FD50541710A4CAE40060248B /* diffstat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = diffstat; sourceTree = BUILT_PRODUCTS_DIR; };
+		FDDB0E86109661DB003751DE /* patch */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = patch; sourceTree = BUILT_PRODUCTS_DIR; };
+		FDDB0E90109661FE003751DE /* backupfile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = backupfile.c; sourceTree = "<group>"; };
+		FDDB0E91109661FE003751DE /* backupfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = backupfile.h; sourceTree = "<group>"; };
+		FDDB0E92109661FE003751DE /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		FDDB0E93109661FE003751DE /* inp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inp.c; sourceTree = "<group>"; };
+		FDDB0E94109661FE003751DE /* inp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inp.h; sourceTree = "<group>"; };
+		FDDB0E95109661FE003751DE /* mkpath.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mkpath.c; sourceTree = "<group>"; };
+		FDDB0E96109661FE003751DE /* patch.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; path = patch.1; sourceTree = "<group>"; };
+		FDDB0E97109661FE003751DE /* patch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = patch.c; sourceTree = "<group>"; };
+		FDDB0E98109661FE003751DE /* pathnames.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pathnames.h; sourceTree = "<group>"; };
+		FDDB0E99109661FE003751DE /* pch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pch.c; sourceTree = "<group>"; };
+		FDDB0E9A109661FE003751DE /* pch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
+		FDDB0E9B109661FE003751DE /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
+		FDDB0E9C109661FE003751DE /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		FDDB0EF710966590003751DE /* patch_cmds.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = patch_cmds.plist; sourceTree = "<group>"; };
+		FDDB0EF810966590003751DE /* patch_cmds.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = patch_cmds.txt; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FD50541510A4CAE40060248B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FDDB0E84109661DB003751DE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FD5052A910A4CABA0060248B /* diffstat */ = {
+			isa = PBXGroup;
+			children = (
+				FD5052B210A4CABA0060248B /* diffstat.1 */,
+				FD5052B310A4CABA0060248B /* diffstat.c */,
+			);
+			path = diffstat;
+			sourceTree = "<group>";
+		};
+		FDDB0E75109661C0003751DE = {
+			isa = PBXGroup;
+			children = (
+				FDDB0EF710966590003751DE /* patch_cmds.plist */,
+				FDDB0EF810966590003751DE /* patch_cmds.txt */,
+				FD5052A910A4CABA0060248B /* diffstat */,
+				FDDB0E8D109661FE003751DE /* patch */,
+				FDDB0E87109661DB003751DE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FDDB0E87109661DB003751DE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FDDB0E86109661DB003751DE /* patch */,
+				FD50541710A4CAE40060248B /* diffstat */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FDDB0E8D109661FE003751DE /* patch */ = {
+			isa = PBXGroup;
+			children = (
+				FDDB0E90109661FE003751DE /* backupfile.c */,
+				FDDB0E91109661FE003751DE /* backupfile.h */,
+				FDDB0E92109661FE003751DE /* common.h */,
+				FDDB0E93109661FE003751DE /* inp.c */,
+				FDDB0E94109661FE003751DE /* inp.h */,
+				FDDB0E95109661FE003751DE /* mkpath.c */,
+				FDDB0E96109661FE003751DE /* patch.1 */,
+				FDDB0E97109661FE003751DE /* patch.c */,
+				FDDB0E98109661FE003751DE /* pathnames.h */,
+				FDDB0E99109661FE003751DE /* pch.c */,
+				FDDB0E9A109661FE003751DE /* pch.h */,
+				FDDB0E9B109661FE003751DE /* util.c */,
+				FDDB0E9C109661FE003751DE /* util.h */,
+			);
+			path = patch;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FD50541610A4CAE40060248B /* diffstat */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD50542010A4CB270060248B /* Build configuration list for PBXNativeTarget "diffstat" */;
+			buildPhases = (
+				FD50541410A4CAE40060248B /* Sources */,
+				FD50541510A4CAE40060248B /* Frameworks */,
+				FD50541F10A4CB270060248B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = diffstat;
+			productName = diffstat;
+			productReference = FD50541710A4CAE40060248B /* diffstat */;
+			productType = "com.apple.product-type.tool";
+		};
+		FDDB0E85109661DB003751DE /* patch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FDDB0E8C109661DB003751DE /* Build configuration list for PBXNativeTarget "patch" */;
+			buildPhases = (
+				FDDB0E83109661DB003751DE /* Sources */,
+				FDDB0E84109661DB003751DE /* Frameworks */,
+				FDDB0EDB10966409003751DE /* Install man1 */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = patch;
+			productName = patch;
+			productReference = FDDB0E86109661DB003751DE /* patch */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FDDB0E77109661C0003751DE /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = FDDB0E7A109661C0003751DE /* Build configuration list for PBXProject "patch_cmds" */;
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 0;
+			mainGroup = FDDB0E75109661C0003751DE;
+			productRefGroup = FDDB0E87109661DB003751DE /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FDDB0E80109661D2003751DE /* Default */,
+				FD50541610A4CAE40060248B /* diffstat */,
+				FDDB0E85109661DB003751DE /* patch */,
+				FDDB0EFB1096659F003751DE /* Open Source Info */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FD50541410A4CAE40060248B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FD50541E10A4CB210060248B /* diffstat.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FDDB0E83109661DB003751DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FDDB0EA010966219003751DE /* patch.c in Sources */,
+				FDDB0EA110966219003751DE /* pch.c in Sources */,
+				FDDB0E9E10966219003751DE /* inp.c in Sources */,
+				FDDB0EA210966219003751DE /* util.c in Sources */,
+				FDDB0E9D10966219003751DE /* backupfile.c in Sources */,
+				FDDB0E9F10966219003751DE /* mkpath.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FD50541B10A4CAEA0060248B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FD50541610A4CAE40060248B /* diffstat */;
+			targetProxy = FD50541A10A4CAEA0060248B /* PBXContainerItemProxy */;
+		};
+		FDDB0F00109665B7003751DE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FDDB0EFB1096659F003751DE /* Open Source Info */;
+			targetProxy = FDDB0EFF109665B7003751DE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		FD50541910A4CAE50060248B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					HAVE_CONFIG_H,
+					"_XOPEN_SOURCE=500",
+					_DARWIN_C_SOURCE,
+				);
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/diffstat";
+				INSTALL_PATH = /usr/bin;
+				PRODUCT_NAME = diffstat;
+			};
+			name = Release;
+		};
+		FDDB0E79109661C0003751DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CODE_SIGN_IDENTITY = "-";
+				CURRENT_PROJECT_VERSION = "$(RC_ProjectSourceVersion)";
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				PREBINDING = NO;
+				USE_HEADERMAP = NO;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = __;
+				WARNING_CFLAGS = "-Wall";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		FDDB0E82109661D2003751DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = Default;
+			};
+			name = Release;
+		};
+		FDDB0E8A109661DB003751DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INSTALL_PATH = /usr/bin;
+				PRODUCT_NAME = patch;
+			};
+			name = Release;
+		};
+		FDDB0EFC1096659F003751DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "Open Source Info";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FD50542010A4CB270060248B /* Build configuration list for PBXNativeTarget "diffstat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FD50541910A4CAE50060248B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FDDB0E7A109661C0003751DE /* Build configuration list for PBXProject "patch_cmds" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FDDB0E79109661C0003751DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FDDB0E8B109661DB003751DE /* Build configuration list for PBXAggregateTarget "Default" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FDDB0E82109661D2003751DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FDDB0E8C109661DB003751DE /* Build configuration list for PBXNativeTarget "patch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FDDB0E8A109661DB003751DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FDDB0F0A109665C3003751DE /* Build configuration list for PBXAggregateTarget "Open Source Info" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FDDB0EFC1096659F003751DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FDDB0E77109661C0003751DE /* Project object */;
+}

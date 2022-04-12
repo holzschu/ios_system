@@ -1,0 +1,13 @@
+ build/Makefile.in    |   38 ++++++++++-----------
+ build/recover        |   49 ----------------------------
+ debian/README.debian |   14 --------
+ debian/changelog     |   53 ------------------------------
+ debian/conffiles     |    1 
+ debian/control       |   19 ----------
+ debian/copyright     |   40 ----------------------
+ debian/postinst      |   21 ------------
+ debian/prerm         |   11 ------
+ debian/rc.boot       |   58 ---------------------------------
+ debian/rules         |   89 ---------------------------------------------------
+ debian/substvars     |    1 
+ 12 files changed, 19 insertions(+), 375 deletions(-)

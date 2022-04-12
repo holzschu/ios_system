@@ -1,0 +1,15 @@
+Source: diffstat
+Maintainer: Thomas E. Dickey <dickey@invisible-island.net>
+Section: devel
+Priority: extra
+Standards-Version: 3.8.4
+Build-Depends: debhelper (>= 5)
+Homepage: http://invisible-island.net/diffstat/
+
+Package: diffstat
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: generate C function prototypes and convert function definitions
+ Diffstat is is useful for reviewing large, complex patch files.  It reads from
+ one or more input files which contain output from diff, producing a histogram
+ of the total lines changed for each file referenced.

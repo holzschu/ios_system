@@ -1,0 +1,6 @@
+ config.cache  |    1 	0 +	0 -	1 !
+ config.h      |    1 	1 +	0 -	0 !
+ configure.out |only
+ diffstat      |binary
+ diffstat.o    |binary
+ 5 files changed, 1 insertion(+), 1 modification(!)

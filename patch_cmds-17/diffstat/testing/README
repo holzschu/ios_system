@@ -1,0 +1,5 @@
+-- $Id: README,v 1.1 2004/12/18 12:19:21 tom Exp $
+
+The files in this directory are used for regression-checks of diffstat.  The
+full test-suite is not distributed since some of the test-data is not freely
+distributable.

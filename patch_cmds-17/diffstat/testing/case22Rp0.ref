@@ -1,0 +1,37 @@
+ pgp-menu-traditional/PATCHES     |    1 
+ pgp-menu-traditional/compose.c   |   17 ++----------
+ pgp-menu-traditional/crypt.c     |   26 ++++++++++--------
+ pgp-menu-traditional/init.h      |   54 +++++----------------------------------
+ pgp-menu-traditional/mutt.h      |    4 --
+ pgp-menu-traditional/pgp.c       |    5 ---
+ pgp-menu-traditional/pgplib.h    |    1 
+ pgp-menu-traditional/po/ca.po    |   10 +++----
+ pgp-menu-traditional/po/cs.po    |    8 ++---
+ pgp-menu-traditional/po/da.po    |    8 ++---
+ pgp-menu-traditional/po/de.po    |    8 ++---
+ pgp-menu-traditional/po/el.po    |    8 ++---
+ pgp-menu-traditional/po/eo.po    |    8 ++---
+ pgp-menu-traditional/po/es.po    |    9 ++----
+ pgp-menu-traditional/po/et.po    |    6 ++--
+ pgp-menu-traditional/po/fr.po    |    8 ++---
+ pgp-menu-traditional/po/gl.po    |    8 ++---
+ pgp-menu-traditional/po/hu.po    |    8 ++---
+ pgp-menu-traditional/po/id.po    |    8 ++---
+ pgp-menu-traditional/po/it.po    |    8 ++---
+ pgp-menu-traditional/po/ja.po    |    9 ++----
+ pgp-menu-traditional/po/ko.po    |    8 ++---
+ pgp-menu-traditional/po/lt.po    |   13 +++++----
+ pgp-menu-traditional/po/nl.po    |    8 ++---
+ pgp-menu-traditional/po/pl.po    |    8 ++---
+ pgp-menu-traditional/po/pt_BR.po |   12 ++++----
+ pgp-menu-traditional/po/ru.po    |    8 ++---
+ pgp-menu-traditional/po/sk.po    |   13 +++++----
+ pgp-menu-traditional/po/sv.po    |    8 ++---
+ pgp-menu-traditional/po/tr.po    |    8 ++---
+ pgp-menu-traditional/po/uk.po    |    8 ++---
+ pgp-menu-traditional/po/zh_CN.po |    6 ++--
+ pgp-menu-traditional/po/zh_TW.po |    6 ++--
+ pgp-menu-traditional/postpone.c  |    7 -----
+ pgp-menu-traditional/send.c      |   16 -----------
+ pgp-menu-traditional/sendlib.c   |    2 -
+ 36 files changed, 139 insertions(+), 214 deletions(-)

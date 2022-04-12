@@ -1,0 +1,30 @@
+ PDCurses/Makefile.in          |   61 ++----
+ PDCurses/README               |    5 
+ PDCurses/aclocal.m4           |    7 
+ PDCurses/config.h.in          |    6 
+ PDCurses/configure            |  386 ++++++++++++++----------------------------
+ PDCurses/curses.h             |   37 ----
+ PDCurses/curspriv.h           |   12 -
+ PDCurses/demos/testcurs.c     |    9 
+ PDCurses/doc/intro.man        |   27 +-
+ PDCurses/doc/x11.man          |  100 +++-------
+ PDCurses/dos/pdckbd.c         |   28 ---
+ PDCurses/dos/wccdos.lrf       |   26 --
+ PDCurses/os2/gccos2.mak       |   14 -
+ PDCurses/os2/pdckbd.c         |   28 ---
+ PDCurses/os2/pdcurses.def     |    8 
+ PDCurses/pdcurses/Makefile.in |  120 ++++---------
+ PDCurses/pdcurses/border.c    |  168 ------------------
+ PDCurses/pdcurses/color.c     |   26 --
+ PDCurses/pdcurses/getch.c     |   12 -
+ PDCurses/pdcurses/initscr.c   |    6 
+ PDCurses/pdcurses/util.c      |    6 
+ PDCurses/win32/curses.def     |    3 
+ PDCurses/win32/pdckbd.c       |   10 -
+ PDCurses/x11/README           |   15 -
+ PDCurses/x11/ScrollBox.c      |   32 +--
+ PDCurses/x11/pdcdisp.c        |    4 
+ PDCurses/x11/pdckbd.c         |    4 
+ PDCurses/x11/pdcscrn.c        |    3 
+ PDCurses/x11/pdcsetsc.c       |   11 -
+ 29 files changed, 327 insertions(+), 847 deletions(-)

@@ -1,0 +1,27 @@
+ 00list                        |    8 -
+ 100_double_ampersand.dpatch   |   20 ++
+ 100_fl_filename_name.dpatch   |   22 ---
+ 101_visible_focus.dpatch      |   20 --
+ 102_charstruct.dpatch         |   46 ------
+ 103_man_typo.dpatch           |   20 --
+ 104_g++-4.1_warning.dpatch    |   61 --------
+ 105_double_ampersand.dpatch   |   49 -------
+ 200_Debian_menu.dpatch        |   14 +-
+ 201_background_color.dpatch   |   59 --------
+ 202_background_color_2.dpatch |   92 -------------
+ Frame.C                       |  294 +++++++++++++++++++++++++++++++-----------
+ Frame.H                       |   21 +--
+ Hotkeys.C                     |   32 ++++
+ Makefile                      |    2 
+ Menu.C                        |   70 ++++++----
+ README                        |   18 +-
+ Rotated.C                     |   61 ++++----
+ changelog                     |   12 +
+ config.h                      |    6 
+ flwm.1                        |    4 
+ flwm_wmconfig                 |    4 
+ logo.fl                       |   19 ++
+ main.C                        |   99 ++++++++++----
+ patch-stamp                   |   25 ---
+ watch                         |    3 
+ 26 files changed, 498 insertions(+), 583 deletions(-)

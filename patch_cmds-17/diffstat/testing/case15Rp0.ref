@@ -1,0 +1,13 @@
+ nvi-1.79.orig/build/Makefile.in    |   38 +++++++--------
+ nvi-1.79.orig/build/recover        |   49 --------------------
+ nvi-1.79.orig/debian/README.debian |   14 -----
+ nvi-1.79.orig/debian/changelog     |   53 ----------------------
+ nvi-1.79.orig/debian/conffiles     |    1 
+ nvi-1.79.orig/debian/control       |   19 -------
+ nvi-1.79.orig/debian/copyright     |   40 ----------------
+ nvi-1.79.orig/debian/postinst      |   21 --------
+ nvi-1.79.orig/debian/prerm         |   11 ----
+ nvi-1.79.orig/debian/rc.boot       |   58 ------------------------
+ nvi-1.79.orig/debian/rules         |   89 -------------------------------------
+ nvi-1.79.orig/debian/substvars     |    1 
+ 12 files changed, 19 insertions(+), 375 deletions(-)

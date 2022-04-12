@@ -1,0 +1,8 @@
+ scripts/export_report.pl             |    2 +-
+ Makefile                             |    4 ++++
+ b/drivers/cpuidle/governors/menu.c   |    2 +-
+ b/Documentation/parport-lowlevel.txt |   29 +++--------------------------
+ b/drivers/parport/daisy.c            |   29 -----------------------------
+ b/include/linux/parport.h            |    1 -
+ b/fs/select.c                        |    2 +-
+ 7 files changed, 10 insertions(+), 59 deletions(-)

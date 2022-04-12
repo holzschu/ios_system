@@ -1,0 +1,6 @@
+ NEWS                   |    2 -
+ ncurses/lib_doupdate.c |   91 +++++++++++--------------------------------------
+ ncurses/lib_initscr.c  |    4 --
+ ncurses/lib_pad.c      |   48 +++++--------------------
+ test/ncurses.c         |   29 ---------------
+ 5 files changed, 32 insertions(+), 142 deletions(-)

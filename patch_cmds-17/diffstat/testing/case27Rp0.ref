@@ -1,0 +1,8 @@
+ a/Documentation/parport-lowlevel.txt |   29 ++++++++++++++++++++++++++---
+ a/drivers/cpuidle/governors/menu.c   |    2 +-
+ a/drivers/parport/daisy.c            |   29 +++++++++++++++++++++++++++++
+ a/fs/select.c                        |    2 +-
+ a/include/linux/parport.h            |    1 +
+ a/scripts/export_report.pl           |    2 +-
+ b/Makefile                           |    4 ----
+ 7 files changed, 59 insertions(+), 10 deletions(-)

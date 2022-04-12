@@ -1,0 +1,25 @@
+ Makefile.in  |  181 ++++++++++++++++-----------
+ README       |   20 ++-
+ ScrollBox.c  |   32 ++--
+ aclocal.m4   |    7 -
+ border.c     |  168 ++++++++++++++++++++++++-
+ color.c      |   26 +++
+ config.h.in  |    6 
+ configure    |  386 +++++++++++++++++++++++++++++++++++++++--------------------
+ curses.def   |    3 
+ curses.h     |   37 ++++-
+ curspriv.h   |   12 -
+ gccos2.mak   |   14 +-
+ getch.c      |   12 +
+ initscr.c    |    6 
+ install-sh   |   26 +++
+ intro.man    |   27 ++--
+ pdcdisp.c    |    4 
+ pdckbd.c     |   70 +++++++++-
+ pdcscrn.c    |    3 
+ pdcsetsc.c   |   11 -
+ pdcurses.def |    8 +
+ testcurs.c   |    9 +
+ util.c       |    6 
+ x11.man      |  100 ++++++++++-----
+ 24 files changed, 847 insertions(+), 327 deletions(-)

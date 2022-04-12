@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<dict>
+		<key>OpenSourceProject</key>
+		<string>diffstat</string>
+		<key>OpenSourceVersion</key>
+		<string>1.55</string>
+		<key>OpenSourceWebsiteURL</key>
+		<string>http://invisible-island.net/diffstat/</string>
+		<key>OpenSourceURL</key>
+		<string>ftp://invisible-island.net/diffstat/diffstat-1.55.tgz</string>
+		<key>OpenSourceSHA1</key>
+		<string>625650a9f1a27edbb98316adb3013e57c8e2e23a</string>
+		<key>OpenSourceImportDate</key>
+		<string>2012-11-29</string>
+		<key>OpenSourceModifications</key>
+		<array>
+			<string>Added manually-generated config.h file.</string>
+			<string>Build with -D_DARWIN_C_SOURCE to fix a warning.</string>
+		</array>
+		<key>OpenSourceLicense</key>
+		<string>MIT</string>
+		<key>OpenSourceLicenseFile</key>
+		<string>patch_cmds.txt</string>
+	</dict>
+	<dict>
+		<key>OpenSourceProject</key>
+		<string>patch</string>
+		<key>OpenSourceVersion</key>
+		<string>2009-10-27</string>
+		<key>OpenSourceWebsiteURL</key>
+		<string>http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/patch/</string>
+		<key>OpenSourceCVS</key>
+		<string>cvs -d anoncvs@anoncvs1.usa.openbsd.org:/cvs co src/usr.bin/patch</string>
+		<key>OpenSourceImportDate</key>
+		<string>2009-11-05</string>
+		<key>OpenSourceModifications</key>
+		<array>
+			<string>Correctly cast some arguments to basename/dirname.</string>
+			<string>Disable verbose mode by default, add --verbose option.</string>
+			<string>Print &quot;patching file&quot; message when not in verbose mode.</string>
+			<string>Change version output to Apple.</string>
+			<string>Add --binary option (ignored).</string>
+			<string>Add --dry-run option as an alias for -C/--check.</string>
+		</array>
+		<key>OpenSourceLicense</key>
+		<string>BSD</string>
+		<key>OpenSourceLicenseFile</key>
+		<string>patch_cmds.txt</string>
+	</dict>
+</array>
+</plist>

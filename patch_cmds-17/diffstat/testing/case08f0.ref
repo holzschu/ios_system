@@ -1,0 +1,9 @@
+ Imakefile   |   15 	15 +	0 -	0 !
+ Tekproc.c   |    7 	7 +	0 -	0 !
+ charproc.c  |   22 	22 +	0 -	0 !
+ data.c      |    4 	4 +	0 -	0 !
+ main.c      |   20 	6 +	2 -	12 !
+ menu.c      |    6 	0 +	0 -	6 !
+ misc.c      |    6 	6 +	0 -	0 !
+ scrollbar.c |    2 	0 +	0 -	2 !
+ 8 files changed, 60 insertions(+), 2 deletions(-), 20 modifications(!)

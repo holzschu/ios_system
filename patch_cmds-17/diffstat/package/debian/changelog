@@ -1,0 +1,25 @@
+diffstat (1.55) unstable; urgency=low
+
+  * Add -R option.
+  * Documentation fixes.
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Tue, 03 Jan 2012 04:39:50 -0500
+
+diffstat (1.54) unstable; urgency=low
+
+  * Fix counts for -S/-D options.
+  * change source format to native.
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 10 Oct 2010 14:13:13 -0400
+
+diffstat (1.53) unstable; urgency=low
+
+  * Fix regression in "-c" option.
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Thu, 15 Jul 2010 19:39:36 -0400
+
+diffstat (1.52) unstable; urgency=low
+
+  * Add package scripts to upstream source, for test-builds.
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Thu, 15 Jul 2010 19:39:36 -0400

@@ -1,0 +1,3 @@
+ main.c   |   11 	9 +	2 -	0 !
+ resize.c |   47 	39 +	8 -	0 !
+ 2 files changed, 48 insertions(+), 10 deletions(-)

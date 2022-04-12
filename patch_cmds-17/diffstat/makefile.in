@@ -1,0 +1,144 @@
+# $Id: makefile.in,v 1.29 2010/07/15 22:45:54 tom Exp $
+# Makefile-template for 'diffstat'
+
+THIS		= diffstat
+
+#### Start of system configuration section. ####
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+DESTDIR		= @DESTDIR@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+
+bindir		= @bindir@
+mandir		= @mandir@
+
+CC		= @CC@
+LINK		= $(CC)
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+
+LINT		= @LINT@
+CTAGS		= @CTAGS@
+ETAGS		= @ETAGS@
+
+CFLAGS		= @CFLAGS@ @EXTRA_CFLAGS@
+CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H @CPPFLAGS@
+
+LIBS		= @LIBS@
+LDFLAGS		= @LDFLAGS@
+
+o		= .@OBJEXT@
+x		= @EXEEXT@
+
+BINDIR		= $(DESTDIR)$(bindir)
+MANDIR		= $(DESTDIR)$(mandir)
+
+#### End of system configuration section. ####
+
+SHELL		= /bin/sh
+
+man1dir		= $(MANDIR)/man1
+manext		= 1
+
+PROG		= $(THIS)$x
+
+SRC =		CHANGES \
+		README $(THIS).c $(THIS).1 \
+		config_h.in install-sh \
+		makefile.in configure.in aclocal.m4 \
+		makefile.wnt
+
+PORTFILES =	porting/getopt.c \
+		porting/getopt.h \
+		porting/system.h \
+		porting/wildcard.c
+
+TESTFILES =	testing/README \
+		testing/run_test.sh \
+		testing/case0[1-5]*
+
+DISTFILES =	configure config.guess config.sub $(SRC)
+
+.SUFFIXES: .c $o
+
+.c$o:
+	@RULE_CC@
+	@ECHO_CC@$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+
+all :	$(PROG)
+
+$(PROG) : diffstat$o
+	@ECHO_LD@$(LINK) $(LDFLAGS) -o $@ diffstat$o $(LIBS)
+
+install : all installdirs
+	$(INSTALL_PROGRAM) $(PROG) $(BINDIR)/$(PROG)
+	$(INSTALL_DATA) $(srcdir)/$(THIS).1 $(man1dir)/$(THIS).$(manext)
+
+installdirs :
+	mkdir -p $(BINDIR) $(libdir) $(man1dir)
+
+uninstall :
+	rm -f $(BINDIR)/$(PROG) $(man1dir)/$(THIS).$(manext)
+
+mostlyclean :
+	rm -f *.o core *~ *.out *.err *.BAK *.atac
+
+clean : mostlyclean
+	rm -f $(PROG)
+
+distclean : clean
+	rm -f makefile config.log config.cache config.status config.h
+	rm -f tags TAGS # don't remove configure!
+
+realclean : distclean
+
+check :	$(PROG)
+	$(SHELL) -c 'PATH=`pwd`:$${PATH}; export PATH; \
+	    $(SHELL) $(srcdir)/testing/run_test.sh $(srcdir)/testing/case*.pat'
+
+lint :
+	$(LINT) $(CPPFLAGS) $(LINTOPTS) $(THIS).c
+
+tags :
+	$(CTAGS) $(THIS).c $(HDRS)
+
+@MAKE_UPPER_TAGS@TAGS :
+@MAKE_UPPER_TAGS@	$(ETAGS) $(THIS).c $(HDRS)
+
+dist:	makefile $(DISTFILES)
+	# make a list of the files to distribute
+	echo $(THIS)-`sed \
+		-e '/"$$[A-Za-z]*: $(THIS)\.c.*$$"/!d' \
+		-e 's/^.*$(THIS)[^ ]*[ ]*//' \
+		-e 's/[ ].*$$//' \
+		-e q $(srcdir)/$(THIS).c` > .fname
+	rm -rf `cat .fname`
+	# contents of top directory
+	mkdir `cat .fname`
+	for file in $(DISTFILES); do \
+	  ln $(srcdir)/$$file `cat .fname` \
+	    || { echo copying $$file instead; cp -p $$file `cat .fname`; }; \
+	done
+	# contents of top/porting directory
+	mkdir `cat .fname`/porting
+	for file in $(PORTFILES); do \
+	  ln $(srcdir)/$$file `cat .fname`/porting \
+	    || { echo copying $$file instead; cp -p $$file `cat .fname`/porting; }; \
+	done
+	# contents of top/testing directory
+	mkdir `cat .fname`/testing
+	for file in $(TESTFILES); do \
+	  ln $(srcdir)/$$file `cat .fname`/testing \
+	    || { echo copying $$file instead; cp -p $$file `cat .fname`/testing; }; \
+	done
+	# tar and cleanup
+	tar -cf - `cat .fname` | gzip >`cat .fname`.tgz
+	rm -rf `cat .fname` .fname
+
+$(THIS).o :	config.h
+
+$(SRC) :
