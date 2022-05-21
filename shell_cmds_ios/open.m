@@ -12,7 +12,7 @@
 #import <UIKit/UIKit.h>
 
 
-NSArray<NSString *> *__known_browsers() {
+NSArray<NSString *> *__known_browsers(void) {
   // TODO: @"opera" opera-http(s): doesn't work
   return @[@"googlechrome", @"firefox", @"safari", @"yandexbrowser", @"brave", @"opera"];
 }

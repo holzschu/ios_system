@@ -28,8 +28,6 @@ func convertCArguments(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePoin
     return args
 }
 
-// TODO: create commands makeGlobal, makeLocal in libc_replacement
-
 // Small replacement for the "source" shell command.
 // Everything that affects the current shell should affect the current shell (for now: setenv and cd).
 // Files with "if" / "while" commands are going to fail.
