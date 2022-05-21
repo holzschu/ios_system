@@ -285,6 +285,7 @@
 		22AFD0772067F87F00881B2A /* line_reader.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D481FDB47A90050F312 /* line_reader.c */; };
 		22AFD0782067F88200881B2A /* matching.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4A1FDB47A90050F312 /* matching.c */; };
 		22AFD0792067F88500881B2A /* pathmatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22577D4C1FDB47A90050F312 /* pathmatch.c */; };
+		22B114752817CABD00A5BF16 /* libtermcap.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B114742817CABD00A5BF16 /* libtermcap.tbd */; };
 		22B753052068DF8400F2B025 /* shell.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B753042068DF8400F2B025 /* shell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22B7530B2069801700F2B025 /* curl_ios.h in Headers */ = {isa = PBXBuildFile; fileRef = 22B7530A2069801700F2B025 /* curl_ios.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		22C1D2E920A842460093127F /* ios_error.h in Headers */ = {isa = PBXBuildFile; fileRef = 22CF27661FDB3FDA0087DDAD /* ios_error.h */; };
@@ -318,12 +319,6 @@
 		22F08056209766BD003C3BF0 /* coll.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804E209766BD003C3BF0 /* coll.c */; };
 		22F08057209766BD003C3BF0 /* radixsort.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0804F209766BD003C3BF0 /* radixsort.c */; };
 		22F0805A20979939003C3BF0 /* uniq.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F0805920979938003C3BF0 /* uniq.c */; };
-		22F597162805FB2500F90E93 /* backupfile.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F597152805FB2500F90E93 /* backupfile.c */; };
-		22F597182805FB3000F90E93 /* inp.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F597172805FB3000F90E93 /* inp.c */; };
-		22F5971A2805FB3800F90E93 /* mkpath.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F597192805FB3800F90E93 /* mkpath.c */; };
-		22F5971C2805FB4300F90E93 /* patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F5971B2805FB4300F90E93 /* patch.c */; };
-		22F5971E2805FB4900F90E93 /* pch.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F5971D2805FB4900F90E93 /* pch.c */; };
-		22F597202805FB5500F90E93 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 22F5971F2805FB5400F90E93 /* util.c */; };
 		22F6A1142068393900E618F9 /* tee.c in Sources */ = {isa = PBXBuildFile; fileRef = 225F060A20163C2000466685 /* tee.c */; };
 		22F6A1152068393E00E618F9 /* echo.c in Sources */ = {isa = PBXBuildFile; fileRef = 22D8DEB5200791BB00FAADB7 /* echo.c */; };
 		22F6A1162068394200E618F9 /* date.c in Sources */ = {isa = PBXBuildFile; fileRef = 22CF27711FDB3FDA0087DDAD /* date.c */; };
@@ -1057,6 +1052,7 @@
 		22A3736521CB97E600230846 /* ssh-rsa.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-rsa.c"; path = "ssh_keygen/ssh-rsa.c"; sourceTree = "<group>"; };
 		22A3736921CB986900230846 /* sshkey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sshkey.c; path = ssh_keygen/sshkey.c; sourceTree = "<group>"; };
 		22A3736B21CB99EB00230846 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = ssh_keygen/misc.c; sourceTree = "<group>"; };
+		22B114742817CABD00A5BF16 /* libtermcap.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libtermcap.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/lib/libtermcap.tbd; sourceTree = DEVELOPER_DIR; };
 		22B753042068DF8400F2B025 /* shell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = shell.h; path = shell/shell.h; sourceTree = "<group>"; };
 		22B7530A2069801700F2B025 /* curl_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = curl_ios.h; path = curl_ios/curl_ios.h; sourceTree = "<group>"; };
 		22C5057D2098ADD700FDDFA9 /* y.tab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = y.tab.c; path = bsd_find/y.tab.c; sourceTree = SOURCE_ROOT; };
@@ -1116,12 +1112,6 @@
 		22F0805920979938003C3BF0 /* uniq.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uniq.c; path = text_cmds/uniq/uniq.c; sourceTree = SOURCE_ROOT; };
 		22F567DD2020BAD9009850FD /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		22F568222020C42F009850FD /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
-		22F597152805FB2500F90E93 /* backupfile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = backupfile.c; path = "patch_cmds-17/patch/backupfile.c"; sourceTree = SOURCE_ROOT; };
-		22F597172805FB3000F90E93 /* inp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inp.c; path = "patch_cmds-17/patch/inp.c"; sourceTree = SOURCE_ROOT; };
-		22F597192805FB3800F90E93 /* mkpath.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mkpath.c; path = "patch_cmds-17/patch/mkpath.c"; sourceTree = SOURCE_ROOT; };
-		22F5971B2805FB4300F90E93 /* patch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = patch.c; path = "patch_cmds-17/patch/patch.c"; sourceTree = SOURCE_ROOT; };
-		22F5971D2805FB4900F90E93 /* pch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pch.c; path = "patch_cmds-17/patch/pch.c"; sourceTree = SOURCE_ROOT; };
-		22F5971F2805FB5400F90E93 /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = util.c; path = "patch_cmds-17/patch/util.c"; sourceTree = SOURCE_ROOT; };
 		22F6A10C2068390800E618F9 /* shell.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = shell.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		22F6A10E2068390800E618F9 /* text.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = text.h; sourceTree = "<group>"; };
 		22F6A10F2068390800E618F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -1152,6 +1142,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22B114752817CABD00A5BF16 /* libtermcap.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1301,6 +1292,7 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				22B114742817CABD00A5BF16 /* libtermcap.tbd */,
 				D212F99525B06810007F5D2D /* openssl.xcframework */,
 				D212F98A25B066E9007F5D2D /* libssh2.xcframework */,
 				227F87D6202EFA68001751C6 /* libncurses.tbd */,
@@ -1751,7 +1743,6 @@
 		226378091FDB3EC700AE8827 /* file_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
-				22F597142805FB0600F90E93 /* patch */,
 				226AAB4D2491329700492AFD /* less */,
 				226378411FDB3EE300AE8827 /* humanize_number.c */,
 				2263781D1FDB3EE200AE8827 /* ncurses_dll.h */,
@@ -2329,19 +2320,6 @@
 			name = uniq;
 			sourceTree = "<group>";
 		};
-		22F597142805FB0600F90E93 /* patch */ = {
-			isa = PBXGroup;
-			children = (
-				22F5971F2805FB5400F90E93 /* util.c */,
-				22F5971D2805FB4900F90E93 /* pch.c */,
-				22F5971B2805FB4300F90E93 /* patch.c */,
-				22F597192805FB3800F90E93 /* mkpath.c */,
-				22F597172805FB3000F90E93 /* inp.c */,
-				22F597152805FB2500F90E93 /* backupfile.c */,
-			);
-			name = patch;
-			sourceTree = "<group>";
-		};
 		22F6A10D2068390800E618F9 /* text */ = {
 			isa = PBXGroup;
 			children = (
@@ -2887,7 +2865,6 @@
 				226AAB7F2491361700492AFD /* opttbl.c in Sources */,
 				226AAB53249135C300492AFD /* ch.c in Sources */,
 				2282650C2067F19F002F9671 /* cmp.c in Sources */,
-				22F5971C2805FB4300F90E93 /* patch.c in Sources */,
 				228265052067F184002F9671 /* utils.c in Sources */,
 				226AAB972491392600492AFD /* line.c in Sources */,
 				226AAB56249135CB00492AFD /* cmdbuf.c in Sources */,
@@ -2896,7 +2873,6 @@
 				226AAB51249135C300492AFD /* charset.c in Sources */,
 				226AAB792491360D00492AFD /* option.c in Sources */,
 				228265122067F1B8002F9671 /* rm.c in Sources */,
-				22F5971A2805FB3800F90E93 /* mkpath.c in Sources */,
 				228265142067F1BF002F9671 /* stat.c in Sources */,
 				226AAB57249135CB00492AFD /* command.c in Sources */,
 				226AAB952491363F00492AFD /* version.c in Sources */,
@@ -2914,7 +2890,6 @@
 				226AAB932491363800492AFD /* search.c in Sources */,
 				226AAB60249135D900492AFD /* forwback.c in Sources */,
 				226AAB69249135E800492AFD /* jump.c in Sources */,
-				22F5971E2805FB4900F90E93 /* pch.c in Sources */,
 				228265132067F1BB002F9671 /* rmdir.c in Sources */,
 				228264F42067F156002F9671 /* chown.c in Sources */,
 				226AAB65249135E100492AFD /* ifile.c in Sources */,
@@ -2929,7 +2904,6 @@
 				228265092067F193002F9671 /* futimens.c in Sources */,
 				228265112067F1B4002F9671 /* mv.c in Sources */,
 				228265152067F1C3002F9671 /* touch.c in Sources */,
-				22F597162805FB2500F90E93 /* backupfile.c in Sources */,
 				226AAB6F249135F900492AFD /* linenum.c in Sources */,
 				228264F72067F15C002F9671 /* crc32.c in Sources */,
 				228264FB2067F15C002F9671 /* sum2.c in Sources */,
@@ -2945,13 +2919,11 @@
 				228265062067F189002F9671 /* df.c in Sources */,
 				226AAB70249135F900492AFD /* lsystem.c in Sources */,
 				226AAB7E2491361700492AFD /* output.c in Sources */,
-				22F597182805FB3000F90E93 /* inp.c in Sources */,
 				226AAB61249135D900492AFD /* filename.c in Sources */,
 				2282650E2067F1A6002F9671 /* print.c in Sources */,
 				226AAB852491362800492AFD /* prompt.c in Sources */,
 				228265072067F189002F9671 /* vfslist.c in Sources */,
 				2282650B2067F19B002F9671 /* ln.c in Sources */,
-				22F597202805FB5500F90E93 /* util.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
