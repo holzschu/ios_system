@@ -55,7 +55,6 @@ __FBSDID("$FreeBSD: src/bin/pwd/pwd.c,v 1.25 2005/02/09 17:37:38 ru Exp $");
 
 static char *getcwd_logical(void);
 static void usage(void);
-extern void ios_printBookmarkedVersion(char* p);
 
 int
 pwd_main(int argc, char *argv[])
@@ -98,7 +97,8 @@ pwd_main(int argc, char *argv[])
         if (physical) {
             fprintf(thread_stdout, "%s\n", p);
         } else {
-            ios_printBookmarkedVersion(p);
+            fprintf(thread_stdout, ios_getBookmarkedVersion(p));
+            fprintf(thread_stdout, "\n");
         }
     } else {
 		err(1, ".");

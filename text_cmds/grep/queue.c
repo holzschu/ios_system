@@ -48,8 +48,10 @@ struct qentry {
 	struct str	 	data;
 };
 
+// queue is the only item in grep that is not a thread-local variable.
+// it could create issues, but at the same time the macros are not thread-friendly.
 static STAILQ_HEAD(, qentry)	queue = STAILQ_HEAD_INITIALIZER(queue);
-static unsigned long long	count;
+static __thread unsigned long long	count;
 
 static struct qentry	*dequeue(void);
 

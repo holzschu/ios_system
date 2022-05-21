@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 //! Project version number for ios_system.
 FOUNDATION_EXPORT double ios_systemVersionNumber;
@@ -76,5 +77,7 @@ extern void makeGlobal(void);
 extern void makeLocal(void);
 extern void replaceCommand(NSString* commandName, NSString* functionName, bool allOccurences);
 extern NSError* addCommandList(NSString* fileLocation);
+extern NSArray* backgroundCommandList;
 extern int numPythonInterpreters;
 extern int cd_main(int argc, char** argv);
+extern const char* ios_getBookmarkedVersion(const char* p);

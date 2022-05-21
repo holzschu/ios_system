@@ -61,7 +61,7 @@ __FBSDID("$FreeBSD: src/usr.bin/grep/util.c,v 1.19 2011/12/07 12:25:28 gabor Exp
 #include "grep.h"
 #include "ios_error.h"
 
-static int	 linesqueued;
+static __thread int	 linesqueued;
 static int	 procline(struct str *l, int);
 
 bool

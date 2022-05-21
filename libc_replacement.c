@@ -151,6 +151,7 @@ void makeLocal(void) {
 
 inline pthread_t ios_getThreadId(pid_t pid) {
     // return ios_getLastThreadId(); // previous behaviour
+    if (pid >= IOS_MAX_THREADS) { return -1; }
     return thread_ids[pid];
 }
 
@@ -224,8 +225,9 @@ inline void ios_storeThreadId(pthread_t thread) {
 char* libc_getenv(const char* variableName) {
     if (environment[current_pid] != NULL) {
         if (variableName == NULL) { return NULL; }
+        // fprintf(stderr, "libc_getenv: %s\n", variableName); fflush(stderr);
         char** envp = environment[current_pid];
-        int varNameLen = strlen(variableName);
+        unsigned long varNameLen = strlen(variableName);
         if (varNameLen == 0) { return NULL; }
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
             if (envp[i] == NULL) { continue; }
@@ -268,7 +270,7 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
             return -1;
         }
         char** envp = environment[current_pid];
-        int varNameLen = strlen(variableName);
+        unsigned long varNameLen = strlen(variableName);
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
             if (envp[i] == NULL) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
@@ -352,7 +354,7 @@ int ios_unsetenv(const char* variableName) {
             return -1;
         }
         char** envp = environment[current_pid];
-        int varNameLen = strlen(variableName);
+        unsigned long varNameLen = strlen(variableName);
         for (int i = 0; i < numVariablesSet[current_pid]; i++) {
             if (envp[i] == NULL) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
@@ -454,6 +456,18 @@ void ios_releaseThread(pthread_t thread) {
     // fprintf(stderr, "Not found\n");
 }
 
+void ios_releaseBackgroundThread(pthread_t thread) {
+    // Same as ios_releaseThread, but do not reset the directory.
+    for (int p = 0; p < IOS_MAX_THREADS; p++) {
+        if (thread_ids[p] == thread) {
+            // fprintf(stderr, "Found Id %d\n", p);
+            current_pid = previousPid[p];
+            thread_ids[p] = NULL;
+            return;
+        }
+    }
+    // fprintf(stderr, "Not found\n");
+}
 
 void ios_releaseThreadId(pid_t pid) {
     // Don't reset the environment; sometimes, commands try to change the environment while it is being erased.

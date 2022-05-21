@@ -41,6 +41,7 @@ extern "C" {
   #define fputc ios_fputc
   #define putw ios_putw
   #define fflush ios_fflush
+  #define abort() ios_exit(1)
 #endif 
 
 // Thread-local input and output streams
@@ -49,7 +50,6 @@ extern __thread FILE* thread_stdout;
 extern __thread FILE* thread_stderr;
 
 #define exit ios_exit
-#define abort() ios_exit(1)
 #define _exit ios_exit
 #define kill ios_killpid
 #define _kill ios_killpid
@@ -109,6 +109,10 @@ extern int ios_opentty(void);
 extern void ios_closetty(void);
 extern void ios_stopInteractive(void);
 extern void ios_startInteractive(void);
+// Communication between dash and ios_system:
+extern const char* ios_expandtilde(const char *login);
+extern void ios_activateChildStreams(FILE** old_stdin, FILE** old_stdout,  FILE ** old_stderr);
+extern const char* ios_getBookmarkedVersion(const char* p);
 
 #ifdef __cplusplus
 }

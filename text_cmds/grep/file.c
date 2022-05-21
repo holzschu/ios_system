@@ -62,21 +62,21 @@ __FBSDID("$FreeBSD: src/usr.bin/grep/file.c,v 1.7 2011/10/11 22:27:23 gabor Exp 
 #define	MAXBUFSIZ	(32 * 1024)
 #define	LNBUFBUMP	80
 
-static gzFile gzbufdesc;
+static __thread gzFile gzbufdesc;
 #ifndef WITHOUT_LZMA
-static lzma_stream lstrm = LZMA_STREAM_INIT;
+static __thread lzma_stream lstrm = LZMA_STREAM_INIT;
 #endif
 #ifndef WITHOUT_BZIP2
-static BZFILE* bzbufdesc;
+static __thread BZFILE* bzbufdesc;
 #endif
 
-static unsigned char *buffer;
-static unsigned char *bufpos;
-static size_t bufrem;
-static size_t fsiz;
+static __thread unsigned char *buffer;
+static __thread unsigned char *bufpos;
+static __thread size_t bufrem;
+static __thread size_t fsiz;
 
-static unsigned char *lnbuf;
-static size_t lnbuflen;
+static __thread unsigned char *lnbuf;
+static __thread size_t lnbuflen;
 
 static inline int
 grep_refill(struct file *f)
