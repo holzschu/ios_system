@@ -51,6 +51,22 @@ __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
 __thread void* thread_context;
 
+FILE* ios_stdin(void) {
+    return thread_stdin;
+}
+
+FILE* ios_stdout(void) {
+    return thread_stdout;
+}
+
+FILE* ios_stderr(void) {
+    return thread_stderr;
+}
+
+void* ios_context(void) {
+    return thread_context;
+}
+
 // Parameters for each session. We can have multiple sessions running in parallel.
 typedef struct _sessionParameters {
     bool isMainThread;   // are we on the first command?
