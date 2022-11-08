@@ -83,8 +83,8 @@ typedef struct _sessionParameters {
     void* context;
     int global_errno;
     char commandName[NAME_MAX];
-    char columns[4];
-    char lines[4];
+    char columns[5];
+    char lines[5];
     bool activePager;
 } sessionParameters;
 
@@ -252,8 +252,8 @@ void ios_setWindowSize(int width, int height, const void* sessionId) {
         return;
     }
 
-    sprintf(resizedSession->columns, "%d", width);
-    sprintf(resizedSession->lines, "%d",height);
+    sprintf(resizedSession->columns, "%d", MIN(width, 9999));
+    sprintf(resizedSession->lines, "%d", MIN(height, 9999));
     // Also send SIGWINCH to the main thread of resizedSession:
     if (resizedSession->current_command_root_thread != NULL) {
         pthread_kill(resizedSession->current_command_root_thread, SIGWINCH);
