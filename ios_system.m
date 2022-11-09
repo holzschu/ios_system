@@ -51,6 +51,22 @@ __thread FILE* thread_stdout;
 __thread FILE* thread_stderr;
 __thread void* thread_context;
 
+FILE* ios_stdin(void) {
+    return thread_stdin;
+}
+
+FILE* ios_stdout(void) {
+    return thread_stdout;
+}
+
+FILE* ios_stderr(void) {
+    return thread_stderr;
+}
+
+void* ios_context(void) {
+    return thread_context;
+}
+
 // Parameters for each session. We can have multiple sessions running in parallel.
 typedef struct _sessionParameters {
     bool isMainThread;   // are we on the first command?
@@ -67,8 +83,8 @@ typedef struct _sessionParameters {
     void* context;
     int global_errno;
     char commandName[NAME_MAX];
-    char columns[4];
-    char lines[4];
+    char columns[5];
+    char lines[5];
     bool activePager;
 } sessionParameters;
 
@@ -239,8 +255,8 @@ void ios_setWindowSize(int width, int height, const void* sessionId) {
         return;
     }
 
-    sprintf(resizedSession->columns, "%d", width);
-    sprintf(resizedSession->lines, "%d",height);
+    sprintf(resizedSession->columns, "%d", MIN(width, 9999));
+    sprintf(resizedSession->lines, "%d", MIN(height, 9999));
     // Also send SIGWINCH to the main thread of resizedSession:
     if (resizedSession->current_command_root_thread != NULL) {
         pthread_kill(resizedSession->current_command_root_thread, SIGWINCH);
