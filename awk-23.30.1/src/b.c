@@ -231,6 +231,7 @@ void penter(Node *p)	/* set up parent pointers and leaf indices */
 
 void freetr(Node *p)	/* free parse tree */
 {
+    if (type(p) == 0)
 	switch (type(p)) {
 	ELEAF
 	LEAF
@@ -249,6 +250,8 @@ void freetr(Node *p)	/* free parse tree */
         // fprintf(stderr, "Freeing tree %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
+    case 0:
+        break; /* iOS specific addition, since we always clear the tree */
 	default:	/* can't happen */
 		FATAL("can't happen: unknown type %d in freetr", type(p));
 		break;

@@ -46,8 +46,8 @@ static char sccsid[] = "From: @(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
 #endif
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/comm/comm.c,v 1.21 2004/07/02 22:48:29 tjr Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/comm/comm.c,v 1.21 2004/07/02 22:48:29 tjr Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -59,6 +59,7 @@ __FBSDID("$FreeBSD: src/usr.bin/comm/comm.c,v 1.21 2004/07/02 22:48:29 tjr Exp $
 #include <wchar.h>
 #include <wctype.h>
 
+#define LINE_MAX                 2048
 #define	MAXLINELEN	(LINE_MAX + 1)
 
 const wchar_t *tabs[] = { L"", L"\t", L"\t\t" };

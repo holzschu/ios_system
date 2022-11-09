@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/seq/seq.c,v 1.2 2010/02/20 01:23:15 delphij Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/seq/seq.c,v 1.2 2010/02/20 01:23:15 delphij Exp $");
 
 #include <ctype.h>
 #include <err.h>
@@ -129,7 +129,8 @@ main(int argc, char *argv[])
 	if (errflg) {
 		fprintf(stderr,
 		    "usage: %s [-w] [-f format] [-s string] [-t string] [first [incr]] last\n",
-		    getprogname());
+		    // getprogname());
+		    "seq");
 		exit(1);
 	}
 

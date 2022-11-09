@@ -42,8 +42,8 @@ static const char copyright[] =
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
 #endif
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/jot/jot.c,v 1.40 2009/12/13 03:14:06 delphij Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/jot/jot.c,v 1.40 2009/12/13 03:14:06 delphij Exp $");
 
 /*
  * jot - print sequential or random data

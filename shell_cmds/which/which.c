@@ -24,9 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+// #include <sys/cdefs.h>
 
-__FBSDID("$FreeBSD: head/usr.bin/which/which.c 227245 2011-11-06 18:50:26Z ed $");
+// __FBSDID("$FreeBSD: head/usr.bin/which/which.c 227245 2011-11-06 18:50:26Z ed $");
 
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -106,16 +106,28 @@ is_there(char *candidate)
 {
 	struct stat fin;
 
+	// Web assembly version:
+	if (stat(candidate, &fin) == 0 &&
+	    S_ISREG(fin.st_mode)) {
+	    // Regular file. Good (we don't check for exec status anymore)
+		if (!silent)
+			printf("%s\n", candidate);
+		return (1);
+	}
+	
 	/* XXX work around access(2) false positives for superuser */
+#if 0
 	if (access(candidate, X_OK) == 0 &&
 	    stat(candidate, &fin) == 0 &&
 	    S_ISREG(fin.st_mode) &&
-	    (getuid() != 0 ||
+	   // (getuid() != 0 ||
+	    ( 1 ||
 	    (fin.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)) {
 		if (!silent)
 			printf("%s\n", candidate);
 		return (1);
 	}
+#endif
 	return (0);
 }
 

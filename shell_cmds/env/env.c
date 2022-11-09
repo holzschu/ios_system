@@ -157,6 +157,9 @@ usage(void)
 #undef setenv
 #undef unsetenv
 
+
+extern int ios_setenv_parent(const char* variableName, const char* value, int overwrite);
+
 int setenv_main(int argc, char** argv) {
     if (argc <= 1) return env_main(argc, argv);
     if (argc > 3) {
@@ -167,9 +170,13 @@ int setenv_main(int argc, char** argv) {
     // First in the process environment (if it exists):
     if (argv[2] != NULL) ios_setenv(argv[1], argv[2], 1);
     else ios_setenv(argv[1], "", 1); // if there's no value, pass an empty string instead of a null pointer
-    // and also in the main environment:
+    // and also in the parent process:
+    if (argv[2] != NULL) ios_setenv_parent(argv[1], argv[2], 1);
+    else ios_setenv_parent(argv[1], "", 1); // if there's no value, pass an empty string instead of a null pointer
+#if 0
     if (argv[2] != NULL) setenv(argv[1], argv[2], 1);
     else setenv(argv[1], "", 1); // if there's no value, pass an empty string instead of a null pointer
+#endif
     return 0;
 }
 
@@ -187,12 +194,14 @@ int export_main(int argc, char** argv) {
     *position = 0;
     // First in the process environment (if it exists):
     ios_setenv(argument, position+1, 1);
-    // and also in the main environment:
-    int returnValue = setenv(argument, position+1, 1);
+    // and also in the parent environment:
+    int returnValue = ios_setenv_parent(argument, position+1, 1);
+    // int returnValue = setenv(argument, position+1, 1);
     free(argument);
     return returnValue;
 }
 
+extern int ios_unsetenv_parent(const char* variableName);
 int unsetenv_main(int argc, char** argv) {
     if (argc <= 1) {
         fprintf(thread_stderr, "unsetenv: Too few arguments. Usage: unsetenv variable\n"); fflush(thread_stderr);
@@ -200,8 +209,9 @@ int unsetenv_main(int argc, char** argv) {
     }
     // unsetenv acts on all parameters. First in the process environment:
     for (int i = 1; i < argc; i++) ios_unsetenv(argv[i]);
-    // also unset in the main environment:
-    for (int i = 1; i < argc; i++) unsetenv(argv[i]);
+    // also unset in the parent environment:
+    for (int i = 1; i < argc; i++) ios_unsetenv_parent(argv[i]);
+    // for (int i = 1; i < argc; i++) unsetenv(argv[i]);
     return 0;
 }
 

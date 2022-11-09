@@ -42,8 +42,8 @@
  * assumption about the input.
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $");
 
 #include <sys/types.h>
 
@@ -53,12 +53,37 @@ __FBSDID("$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Ex
 #include <limits.h>
 #include <locale.h>
 #include <regex.h>
-#include <signal.h>
+// #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+// WebAssembly additions:
+#define LINE_MAX                 2048
+#define	REG_BASIC	0000	/* Basic regular expressions (synonym for 0) */
+
+#define MAXTRIES 100
+char *__randname(char *template);
+
+FILE *my_tmpfile(void)
+{
+	char s[] = "/tmp/tmpfile_XXXXXX";
+	char name[LINE_MAX];
+	int fd;
+	FILE *f;
+	int try;
+	for (try=0; try<MAXTRIES; try++) {
+		__randname(s+13);
+		sprintf(name, "%s%s", getenv("HOME"), s); 
+		f = fopen(name, "w+x");
+		if (f)
+			return f;
+	}
+	return 0;
+}
+
 
 void	 cleanup(void);
 void	 do_lineno(const char *);
@@ -94,7 +119,7 @@ int	 doclean;		/* Should cleanup() remove output? */
 int
 main(int argc, char *argv[])
 {
-	struct sigaction sa;
+	// struct sigaction sa;
 	long i;
 	int ch;
 	const char *expr;
@@ -146,6 +171,8 @@ main(int argc, char *argv[])
 	if (!kflag) {
 		doclean = 1;
 		atexit(cleanup);
+		// Cannot signal with webAssembly
+#if 0
 		sa.sa_flags = 0;
 		sa.sa_handler = handlesig;
 		sigemptyset(&sa.sa_mask);
@@ -155,6 +182,7 @@ main(int argc, char *argv[])
 		sigaction(SIGHUP, &sa, NULL);
 		sigaction(SIGINT, &sa, NULL);
 		sigaction(SIGTERM, &sa, NULL);
+#endif
 	}
 
 	lineno = 0;
@@ -219,7 +247,7 @@ usage(void)
 }
 
 void
-handlesig(int sig __unused)
+handlesig(int sig /* __unused */)
 {
 	const char msg[] = "csplit: caught signal, cleaning up\n";
 
@@ -235,8 +263,13 @@ newfile(void)
 	FILE *fp;
 
 	if ((size_t)snprintf(currfile, sizeof(currfile), "%s%0*ld", prefix,
-	    (int)sufflen, nfiles) >= sizeof(currfile))
-		errc(1, ENAMETOOLONG, NULL);
+	    (int)sufflen, nfiles) >= sizeof(currfile)) {
+	    int saved_errno = errno;
+	    errno = ENAMETOOLONG; 
+	    err(1, NULL);
+	    errno = saved_errno;
+		// errc(1, ENAMETOOLONG, NULL);
+	}
 	if ((fp = fopen(currfile, "w+")) == NULL)
 		err(1, "%s", currfile);
 	nfiles++;
@@ -385,7 +418,7 @@ do_rexp(const char *expr)
 		ofp = newfile();
 	else {
 		/* %regexp%: Make a temporary file for overflow. */
-		if ((ofp = tmpfile()) == NULL)
+		if ((ofp = my_tmpfile()) == NULL)
 			err(1, "tmpfile");
 	}
 

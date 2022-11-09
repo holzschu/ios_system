@@ -39,8 +39,8 @@ static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
 #endif
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/column/column.c,v 1.19 2011/11/06 08:14:34 ed Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/column/column.c,v 1.19 2011/11/06 08:14:34 ed Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -77,7 +77,7 @@ static const wchar_t *separator = L"\t "; /* field separator for table option */
 int
 main(int argc, char **argv)
 {
-	struct winsize win;
+	// struct winsize win;
 	FILE *fp;
 	int ch, tflag, xflag;
 	char *p;
@@ -87,11 +87,11 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	if (ioctl(1, TIOCGWINSZ, &win) == -1 || !win.ws_col) {
+	// if (ioctl(1, TIOCGWINSZ, &win) == -1 || !win.ws_col) {
 		if ((p = getenv("COLUMNS")))
 			termwidth = atoi(p);
-	} else
-		termwidth = win.ws_col;
+	// } else
+	//	termwidth = win.ws_col;
 
 	tflag = xflag = 0;
 	while ((ch = getopt(argc, argv, "c:s:tx")) != -1)
@@ -271,6 +271,7 @@ maketbl(void)
 	}
 }
 
+#define LINE_MAX                 2048
 #define	DEFNUM		1000
 #define	MAXLINELEN	(LINE_MAX + 1)
 

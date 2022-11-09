@@ -47,8 +47,9 @@ static char sccsid[] = "@(#)pr.c	8.2 (Berkeley) 4/16/94";
 #endif /* not lint */
 #endif
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/pr/pr.c,v 1.18 2004/07/26 20:24:59 charnier Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/pr/pr.c,v 1.18 2004/07/26 20:24:59 charnier Exp $");
+#define	D_MD_ORDER	57	/* month/day order (local extension) */
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -1541,7 +1542,7 @@ prtail(int cnt, int incomp)
  * terminate():	when a SIGINT is recvd
  */
 void
-terminate(int which_sig __unused)
+terminate(int which_sig /* __unused */)
 {
 	flsh_errs();
 	exit(1);

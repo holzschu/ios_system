@@ -31,8 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/split/split.c,v 1.17 2005/08/30 12:32:18 tjr Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/split/split.c,v 1.17 2005/08/30 12:32:18 tjr Exp $");
+#define MAXBSIZE        (256 * 4096)
+#define OFF_MAX		LLONG_MAX	/* max value for an off_t */
+#define	REG_STARTEND	00004	/* String start/end in pmatch[0] */
 
 #ifndef lint
 static const char copyright[] =

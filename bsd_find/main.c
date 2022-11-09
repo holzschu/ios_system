@@ -170,6 +170,9 @@ find_main(int argc, char *argv[])
 		ftsoptions |= FTS_NOCHDIR;
 	}
 
+    // iOS: force FTS_NOCHDIR for exec commands. Slower, but no bugs.
+    ftsoptions |= FTS_NOCHDIR;
+    
 	exit(find_execute(find_formplan(argv), start));
 }
 

@@ -40,8 +40,8 @@ static const char copyright[] =
 #ifndef lint
 static const char sccsid[] = "@(#)dirname.c	8.4 (Berkeley) 5/4/95";
 #endif /* not lint */
-#include <sys/cdefs.h>
-__RCSID("$FreeBSD: src/usr.bin/dirname/dirname.c,v 1.11 2002/07/28 15:43:56 dwmalone Exp $");
+// #include <sys/cdefs.h>
+// __RCSID("$FreeBSD: src/usr.bin/dirname/dirname.c,v 1.11 2002/07/28 15:43:56 dwmalone Exp $");
 
 #include <err.h>
 #include <libgen.h>

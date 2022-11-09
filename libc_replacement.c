@@ -21,6 +21,7 @@
 #undef fputs
 #undef fputc
 #undef putw
+#undef putp
 #undef fflush
 #undef getenv
 #undef setenv
@@ -215,7 +216,7 @@ static inline const pid_t ios_nextAvailablePid() {
 inline void ios_storeThreadId(pthread_t thread) {
     // To avoid issues when a command starts a command without forking,
     // we only store thread IDs for the first thread of the "process".
-    // fprintf(stderr, "Unlocking pid %x, storing thread %x current value: %x\n", current_pid, thread,  thread_ids[current_pid]);
+    // fprintf(stderr, "Unlocking pid %d, storing thread %x current value: %x\n", current_pid, thread,  thread_ids[current_pid]);
     if (thread_ids[current_pid] == -1) {
         thread_ids[current_pid] = thread;
     }
@@ -254,8 +255,8 @@ char* libc_getenv(const char* variableName) {
 }
 
 extern void set_session_errno(int n);
-int ios_setenv(const char* variableName, const char* value, int overwrite) {
-    if (environment[current_pid] != NULL) {
+int ios_setenv_pid(const char* variableName, const char* value, int overwrite, int pid) {
+    if (environment[pid] != NULL) {
         if (variableName == NULL) {
             set_session_errno(EINVAL);
             return -1;
@@ -269,9 +270,9 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
             set_session_errno(EINVAL);
             return -1;
         }
-        char** envp = environment[current_pid];
+        char** envp = environment[pid];
         unsigned long varNameLen = strlen(variableName);
-        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+        for (int i = 0; i < numVariablesSet[pid]; i++) {
             if (envp[i] == NULL) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
                 if (strlen(envp[i]) > varNameLen) {
@@ -286,16 +287,24 @@ int ios_setenv(const char* variableName, const char* value, int overwrite) {
             }
         }
         // Not found so far, add it to the list:
-        int pos = numVariablesSet[current_pid];
-        environment[current_pid] = realloc(envp, (numVariablesSet[current_pid] + 2) * sizeof(char*));
-        environment[current_pid][pos] = malloc(strlen(variableName) + strlen(value) + 2);
-        environment[current_pid][pos + 1] = NULL;
-        sprintf(environment[current_pid][pos], "%s=%s", variableName, value);
-        numVariablesSet[current_pid] += 1;
+        int pos = numVariablesSet[pid];
+        environment[pid] = realloc(envp, (numVariablesSet[pid] + 2) * sizeof(char*));
+        environment[pid][pos] = malloc(strlen(variableName) + strlen(value) + 2);
+        environment[pid][pos + 1] = NULL;
+        sprintf(environment[pid][pos], "%s=%s", variableName, value);
+        numVariablesSet[pid] += 1;
         return 0;
     } else {
         return setenv(variableName, value, overwrite);
     }
+}
+
+int ios_setenv_parent(const char* variableName, const char* value, int overwrite) {
+    return ios_setenv_pid(variableName, value, overwrite, previousPid[current_pid]);
+}
+
+int ios_setenv(const char* variableName, const char* value, int overwrite) {
+    return ios_setenv_pid(variableName, value, overwrite, current_pid);
 }
 
 int ios_putenv(char* string) {
@@ -336,10 +345,10 @@ int ios_putenv(char* string) {
     }
 }
 
-int ios_unsetenv(const char* variableName) {
+int ios_unsetenv_pid(const char* variableName, int pid) {
     // Someone calls unsetenv once the process has been terminated.
     // Best thing to do is erase the environment and return
-    if (environment[current_pid] != NULL) {
+    if (environment[pid] != NULL) {
         if (variableName == NULL) {
             set_session_errno(EINVAL);
             return -1;
@@ -353,9 +362,9 @@ int ios_unsetenv(const char* variableName) {
             set_session_errno(EINVAL);
             return -1;
         }
-        char** envp = environment[current_pid];
+        char** envp = environment[pid];
         unsigned long varNameLen = strlen(variableName);
-        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
+        for (int i = 0; i < numVariablesSet[pid]; i++) {
             if (envp[i] == NULL) { continue; }
             if (strncmp(variableName, envp[i], varNameLen) == 0) {
                 if (strlen(envp[i]) > varNameLen) {
@@ -363,30 +372,38 @@ int ios_unsetenv(const char* variableName) {
                         // This variable is defined in the current environment:
                         free(envp[i]);
                         envp[i] = NULL;
-                        if (i < numVariablesSet[current_pid] - 1) {
-                            for (int j = i; j < numVariablesSet[current_pid] - 1; j++) {
+                        if (i < numVariablesSet[pid] - 1) {
+                            for (int j = i; j < numVariablesSet[pid] - 1; j++) {
                                 envp[j] = envp[j+1];
                             }
-                            envp[numVariablesSet[current_pid] - 1] = NULL;
+                            envp[numVariablesSet[pid] - 1] = NULL;
                         }
-                        numVariablesSet[current_pid] -= 1;
-                        environment[current_pid] = realloc(envp, (numVariablesSet[current_pid] + 1) * sizeof(char*));
+                        numVariablesSet[pid] -= 1;
+                        environment[pid] = realloc(envp, (numVariablesSet[pid] + 1) * sizeof(char*));
                         return 0;
                     }
                 }
             }
         }
         /*
-        for (int i = 0; i < numVariablesSet[current_pid]; i++) {
-            char* position = strstr(envp[i],"=");
-            if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
-            }
-        } */
+         for (int i = 0; i < numVariablesSet[pid]; i++) {
+         char* position = strstr(envp[i],"=");
+         if (strncmp(variableName, envp[i], position - envp[i]) == 0) {
+         }
+         } */
         // Not found:
         return 0;
     } else {
         return unsetenv(variableName);
     }
+}
+
+int ios_unsetenv_parent(const char* variableName) {
+    return ios_unsetenv_pid(variableName, previousPid[current_pid]);
+}
+
+int ios_unsetenv(const char* variableName) {
+    return ios_unsetenv_pid(variableName, current_pid);
 }
 
 
@@ -488,6 +505,8 @@ pid_t ios_currentPid() {
     return current_pid;
 }
 
+// Note to self: do not redefine getpid() unless you have a way to make it consistent even when a "process" starts a new thread.
+// 0MQ and asyncio rely on this.
 pid_t fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
 pid_t ios_fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
 pid_t vfork(void) { return ios_nextAvailablePid(); }
@@ -570,31 +589,72 @@ void vwarnx(const char *fmt, va_list args)
 }
 // void err(int eval, const char *fmt, ...);
 void err(int eval, const char *fmt, ...) {
-    va_list argptr;
-    va_start(argptr, fmt);
-    vwarn(fmt, argptr);
-    va_end(argptr);
+    if (fmt != NULL) {
+        va_list argptr;
+        va_start(argptr, fmt);
+        vwarn(fmt, argptr);
+        va_end(argptr);
+    }
+    ios_exit(eval);
+}
+// void errc(int eval, int errorcode, const char *fmt, ...);
+void errc(int eval, int errorcode, const char *fmt, ...) {
+    if (thread_stderr == NULL) thread_stderr = stderr;
+    if (fmt != NULL) {
+        va_list argptr;
+        va_start(argptr, fmt);
+        fputs(ios_progname(), thread_stderr);
+        fputs(": ", thread_stderr);
+        vfprintf(thread_stderr, fmt, argptr);
+        fputs(": ", thread_stderr);
+        fputs(strerror(errorcode), thread_stderr);
+        putc('\n', thread_stderr);
+        va_end(argptr);
+    }
     ios_exit(eval);
 }
 //     void errx(int eval, const char *fmt, ...);
 void errx(int eval, const char *fmt, ...) {
-    va_list argptr;
-    va_start(argptr, fmt);
-    vwarnx(fmt, argptr);
-    va_end(argptr);
+    if (fmt != NULL) {
+        va_list argptr;
+        va_start(argptr, fmt);
+        vwarnx(fmt, argptr);
+        va_end(argptr);
+    }
     ios_exit(eval);
 }
 //   void warn(const char *fmt, ...);
 void warn(const char *fmt, ...) {
-    va_list argptr;
-    va_start(argptr, fmt);
-    vwarn(fmt, argptr);
-    va_end(argptr);
+    if (fmt != NULL) {
+        va_list argptr;
+        va_start(argptr, fmt);
+        vwarn(fmt, argptr);
+        va_end(argptr);
+    }
 }
 //   void warnx(const char *fmt, ...);
 void warnx(const char *fmt, ...) {
-    va_list argptr;
-    va_start(argptr, fmt);
-    vwarnx(fmt, argptr);
-    va_end(argptr);
+    if (fmt != NULL) {
+        va_list argptr;
+        va_start(argptr, fmt);
+        vwarnx(fmt, argptr);
+        va_end(argptr);
+    }
+}
+// void warnc(int code, const char *fmt, ...);
+void warnc(int code, const char *fmt, ...) {
+    if (thread_stderr == NULL) thread_stderr = stderr;
+    fputs(ios_progname(), thread_stderr);
+    if (fmt != NULL)
+    {
+        va_list argptr;
+        va_start(argptr, fmt);
+        fputs(": ", thread_stderr);
+        vfprintf(thread_stderr, fmt, argptr);
+        vwarn(fmt, argptr);
+        va_end(argptr);
+    }
+    fputs(": ", thread_stderr);
+    fputs(strerror(code), thread_stderr);
+    putc('\n', thread_stderr);
 }

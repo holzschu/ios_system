@@ -672,7 +672,7 @@ doexec:	if ((plan->flags & F_NEEDOK) && !queryuser(plan->e_argv))
     default: { // We need to go through both branches:
 	// case 0: {
 		/* change dir back from where we started */
-		if (!(plan->flags & F_EXECDIR) &&
+        if (!(plan->flags & F_EXECDIR) &&
 		    !(ftsoptions & FTS_NOCHDIR) && ios_fchdir_nolock(dotfd)) {
 			warn("chdir");
 			_exit(1);

@@ -153,7 +153,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `fork' function. */
-#define HAVE_FORK 1
+// #define HAVE_FORK 1
 
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #define HAVE_FSEEKO 1
@@ -559,7 +559,7 @@
 #define HAVE_UTIME_H 1
 
 /* Define to 1 if you have the `vfork' function. */
-#define HAVE_VFORK 1
+// #define HAVE_VFORK 1
 
 /* Define to 1 if you have the `vprintf' function. */
 #define HAVE_VPRINTF 1

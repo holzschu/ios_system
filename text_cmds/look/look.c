@@ -45,8 +45,8 @@ static const char copyright[] =
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
 #endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/look/look.c,v 1.18.10.2.4.1 2010/06/14 02:09:06 kensmith Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/look/look.c,v 1.18.10.2.4.1 2010/06/14 02:09:06 kensmith Exp $");
 
 /*
  * look -- find lines in a sorted list.
@@ -73,7 +73,8 @@ __FBSDID("$FreeBSD: src/usr.bin/look/look.c,v 1.18.10.2.4.1 2010/06/14 02:09:06 
 #include <wctype.h>
 
 #include "pathnames.h"
-
+#define LINE_MAX                 2048   /* max bytes in an input line */
+#define SIZE_T_MAX      ULONG_MAX       /* max value for a size_t */
 static char _path_words[] = _PATH_WORDS;
 
 #define	EQUAL		0
@@ -82,12 +83,12 @@ static char _path_words[] = _PATH_WORDS;
 
 int dflag, fflag;
 
-char    *binary_search(wchar_t *, unsigned char *, unsigned char *);
-int      compare(wchar_t *, unsigned char *, unsigned char *);
-char    *linear_search(wchar_t *, unsigned char *, unsigned char *);
-int      look(wchar_t *, unsigned char *, unsigned char *);
+char    *binary_search(wchar_t *, char *, char *);
+int      compare(wchar_t *, char *, char *);
+char    *linear_search(wchar_t *, char *, char *);
+int      look(wchar_t *, char *, char *);
 wchar_t	*prepkey(const char *, wchar_t);
-void     print_from(wchar_t *, unsigned char *, unsigned char *);
+void     print_from(wchar_t *, char *, char *);
 
 static void usage(void);
 
@@ -97,13 +98,14 @@ main(int argc, char *argv[])
 	struct stat sb;
 	int ch, fd, match;
 	wchar_t termchar;
-	unsigned char *back, *front;
-	unsigned const char *file;
+	char *back, *front;
+	char *file;
 	wchar_t *key;
 
 	(void) setlocale(LC_CTYPE, "");
 
-	file = _path_words;
+	// file = _path_words;
+	file = NULL;
 	termchar = L'\0';
 	while ((ch = getopt(argc, argv, "dft:")) != -1)
 		switch(ch) {
@@ -135,11 +137,19 @@ main(int argc, char *argv[])
 	if (argc == 1) 			/* But set -df by default. */
 		dflag = fflag = 1;
 	key = prepkey(*argv++, termchar);
-	if (argc >= 2)
-		file = *argv++;
+	if (argc >= 2) {
+		// file = *argv++;
+		file = malloc(LINE_MAX * sizeof(char)); 
+		sprintf(file, "%s", *argv);
+		argv++;
+	}
 
 	match = 1;
 
+	if (file == NULL) {
+		file = malloc(LINE_MAX * sizeof(char)); 
+		sprintf(file, "%s/Library/share/dict/words", getenv("HOME"));
+	}
 	do {
 		if ((fd = open(file, O_RDONLY, 0)) < 0 || fstat(fd, &sb))
 			err(2, "%s", file);
@@ -176,8 +186,13 @@ prepkey(const char *string, wchar_t termchar)
 	readp = string;
 	writep = key;
 	while ((clen = mbrtowc(&ch, readp, MB_LEN_MAX, NULL)) != 0) {
-		if (clen == (size_t)-1 || clen == (size_t)-2)
-			errc(2, EILSEQ, NULL);
+		if (clen == (size_t)-1 || clen == (size_t)-2) {
+			int saved_errno = errno;
+			errno = EILSEQ;
+			err(2, NULL); 
+			errno = saved_errno;
+			// errc(2, EILSEQ, NULL);
+		}
 		if (fflag)
 			ch = towlower(ch);
 		if (!dflag || iswalnum(ch))
@@ -191,7 +206,7 @@ prepkey(const char *string, wchar_t termchar)
 }
 
 int
-look(wchar_t *string, unsigned char *front, unsigned char *back)
+look(wchar_t *string, char *front, char *back)
 {
 
 	front = binary_search(string, front, back);
@@ -245,9 +260,9 @@ look(wchar_t *string, unsigned char *front, unsigned char *back)
 	while (p < back && *p++ != '\n');
 
 char *
-binary_search(wchar_t *string, unsigned char *front, unsigned char *back)
+binary_search(wchar_t *string, char *front, char *back)
 {
-	unsigned char *p;
+	char *p;
 
 	p = front + (back - front) / 2;
 	SKIP_PAST_NEWLINE(p, back);
@@ -279,7 +294,7 @@ binary_search(wchar_t *string, unsigned char *front, unsigned char *back)
  *	o front is before or at the first line to be printed.
  */
 char *
-linear_search(wchar_t *string, unsigned char *front, unsigned char *back)
+linear_search(wchar_t *string, char *front, char *back)
 {
 	while (front < back) {
 		switch (compare(string, front, back)) {
@@ -299,7 +314,7 @@ linear_search(wchar_t *string, unsigned char *front, unsigned char *back)
  * Print as many lines as match string, starting at front.
  */
 void
-print_from(wchar_t *string, unsigned char *front, unsigned char *back)
+print_from(wchar_t *string, char *front, char *back)
 {
 	for (; front < back && compare(string, front, back) == EQUAL; ++front) {
 		for (; front < back && *front != '\n'; ++front)
@@ -324,7 +339,7 @@ print_from(wchar_t *string, unsigned char *front, unsigned char *back)
  * "back" terminated).
  */
 int
-compare(wchar_t *s1, unsigned char *s2, unsigned char *back)
+compare(wchar_t *s1, char *s2, char *back)
 {
 	wchar_t ch1, ch2;
 	size_t len2;

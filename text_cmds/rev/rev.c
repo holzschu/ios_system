@@ -43,8 +43,8 @@ static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
 #endif /* not lint */
 #endif
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/rev/rev.c,v 1.12 2009/12/13 03:14:06 delphij Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/rev/rev.c,v 1.12 2009/12/13 03:14:06 delphij Exp $");
 
 #include <sys/types.h>
 

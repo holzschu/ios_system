@@ -187,6 +187,10 @@ find_execute(PLAN *plan, char *paths[])
 
 	exitstatus = 0;
 	while (errno = 0, (entry = fts_read(tree)) != NULL) {
+        // debugging
+        char dirBefore[MAXPATHLEN];
+        getwd(dirBefore);
+        //
 		if (maxdepth != -1 && entry->fts_level >= maxdepth) {
 			if (fts_set(tree, entry, FTS_SKIP))
 				err(1, "%s", entry->fts_path);
@@ -235,6 +239,13 @@ find_execute(PLAN *plan, char *paths[])
 		 * the work specified by the user on the command line.
 		 */
 		for (p = plan; p && (p->execute)(p, entry); p = p->next);
+        // debugging
+        char dirAfter[MAXPATHLEN];
+        getwd(dirAfter);
+        if (strcmp(dirBefore, dirAfter) != 0) {
+            fprintf(stderr, "Active directory changed: %s %s\n", ios_getBookmarkedVersion(dirBefore), ios_getBookmarkedVersion(dirAfter));
+        }
+        //
 	}
 	e = errno;
 	finish_execplus();

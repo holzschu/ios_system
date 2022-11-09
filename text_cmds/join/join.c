@@ -46,10 +46,11 @@ static const char copyright[] =
 static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95";
 #endif
 #endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/join/join.c,v 1.20 2004/08/26 06:28:05 maxim Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/join/join.c,v 1.20 2004/08/26 06:28:05 maxim Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -387,8 +388,13 @@ mbssep(char **stringp, const wchar_t *delim)
 		return (NULL);
 	for (tok = s;;) {
 		n = mbrtowc(&c, s, MB_LEN_MAX, NULL);
-		if (n == (size_t)-1 || n == (size_t)-2)
-			errc(1, EILSEQ, NULL);	/* XXX */
+		if (n == (size_t)-1 || n == (size_t)-2) {
+			int old_errno = errno;
+			errno = EILSEQ;
+			err(1, NULL);	/* XXX */
+			errno = old_errno;
+			// errc(1, EILSEQ, NULL);	/* XXX */
+		}
 		s += n;
 		spanp = delim;
 		do {

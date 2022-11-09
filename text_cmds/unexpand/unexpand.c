@@ -31,9 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+// #include <sys/cdefs.h>
 
-__FBSDID("$FreeBSD: src/usr.bin/unexpand/unexpand.c,v 1.15 2006/10/13 16:22:25 ru Exp $");
+// __FBSDID("$FreeBSD: src/usr.bin/unexpand/unexpand.c,v 1.15 2006/10/13 16:22:25 ru Exp $");
 
 #ifndef lint
 static const char copyright[] =

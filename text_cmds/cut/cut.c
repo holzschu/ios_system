@@ -40,8 +40,8 @@ static const char copyright[] =
 	The Regents of the University of California.  All rights reserved.\n";
 static const char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/cut/cut.c,v 1.30 2004/11/05 10:45:23 tjr Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/cut/cut.c,v 1.30 2004/11/05 10:45:23 tjr Exp $");
 
 #include <ctype.h>
 #include <err.h>
@@ -239,7 +239,7 @@ needpos(size_t n)
 }
 
 int
-b_cut(FILE *fp, const char *fname __unused)
+b_cut(FILE *fp, const char *fname /* __unused */)
 {
 	int ch, col;
 	char *pos;
@@ -398,7 +398,11 @@ f_cut(FILE *fp, const char *fname)
 		for (isdelim = 0, p = lbuf;; p += clen) {
 			clen = mbrtowc(&ch, p, lbuf + reallen - p, NULL);
 			if (clen == (size_t)-1 || clen == (size_t)-2) {
-				warnc(EILSEQ, "%s", fname);
+				int stored_errno = errno;
+				errno = EILSEQ;
+				warn("%s", fname);
+				errno = stored_errno;
+				// warnc(EILSEQ, "%s", fname);
 				free(mlbuf);
 				return (1);
 			}
@@ -425,7 +429,11 @@ f_cut(FILE *fp, const char *fname)
 				clen = mbrtowc(&ch, p, lbuf + reallen - p,
 				    NULL);
 				if (clen == (size_t)-1 || clen == (size_t)-2) {
-					warnc(EILSEQ, "%s", fname);
+					int stored_errno = errno;
+					errno = EILSEQ;
+					warn("%s", fname);
+					errno = stored_errno;
+					// warnc(EILSEQ, "%s", fname);
 					free(mlbuf);
 					return (1);
 				}

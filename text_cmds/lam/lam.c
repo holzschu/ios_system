@@ -42,8 +42,8 @@ static const char copyright[] =
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
 #endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/lam/lam.c,v 1.14 2005/08/05 01:04:36 jmallett Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/lam/lam.c,v 1.14 2005/08/05 01:04:36 jmallett Exp $");
 
 /*
  *	lam - laminate files

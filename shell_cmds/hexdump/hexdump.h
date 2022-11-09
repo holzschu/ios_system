@@ -35,6 +35,7 @@
  */
 
 #include <wchar.h>
+#include <sys/types.h>
 
 typedef struct _pr {
 	struct _pr *nextpr;		/* next print unit */

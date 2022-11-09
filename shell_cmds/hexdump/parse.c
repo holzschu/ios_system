@@ -36,8 +36,8 @@
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #endif
 #endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/hexdump/parse.c,v 1.12 2002/09/04 23:29:01 dwmalone Exp $");
+// #include <sys/cdefs.h>
+// __FBSDID("$FreeBSD: src/usr.bin/hexdump/parse.c,v 1.12 2002/09/04 23:29:01 dwmalone Exp $");
 
 #include <sys/types.h>
 
@@ -284,7 +284,7 @@ rewrite(FS *fs)
 				pr->flags = F_UINT;
 isint:				cs[2] = '\0';
 				cs[1] = cs[0];
-				cs[0] = 'q';
+				cs[0] = 'l'; // was 'q'
 				switch(fu->bcnt) {
 				case 0: case 4:
 					pr->bcnt = 4;
@@ -351,7 +351,7 @@ isint:				cs[2] = '\0';
 					++p2;
 					switch(p1[2]) {
 					case 'd': case 'o': case'x':
-						cs[0] = 'q';
+						cs[0] = 'l'; // was 'q'
 						cs[1] = p1[2];
 						cs[2] = '\0';
 						break;

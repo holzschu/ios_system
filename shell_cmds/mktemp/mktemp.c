@@ -38,7 +38,7 @@
 #ifdef __APPLE__
 #include <limits.h>
 #endif
-#include <paths.h>
+// #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -119,9 +119,9 @@ main(int argc, char **argv)
 		}
 #else
 		tmpdir = getenv("TMPDIR");
-		if (tmpdir == NULL)
-			asprintf(&name, "%s%s.XXXXXXXX", _PATH_TMP, prefix);
-		else
+		// if (tmpdir == NULL)
+		// 	asprintf(&name, "%s%s.XXXXXXXX", _PATH_TMP, prefix);
+		// else
 			asprintf(&name, "%s/%s.XXXXXXXX", tmpdir, prefix);
 #endif
 		/* if this fails, the program is in big trouble already */

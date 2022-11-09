@@ -1,5 +1,5 @@
-#include <sys/cdefs.h>
-__RCSID("$FreeBSD: src/usr.bin/getopt/getopt.c,v 1.10 2002/09/04 23:29:01 dwmalone Exp $");
+// #include <sys/cdefs.h>
+// __RCSID("$FreeBSD: src/usr.bin/getopt/getopt.c,v 1.10 2002/09/04 23:29:01 dwmalone Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

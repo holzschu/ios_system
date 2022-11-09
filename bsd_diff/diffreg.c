@@ -1071,7 +1071,7 @@ static void
 change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d,
     int *pflags)
 {
-	static size_t max_context = 64;
+	static __thread size_t max_context = 64;
 	long curpos;
 	int i, nc, f;
 	const char *walk;

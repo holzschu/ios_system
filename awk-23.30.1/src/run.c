@@ -154,7 +154,10 @@ void freeTree(Node *u, int eraseSelf)    /* scan the entire tree, and frees the 
     
     if (u == NULL) return;
     if ((int)u == 0x1) return; // safeguard
-    
+    // iOS addition to avoid a crash:
+    if (u == STRING) return; // yyparse can create nodes with fake addresses
+    if (u == REGEXPR) return; // yyparse can create nodes with fake addresses
+
     // If it's a tree, freetr will do the job:
     if ((u->nobj == CCL) || (u->nobj == NCCL) || (u->nobj == CHAR) || (u->nobj == DOT) || (u->nobj == FINAL)
         || (u->nobj == ALL) || (u->nobj == EMPTYRE) || (u->nobj == STAR) || (u->nobj == PLUS) || (u->nobj == QUEST)
@@ -165,6 +168,11 @@ void freeTree(Node *u, int eraseSelf)    /* scan the entire tree, and frees the 
     for (a = u; a; a = anext) {
         if ((a->ntype == NSTAT) || (a->ntype == NEXPR)) {
             for (int i = 0; i < a->nnarg; i++) {
+                // Nodes created with itonp, cannot free with freeTree:
+                if ((a->nobj == BLTIN) && (i == 0)) continue;
+                if ((a->nobj == ARG) && (i == 0)) continue;
+                if ((a->nobj == VARNF) && (i == 0)) continue;
+                if ((a->nobj == GETLINE) && (i == 1)) continue;
                 freeTree(a->narg[i], 0); // never free narg, it was allocated as part of the node
                 a->narg[i] = NULL;
             }

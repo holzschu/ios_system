@@ -34,13 +34,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1999\
- The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$FreeBSD: src/usr.bin/nl/nl.c,v 1.10 2005/04/09 14:31:41 stefanf Exp $");
-#endif    
+// #include <sys/cdefs.h>
+// #ifndef lint
+// __COPYRIGHT(
+// "@(#) Copyright (c) 1999\
+//  The NetBSD Foundation, Inc.  All rights reserved.");
+// __RCSID("$FreeBSD: src/usr.bin/nl/nl.c,v 1.10 2005/04/09 14:31:41 stefanf Exp $");
+// #endif    
+#define LINE_MAX                 2048   /* max bytes in an input line */
 
 #include <sys/types.h>
 
@@ -164,15 +165,25 @@ main(argc, argv)
 			break;
 		case 'd':
 			clen = mbrlen(optarg, MB_CUR_MAX, NULL);
-			if (clen == (size_t)-1 || clen == (size_t)-2)
-				errc(EXIT_FAILURE, EILSEQ, NULL);
+			if (clen == (size_t)-1 || clen == (size_t)-2) {
+				// errc(EXIT_FAILURE, EILSEQ, NULL);
+				int saved_errno = errno;
+				errno = EILSEQ;
+				err(EXIT_FAILURE, NULL);
+				errno = saved_errno;
+			}
 			if (clen != 0) {
 				memcpy(delim1, optarg, delim1len = clen);
 				clen = mbrlen(optarg + delim1len,
 				    MB_CUR_MAX, NULL);
 				if (clen == (size_t)-1 ||
-				    clen == (size_t)-2)
-					errc(EXIT_FAILURE, EILSEQ, NULL);
+				    clen == (size_t)-2) {
+					// errc(EXIT_FAILURE, EILSEQ, NULL);
+					int saved_errno = errno;
+					errno = EILSEQ;
+					err(EXIT_FAILURE, NULL);
+					errno = saved_errno;
+				}
 				if (clen != 0) {
 					memcpy(delim2, optarg + delim1len,
 					    delim2len = clen);
