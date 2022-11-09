@@ -79,5 +79,7 @@ extern void replaceCommand(NSString* commandName, NSString* functionName, bool a
 extern NSError* addCommandList(NSString* fileLocation);
 extern NSArray* backgroundCommandList;
 extern int numPythonInterpreters;
+extern int numPerlInterpreters;
+extern int numTeXInterpreters;
 extern int cd_main(int argc, char** argv);
 extern const char* ios_getBookmarkedVersion(const char* p);
