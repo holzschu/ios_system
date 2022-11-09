@@ -160,14 +160,17 @@ int numTeXInterpreters = MaxTeXInterpreters; // Apps can overwrite this
 static bool TeXIsRunning[MaxTeXInterpreters];
 static int currentTeXInterpreter = 0;
 NSArray *TeXcommands = nil; // initialized later
-static bool dashIsRunning = false;
+// Multiple dash:
+// limit to 6 (for now)
+static const int MaxDashCommands = 6; // const so we can allocate an array
+int numDashCommands = MaxDashCommands; // Apps can overwrite this
+static bool dashIsRunning[MaxDashCommands];
+static int currentDashCommand = 0;
 
 // pointers for sh sessions:
 char* sh_session = "sh_session";
 
 // replace system-provided exit() by our own:
-// Make sure we call pthread_cancel(currentSession->current_command_root_thread)
-// as much as possible, because ios_exit can be called from a signal handler now.
 void ios_exit(int n) {
     if (currentSession != NULL) {
         currentSession->global_errno = n;
@@ -366,12 +369,14 @@ static void cleanup_function(void* parameters) {
         NSLog(@"Ending a TeX command: %d", p->numInterpreter);
         TeXIsRunning[p->numInterpreter] = false;
     } else if (strcmp(commandName, "dash") == 0) {
-        dashIsRunning = false;
+        NSLog(@"Ending a dash command: %d", p->numInterpreter);
+        dashIsRunning[p->numInterpreter] = false;
     }
     if (strcmp(currentSession->commandName, commandName) == 0) {
         currentSession->commandName[0] = 0;
     }
     bool isSh = strcmp(p->argv[0], "sh") == 0;
+    bool isWasm = strcmp(p->argv[0], "wasm") == 0;
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
@@ -412,6 +417,8 @@ static void cleanup_function(void* parameters) {
         if (currentSession != nil) {
             mustCloseStdin &= fileno(p->stdin) != fileno(currentSession->stdin);
         }
+        // experimental: don't close stdin for wasm commands
+        mustCloseStdin &= !isWasm;
     }
     if (mustCloseStdin) {
         NSLog(@"Closing stdin (mustCloseStdin): %d \n", fileno(p->stdin));
@@ -454,8 +461,8 @@ void crash_handler(int sig) {
         } else if (sig == SIGBUS) {
             fputs("bus error\n", thread_stderr);
         }
+        ios_exit(1);
     }
-    ios_exit(1);
 }
 
 static void* run_function(void* parameters) {
@@ -466,6 +473,7 @@ static void* run_function(void* parameters) {
           (p->stderr == nil) ? -1 : fileno(p->stderr), p->argv[0]);
     ios_storeThreadId(pthread_self());
     if (p->storeRootThread && (p->session != NULL)) {
+        NSLog(@"Storing thread_id: %x as root_thread\n", pthread_self());
         p->session->current_command_root_thread = pthread_self();
     }
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
@@ -607,7 +615,7 @@ static char* parseArgument(char* argument, char* command) {
     // expand all environment variables, convert "~" to $HOME (only if localFile)
     // we also pass the shell command for some specific behaviour (don't do this for that command)
     NSString* argumentString = [NSString stringWithCString:argument encoding:NSUTF8StringEncoding];
-    NSLog(@"parsing argument, argumentString= %s", argumentString.UTF8String);
+    // NSLog(@"parsing argument, argumentString= %s", argumentString.UTF8String);
     // If command == "export", first extract the value string here.
     NSString* variableName;
     if (strcmp(command, "export") == 0) {
@@ -617,7 +625,7 @@ static char* parseArgument(char* argument, char* command) {
             argumentCString = unquoteArgument(argumentCString);
             variableName = [argumentString substringToIndex:(equalSign - argument)];
             argumentString = [NSString stringWithCString:argumentCString encoding:NSUTF8StringEncoding];
-            NSLog(@"parsing argument, variable name= %s argument= %s", variableName.UTF8String, argumentString.UTF8String);
+            // NSLog(@"parsing argument, variable name= %s argument= %s", variableName.UTF8String, argumentString.UTF8String);
         } else {
             // No equal sign, or nothing after. export_main will take care of this.
             return argument;
@@ -726,7 +734,7 @@ static char* parseArgument(char* argument, char* command) {
         argumentString = [[variableName stringByAppendingString:@"="] stringByAppendingString:argumentString];
     }
     const char* newArgument = [argumentString UTF8String];
-    NSLog(@"After parsing: %s", newArgument);
+    // NSLog(@"After parsing: %s", newArgument);
     if (strcmp(argument, newArgument) == 0) return argument; // nothing changed
     // Make sure the argument is reallocated, so it can be free-ed
     char* returnValue = realloc(argument, strlen(newArgument) + 1);
@@ -884,7 +892,7 @@ int ios_setAllowedPaths(NSArray<NSString *> *paths) {
 }
 
 BOOL __allowed_cd_to_path(NSString *path) {
-    // NSLog(@"__allowed_cd_to_path: miniRoot: %s\n", miniRoot);
+    // NSLog(@"__allowed_cd_to_path: %@ miniRoot: %@\n", path, miniRoot);
     if (miniRoot == nil) {
         return YES;
     }
@@ -920,6 +928,7 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
     fprintf(thread_stderr, "cd: %s: not a directory\n", [newDir UTF8String]);
     return;
   }
+
   if (![fileManager isReadableFileAtPath:newDir] ||
       ![fileManager changeCurrentDirectoryPath:newDir]) {
     fprintf(thread_stderr, "cd: %s: permission denied\n", [newDir UTF8String]);
@@ -995,6 +1004,7 @@ int ios_fchdir(const int fd) {
 }
 
 int ios_fchdir_nolock(const int fd) {
+    NSLog(@"fchdir_nolock: %x thread %x\n", fd, pthread_self());
     // Same function as fchdir, except it does not lock. To be called when resetting directory after fork().
     while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
     int result = fchdir(fd);
@@ -1006,6 +1016,7 @@ int ios_fchdir_nolock(const int fd) {
     // Allowed "cd" = below miniRoot *or* below localMiniRoot
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     NSString* resultDir = [fileManager currentDirectoryPath];
+    NSLog(@"fchdir_nolock, success: %s\n", resultDir.UTF8String);
 
     if (__allowed_cd_to_path(resultDir)) {
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
@@ -1024,6 +1035,7 @@ int ios_fchdir_nolock(const int fd) {
         // go back to where we were before:
         [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
     }
+    NSLog(@"fchdir_nolock, failure\n");
     return -1;
 }
 
@@ -1076,7 +1088,7 @@ int chdir_nolock(const char* path) {
 // Is also called at the end of the execution of each command
 int chdir(const char* path) {
     while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
-    NSLog(@"Locking for thread %x in chdir, cd %s, stdin= %d\n", pthread_self(), path, fileno(thread_stdin));
+    NSLog(@"Locking for thread %x in chdir, cd %s\n", pthread_self(), path);
     // We cannot have someone change the current directory while a command is starting or terminating.
     // hence the mutex_lock here.
     pthread_mutex_lock(&pid_mtx);
@@ -1111,7 +1123,9 @@ int chdir(const char* path) {
     // NSLog(@"After changing directory, result= %s\n", resultDir.UTF8String);
 
     if (__allowed_cd_to_path(resultDir)) {
-        strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        if (currentSession != NULL) {
+            strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        }
         NSLog(@"Unlocking for thread %x in chdir (allowed)\n", pthread_self());
         pthread_mutex_unlock(&pid_mtx);
         errno = 0;
@@ -1119,6 +1133,9 @@ int chdir(const char* path) {
     }
     
     errno = EACCES; // Permission denied
+    if (currentSession == NULL) {
+        return -1   ;
+    }
     // If the user tried to go above the miniRoot, set it to miniRoot
     if ([miniRoot hasPrefix:resultDir]) {
         [fileManager changeCurrentDirectoryPath:miniRoot];
@@ -1141,13 +1158,6 @@ int command_not_found(int argc, char** argv) {
     return 127;
     // TODO: this should also raise an exception, for python scripts
 }
-
-int dash_rejected(int argc, char** argv) {
-// Don't go through dash if dash is already running
-    fprintf(thread_stderr, "Sorry, you cannot run dash while dash is already running\n");
-    return 0;
-}
-
 
 int xcode_select(int argc, char** argv) {
     // Replacement for xcode-select so config.guess scripts work
@@ -1460,13 +1470,14 @@ int alias_main(int argc, char** argv) {
     if ((equalSign == NULL) && (argc == 2)) {
         // single command, show alias:
         command =  [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+        NSLog(@"Extracting alias for command %s = %@.", argv[1], command);
         NSArray<NSString*>* aliasArray = aliasDictionary[command];
         if (aliasArray == nil) { return 0; }
-        fprintf(thread_stdout, "%s", aliasArray[0]);
+        fprintf(thread_stdout, "%s", aliasArray[0].UTF8String);
         if ([aliasArray[2] isEqualToString: @"afterFirst"]) {
-            fprintf(thread_stdout, " !^ %s", aliasArray[1]);
+            fprintf(thread_stdout, " !^ %s", aliasArray[1].UTF8String);
         } else if ([aliasArray[2] isEqualToString: @"afterLast"]) {
-            fprintf(thread_stdout, " !* %s", aliasArray[1]);
+            fprintf(thread_stdout, " !* %s  ", aliasArray[1].UTF8String);
         }
         fprintf(thread_stdout, "\n");
         return 0;
@@ -1886,7 +1897,9 @@ int ios_dup2(int fd1, int fd2)
         child_stdout = fdopen(fd1, "wb");
     } else if (fd2 == 2) {
         if ((child_stdout != NULL) && (fileno(child_stdout) == fd1)) child_stderr = child_stdout;
-        else child_stderr = fdopen(fd1, "wb");
+        else if (fd1 == 1) {
+            child_stderr = thread_stdout;
+        } else child_stderr = fdopen(fd1, "wb");
     } else if (thread_stdin != NULL && fd2 == fileno(thread_stdin)) {
         child_stdin = fdopen(fd1, "rb");
     } else if (thread_stdout != NULL && fd2 == fileno(thread_stdout)) {
@@ -1929,8 +1942,6 @@ void ios_activateChildStreams(FILE** old_stdin, FILE** old_stdout,  FILE ** old_
         child_stderr = NULL;
     }
 }
-
-
 
 int ios_kill()
 {
@@ -2107,8 +2118,9 @@ void ios_startInteractive(void) {
 }
 
 static int isInteractive(const char* command) {
-    // let interactiveRegexp = /^vim|^ipython|^less|^more|^ssh|^scp|^sftp|^jump|\|&? *less|\|&? *more|^man/;
+    // let interactiveRegexp = /^vim|^ipython|^less|^more|^ssh|^scp|^sftp|^jump|\|&? *less|\|&? *more|^man|^pico/;
     if (strncmp(command, "vim", 3) == 0) return true;
+    if (strncmp(command, "pico", 4) == 0) return true;
     if (strncmp(command, "ipython", 7) == 0) return true;
     if (strncmp(command, "less", 4) == 0) return true;
     if (strncmp(command, "more", 4) == 0) return true;
@@ -2409,6 +2421,7 @@ int ios_system(const char* inputCmd) {
         initSessionParameters(currentSession);
     }
     currentSession->global_errno = 0;
+    NSLog(@"Starting command: %s currentSession->isMainThread: %d", inputCmd, currentSession->isMainThread);
     // Don't start if the command is NULL:
     if (inputCmd == NULL) {
         ios_storeThreadId(0);
@@ -2523,14 +2536,14 @@ int ios_system(const char* inputCmd) {
                 originalCommand = newCommand;
                 cmd = newCommand;
                 command = newCommand;
-                // Maybe we aliased to an interactive command (vim, ssh, less, more, man, scp, sftp)
-                // We need to tell the command line editor:
-                if (isInteractive(newCommand)) {
-                    ios_startInteractive();
-                }
             }
         }
         free(commandForParsing);
+    }
+    // Maybe we aliased to an interactive command (vim, ssh, less, more, man, scp, sftp)
+    // We need to tell the command line editor:
+    if (isInteractive(command)) {
+        ios_startInteractive();
     }
     // NSLog(@"command after alias expansion= %s\n", command);
     // Search for input, output and error redirection
@@ -2732,7 +2745,7 @@ int ios_system(const char* inputCmd) {
             } else {
                 newStream = fopen(ios_expandFilename(outputFileName), "w");
             }
-            NSLog(@"Opened %s as output file: %x", outputFileName, newStream);
+            // NSLog(@"Opened %s as output file: %x", outputFileName, newStream);
             if (newStream) {
                 if (params->stdout != NULL) {
                     if (fileno(params->stdout) != fileno(currentSession->stdout)) fclose(params->stdout);
@@ -2879,7 +2892,7 @@ int ios_system(const char* inputCmd) {
                     if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
                     NSString* locationName;
                     if (!cmdIsAFile) {
-                        // search for 3 possibilities: name, name.bc and name.ll
+                        // search for 4 possibilities: name, name.bc, name.ll and name.wasm
                         locationName = [path stringByAppendingPathComponent:commandName];
                         bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
                         if (fileFound && isDir) continue; // file exists, but is a directory
@@ -3012,6 +3025,7 @@ int ios_system(const char* inputCmd) {
                                     strcpy(argv[1], locationName.UTF8String);
                                     // Copy all arguments without change (except the first):
                                     argv[0] = strdup("wasm"); // creates new pointer
+                                    break;
                                 }
                             }
                         } else {
@@ -3068,9 +3082,6 @@ int ios_system(const char* inputCmd) {
             NSString* functionName = commandStructure[1];
             // Python, Perl and TeX can have multiple commands calling themselves:
             // hasPrefix covers python, python3, python3.9.
-            // TODO: insert here the Perl, Python, TeX tests to avoid duplicating the commands in commandDictionary.plist
-            // TODO: check that it still works with python, perl, tex
-            // TODO: renaming argv[0]: necessary for Perl? TeX? (yes for Python, that uses it). Nope, bit I need to set param->numInterpreter
             if ([commandName hasPrefix: @"python"]) {
                 // Ability to start multiple python3 scripts (required for Jupyter notebooks):
                 // start by increasing the number of the interpreter, until we're out.
@@ -3087,13 +3098,14 @@ int ios_system(const char* inputCmd) {
                         display_alert(@"Too many Python scripts", @"There are too many Python interpreters running at the same time. Try closing some of them.");
                         NSLog(@"%@", @"Too many python scripts running simultaneously. Try closing some notebooks.\n");
                         functionName = @"notAValidCommand";
+                        argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
                         currentSession->global_errno = ENOENT;
                     } else {
                         currentPythonInterpreter = numInterpreter;
                     }
                 }
                 if ((numInterpreter == 0) && (strlen(argv[0]) > 7)) {
-                    // python3.9 creates issues, so we truncate to 'python3'
+                    // python3.x creates issues, so we truncate to 'python3'
                     argv[0][7] = 0;
                 }
                 if ((numInterpreter >= 0) && (numInterpreter < numPythonInterpreters)) {
@@ -3110,7 +3122,9 @@ int ios_system(const char* inputCmd) {
                         argv[0][6] = suffix[0];
                         argv[0][7] = 0;
                         commandName = [@"python" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
-                        libraryName = [libraryName stringByReplacingOccurrencesOfString:@"python3_ios" withString:commandName];
+                        NSLog(@"Python new commandName: %s", commandName.UTF8String);
+                        libraryName = [[commandName stringByAppendingString: @".framework/"] stringByAppendingString: commandName];
+                        NSLog(@"Python new libraryName: %s", libraryName.UTF8String);
                     }
                 }
             } else if ([commandName hasPrefix: @"perl"]) {
@@ -3130,6 +3144,7 @@ int ios_system(const char* inputCmd) {
                         NSLog(@"%@", @"Too many perl scripts running simultaneously.\n");
                         functionName = @"notAValidCommand";
                         currentSession->global_errno = ENOENT;
+                        argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
                     }
                 }
                 if ((numInterpreter >= 0) && (numInterpreter < numPerlInterpreters)) {
@@ -3161,6 +3176,7 @@ int ios_system(const char* inputCmd) {
                         NSLog(@"%@", @"Too many TeX scripts running simultaneously.\n");
                         functionName = @"notAValidCommand";
                         currentSession->global_errno = ENOENT;
+                        argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
                     }
                 }
                 if ((numInterpreter >= 0) && (numInterpreter < numTeXInterpreters)) {
@@ -3184,6 +3200,38 @@ int ios_system(const char* inputCmd) {
                         }
                     }
                 }
+            } else if ([commandName hasPrefix: @"dash"]) {
+                // Ability to start multiple dash commands:
+                // start by increasing the number of the interpreter, until we're out.
+                int numInterpreter = 0;
+                if (currentDashCommand < numDashCommands) {
+                    numInterpreter = currentDashCommand;
+                    currentDashCommand++;
+                } else {
+                    while  (numInterpreter < numDashCommands) {
+                        if (dashIsRunning[numInterpreter] == false) break;
+                        numInterpreter++;
+                    }
+                    if (numInterpreter >= numDashCommands) {
+                        display_alert(@"Too many dash scripts", @"There are too many dash scripts running at the same time. Try closing some of them.");
+                        NSLog(@"%@", @"Too many dash scripts running simultaneously.\n");
+                        functionName = @"notAValidCommand";
+                        currentSession->global_errno = ENOENT;
+                        argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
+                    }
+                }
+                if ((numInterpreter >= 0) && (numInterpreter < numDashCommands)) {
+                    params->numInterpreter = numInterpreter;
+                    dashIsRunning[numInterpreter] = true;
+                    NSLog(@"Starting a dash shell: %d", params->numInterpreter);
+                    if (numInterpreter > 0) {
+                        char suffix[2];
+                        suffix[0] = 'A' + (numInterpreter - 1);
+                        suffix[1] = 0;
+                        commandName = [@"dash" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                        libraryName = [libraryName stringByReplacingOccurrencesOfString:@"dash" withString:commandName];
+                    }
+                }
             }
             if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
             else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
@@ -3196,6 +3244,7 @@ int ios_system(const char* inputCmd) {
                 free(errorLoading);
             } else {
                 function = dlsym(handle, functionName.UTF8String);
+                NSLog(@"Loading %s from %s", functionName.UTF8String, libraryName.UTF8String);
                 if (function == NULL) {
                     char* errorLoading = strdup(dlerror());
                     fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", functionName.UTF8String, libraryName.UTF8String, errorLoading);
@@ -3209,14 +3258,6 @@ int ios_system(const char* inputCmd) {
             currentSession->global_errno = ENOENT;
             // function = dlsym(RTLD_SELF, "command_not_found");
         }
-        // Avoid running dash twice at the same time:
-        if ([commandName isEqualToString: @"dash"]) {
-            if (dashIsRunning) {
-                argv[0][0] = 'c'; // avoid resetting dashIsRunning
-                function = &dash_rejected;
-            }
-            dashIsRunning = true;
-        }
         if (function) {
             // We run the function in a thread because there are several
             // points where we can exit from a shell function.
@@ -3228,8 +3269,10 @@ int ios_system(const char* inputCmd) {
             params->dlHandle = handle;
             params->isPipeIn = (params->stdin != thread_stdin);
             params->isPipeOut = (params->stdout != thread_stdout);
+            if (params->stdout != NULL)
             NSLog(@"params->stdout: %d thread_stdout: %d \n", fileno(params->stdout), fileno(thread_stdout));
-            NSLog(@"params->stdin: %d thread_stdin: %d \n", fileno(params->stdin), fileno(thread_stdin));
+            if (params->stdin != NULL)
+                NSLog(@"params->stdin: %d thread_stdin: %d \n", fileno(params->stdin), fileno(thread_stdin));
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
             params->storeRootThread = false;
             // params->session = currentSession;
@@ -3253,8 +3296,14 @@ int ios_system(const char* inputCmd) {
                 if (res == 0) NSLog(@"[Info] Increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
                 else NSLog(@"[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
             }
+            NSLog(@"Starting command: %s, currentSession->isMainThread: %d", commandName.UTF8String, currentSession->isMainThread);
             if (currentSession->isMainThread) {
                 params->storeRootThread = true;
+                // I'm still not sure why this is needed specially for dash and no other commands:
+                // Needed for pipes
+                if ([commandName isEqualToString: @"dash"]) {
+                    params->storeRootThread = false;
+                }
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
                                                params->isPipeOut || params->isPipeErr);
@@ -3262,8 +3311,6 @@ int ios_system(const char* inputCmd) {
                 commandOperatesOnFiles &= (currentPath != nil);
                 if (commandOperatesOnFiles) {
                     // Send a signal to the system that we're going to change the current directory:
-                    // TODO: only do this if the command actually accesses files: either outputFile exists,
-                    // or errorFile exists, or the command uses files.
                     NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
                     NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
                     [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
