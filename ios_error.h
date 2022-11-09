@@ -40,9 +40,10 @@ extern "C" {
   #define fputs ios_fputs
   #define fputc ios_fputc
   #define putw ios_putw
+  #define putp ios_putp
   #define fflush ios_fflush
   #define abort() ios_exit(1)
-#endif 
+#endif
 
 // Thread-local input and output streams
 extern __thread FILE* thread_stdin;
@@ -101,7 +102,7 @@ extern ssize_t ios_write(int fildes, const void *buf, size_t nbyte);
 extern size_t ios_fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 extern int ios_puts(const char *s);
 extern int ios_fputs(const char* s, FILE *stream);
-extern    int ios_fputc(int c, FILE *stream);
+extern int ios_fputc(int c, FILE *stream);
 extern int ios_putw(int w, FILE *stream);
 extern int ios_fflush(FILE *stream);
 extern int ios_gettty(void);
