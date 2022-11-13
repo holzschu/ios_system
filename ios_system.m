@@ -74,7 +74,7 @@ typedef struct _sessionParameters {
     char previousDirectory[MAXPATHLEN];
     char localMiniRoot[MAXPATHLEN];
     pthread_t current_command_root_thread; // thread ID of first command
-    pthread_t lastThreadId; // thread ID of last command
+    pthread_t lastThreadId; // thread ID of last command.
     pthread_t mainThreadId; // thread ID of parent command, if any (e.g. vim, which starts "sh -c cd dir && flake8 file")
     FILE* stdin;
     FILE* stdout;
@@ -82,7 +82,9 @@ typedef struct _sessionParameters {
     FILE* tty;
     void* context;
     int global_errno;
-    char commandName[NAME_MAX];
+    int numCommandsAllocated;
+    int numCommand;
+    char** commandName;
     char columns[5];
     char lines[5];
     bool activePager;
@@ -104,7 +106,13 @@ static void initSessionParameters(sessionParameters* sp) {
     sp->stderr = stderr;
     sp->tty = stdin;
     sp->context = nil;
-    sp->commandName[0] = 0;
+    sp->numCommandsAllocated = 10; // 10 slots available to store commands, will realloc if more needed.
+    sp->commandName = malloc(sizeof(char*) * sp->numCommandsAllocated);
+    for (int i = 0; i < sp->numCommandsAllocated; i++) {
+        sp->commandName[i] = malloc(sizeof(char) * NAME_MAX);
+    }
+    sp->commandName[0][0] = 0;
+    sp->numCommand = 0;
     strcpy(sp->columns, "80");
     strcpy(sp->lines, "80");
     sp->activePager = FALSE;
@@ -294,7 +302,12 @@ int ios_getCommandStatus() {
 }
 
 extern const char* ios_progname(void) {
-    if (currentSession != NULL) return currentSession->commandName;
+    if (currentSession != NULL) {
+        if (currentSession->numCommand <= 0)
+            return currentSession->commandName[0];
+        else
+            return currentSession->commandName[currentSession->numCommand - 1];
+    }
     else return getprogname();
 }
 
@@ -340,10 +353,18 @@ static void cleanup_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     bool backgroundCommand = p->backgroundCommand;
     char* commandName = p->argv[0];
+    char* currentSessionCommandName = NULL;
+    if (currentSession->numCommand <= 0)
+        currentSessionCommandName = currentSession->commandName[0];
+    else
+        currentSessionCommandName = currentSession->commandName[currentSession->numCommand - 1];
     NSLog(@"cleanup_function: %s thread_id %x pid: %d stdin %d stdout %d stderr %d isPipeOut %d", commandName, pthread_self(), ios_currentPid(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
-    NSLog(@"currentSession->commandName: %s root_thread: %x", currentSession->commandName, currentSession->current_command_root_thread);
+    NSLog(@"currentSession->commandName: %s root_thread: %x", currentSessionCommandName, currentSession->current_command_root_thread);
+    NSLog(@"Num commands stored: : %d", currentSession->numCommand);
     if ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0)) {
-        if ((strlen(currentSession->commandName) > 0) && (strcmp(currentSession->commandName, "less") != 0) && (strcmp(currentSession->commandName, "more") != 0)) {
+        if ((strlen(currentSessionCommandName) > 0)
+            && (strcmp(currentSessionCommandName, "less") != 0)
+            && (strcmp(currentSessionCommandName, "more") != 0)) {
             // Command was "root_command | sthg | less". We need to kill root command.
             // If less itself started another command, then currentSession->commandName is "".
             // Unless less / more was started as a pager, in which case don't kill root command (e.g. for man).
@@ -388,9 +409,13 @@ static void cleanup_function(void* parameters) {
         NSLog(@"Ending a dash command: %d", p->numInterpreter);
         dashIsRunning[p->numInterpreter] = false;
     }
-    if (strcmp(currentSession->commandName, commandName) == 0) {
-        currentSession->commandName[0] = 0;
-    }
+    if (currentSession->numCommand > 0)
+        currentSession->numCommand -= 1;
+    else
+        currentSession->commandName[0][0] = 0;
+    // if (strcmp(currentSession->commandName, commandName) == 0) {
+    //     currentSession->commandName[0] = 0;
+    // }
     bool isSh = strcmp(p->argv[0], "sh") == 0;
     bool isWasm = strcmp(p->argv[0], "wasm") == 0;
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
@@ -433,8 +458,13 @@ static void cleanup_function(void* parameters) {
         if (currentSession != nil) {
             mustCloseStdin &= fileno(p->stdin) != fileno(currentSession->stdin);
         }
-        // experimental: don't close stdin for wasm commands
+        // we cannot close stdin for wasm commands:
         mustCloseStdin &= !isWasm;
+        // commands started by Python: Python will close stdin (Lua and Perl? not broken, AFAIK)
+        if ((currentSession->numCommand > 0) && (strncmp(currentSession->commandName[currentSession->numCommand - 1], "python", 6) == 0)) {
+            NSLog(@"Command started by Python, not closing stdin: %d \n", fileno(p->stdin));
+            mustCloseStdin &= false;
+        }
     }
     if (mustCloseStdin) {
         NSLog(@"Closing stdin (mustCloseStdin): %d \n", fileno(p->stdin));
@@ -1829,7 +1859,6 @@ int sh_main(int argc, char** argv) {
 
 
 int ios_execv(const char *path, char* const argv[]) {
-    // TODO: store new environment if current process has already stored some. 
     // path and argv[0] are the same (not in theory, but in practice, since Python wrote the command)
     // start "child" with the child streams:
     char* cmd = concatenateArgv(argv);
@@ -2102,8 +2131,13 @@ void ios_closetty(void) {
 int ios_activePager() {
     // All commands that read from tty instead of stdin:
     if (currentSession == nil) { return 0; }
-    if ((strcmp(currentSession->commandName, "less") == 0) ||
-        (strcmp(currentSession->commandName, "more") == 0)) {
+    char* currentSessionCommandName;
+    if (currentSession->numCommand <= 0)
+        currentSessionCommandName = currentSession->commandName[0];
+    else
+        currentSessionCommandName = currentSession->commandName[currentSession->numCommand - 1];
+    if ((strcmp(currentSessionCommandName, "less") == 0) ||
+        (strcmp(currentSessionCommandName, "more") == 0)) {
         return 1;
     }
     if (currentSession->activePager) { return 1; }
@@ -2872,7 +2906,23 @@ int ios_system(const char* inputCmd) {
             memmove(argv[0], argv[0] + 1, len_with_terminator);
         } else  {
             NSString* commandName = [NSString stringWithCString:argv[0]  encoding:NSUTF8StringEncoding];
-            strcpy(currentSession->commandName, argv[0]);
+            // strcpy(currentSession->commandName, argv[0]);
+            // store into heap:
+            if ((currentSession->numCommand <= 0) && (strlen(currentSession->commandName[0]) == 0)) {
+                strcpy(currentSession->commandName[0], argv[0]);
+                currentSession->numCommand = 1;
+            } else {
+                if (currentSession->numCommand >= currentSession->numCommandsAllocated) {
+                    int oldCommandsAllocated = currentSession->numCommandsAllocated;
+                    currentSession->numCommandsAllocated += 10;
+                    currentSession->commandName = realloc(currentSession->commandName, sizeof(char*) * currentSession->numCommandsAllocated);
+                    for (int i = oldCommandsAllocated; i < currentSession->numCommandsAllocated; i++) {
+                        currentSession->commandName[i] = malloc(sizeof(char) * NAME_MAX);
+                    }
+                }
+                strcpy(currentSession->commandName[currentSession->numCommand], argv[0]);
+                currentSession->numCommand += 1;
+            }
             BOOL isDir = false;
             bool cmdIsAFile = false;
             bool cmdIsReal = false;
