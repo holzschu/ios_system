@@ -35,6 +35,9 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#if TARGET_OS_IPHONE
+#include "log.h"
+#endif
 
 #ifndef TCSASOFT
 /* If we don't have TCSASOFT define it so that ORing it it below is a no-op. */
@@ -162,6 +165,13 @@ restart:
                 if (p > buf)
                     p--;
                 continue;
+            }
+            if ((ch == 3) || (ch == 4)) {
+                // ctrl-C or ctrl-D. Exit the prompt (at the request of users).
+                fputc('\n', thread_stderr);
+                fflush(thread_stderr);
+                cleanup_exit(0);
+                break;
             }
 #endif
 			if ((flags & RPP_SEVENBIT))

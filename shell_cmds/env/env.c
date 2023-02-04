@@ -133,8 +133,14 @@ env_main(int argc, char **argv)
 			if (env_verbosity > 1)
 				sleep(1);
 		}
+#if !TARGET_OS_IPHONE
         execvp(*argv, argv);
         err(errno == ENOENT ? 127 : 126, "%s", *argv);
+#else
+        // execvp is not supposed to return, but on iOS it does.
+        int childerr = execvp(*argv, argv);
+        ios_exit(childerr);
+#endif
 	}
 #if !TARGET_OS_IPHONE
         for (ep = environ; *ep != NULL; ep++)

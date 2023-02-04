@@ -110,6 +110,7 @@ extern int ios_opentty(void);
 extern void ios_closetty(void);
 extern void ios_stopInteractive(void);
 extern void ios_startInteractive(void);
+extern int ios_storeInteractive(void);
 // Communication between dash and ios_system:
 extern const char* ios_expandtilde(const char *login);
 extern void ios_activateChildStreams(FILE** old_stdin, FILE** old_stdout,  FILE ** old_stderr);

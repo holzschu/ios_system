@@ -88,6 +88,7 @@ size_t ios_fwrite(const void *restrict ptr, size_t size, size_t nitems, FILE *re
     if (thread_stdout == NULL) thread_stdout = stdout;
     if (thread_stderr == NULL) thread_stderr = stderr;
     if (fileno(stream) == STDOUT_FILENO) return fwrite(ptr, size, nitems, thread_stdout);
+    // iOS, debug:
     if (fileno(stream) == STDERR_FILENO) return fwrite(ptr, size, nitems, thread_stderr);
     return fwrite(ptr, size, nitems, stream);
 }
@@ -457,6 +458,9 @@ char** environmentVariables(pid_t pid) {
 
 extern int chdir_nolock(const char* path); // defined in ios_system.m
 void ios_releaseThread(pthread_t thread) {
+    if (thread == NULL) {
+        return;
+    }
     // TODO: this is inefficient. Replace with NSMutableArray?
     for (int p = 0; p < IOS_MAX_THREADS; p++) {
         if (thread_ids[p] == thread) {
