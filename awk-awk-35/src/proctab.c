@@ -1,0 +1,218 @@
+#include <stdio.h>
+#include "awk.h"
+#include "awkgram.tab.h"
+#include "ios_error.h"
+
+static const char * const printname[98] = {
+	"FIRSTTOKEN",	/* 258 */
+	"PROGRAM",	/* 259 */
+	"PASTAT",	/* 260 */
+	"PASTAT2",	/* 261 */
+	"XBEGIN",	/* 262 */
+	"XEND",	/* 263 */
+	"NL",	/* 264 */
+	"ARRAY",	/* 265 */
+	"MATCH",	/* 266 */
+	"NOTMATCH",	/* 267 */
+	"MATCHOP",	/* 268 */
+	"FINAL",	/* 269 */
+	"DOT",	/* 270 */
+	"ALL",	/* 271 */
+	"CCL",	/* 272 */
+	"NCCL",	/* 273 */
+	"CHAR",	/* 274 */
+	"HAT",	/* 275 */
+	"DOLLAR",	/* 276 */
+	"OR",	/* 277 */
+	"STAR",	/* 278 */
+	"QUEST",	/* 279 */
+	"PLUS",	/* 280 */
+	"EMPTYRE",	/* 281 */
+	"ZERO",	/* 282 */
+	"IGNORE_PRIOR_ATOM",	/* 283 */
+	"AND",	/* 284 */
+	"BOR",	/* 285 */
+	"APPEND",	/* 286 */
+	"EQ",	/* 287 */
+	"GE",	/* 288 */
+	"GT",	/* 289 */
+	"LE",	/* 290 */
+	"LT",	/* 291 */
+	"NE",	/* 292 */
+	"IN",	/* 293 */
+	"ARG",	/* 294 */
+	"BLTIN",	/* 295 */
+	"BREAK",	/* 296 */
+	"CLOSE",	/* 297 */
+	"CONTINUE",	/* 298 */
+	"DELETE",	/* 299 */
+	"DO",	/* 300 */
+	"EXIT",	/* 301 */
+	"FOR",	/* 302 */
+	"FUNC",	/* 303 */
+	"SUB",	/* 304 */
+	"GSUB",	/* 305 */
+	"IF",	/* 306 */
+	"INDEX",	/* 307 */
+	"LSUBSTR",	/* 308 */
+	"MATCHFCN",	/* 309 */
+	"NEXT",	/* 310 */
+	"NEXTFILE",	/* 311 */
+	"ADD",	/* 312 */
+	"MINUS",	/* 313 */
+	"MULT",	/* 314 */
+	"DIVIDE",	/* 315 */
+	"MOD",	/* 316 */
+	"ASSIGN",	/* 317 */
+	"ASGNOP",	/* 318 */
+	"ADDEQ",	/* 319 */
+	"SUBEQ",	/* 320 */
+	"MULTEQ",	/* 321 */
+	"DIVEQ",	/* 322 */
+	"MODEQ",	/* 323 */
+	"POWEQ",	/* 324 */
+	"PRINT",	/* 325 */
+	"PRINTF",	/* 326 */
+	"SPRINTF",	/* 327 */
+	"ELSE",	/* 328 */
+	"INTEST",	/* 329 */
+	"CONDEXPR",	/* 330 */
+	"POSTINCR",	/* 331 */
+	"PREINCR",	/* 332 */
+	"POSTDECR",	/* 333 */
+	"PREDECR",	/* 334 */
+	"VAR",	/* 335 */
+	"IVAR",	/* 336 */
+	"VARNF",	/* 337 */
+	"CALL",	/* 338 */
+	"NUMBER",	/* 339 */
+	"STRING",	/* 340 */
+	"REGEXPR",	/* 341 */
+	"GETLINE",	/* 342 */
+	"SUBSTR",	/* 343 */
+	"SPLIT",	/* 344 */
+	"RETURN",	/* 345 */
+	"WHILE",	/* 346 */
+	"CAT",	/* 347 */
+	"UPLUS",	/* 348 */
+	"UMINUS",	/* 349 */
+	"NOT",	/* 350 */
+	"POWER",	/* 351 */
+	"INCR",	/* 352 */
+	"DECR",	/* 353 */
+	"INDIRECT",	/* 354 */
+	"LASTTOKEN",	/* 355 */
+};
+
+
+Cell *(*proctab[98])(Node **, int) = {
+	nullproc,	/* FIRSTTOKEN */
+	program,	/* PROGRAM */
+	pastat,	/* PASTAT */
+	dopa2,	/* PASTAT2 */
+	nullproc,	/* XBEGIN */
+	nullproc,	/* XEND */
+	nullproc,	/* NL */
+	array,	/* ARRAY */
+	matchop,	/* MATCH */
+	matchop,	/* NOTMATCH */
+	nullproc,	/* MATCHOP */
+	nullproc,	/* FINAL */
+	nullproc,	/* DOT */
+	nullproc,	/* ALL */
+	nullproc,	/* CCL */
+	nullproc,	/* NCCL */
+	nullproc,	/* CHAR */
+	nullproc,	/* HAT */
+	nullproc,	/* DOLLAR */
+	nullproc,	/* OR */
+	nullproc,	/* STAR */
+	nullproc,	/* QUEST */
+	nullproc,	/* PLUS */
+	nullproc,	/* EMPTYRE */
+	nullproc,	/* ZERO */
+	nullproc,	/* IGNORE_PRIOR_ATOM */
+	boolop,	/* AND */
+	boolop,	/* BOR */
+	nullproc,	/* APPEND */
+	relop,	/* EQ */
+	relop,	/* GE */
+	relop,	/* GT */
+	relop,	/* LE */
+	relop,	/* LT */
+	relop,	/* NE */
+	instat,	/* IN */
+	arg,	/* ARG */
+	bltin,	/* BLTIN */
+	jump,	/* BREAK */
+	closefile,	/* CLOSE */
+	jump,	/* CONTINUE */
+	awkdelete,	/* DELETE */
+	dostat,	/* DO */
+	jump,	/* EXIT */
+	forstat,	/* FOR */
+	nullproc,	/* FUNC */
+	sub,	/* SUB */
+	gsub,	/* GSUB */
+	ifstat,	/* IF */
+	sindex,	/* INDEX */
+	nullproc,	/* LSUBSTR */
+	matchop,	/* MATCHFCN */
+	jump,	/* NEXT */
+	jump,	/* NEXTFILE */
+	arith,	/* ADD */
+	arith,	/* MINUS */
+	arith,	/* MULT */
+	arith,	/* DIVIDE */
+	arith,	/* MOD */
+	assign,	/* ASSIGN */
+	nullproc,	/* ASGNOP */
+	assign,	/* ADDEQ */
+	assign,	/* SUBEQ */
+	assign,	/* MULTEQ */
+	assign,	/* DIVEQ */
+	assign,	/* MODEQ */
+	assign,	/* POWEQ */
+	printstat,	/* PRINT */
+	awkprintf,	/* PRINTF */
+	awksprintf,	/* SPRINTF */
+	nullproc,	/* ELSE */
+	intest,	/* INTEST */
+	condexpr,	/* CONDEXPR */
+	incrdecr,	/* POSTINCR */
+	incrdecr,	/* PREINCR */
+	incrdecr,	/* POSTDECR */
+	incrdecr,	/* PREDECR */
+	nullproc,	/* VAR */
+	nullproc,	/* IVAR */
+	getnf,	/* VARNF */
+	call,	/* CALL */
+	nullproc,	/* NUMBER */
+	nullproc,	/* STRING */
+	nullproc,	/* REGEXPR */
+	awkgetline,	/* GETLINE */
+	substr,	/* SUBSTR */
+	split,	/* SPLIT */
+	jump,	/* RETURN */
+	whilestat,	/* WHILE */
+	cat,	/* CAT */
+	arith,	/* UPLUS */
+	arith,	/* UMINUS */
+	boolop,	/* NOT */
+	arith,	/* POWER */
+	nullproc,	/* INCR */
+	nullproc,	/* DECR */
+	indirect,	/* INDIRECT */
+	nullproc,	/* LASTTOKEN */
+};
+
+const char *tokname(int n)
+{
+	static __thread char buf[100];
+
+	if (n < FIRSTTOKEN || n > LASTTOKEN) {
+		snprintf(buf, sizeof(buf), "token %d", n);
+		return buf;
+	}
+	return printname[n-FIRSTTOKEN];
+}

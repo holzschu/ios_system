@@ -1,0 +1,54 @@
+# This test should pass when performed in a UTF-8 locale
+export LC_ALL=de_DE.UTF-8
+
+echo T.multibyte: tests of multibyte input
+
+awk=${awk-../a.out}
+locale
+$awk '
+{ print $0 }
+' multibyte >foo1
+
+diff multibyte foo1 || echo 'BAD: T.multibyte 1'
+
+$awk '{ gsub(/ö/, "Ü"); print }' multibyte >foo0
+diff foo0 multibyte-replaced || echo 'BAD: T.multibyte 2'
+
+$awk '{ gsub(/[^Ü-ö]/, ""); print }' multibyte >foo0
+diff foo0 multibyte-onlysomembchars || echo 'BAD: T.multibyte 3'
+
+# NOTE: (macOS) "ſ" and "ß" do not seem to be members of any character class
+$awk '{
+	gsub(/[[=a=][=A=][=b=][=B=][=c=][=C=][=d=][=D=][=e=][=E=]]/, "")
+	gsub(/[[=f=][=F=][=g=][=G=][=h=][=H=][=i=][=I=][=j=][=J=]]/, "")
+	gsub(/[[=k=][=K=][=l=][=L=][=m=][=M=][=n=][=N=][=o=][=O=]]/, "")
+	gsub(/[[=p=][=P=][=q=][=Q=][=r=][=R=][=s=][=S=][=t=][=T=]]/, "")
+	gsub(/[[=u=][=U=][=v=][=V=][=w=][=W=][=x=][=X=][=y=][=Y=]]/, "")
+	gsub(/[[=z=][=Z=]]/, "")
+	print
+}' multibyte >foo0
+diff foo0 multibyte-noletters || echo 'BAD: T.multibyte 4'
+
+# NOTE: (macOS) "ß" is recognized by isalpha(), but "ſ" is not
+$awk '{
+	gsub(/[[:alpha:]]/, "")
+	print
+}' multibyte >foo0
+diff foo0 multibyte-noalpha || echo 'BAD: T.multibyte 5'
+
+echo  '/Ü/' >foo1
+$awk -f foo1 foo1 >foo2
+diff foo1 foo2 || echo 'BAD: T.multibyte 6'
+
+echo /[Üö]/ >foo1
+$awk -f foo1 foo1 >foo2
+diff foo1 foo2 || echo 'BAD: T.multibyte 7'
+
+echo 'This is a line.
+Patterns like /[Üö]/ do not work yet. Example, run awk /[Üö]/
+over a file containing just Ü.
+This is another line.' >foo0
+echo 'Patterns like /[Üö]/ do not work yet. Example, run awk /[Üö]/
+over a file containing just Ü.' >foo1
+$awk '/[Üö]/' foo0 >foo2
+diff foo1 foo2 || echo 'BAD: T.multibyte 8'

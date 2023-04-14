@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>OpenSourceProject</key>
+	<string>awk</string>
+	<key>OpenSourceVersion</key>
+	<string>August 16, 2020</string>
+	<key>OpenSourceWebsiteURL</key>
+	<string>https://github.com/onetrueawk/awk</string>
+	<key>OpenSourceURL</key>
+	<string>https://github.com/onetrueawk/awk/archive/ed6ff8c1cb3136df1ea34ea2172fa84245c99c2b.zip</string>
+	<key>OpenSourceSHA512256</key>
+	<string>a3e59fba12d6ebb1ed921d6d42e4065474b4156fac5409408d4cb0be2cc462f6</string>
+	<key>OpenSourceImportDate</key>
+	<string>2020-09-21</string>
+	<key>OpenSourceModifications</key>
+	<array>
+		<string>3668527</string>
+		<string>Fix build warnings.</string>
+		<string>53872683: Unix Conformance: FAIL /tset/POSIX.cmd/awk/awk.ex - non-english locale tests</string>
+		<string>62947651: Fix return condition for readrec()</string>
+		<string>57168555: Multibyte support for character classes</string>
+		<string>59291605: Fix mandoc linter errors in man page</string>
+	</array>
+	<key>OpenSourceLicense</key>
+	<string>Other</string>
+	<key>OpenSourceLicenseFile</key>
+	<string>awk.txt</string>
+</dict>
+</plist>
