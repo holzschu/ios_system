@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/param.h>
+#include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
 
 #include "ios_error.h"
 #undef write
@@ -26,6 +27,39 @@
 #undef getenv
 #undef setenv
 #undef unsetenv
+
+// in order to run webAssembly commands sequentially, we first stack them, then run them in command line order:
+// At this point, this could just be a mutex.
+
+int preparingWebAssemblyCommands = 0;
+int orderOfWebAssemblyCommands = 0;
+void startedPreparingWebAssemblyCommand(void) {
+    preparingWebAssemblyCommands += 1;
+    orderOfWebAssemblyCommands += 1;
+}
+
+int webAssemblyCommandOrder(void) {
+    return orderOfWebAssemblyCommands;
+}
+
+void finishedPreparingWebAssemblyCommand(void) {
+    preparingWebAssemblyCommands -= 1;
+}
+
+static void executeWebAssemblyCommandsInOrder(void) {
+    void (*function)() = NULL;
+    function = dlsym(RTLD_MAIN_ONLY, "executeWebAssemblyCommands");
+    if (function != NULL) {
+        while (preparingWebAssemblyCommands > 0) {
+            // Empty loops create problems in Release mode.
+            if (thread_stdout != NULL) { fflush(thread_stdout); }
+            if (thread_stderr != NULL) { fflush(thread_stderr); }
+        }
+        function();
+    }
+    orderOfWebAssemblyCommands = 0;
+}
+
 
 int printf (const char *format, ...) {
     va_list arg;
@@ -518,7 +552,9 @@ pid_t vfork(void) { return ios_nextAvailablePid(); }
 // simple replacement of waitpid for swift programs
 // We use "optnone" to prevent optimization, otherwise the while loops never end.
 __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
-
+    
+    executeWebAssemblyCommandsInOrder();
+    
     pthread_t threadToWaitFor;
     // Old system: no explicit pid, just store last thread Id.
     if ((pid == -1) || (pid == 0)) {
@@ -545,6 +581,7 @@ __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
     //  0 = the call waits for any child process in the process group of the caller
     
     if (options && WNOHANG) {
+        executeWebAssemblyCommandsInOrder(); // start executing webAssembly commands
         // WNOHANG: just check that the process is still running:
         pthread_t threadToWaitFor;
         if ((pid == -1) || (pid == 0)) threadToWaitFor = ios_getLastThreadId();
