@@ -5,7 +5,6 @@
 //  Copyright © 2017 N. Holzschuch. All rights reserved.
 //
 
-
 #import <UIKit/UIKit.h>
 
 #include "ios_system.h"
@@ -208,7 +207,9 @@ void ios_exit(int n) {
 }
 
 void set_session_errno(int n) {
-    currentSession->global_errno = n;
+    if (currentSession != NULL) {
+        currentSession->global_errno = n;
+    }
 }
 
 // Replace standard abort and exit functions with ours:
@@ -300,6 +301,9 @@ char * ios_getenv(const char *name) {
     return libc_getenv(name);
 }
 
+void ios_IsMainThread(bool value) {
+    currentSession->isMainThread = value;
+}
 
 int ios_getCommandStatus() {
     if (currentSession != NULL) return currentSession->global_errno;
@@ -352,6 +356,7 @@ typedef struct _functionParameters {
 extern pthread_mutex_t pid_mtx;
 extern _Atomic(int) cleanup_counter;
 extern void ios_releaseBackgroundThread(pthread_t thread);
+extern void startedPreparingWebAssemblyCommand(void);
 
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
@@ -401,6 +406,9 @@ static void cleanup_function(void* parameters) {
             }
         }
     }
+    fcntl(fileno(thread_stdin), F_SETNOSIGPIPE);
+    fcntl(fileno(thread_stdout), F_SETNOSIGPIPE);
+    fcntl(fileno(thread_stderr), F_SETNOSIGPIPE);
     fflush(thread_stdin);
     fflush(thread_stdout);
     fflush(thread_stderr);
@@ -509,6 +517,7 @@ static void cleanup_function(void* parameters) {
         currentSession->mainThreadId = 0;
     }
     cleanup_counter--;
+    NSLog(@"returning from cleanup_function\n");
 }
 
 // Avoir calling crash_handler several times:
@@ -521,6 +530,9 @@ void crash_handler(int sig) {
             fputs("segmentation fault\n", thread_stderr);
         } else if (sig == SIGBUS) {
             fputs("bus error\n", thread_stderr);
+        } else if (sig == SIGPIPE) {
+            fputs("pipe error\n", thread_stderr);
+            return;
         }
         ios_exit(1);
     }
@@ -555,6 +567,7 @@ static void* run_function(void* parameters) {
 
     signal(SIGSEGV, crash_handler);
     signal(SIGBUS, crash_handler);
+    signal(SIGPIPE, crash_handler);
 
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
@@ -1129,6 +1142,7 @@ int chdir_nolock(const char* path) {
 
     if (__allowed_cd_to_path(resultDir)) {
         strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        NSLog(@"allowed directory change, returning\n");
         errno = 0;
         return 0;
     }
@@ -1319,12 +1333,16 @@ static __thread FILE* child_stdout = NULL;
 static __thread FILE* child_stderr = NULL;
 
 FILE* ios_popen(const char* inputCmd, const char* type) {
+    // NSLog(@"ios_popen: %s mode %s", inputCmd, type);
     // Save existing streams:
     int fd[2] = {0};
     const char* command = inputCmd;
     // skip past all spaces
     while ((command[0] == ' ') && strlen(command) > 0) command++;
     if (pipe(fd) < 0) { return NULL; } // Nothing we can do if pipe fails
+    // F_SETNOSIGPIPE: don't cause a signal 13 if the pipe is already closed
+    fcntl(fd[0], F_SETNOSIGPIPE);
+    fcntl(fd[1], F_SETNOSIGPIPE);
     // NOTES: fd[0] is set up for reading, fd[1] is set up for writing
     // fpout = fdopen(fd[1], "w");
     // fpin = fdopen(fd[0], "r");
@@ -1792,7 +1810,7 @@ int sh_main(int argc, char** argv) {
         char* position = strstrquoted(command[0],"=");
         if (position == NULL) { break; }
         char* firstSpace = strstrquoted(command[0]," ");
-        if (firstSpace < position) { break; }
+        if ((firstSpace!=NULL) && (firstSpace < position)) { break; }
         firstSpace = strstrquoted(position," ");
         if (firstSpace != NULL) { *firstSpace = 0; }
         *position = 0;
@@ -1987,6 +2005,7 @@ int ios_dup2(int fd1, int fd2)
         child_stdout = fdopen(fd1, "wb");
     } else if (fd2 == 2) {
         if ((child_stdout != NULL) && (fileno(child_stdout) == fd1)) child_stderr = child_stdout;
+        if ((child_stdout != NULL) && (fileno(thread_stdout) == fd1)) child_stderr = child_stdout;
         else if (fd1 == 1) {
             child_stderr = thread_stdout;
         } else child_stderr = fdopen(fd1, "wb");
@@ -2507,6 +2526,60 @@ static bool isBackgroundCommand(char* command) {
     return false;
 }
 
+NSString* beforeScriptCommandName(NSString* scriptName) {
+    // scans the PATH for a binary that has the name script and non-null size,
+    // checks whether it has wasm signature, if so insert "wasm" before script name.
+    BOOL isDir = false;
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
+    for (NSString* path in directoriesInPath) {
+        // If we don't have access to the path component, there's no point in continuing:
+        if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
+        if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
+        NSString* locationName;
+        // search for 2 possibilities: name and name.wasm
+        locationName = [path stringByAppendingPathComponent:scriptName];
+        bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+        fileFound = fileFound && !isDir;
+        if (!fileFound) {
+            locationName = [[path stringByAppendingPathComponent:scriptName] stringByAppendingString:@".wasm"];
+            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+            fileFound = fileFound && !isDir;
+        }
+        if (!fileFound) continue;
+        // isExecutableFileAtPath replies "NO" even if file has x-bit set.
+        // if (![fileManager  isExecutableFileAtPath:cmdname]) continue;
+        struct stat sb;
+        // Files inside the Application Bundle will always have "x" removed. Don't check.
+        if (!([path containsString: [[NSBundle mainBundle] resourcePath]]) // Not inside the App Bundle
+            && !((stat(locationName.UTF8String, &sb) == 0))) // file exists, is not a directory
+            continue;
+        // At this point the file exists, is a file.
+        if (!isRealCommand(locationName.UTF8String)) // if it's one of our fake commands, search is over.
+            return NULL;
+        NSData *data = [NSData dataWithContentsOfFile:locationName]; // You have the data. Conversion to String probably failed.
+        NSString *fileContent = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+        if ((fileContent == nil) && (data.length > 0)) {
+            // Conversion to string failed with UTF8. Try with Ascii as a backup:
+            fileContent =  [[NSString alloc]initWithData:data encoding:NSASCIIStringEncoding];
+        }
+        NSString* signature;
+        // Detect WebAssembly file signature: '\0asm' (begins with 0, so not a string)
+        if ((data.length >0) && (((char*)data.bytes)[0] == 0)) {
+            // fileContent = [[NSString alloc]initWithData:data encoding:NSASCIIStringEncoding];
+            NSRange signatureRange = NSMakeRange(1, 3);
+            signature = [fileContent substringWithRange:signatureRange];
+        }
+        if ([signature isEqualToString:@"asm"]) {
+            return [@"wasm " stringByAppendingString:locationName];
+        }
+    }
+    // We didn't find anything, no change to scriptName
+    return NULL;
+}
+
+
+
 int ios_system(const char* inputCmd) {
     NSLog(@"command= %s pid= %d\n", inputCmd, ios_currentPid());
 
@@ -3020,21 +3093,21 @@ int ios_system(const char* inputCmd) {
                         // search for 4 possibilities: name, name.bc, name.ll and name.wasm
                         locationName = [path stringByAppendingPathComponent:commandName];
                         bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
-                        if (fileFound && isDir) continue; // file exists, but is a directory
+                        fileFound = fileFound && !isDir;
                         if (!fileFound) {
                             locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".bc"];
                             fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
-                            if (fileFound && isDir) continue; // file exists, but is a directory
+                            fileFound = fileFound && !isDir;
                         }
                         if (!fileFound) {
                             locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".ll"];
                             fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
-                            if (fileFound && isDir) continue; // file exists, but is a directory
+                            fileFound = fileFound && !isDir;
                         }
                         if (!fileFound) {
                             locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".wasm"];
                             fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
-                            if (fileFound && isDir) continue; // file exists, but is a directory
+                            fileFound = fileFound && !isDir;
                         }
                         if (!fileFound) continue;
                         // isExecutableFileAtPath replies "NO" even if file has x-bit set.
@@ -3097,14 +3170,29 @@ int ios_system(const char* inputCmd) {
                                 // Take alphanumericCharacterSet and invert it.
                                 firstLine = [firstLine substringFromIndex:2]; // remove "#!" at the beginning
                                 firstLine = [firstLine stringByTrimmingCharactersInSet: [NSCharacterSet whitespaceCharacterSet]]; // remove any extra space
-                                NSArray<NSString*> *components = [firstLine componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-                                unsigned long numComponents = components.count;
-                                int start = 0;
+                                
+                                NSArray<NSString*> *firstLineComponents = [firstLine componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                                NSMutableArray<NSString*> *components = [firstLineComponents mutableCopy];
                                 if ([components.firstObject hasSuffix:@"env"]) {
                                     // /usr/bin/env <command>
-                                    start = 1;
-                                    numComponents -= 1;
+                                    [components removeObjectAtIndex:0];
                                 }
+                                // Extract stript name by removing the path:
+                                NSString* scriptNameString = components[0];
+                                NSCharacterSet* separators = [NSCharacterSet characterSetWithCharactersInString:@"/"];
+                                NSArray<NSString*> *scriptComponents = [scriptNameString componentsSeparatedByCharactersInSet:separators];
+                                scriptNameString = scriptComponents.lastObject;
+                                if ([scriptNameString isEqualToString:@"sh"])
+                                    scriptNameString = @"dash";
+                                // If scriptNameString is a file that exists in PATH and has webAssembly signature, then insert "wasm script". Other cases?
+                                components[0] = scriptNameString;
+                                NSString* beforeCommand = beforeScriptCommandName(scriptNameString);
+                                if (beforeCommand != NULL) {
+                                    [components removeObjectAtIndex:0];
+                                    NSArray<NSString*> *newComponents = [beforeCommand componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                                    [components insertObjects:newComponents atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, newComponents.count)]];
+                                }
+                                unsigned long numComponents = components.count;
                                 if (numComponents > 0) {
                                     // 2) insert all arguments at beginning of argument list:
                                     argc += numComponents;
@@ -3116,18 +3204,9 @@ int ios_system(const char* inputCmd) {
                                     argv[numComponents] = realloc(argv[numComponents], locationName.length + 1);
                                     strcpy(argv[numComponents], locationName.UTF8String);
                                     // Copy all arguments without change (except the first):
-                                    for (int i = 1; i < numComponents; i++) {
-                                        argv[i] = strdup(components[i + start].UTF8String); // creates new pointer
+                                    for (int i = 0; i < numComponents; i++) {
+                                        argv[i] = strdup(components[i].UTF8String); // creates new pointers
                                     }
-                                    // Extract stript name by removing the path:
-                                    NSString* scriptNameString = components[start];
-                                    NSCharacterSet* separators = [NSCharacterSet characterSetWithCharactersInString:@"/"];
-                                    NSArray<NSString*> *scriptComponents = [scriptNameString componentsSeparatedByCharactersInSet:separators];
-                                    scriptNameString = scriptComponents.lastObject;
-                                    if ([scriptNameString isEqualToString:@"sh"])
-                                        scriptNameString = @"dash";
-                                    argv[0] = strdup(scriptNameString.UTF8String); // creates new pointer
-                                    // TODO: need to loop back if scriptName is itself a file.
                                     break;
                                 }
                             } else {
@@ -3447,6 +3526,8 @@ int ios_system(const char* inputCmd) {
                 else NSLog(@"[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
             }
             NSLog(@"Starting command: %s, currentSession->isMainThread: %d", commandName.UTF8String, currentSession->isMainThread);
+            if ([commandName isEqualToString:@"wasm"])
+                startedPreparingWebAssemblyCommand();
             if (currentSession->isMainThread) {
                 params->storeRootThread = true;
                 // I'm still not sure why this is needed specially for dash and no other commands:
