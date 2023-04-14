@@ -25,6 +25,7 @@ extension URL {
     }
 }
 
+/* 
 func convertCArguments(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?) -> [String]? {
     
     var args = [String]()
@@ -41,32 +42,108 @@ func convertCArguments(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePoin
         
     }
     return args
+} */
+
+func printUsage(command: String) {
+    fputs("Usage: \(command) file.js\nExecutes JavaScript files using JavaScriptCore.", thread_stdout)
 }
 
-func printUsage() {
-    fputs("Usage: jsc file.js\n", thread_stdout)
+let timerJSSharedInstance = TimerJS()
+
+@objc protocol TimerJSExport : JSExport {
+
+    func setTimeout(_ callback : JSValue,_ ms : Double) -> String
+
+    func clearTimeout(_ identifier: String)
+
+    func setInterval(_ callback : JSValue,_ ms : Double) -> String
+
+}
+
+// Custom class must inherit from `NSObject`
+@objc class TimerJS: NSObject, TimerJSExport {
+    var timers = [String: Timer]()
+    
+    static func registerInto(jsContext: JSContext, forKeyedSubscript: String = "timerJS") {
+        jsContext.setObject(timerJSSharedInstance,
+                            forKeyedSubscript: forKeyedSubscript as (NSCopying & NSObjectProtocol))
+        jsContext.evaluateScript(
+            "function setTimeout(callback, ms) {" +
+            "    return timerJS.setTimeout(callback, ms)" +
+            "}" +
+            "function clearTimeout(indentifier) {" +
+            "    timerJS.clearTimeout(indentifier)" +
+            "}" +
+            "function setInterval(callback, ms) {" +
+            "    return timerJS.setInterval(callback, ms)" +
+            "}"
+        )
+    }
+    
+    func clearTimeout(_ identifier: String) {
+        let timer = timers.removeValue(forKey: identifier)
+        
+        timer?.invalidate()
+    }
+    
+    
+    func setInterval(_ callback: JSValue,_ ms: Double) -> String {
+        return createTimer(callback: callback, ms: ms, repeats: true)
+    }
+    
+    func setTimeout(_ callback: JSValue, _ ms: Double) -> String {
+        return createTimer(callback: callback, ms: ms , repeats: false)
+    }
+    
+    @objc func callJsCallback(timer: Timer) {
+        let callback = (timer.userInfo as! JSValue)
+        callback.call(withArguments: nil)
+    }
+    
+    func createTimer(callback: JSValue, ms: Double, repeats : Bool) -> String {
+        let timeInterval  = ms/1000.0
+        
+        let uuid = NSUUID().uuidString
+        
+        // make sure that we are queueing it all in the same executable queue...
+        // JS calls are getting lost if the queue is not specified... that's what we believe... ;)
+        DispatchQueue.main.async(execute: {
+            let timer = Timer.scheduledTimer(timeInterval: timeInterval,
+                                             target: self,
+                                             selector: #selector(self.callJsCallback),
+                                             userInfo: callback,
+                                             repeats: repeats)
+            self.timers[uuid] = timer
+        })
+        
+        
+        return uuid
+    }
 }
 
 // TODO:
-// add searching for modules in ~/Library
+// add searching for modules in ~/Library and ~/Documents
 // npm to install new modules (not parcel, though)
 
 // execute JavaScript:
 @_cdecl("jsc")
 public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?) -> Int32 {
-    if (argc != 2) {
-        printUsage()
+    guard let args = convertCArguments(argc: argc, argv: argv) else {
+        printUsage(command: "jsc")
         return 0
     }
-    guard let args = convertCArguments(argc: argc, argv: argv) else {
-        printUsage()
+    if (argc != 2) {
+        printUsage(command: args[0])
         return 0
     }
     let command = args[1]
-    let fileName = FileManager().currentDirectoryPath + "/" + command
+    
+    // let fileName = FileManager().currentDirectoryPath + "/" + command
+    let fileName = command.hasPrefix("/") ? command : FileManager().currentDirectoryPath + "/" + command
     do {
         let javascript = try String(contentsOf: URL(fileURLWithPath: fileName), encoding: String.Encoding.utf8)
         let context = JSContext()!
+        TimerJS.registerInto(jsContext: context) // for setTimeOut
         
         context.exceptionHandler = { context, exception in
             let line = exception!.objectForKeyedSubscript("line").toString()
@@ -87,6 +164,15 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
                 fputs("jsc: Full stack: " + stacktrace! + "\n", thread_stderr)
             }
         }
+        // create basic variables
+        context.evaluateScript(
+            "const global = (() => this)();\n" +
+            "global.jsc = { };\n" +
+            "global.document = { baseURI: \"/\" };\n" +
+            "self = this;\n")
+        
+        let gateway = context.objectForKeyedSubscript("jsc" as NSString)
+        // Key functions: print, println, console.log:
         let print: @convention(block) (String) -> Void = { string in
             fputs(string, thread_stdout)
         }
@@ -101,75 +187,49 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
             fputs("console.log: " + message + "\n", thread_stderr)
         }
         context.setObject(consoleLog, forKeyedSubscript: "_consoleLog" as NSString)
-        // exports, __filename, and __dirname
-        // require
-        let require: @convention(block) (String) -> (JSValue?) = { path in
-            // Store module, filename, exports, dirname before if they exist. Restore them at the end.
-            let currentDirectory = context.evaluateScript("if (typeof __dirname !== 'undefined') { __dirname }")
-            let currentFilename = context.evaluateScript("if (typeof __filename !== 'undefined') { __filename }")
-            let currentExports = context.evaluateScript("if (typeof exports !== 'undefined') { exports }")
-            let currentModule = context.evaluateScript("if (typeof module !== 'undefined') { module }")
-            var expandedPath = NSString(string: path).expandingTildeInPath
-            if (expandedPath.hasPrefix(".")) {
-                if (currentDirectory != nil) {
-                    if (!currentDirectory!.isUndefined) {
-                        NSLog("currentDirectory = \(currentDirectory!)")
-                        var shortPath = expandedPath
-                        shortPath.removeFirst(".".count)
-                        expandedPath = currentDirectory!.toString() + shortPath
-                    }
-                }
-            }
-            let expandedPathFile = expandedPath + ".js"
-            if (!FileManager.default.fileExists(atPath: expandedPath) && !FileManager.default.fileExists(atPath: expandedPathFile)) {
-                // Not found locally, trying globally
-                let bundleUrl = URL(fileURLWithPath: Bundle.main.resourcePath!)
-                let newUrl = bundleUrl.appendingPathComponent("node_modules").appendingPathComponent(path)
-                if (FileManager.default.fileExists(atPath: newUrl.path)) {
-                    expandedPath = newUrl.path
-                    if (newUrl.isDirectory) {
-                        let browserUrl = newUrl.appendingPathComponent("browser.js")
-                        if (FileManager.default.fileExists(atPath: browserUrl.path)) {
-                            expandedPath = browserUrl.path
-                        } else {
-                            let indexUrl = newUrl.appendingPathComponent("index.js")
-                            if (FileManager.default.fileExists(atPath: indexUrl.path)) {
-                                expandedPath = indexUrl.path
-                            }
-                        }
-                    }
-                }
-            }
-            if (!FileManager.default.fileExists(atPath: expandedPath) && FileManager.default.fileExists(atPath: expandedPathFile)) {
-                expandedPath = expandedPathFile
-            }
-            // Return void or throw an error here.
-            guard FileManager.default.fileExists(atPath: expandedPath)
-                else {
-                    fputs("Require: filename \(expandedPath) not found.\n", thread_stderr)
-                    return nil
-            }
-            guard let fileContent = try? String(contentsOfFile: expandedPath)
-                else {
-                    fputs("Empty content for: \(expandedPath)\n", thread_stderr)
-                    return nil
-            }
-            // module and exports. One for each module we load with require:
-            let dirName = URL(fileURLWithPath: expandedPath).deletingLastPathComponent().path
-            context.evaluateScript("var module = { id: '.', exports: {}, parent: null, filename: '" + expandedPath + "',  dirname: '" + dirName + "', loaded: false, children: [], paths: []};")
-            context.evaluateScript("var exports = module.exports; var __filename = module.filename; var __dirname = module.dirname; ")
-            let returnValue = context.evaluateScript(fileContent)
-            // Restore previous value for module, exports, etc:
-            if (currentModule != nil) {
-                if (!currentModule!.isUndefined) {
-                    context.setObject(currentModule, forKeyedSubscript: "module" as NSString)
-                    context.evaluateScript("exports = module.exports; __filename = module.filename; __dirname = module.dirname; ")
-                }
-            }
-            // send return
-            return returnValue
+        // Add URL type using url-polyfill
+        guard let urlUrl = Bundle.main.url(forResource: "url-polyfill", withExtension: "js") else {
+            return -1
         }
-        context.setObject(require, forKeyedSubscript: "require" as NSString)
+        guard let urlData = try? Data(contentsOf: urlUrl) else {
+            NSLog("could not read file url-polyfill.js")
+            return -1
+        }
+        let urlContent = String(decoding: urlData, as: UTF8.self)
+        context.evaluateScript(urlContent) // Now we have URL type
+    
+        context.evaluateScript("var location = new URL(\"" + Bundle.main.bundlePath + "/wasm.html\");")
+        
+        let readFile: @convention(block) (String) -> String = { string in
+            if (FileManager.default.fileExists(atPath: string)) {
+                if let contentOfFile = try? String(contentsOf: URL(fileURLWithPath: string), encoding: String.Encoding.utf8) {
+                    return contentOfFile
+                }
+            }
+            // TODO: set error value https://developer.apple.com/documentation/javascriptcore/jsvalue/1451630-init
+            return ""
+        }
+        gateway?.setObject(readFile, forKeyedSubscript: "readFile" as NSString)
+
+        // Load require:
+        guard let requireUrl = Bundle.main.url(forResource: "require_jscore", withExtension: "js") else {
+            return -1
+        }
+        guard let data = try? Data(contentsOf: requireUrl) else {
+            NSLog("could not read file require_jscore.js")
+            return -1
+        }
+        let content = String(decoding: data, as: UTF8.self)
+        context.evaluateScript(content) // Now we should have require()
+        
+        // Extra things for WebAssembly:
+        // We also need performance.now (returns float in milliseconds):
+        let performance_now: @convention(block) () -> Double = {
+            return Date().timeIntervalSince1970 * 1000.0
+        }
+        context.setObject(performance_now, forKeyedSubscript: "_performance_now" as NSString)
+        context.evaluateScript("performance = {now: _performance_now };\n")
+        
         // actual script execution:
         if let result = context.evaluateScript(javascript) {
             if (!result.isUndefined) {
@@ -187,3 +247,187 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
     }
     return 0
 }
+
+
+
+// As of April 14, 2023, JavaScriptCore does not support WebAssembly (new WebAssembly -> Can't find variable: WebAssembly).
+// execute webAssembly:
+@_cdecl("wasm")
+public func wasm(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?) -> Int32 {
+    guard let args = convertCArguments(argc: argc, argv: argv) else {
+        fputs("Error: could not convert arguments\n", thread_stdout)
+        fputs("Usage: wasm file.wasm\nExecutes webAssembly files using JavaScriptCore and WASI.", thread_stdout)
+        return 0
+    }
+    
+    let context = JSContext()!
+    TimerJS.registerInto(jsContext: context) // for setTimeOut
+    
+    context.exceptionHandler = { context, exception in
+        let line = exception!.objectForKeyedSubscript("line").toString()
+        let column = exception!.objectForKeyedSubscript("column").toString()
+        let stacktrace = exception!.objectForKeyedSubscript("stack").toString()
+        let unknown = "<unknown>"
+        fputs("jsc: Error ", thread_stderr)
+        if let currentFilename = context?.evaluateScript("if (typeof __filename !== 'undefined') { __filename }") {
+            if (!currentFilename.isUndefined) {
+                let file = currentFilename.toString()
+                fputs("in file " + (file ?? unknown) + " ", thread_stderr)
+            }
+        }
+        fputs("at line " + (line ?? unknown), thread_stderr)
+        fputs(", column: " + (column ?? unknown) + ": ", thread_stderr)
+        fputs(exception!.toString() + "\n", thread_stderr)
+        if (stacktrace != nil) {
+            fputs("jsc: Full stack: " + stacktrace! + "\n", thread_stderr)
+        }
+    }
+    // create basic variables
+    context.evaluateScript(
+        "const global = (() => this)();\n" +
+        "global.jsc = { };\n" +
+        "global.document = { baseURI: \"/\" };\n" +
+        "self = this;\n")
+    
+    let gateway = context.objectForKeyedSubscript("jsc" as NSString)
+    // Key functions: print, println, console.log:
+    let print: @convention(block) (String) -> Void = { string in
+        fputs(string, thread_stdout)
+    }
+    context.setObject(print, forKeyedSubscript: "print" as NSString)
+    let println: @convention(block) (String) -> Void = { string in
+        fputs(string + "\n", thread_stdout)
+    }
+    context.setObject(println, forKeyedSubscript: "println" as NSString)
+    // console.log
+    context.evaluateScript("var console = { log: function(message) { _consoleLog(message) } }")
+    let consoleLog: @convention(block) (String) -> Void = { message in
+        fputs("console.log: " + message + "\n", thread_stderr)
+    }
+    context.setObject(consoleLog, forKeyedSubscript: "_consoleLog" as NSString)
+    // Add URL type using url-polyfill
+    guard let urlUrl = Bundle.main.url(forResource: "url-polyfill", withExtension: "js") else {
+        return -1
+    }
+    guard let urlData = try? Data(contentsOf: urlUrl) else {
+        NSLog("could not read file url-polyfill.js")
+        return -1
+    }
+    let urlContent = String(decoding: urlData, as: UTF8.self)
+    context.evaluateScript(urlContent) // Now we have URL type
+    
+    context.evaluateScript("var location = new URL(\"" + Bundle.main.bundlePath + "/wasm.html\");")
+    
+    let readFile: @convention(block) (String) -> String = { string in
+        if (FileManager.default.fileExists(atPath: string)) {
+            if let contentOfFile = try? String(contentsOf: URL(fileURLWithPath: string), encoding: String.Encoding.utf8) {
+                return contentOfFile
+            }
+        }
+        // TODO: set error value https://developer.apple.com/documentation/javascriptcore/jsvalue/1451630-init
+        return ""
+    }
+    gateway?.setObject(readFile, forKeyedSubscript: "readFile" as NSString)
+    
+    // Load require:
+    guard let requireUrl = Bundle.main.url(forResource: "require_jscore", withExtension: "js") else {
+        return -1
+    }
+    guard let data = try? Data(contentsOf: requireUrl) else {
+        NSLog("could not read file require_jscore.js")
+        return -1
+    }
+    let content = String(decoding: data, as: UTF8.self)
+    context.evaluateScript(content) // Now we should have require()
+    
+    // Extra things for WebAssembly:
+    // We also need performance.now (returns float in milliseconds):
+    let performance_now: @convention(block) () -> Double = {
+        return Date().timeIntervalSince1970 * 1000.0
+    }
+    context.setObject(performance_now, forKeyedSubscript: "_performance_now" as NSString)
+    context.evaluateScript("performance = {now: _performance_now };\n")
+    
+    // a-Shell WASI-libc communicates with the system using prompt("libc\n..."). Replacement here:
+    let prompt: @convention(block) (String) -> String = { string in
+        let arguments = string.components(separatedBy: "\n")
+        let title = arguments[0]
+        fputs(string, thread_stdout)
+        fputs("\n", thread_stdout)
+        fflush(thread_stdout)
+        fflush(thread_stderr)
+        return ""
+    }
+    context.setObject(prompt, forKeyedSubscript: "prompt" as NSString)
+    
+    guard let wasmUrl = Bundle.main.url(forResource: "wasm", withExtension: "js") else {
+        return -1
+    }
+    guard let wasmData = try? Data(contentsOf: wasmUrl) else {
+        NSLog("could not read file wasm.js")
+        return -1
+    }
+    let wasmContent = String(decoding: wasmData, as: UTF8.self)
+    context.evaluateScript(wasmContent) // Now we should have executeWebAssembly()
+    
+    // Parse the arguments:
+    // let fileName = FileManager().currentDirectoryPath + "/" + command
+    let command = args[1]
+    var argumentString = "["
+    for c in 1...args.count-1 {
+        // replace quotes and backslashes in arguments:
+        let sanitizedArgument = args[c] .replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        argumentString = argumentString + " \"" +  sanitizedArgument + "\","
+    }
+    argumentString = argumentString + "]"
+    // async functions don't work in WKWebView (so, no fetch, no WebAssembly.instantiateStreaming)
+    // Instead, we load the file in swift and send the base64 version to JS
+    let currentDirectory = FileManager().currentDirectoryPath
+    let fileName = command.hasPrefix("/") ? command : currentDirectory + "/" + command
+    guard let buffer = NSData(contentsOf: URL(fileURLWithPath: fileName)) else {
+        fputs("wasm: file \(command) not found\n", thread_stderr)
+        return -1
+    }
+    var environmentAsJSDictionary = "{"
+    if let localEnvironment = environmentAsArray() {
+        for variable in localEnvironment {
+            if let envVar = variable as? String {
+                // Let's not carry environment variables with quotes:
+                if (envVar.contains("\"")) {
+                    continue
+                }
+                let components = envVar.components(separatedBy:"=")
+                if (components.count <= 1) {
+                    continue
+                }
+                let name = components[0]
+                var value = envVar
+                if (value.count > name.count + 1) {
+                    value.removeFirst(name.count + 1)
+                } else {
+                    continue
+                }
+                value = value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\n", with: "\\n")
+                // NSLog("envVar: \(envVar) name: \(name) value: \(value)")
+                environmentAsJSDictionary += "\"" + name + "\"" + ":" + "\"" + value + "\",\n"
+            }
+        }
+    }
+    environmentAsJSDictionary += "}"
+    let base64string = buffer.base64EncodedString()
+    let javascript = "executeWebAssembly(\"\(base64string)\", " + argumentString + ", \"" + currentDirectory + "\", \(ios_isatty(STDIN_FILENO)), " + environmentAsJSDictionary + ")"
+    
+    // actual wasm execution:
+    if let result = context.evaluateScript(javascript) {
+        if (!result.isUndefined) {
+            // Do I need these?
+            let string = result.toString()
+            fputs(string, thread_stdout)
+            fputs("\n", thread_stdout)
+            fflush(thread_stdout)
+            fflush(thread_stderr)
+        }
+    }
+    return 0
+}
+
