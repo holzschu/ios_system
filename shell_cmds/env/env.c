@@ -138,7 +138,9 @@ env_main(int argc, char **argv)
         err(errno == ENOENT ? 127 : 126, "%s", *argv);
 #else
         // execvp is not supposed to return, but on iOS it does.
+        int pid = ios_fork();
         int childerr = execvp(*argv, argv);
+        waitpid(pid, &childerr, 0);
         ios_exit(childerr);
 #endif
 	}

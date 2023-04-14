@@ -85,6 +85,13 @@ static void usage(void);
 
 static const char *rfc2822_format = "%a, %d %b %Y %T %z";
 
+// iOS: store the previous value of TZ, and restore it at the end
+#undef setenv
+#undef unsetenv
+#undef getenv
+char* local_TZ;
+char* global_TZ;
+
 int
 date_main(int argc, char *argv[])
 {
@@ -111,6 +118,13 @@ date_main(int argc, char *argv[])
 	jflag = nflag = Rflag = 0;
     optind = 1; opterr = 1; optreset = 1;
 	set_timezone = 0;
+    // iOS: strftime uses TZ from the real environment, not from ours:
+    global_TZ = getenv("TZ"); // so we can restore it later
+    local_TZ = ios_getenv("TZ");
+    if (local_TZ)
+        setenv("TZ", local_TZ, 1);
+    else
+        unsetenv("TZ");
 	while ((ch = getopt(argc, argv, "d:f:jnRr:t:uv:")) != -1)
 		switch((char)ch) {
 		case 'd':		/* daylight savings time */
@@ -220,6 +234,10 @@ date_main(int argc, char *argv[])
 
 	(void)strftime(buf, sizeof(buf), format, &lt);
 	(void)fprintf(thread_stdout, "%s\n", buf);
+    if (global_TZ)
+        setenv("TZ", global_TZ, 1); // restore global value of TZ
+    else
+        unsetenv("TZ");
     if (fflush(thread_stdout)) {
 		err(1, "stdout");
     }
@@ -369,5 +387,9 @@ usage(void)
 	    "[-f fmt date | [[[mm]dd]HH]MM[[cc]yy][.ss]] [+format]" :
 	    "            "
 	    "[-f fmt date | [[[[[cc]yy]mm]dd]HH]MM[.ss]] [+format]");
+    if (global_TZ)
+        setenv("TZ", global_TZ, 1); // restore global value of TZ
+    else
+        unsetenv("TZ");
 	exit(1);
 }
