@@ -45,7 +45,7 @@ func convertCArguments(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePoin
 } */
 
 func printUsage(command: String) {
-    fputs("Usage: \(command) file.js\nExecutes JavaScript files using JavaScriptCore.", thread_stdout)
+    fputs("Usage: \(command) file.js\nExecutes JavaScript files using JavaScriptCore.\n", thread_stdout)
 }
 
 let timerJSSharedInstance = TimerJS()
@@ -187,40 +187,126 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
             fputs("console.log: " + message + "\n", thread_stderr)
         }
         context.setObject(consoleLog, forKeyedSubscript: "_consoleLog" as NSString)
-        // Add URL type using url-polyfill
-        guard let urlUrl = Bundle.main.url(forResource: "url-polyfill", withExtension: "js") else {
-            return -1
-        }
-        guard let urlData = try? Data(contentsOf: urlUrl) else {
-            NSLog("could not read file url-polyfill.js")
-            return -1
-        }
-        let urlContent = String(decoding: urlData, as: UTF8.self)
-        context.evaluateScript(urlContent) // Now we have URL type
-    
-        context.evaluateScript("var location = new URL(\"" + Bundle.main.bundlePath + "/wasm.html\");")
-        
-        let readFile: @convention(block) (String) -> String = { string in
-            if (FileManager.default.fileExists(atPath: string)) {
-                if let contentOfFile = try? String(contentsOf: URL(fileURLWithPath: string), encoding: String.Encoding.utf8) {
-                    return contentOfFile
-                }
+        // Add URL type using url-polyfill:
+        if let urlUrl = Bundle.main.url(forResource: "url-polyfill", withExtension: "js") {
+            if let urlData = try? Data(contentsOf: urlUrl) {
+                let urlContent = String(decoding: urlData, as: UTF8.self)
+                context.evaluateScript(urlContent) // Now we have URL type
+                context.evaluateScript("var location = new URL(\"" + Bundle.main.bundlePath + "/wasm.html\");")
             }
-            // TODO: set error value https://developer.apple.com/documentation/javascriptcore/jsvalue/1451630-init
+        }
+        // JSC extensions: readFile, writeFile...
+        let readFile: @convention(block) (String) -> String = { string in
+            do {
+                return try String(contentsOf: URL(fileURLWithPath: string), encoding: String.Encoding.utf8)
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+            }
             return ""
         }
         gateway?.setObject(readFile, forKeyedSubscript: "readFile" as NSString)
+        let writeFile: @convention(block) (String, String) -> Int = { filePath, content in
+            do {
+                try content.write(toFile: filePath, atomically: true, encoding: String.Encoding.utf8)
+                return 0
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+            }
+            return -1
+        }
+        gateway?.setObject(writeFile, forKeyedSubscript: "writeFile" as NSString)
 
+        let listFiles: @convention(block) (String) -> [String] = { directory in
+            do {
+                return try FileManager().contentsOfDirectory(atPath: directory)
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+            }
+            return []
+        }
+        gateway?.setObject(listFiles, forKeyedSubscript: "listFiles" as NSString)
+
+        let isFile: @convention(block) (String) -> Bool = { filePath in
+            var isDirectory: ObjCBool = false
+            let isFile = FileManager().fileExists(atPath: filePath, isDirectory: &isDirectory)
+            return isFile && !isDirectory.boolValue
+        }
+        gateway?.setObject(isFile, forKeyedSubscript: "isFile" as NSString)
+        
+        let isDirectory: @convention(block) (String) -> Bool = { path in
+            var isDirectory: ObjCBool = false
+            let isFile = FileManager().fileExists(atPath: path, isDirectory: &isDirectory)
+            return isFile && isDirectory.boolValue
+        }
+        gateway?.setObject(isDirectory, forKeyedSubscript: "isDirectory" as NSString)
+
+        let createDirectory: @convention(block) (String) -> Int = { path in
+            do {
+                try FileManager().createDirectory(atPath: path, withIntermediateDirectories: true)
+                return 0
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+                return -1
+            }
+        }
+        gateway?.setObject(createDirectory, forKeyedSubscript: "makeFolder" as NSString)
+        let delete: @convention(block) (String) -> Int = { path in
+            do {
+                try FileManager().removeItem(atPath: path)
+                return 0
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+                return -1
+            }
+        }
+        gateway?.setObject(delete, forKeyedSubscript: "delete" as NSString)
+        let move: @convention(block) (String, String) -> Int = { pathA, pathB in
+            do {
+                try FileManager().moveItem(atPath: pathA, toPath: pathB)
+                return 0
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+            }
+            return -1
+        }
+        gateway?.setObject(move, forKeyedSubscript: "move" as NSString)
+        let copy: @convention(block) (String, String) -> Int = { pathA, pathB in
+            do {
+                try FileManager().copyItem(atPath: pathA, toPath: pathB)
+                return 0
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+            }
+            return -1
+        }
+        gateway?.setObject(copy, forKeyedSubscript: "copy" as NSString)
+
+        let fileSize: @convention(block) (String) -> UInt64 = { path in
+            do {
+                //return [FileAttributeKey : Any]
+                let attr = try FileManager.default.attributesOfItem(atPath: path)
+                return attr[FileAttributeKey.size] as? UInt64 ?? 0
+            } catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+                return 0
+            }
+        }
+        gateway?.setObject(fileSize, forKeyedSubscript: "fileSize" as NSString)
+        
         // Load require:
-        guard let requireUrl = Bundle.main.url(forResource: "require_jscore", withExtension: "js") else {
-            return -1
+        if let requireUrl = Bundle.main.url(forResource: "require_jscore", withExtension: "js") {
+            if let data = try? Data(contentsOf: requireUrl) {
+                let content = String(decoding: data, as: UTF8.self)
+                context.evaluateScript(content) // Now we should have require()
+            }
         }
-        guard let data = try? Data(contentsOf: requireUrl) else {
-            NSLog("could not read file require_jscore.js")
-            return -1
-        }
-        let content = String(decoding: data, as: UTF8.self)
-        context.evaluateScript(content) // Now we should have require()
         
         // Extra things for WebAssembly:
         // We also need performance.now (returns float in milliseconds):
@@ -242,7 +328,7 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
         }
     }
     catch {
-        fputs("Error executing JavaScript  file: " + command + ": \(error) \n", thread_stderr)
+        fputs("Error executing JavaScript  file: " + command + ": \(error.localizedDescription) \n", thread_stderr)
         fflush(thread_stderr)
     }
     return 0
@@ -319,12 +405,13 @@ public func wasm(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<In
     context.evaluateScript("var location = new URL(\"" + Bundle.main.bundlePath + "/wasm.html\");")
     
     let readFile: @convention(block) (String) -> String = { string in
-        if (FileManager.default.fileExists(atPath: string)) {
-            if let contentOfFile = try? String(contentsOf: URL(fileURLWithPath: string), encoding: String.Encoding.utf8) {
-                return contentOfFile
-            }
+        do {
+            let contentOfFile = try String(contentsOf: URL(fileURLWithPath: string), encoding: String.Encoding.utf8)
+            return contentOfFile
         }
-        // TODO: set error value https://developer.apple.com/documentation/javascriptcore/jsvalue/1451630-init
+        catch {
+            context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+        }
         return ""
     }
     gateway?.setObject(readFile, forKeyedSubscript: "readFile" as NSString)
