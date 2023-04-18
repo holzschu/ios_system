@@ -206,6 +206,17 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
             return ""
         }
         gateway?.setObject(readFile, forKeyedSubscript: "readFile" as NSString)
+        let readFileBase64: @convention(block) (String) -> String = { string in
+            do {
+                return try NSData(contentsOf: URL(fileURLWithPath: fileName)).base64EncodedString()
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+            }
+            return ""
+        }
+        gateway?.setObject(readFileBase64, forKeyedSubscript: "readFileBase64" as NSString)
+        
         let writeFile: @convention(block) (String, String) -> Int = { filePath, content in
             do {
                 try content.write(toFile: filePath, atomically: true, encoding: String.Encoding.utf8)
@@ -217,6 +228,19 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
             return -1
         }
         gateway?.setObject(writeFile, forKeyedSubscript: "writeFile" as NSString)
+        let writeFileBase64: @convention(block) (String, String) -> Int = { filePath, content in
+            do {
+                if let data = Data(base64Encoded: content, options: .ignoreUnknownCharacters) {
+                    try data.write(to: URL(fileURLWithPath: filePath))
+                    return 0
+                }
+            }
+            catch {
+                context.exception = JSValue(newErrorFromMessage: error.localizedDescription, in: context)
+            }
+            return -1
+        }
+        gateway?.setObject(writeFileBase64, forKeyedSubscript: "writeFileBase64" as NSString)
 
         let listFiles: @convention(block) (String) -> [String] = { directory in
             do {
@@ -300,6 +324,19 @@ public func jsc(argc: Int32, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int
         }
         gateway?.setObject(fileSize, forKeyedSubscript: "fileSize" as NSString)
         
+        let system: @convention(block) (String) -> Int32 = { command in
+            let pid = ios_fork()
+            var result = ios_system(command)
+            ios_waitpid(pid)
+            ios_releaseThreadId(pid)
+            if (result == 0) {
+                // If there's already been an error (e.g. "command not found") no need to ask for more.
+                result = ios_getCommandStatus()
+            }
+            return result
+        }
+        gateway?.setObject(system, forKeyedSubscript: "system" as NSString)
+
         // Load require:
         if let requireUrl = Bundle.main.url(forResource: "require_jscore", withExtension: "js") {
             if let data = try? Data(contentsOf: requireUrl) {
