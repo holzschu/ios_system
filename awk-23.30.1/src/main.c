@@ -116,8 +116,8 @@ int awk_main(int argc, char *argv[])
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 	cmdname = argv[0];
 	if (argc == 1) {
-		fprintf(thread_stderr, 
-		  "usage: %s [-F fs] [-v var=value] [-f progfile | 'prog'] [file ...]\n", 
+		fprintf(thread_stderr,
+		  "usage: %s [-F fs] [-v var=value] [-f progfile | 'prog'] [file ...]\n",
 		  cmdname);
         exit(1);
 	}

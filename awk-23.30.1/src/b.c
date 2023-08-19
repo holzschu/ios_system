@@ -240,14 +240,12 @@ void freetr(Node *p)	/* free parse tree */
 		break;
 	UNARY
 		freetr(left(p));
-        // fprintf(stderr, "Freeing unary %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
 	case CAT:
 	case OR:
 		freetr(left(p));
 		freetr(right(p));
-        // fprintf(stderr, "Freeing tree %x\n", p); fflush(stderr);
 		xfree(p);
 		break;
     case 0:

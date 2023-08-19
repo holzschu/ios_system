@@ -173,6 +173,10 @@ void freeTree(Node *u, int eraseSelf)    /* scan the entire tree, and frees the 
                 if ((a->nobj == ARG) && (i == 0)) continue;
                 if ((a->nobj == VARNF) && (i == 0)) continue;
                 if ((a->nobj == GETLINE) && (i == 1)) continue;
+                if ((a->nobj == PRINTF) && (i == 1)) continue;
+                if ((a->nobj == PRINT) && (i == 1)) continue;
+                if ((a->nobj == PASTAT2) && (i == 3)) continue;
+                if ((a->nobj == SPLIT) && (i == 3)) continue;
                 freeTree(a->narg[i], 0); // never free narg, it was allocated as part of the node
                 a->narg[i] = NULL;
             }
@@ -1308,7 +1312,8 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	int n, tempstat, arg3type;
 
 	y = execute(a[0]);	/* source string */
-	s = getsval(y);
+	s = strdup(getsval(y));
+    dprintf( (thread_stdout, "split: s=|%s|\n", s) );  // OK so far
 	arg3type = ptoi(a[3]);
 	if (a[2] == 0)		/* fs string */
 		fs = *FS;
@@ -1319,9 +1324,12 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		fs = "(regexpr)";	/* split(str,arr,/regexpr/) */
 	else
 		FATAL("illegal type of split");
+    dprintf( (thread_stdout, "split: s=|%s|\n", s) ); // That one is OK too
 	sep = *fs;
 	ap = execute(a[1]);	/* array name */
-	freesymtab(ap);
+    dprintf( (thread_stdout, "split: s=|%s|  %x\n", s, s) ); // This one is OK
+	freesymtab(ap); // ?????? This is causing s to disappear
+    dprintf( (thread_stdout, "split: s=|%s|\n", s) ); // This one is not
 	   dprintf( (thread_stdout, "split: s=|%s|, a=%s, sep=|%s|\n", s, NN(ap->nval), fs) );
 	ap->tval &= ~STR;
 	ap->tval |= ARR;
@@ -1428,6 +1436,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	x = gettemp();
 	x->tval = NUM;
 	x->fval = n;
+    free(s);
 	return(x);
 }
 
@@ -1599,7 +1608,13 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FSYSTEM:
 		fflush(thread_stdout);		/* in case something is buffered already */
-		u = (Awkfloat) ios_system(getsval(x)) / 256;   /* 256 is unix-dep */
+            // iOS
+            int pid = ios_fork();
+            int returnValue;
+            ios_system(getsval(x));
+            waitpid(pid, &returnValue, 0);
+            u = (Awkfloat) returnValue / 256;   /* 256 is unix-dep */
+		// u = (Awkfloat) system(getsval(x)) / 256;   /* 256 is unix-dep */
 		break;
 	case FRAND:
 		/* in principle, rand() returns something in 0..RAND_MAX */
@@ -1705,7 +1720,6 @@ FILE *redirect(int a, Node *b)	/* set up all i/o redirections */
 	return fp;
 }
 
-
 FILE *openfile(int a, const char *us)
 {
 	const char *s = us;
@@ -1797,14 +1811,18 @@ void closeall(void)
             if (files[i].fp == thread_stderr) continue;
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
-			if (files[i].mode == '|' || files[i].mode == LE)
-				stat = pclose(files[i].fp);
-            else {
+            if (files[i].mode == '|' || files[i].mode == LE) {
+                stat = pclose(files[i].fp);
+                files[i].fp = 0;
+            } else {
                 stat = fclose(files[i].fp);
                 files[i].fp = 0;
             }
 			if (stat == EOF)
 				WARNING( "i/o error occurred while closing %s", files[i].fname );
+            // iOS: cleanup
+            free(files[i].fname);
+            files[i].fname = NULL;
 		}
 	}
 }
