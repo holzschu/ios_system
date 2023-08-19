@@ -176,7 +176,7 @@ static bool PythonIsRunning[MaxPythonInterpreters];
 static int currentPythonInterpreter = 0;
 static bool showPythonInterpreterAlert = true;
 // Same with perl:
-static const int MaxPerlInterpreters = 3; // const so we can allocate an array
+static const int MaxPerlInterpreters = 4; // const so we can allocate an array
 // cpan starts perl Makefile.PL, which starts perl -e print Version, so at least 3.
 int numPerlInterpreters = MaxPerlInterpreters; // Apps can overwrite this
 static bool PerlIsRunning[MaxPerlInterpreters];
@@ -398,7 +398,10 @@ static void cleanup_function(void* parameters) {
         if (currentSession->current_command_root_thread != 0) {
             if (currentSession->current_command_root_thread != current_thread) {
                 NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
-                while ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != current_thread)) { }
+                while ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != current_thread)) {
+                    fflush(thread_stdout);
+                    fflush(thread_stderr);
+                }
                 NSLog(@"Thread %x is done waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
             } else {
                 NSLog(@"Terminating root_thread of currentSession %x \n", current_thread);
@@ -458,6 +461,7 @@ static void cleanup_function(void* parameters) {
         }
     }
     // Some programs stop waiting as soon as stdout/stderr close (which makes sense)
+    // This fclose does close the fileno, but I find it re-opened later.
     cleanup_counter++;
     while (pthread_mutex_trylock(&pid_mtx) != 0) { } // Someone else has the lock, so we wait.
     pthread_mutex_unlock(&pid_mtx);
@@ -584,7 +588,7 @@ static void* run_function(void* parameters) {
       NSLog( @"NSException caught" );
       NSLog( @"Name: %@", exception.name);
       NSLog( @"Reason: %@", exception.reason );
-        fprintf(thread_stderr, "Command %s was interrupted because it triggered a system exception: %s: %s\n", p->argv[0], exception.name, exception.reason);
+        fprintf(thread_stderr, "Command %s was interrupted because it triggered a system exception: %s: %s\n", p->argv[0], exception.name.UTF8String, exception.reason.UTF8String);
       return NULL;
     }
     @finally
@@ -635,6 +639,7 @@ void initializeEnvironment() {
     setenv("SSH_HOME", docsPath.UTF8String, 0);  // SSH keys in ~/Documents/.ssh/ or [Cloud Drive]/.ssh
     setenv("DIG_HOME", docsPath.UTF8String, 0);  // .digrc is in ~/Documents/.digrc or [Cloud Drive]/.digrc
     setenv("CURL_HOME", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
+    setenv("CURLOPT_SSH_KNOWNHOSTS", [docsPath stringByAppendingPathComponent:@".ssh/known_hosts"].UTF8String, 0);
     setenv("SSL_CERT_FILE", [docsPath stringByAppendingPathComponent:@"cacert.pem"].UTF8String, 0); // SLL cacert.pem in ~/Documents/cacert.pem or [Cloud Drive]/cacert.pem
     // iOS already defines "HOME" as the home dir of the application
     for (int i = 0; i < MaxPythonInterpreters; i++) PythonIsRunning[i] = false;
@@ -678,9 +683,11 @@ void initializeEnvironment() {
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     // Store the maximum number of file descriptors allowed:
     getrlimit(RLIMIT_NOFILE, &limitFilesOpen);
-    // Initialize the array with the name of TeX commands:
-    TeXcommands = @[@"amstex", @"cslatex", @"csplain", @"eplain", @"etex", @"jadetex", @"latex", @"mex", @"mllatex", @"mltex", @"pdfsclatex", @"pdfcsplain", @"pdfetex", @"pdfjadetex", @"pdflatex", @"pdfmex", @"pdftex", @"pdfxmltex", @"tex", @"texsis", @"utf8mex", @"xmltex", @"texlua", @"texluac", @"dvilualatex", @"dviluatex", @"lualatex", @"luatex", @"luahbtex",
-        @"amstexA", @"cslatexA", @"csplainA", @"eplainA", @"etexA", @"jadetexA", @"latexA", @"mexA", @"mllatexA", @"mltexA", @"pdfsclatexA", @"pdfcsplainA", @"pdfetexA", @"pdfjadetexA", @"pdflatexA", @"pdfmexA", @"pdftexA", @"pdfxmltexA", @"texA", @"texsisA", @"utf8mexA", @"xmltexA", @"texluaA", @"texluacA", @"dvilualatexA", @"dviluatexA", @"lualatexA", @"luatexA", @"luahbtexA"];
+    // Initialize the array with the name of TeX commands (this might be too many commands):
+    TeXcommands = @[@"amstex", @"cslatex", @"csplain", @"eplain", @"etex", @"jadetex", @"latex", @"mex", @"mllatex", @"mltex", @"pdfsclatex", @"pdfcsplain", @"pdfetex", @"pdfjadetex", @"pdflatex", @"pdfmex", @"pdftex", @"pdfxmltex", @"tex", @"texsis", @"utf8mex", @"xmltex", @"texlua", @"texluac", @"dvilualatex", @"dviluatex", @"lualatex", @"luatex", @"luahbtex", @"mptopdf", @"optex",
+                    @"xetex", @"xelatex", @"dvipdfmx", @"xdvipdfmx",
+        @"amstexA", @"cslatexA", @"csplainA", @"eplainA", @"etexA", @"jadetexA", @"latexA", @"mexA", @"mllatexA", @"mltexA", @"pdfsclatexA", @"pdfcsplainA", @"pdfetexA", @"pdfjadetexA", @"pdflatexA", @"pdfmexA", @"pdftexA", @"pdfxmltexA", @"texA", @"texsisA", @"utf8mexA", @"xmltexA", @"texluaA", @"texluacA", @"dvilualatexA", @"dviluatexA", @"lualatexA", @"luatexA", @"luahbtexA", @"mptopdfA", @"optexA",
+                    @"xetexA", @"xelatexA",  @"dvipdfmxA", @"xdvipdfmxA"];
 }
 
 NSString * pathJoin(NSString * segmentA, NSString * segmentB);
@@ -724,9 +731,11 @@ static char* parseArgument(char* argument, char* command) {
         const char* variable = ios_getenv([variable_string UTF8String]);
         if (variable) {
             // Okay, so this one exists.
-            NSString* replacement_string = [NSString stringWithCString:variable encoding:NSUTF8StringEncoding];
             variable_string = [[NSString stringWithCString:"$" encoding:NSUTF8StringEncoding] stringByAppendingString:variable_string];
+            NSString* replacement_string = [NSString stringWithCString:variable encoding:NSUTF8StringEncoding];
             argumentString = [argumentString stringByReplacingOccurrencesOfString:variable_string withString:replacement_string];
+            if ([replacement_string containsString:variable_string]) // avoid an infinite loop here
+                cannotExpand = true;
         } else cannotExpand = true; // found a variable we can't expand. stop trying for this argument
     }
     // 2) Tilde conversion: replace "~" with $HOME
@@ -1139,9 +1148,14 @@ int chdir_nolock(const char* path) {
     // Was that allowed?
     // Allowed "cd" = below miniRoot *or* below localMiniRoot
     NSString* resultDir = [fileManager currentDirectoryPath];
+    if (resultDir == nil) {
+        resultDir = newDir;
+    }
 
     if (__allowed_cd_to_path(resultDir)) {
-        strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        if (currentSession != NULL) {
+            strcpy(currentSession->currentDir, [resultDir UTF8String]);
+        }
         NSLog(@"allowed directory change, returning\n");
         errno = 0;
         return 0;
@@ -1766,10 +1780,10 @@ static int splitCommandAndExecute(char* command) {
                 andNextCommand = false;
             }
         }
-        command[nextCommandPosition] = NULL; // terminate string
+        command[nextCommandPosition] = 0; // terminate string
         pid_t pid = ios_fork();
         returnValue = ios_system(command);
-        // NSLog(@"Started command (2), stored last_thread= %x", currentSession->lastThreadId);
+        NSLog(@"Started command (2), stored last_thread= %x", currentSession->lastThreadId);
         ios_waitpid(pid);
         if (andNextCommand && (returnValue != 0)) {
             // && + the command returned error, we return:
@@ -2266,7 +2280,10 @@ void ios_setContext(const void *context) {
 
 void* ios_getContext() {
     if (currentSession == NULL) return NULL;
-    return currentSession->context;
+    if (currentSession->context != sh_session)
+        return currentSession->context;
+    else
+        return parentSession->context;
 }
 
 
@@ -3417,6 +3434,12 @@ int ios_system(const char* inputCmd) {
                         } else if ([libraryName hasPrefix: @"luahbtex"]) {
                             NSString* newName = [@"luahbtex" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
                             libraryName = [libraryName stringByReplacingOccurrencesOfString:@"luahbtex" withString:newName];
+                        } else if ([libraryName hasPrefix: @"xetex"]) {
+                            NSString* newName = [@"xetex" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                            libraryName = [libraryName stringByReplacingOccurrencesOfString:@"xetex" withString:newName];
+                        } else if ([libraryName hasPrefix: @"xdvipdfmx"]) {
+                            NSString* newName = [@"xdvipdfmx" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                            libraryName = [libraryName stringByReplacingOccurrencesOfString:@"xdvipdfmx" withString:newName];
                         }
                     }
                 }
@@ -3515,6 +3538,7 @@ int ios_system(const char* inputCmd) {
                 }
                 ++numFileDescriptorsOpen ;
             }
+            NSLog(@"\nNum file descriptors opened = %d limit= %llu\n", numFileDescriptorsOpen, limitFilesOpen.rlim_cur);
             // fprintf(stderr, "Num file descriptor = %d\n", numFileDescriptorsOpen);
             // We assume 128 file descriptors will be enough for a single command.
             if (numFileDescriptorsOpen + 128 > limitFilesOpen.rlim_cur) {
@@ -3522,7 +3546,7 @@ int ios_system(const char* inputCmd) {
                 int res = setrlimit(RLIMIT_NOFILE, &limitFilesOpen);
                 // Check the result:
                 getrlimit(RLIMIT_NOFILE, &limitFilesOpen);
-                if (res == 0) NSLog(@"[Info] Increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
+                if (res == 0) NSLog(@"[Info] Increased file descriptor limit to = %llu OPEN_MAX= %d\n", limitFilesOpen.rlim_cur, OPEN_MAX);
                 else NSLog(@"[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
             }
             NSLog(@"Starting command: %s, currentSession->isMainThread: %d", commandName.UTF8String, currentSession->isMainThread);
