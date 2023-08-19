@@ -2406,7 +2406,9 @@ static char* getLastCharacterOfArgument(const char* argument) {
                 write[0] = 0;
                 return getLastCharacterOfArgument(endquote + 1);
             }
-            return endquote + 1;
+            // After quote non space character, we should continue till space:
+            // `ssh "user name"@localhost`
+            return nextUnescapedCharacter(endquote + 1, ' ');
         }
         return NULL;
     } else if (argument[0] == '\'') {
@@ -2426,7 +2428,9 @@ static char* getLastCharacterOfArgument(const char* argument) {
                 write[0] = 0;
                 return getLastCharacterOfArgument(endquote);
             }
-            return endquote + 1;
+            // After quote non space character, we should continue till space
+            // `ssh "user name"@localhost`
+            return nextUnescapedCharacter(endquote + 1, ' ');
         }
         return NULL;
     } else if (argument[0] == recordSeparator) {
