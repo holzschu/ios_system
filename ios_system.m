@@ -2005,7 +2005,7 @@ int ios_dup2(int fd1, int fd2)
         child_stdout = fdopen(fd1, "wb");
     } else if (fd2 == 2) {
         if ((child_stdout != NULL) && (fileno(child_stdout) == fd1)) child_stderr = child_stdout;
-        if ((child_stdout != NULL) && (fileno(thread_stdout) == fd1)) child_stderr = child_stdout;
+        if ((thread_stdout != NULL) && (fileno(thread_stdout) == fd1)) child_stderr = child_stdout;
         else if (fd1 == 1) {
             child_stderr = thread_stdout;
         } else child_stderr = fdopen(fd1, "wb");
