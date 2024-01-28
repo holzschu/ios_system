@@ -1,7 +1,5 @@
 $! File: Build_GNV_CURL_PCSI_DESC.COM
 $!
-$! $Id$
-$!
 $! Build the *.pcsi$text file in the following sections:
 $!   Required software dependencies.
 $!   install/upgrade/postinstall steps.
@@ -31,7 +29,7 @@ $! A rename action section is needed to make sure that the files are
 $! created in the GNV$GNU: in the correct case, and to create the alias
 $! link [usr.bin]curl. for [usr.bin]curl.exe.
 $!
-$! Copyright 2009, John Malmberg
+$! Copyright (C) John Malmberg
 $!
 $! Permission to use, copy, modify, and/or distribute this software for any
 $! purpose with or without fee is hereby granted, provided that the above
@@ -45,8 +43,7 @@ $! WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 $! ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 $! OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 $!
-$!
-$! 15-Jun-2009  J. Malmberg
+$! SPDX-License-Identifier: ISC
 $!
 $!===========================================================================
 $!
@@ -351,7 +348,7 @@ $           endif
 $       endif
 $   endif
 $!
-$!  Filenames with $ in them are VMS special and do not need to be lowercased.
+$!  Filenames with $ in them are VMS special and do not need to be lowercase.
 $!  --------------------------------------------------------------------------
 $   if f$locate("$", pathname) .lt. f$length(pathname) then goto inst_file_loop
 $!

@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include "test.h"
@@ -47,8 +49,8 @@ int test(char *URL)
   FILE *paramsf = NULL;
   struct_stat file_info;
   char *stream_uri = NULL;
-  int request=1;
-  struct curl_slist *custom_headers=NULL;
+  int request = 1;
+  struct curl_slist *custom_headers = NULL;
 
   if(curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
     fprintf(stderr, "curl_global_init() failed\n");
@@ -95,13 +97,13 @@ int test(char *URL)
   stream_uri = NULL;
 
   /* PUT style GET_PARAMETERS */
-  params = open("log/file572.txt", O_RDONLY);
+  params = open(libtest_arg2, O_RDONLY);
   fstat(params, &file_info);
   close(params);
 
-  paramsf = fopen("log/file572.txt", "rb");
-  if(paramsf == NULL) {
-    fprintf(stderr, "can't open log/file572.txt\n");
+  paramsf = fopen(libtest_arg2, "rb");
+  if(!paramsf) {
+    fprintf(stderr, "can't open %s\n", libtest_arg2);
     res = TEST_ERR_MAJOR_BAD;
     goto test_cleanup;
   }
@@ -181,4 +183,3 @@ test_cleanup:
 
   return res;
 }
-

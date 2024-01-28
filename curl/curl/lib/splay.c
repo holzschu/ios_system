@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1997 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 
@@ -37,28 +39,27 @@
  * Splay using the key i (which may or may not be in the tree.) The starting
  * root is t.
  */
-struct Curl_tree *Curl_splay(struct timeval i,
+struct Curl_tree *Curl_splay(struct curltime i,
                              struct Curl_tree *t)
 {
   struct Curl_tree N, *l, *r, *y;
-  long comp;
 
-  if(t == NULL)
+  if(!t)
     return t;
   N.smaller = N.larger = NULL;
   l = r = &N;
 
   for(;;) {
-    comp = compare(i, t->key);
+    long comp = compare(i, t->key);
     if(comp < 0) {
-      if(t->smaller == NULL)
+      if(!t->smaller)
         break;
       if(compare(i, t->smaller->key) < 0) {
         y = t->smaller;                           /* rotate smaller */
         t->smaller = y->larger;
         y->larger = t;
         t = y;
-        if(t->smaller == NULL)
+        if(!t->smaller)
           break;
       }
       r->smaller = t;                               /* link smaller */
@@ -66,14 +67,14 @@ struct Curl_tree *Curl_splay(struct timeval i,
       t = t->smaller;
     }
     else if(comp > 0) {
-      if(t->larger == NULL)
+      if(!t->larger)
         break;
       if(compare(i, t->larger->key) > 0) {
         y = t->larger;                          /* rotate larger */
         t->larger = y->smaller;
         y->smaller = t;
         t = y;
-        if(t->larger == NULL)
+        if(!t->larger)
           break;
       }
       l->larger = t;                              /* link larger */
@@ -97,24 +98,26 @@ struct Curl_tree *Curl_splay(struct timeval i,
  *
  * @unittest: 1309
  */
-struct Curl_tree *Curl_splayinsert(struct timeval i,
+struct Curl_tree *Curl_splayinsert(struct curltime i,
                                    struct Curl_tree *t,
                                    struct Curl_tree *node)
 {
-  static const struct timeval KEY_NOTUSED = {-1, -1}; /* will *NEVER* appear */
+  static const struct curltime KEY_NOTUSED = {
+    ~0, -1
+  }; /* will *NEVER* appear */
 
-  if(node == NULL)
+  if(!node)
     return t;
 
-  if(t != NULL) {
+  if(t) {
     t = Curl_splay(i, t);
-    if(compare(i, t->key)==0) {
+    if(compare(i, t->key) == 0) {
       /* There already exists a node in the tree with the very same key. Build
          a doubly-linked circular list of nodes. We add the new 'node' struct
          to the end of this list. */
 
       node->key = KEY_NOTUSED; /* we set the key in the sub node to NOTUSED
-                               to quickly identify this node as a subnode */
+                                  to quickly identify this node as a subnode */
       node->samen = t;
       node->samep = t->samep;
       t->samep->samen = node;
@@ -124,7 +127,7 @@ struct Curl_tree *Curl_splayinsert(struct timeval i,
     }
   }
 
-  if(t == NULL) {
+  if(!t) {
     node->smaller = node->larger = NULL;
   }
   else if(compare(i, t->key) < 0) {
@@ -149,11 +152,11 @@ struct Curl_tree *Curl_splayinsert(struct timeval i,
 /* Finds and deletes the best-fit node from the tree. Return a pointer to the
    resulting tree.  best-fit means the smallest node if it is not larger than
    the key */
-struct Curl_tree *Curl_splaygetbest(struct timeval i,
-                                       struct Curl_tree *t,
-                                       struct Curl_tree **removed)
+struct Curl_tree *Curl_splaygetbest(struct curltime i,
+                                    struct Curl_tree *t,
+                                    struct Curl_tree **removed)
 {
-  static struct timeval tv_zero = {0, 0};
+  static const struct curltime tv_zero = {0, 0};
   struct Curl_tree *x;
 
   if(!t) {
@@ -197,7 +200,7 @@ struct Curl_tree *Curl_splaygetbest(struct timeval i,
 /* Deletes the very node we point out from the tree if it's there. Stores a
  * pointer to the new resulting tree in 'newroot'.
  *
- * Returns zero on success and non-zero on errors! TODO: document error codes.
+ * Returns zero on success and non-zero on errors!
  * When returning error, it does not touch the 'newroot' pointer.
  *
  * NOTE: when the last node of the tree is removed, there's no tree left so
@@ -205,11 +208,13 @@ struct Curl_tree *Curl_splaygetbest(struct timeval i,
  *
  * @unittest: 1309
  */
-int Curl_splayremovebyaddr(struct Curl_tree *t,
-                           struct Curl_tree *removenode,
-                           struct Curl_tree **newroot)
+int Curl_splayremove(struct Curl_tree *t,
+                     struct Curl_tree *removenode,
+                     struct Curl_tree **newroot)
 {
-  static const struct timeval KEY_NOTUSED = {-1, -1}; /* will *NEVER* appear */
+  static const struct curltime KEY_NOTUSED = {
+    ~0, -1
+  }; /* will *NEVER* appear */
   struct Curl_tree *x;
 
   if(!t || !removenode)
@@ -259,7 +264,7 @@ int Curl_splayremovebyaddr(struct Curl_tree *t,
   }
   else {
     /* Remove the root node */
-    if(t->smaller == NULL)
+    if(!t->smaller)
       x = t->larger;
     else {
       x = Curl_splay(removenode->key, t->smaller);
@@ -271,4 +276,3 @@ int Curl_splayremovebyaddr(struct Curl_tree *t,
 
   return 0;
 }
-

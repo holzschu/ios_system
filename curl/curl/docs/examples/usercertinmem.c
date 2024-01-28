@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 2013 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 /* <DESC>
@@ -92,7 +94,7 @@ static CURLcode sslctx_function(CURL *curl, void *sslctx, void *parm)
     "omTxJBzcoTWcFbLUvFUufQb1nA5V9FrWk9p2rSVzTMVD\n"\
     "-----END CERTIFICATE-----\n";
 
-/*replace the XXX with the actual RSA key*/
+/* replace the XXX with the actual RSA key */
   const char *mykey =
     "-----BEGIN RSA PRIVATE KEY-----\n"\
     "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"\
@@ -119,7 +121,7 @@ static CURLcode sslctx_function(CURL *curl, void *sslctx, void *parm)
   /* get a BIO */
   bio = BIO_new_mem_buf((char *)mypem, -1);
 
-  if(bio == NULL) {
+  if(!bio) {
     printf("BIO_new_mem_buf failed\n");
   }
 
@@ -127,29 +129,29 @@ static CURLcode sslctx_function(CURL *curl, void *sslctx, void *parm)
    * structure that SSL can use
    */
   cert = PEM_read_bio_X509(bio, NULL, 0, NULL);
-  if(cert == NULL) {
+  if(!cert) {
     printf("PEM_read_bio_X509 failed...\n");
   }
 
-  /*tell SSL to use the X509 certificate*/
+  /* tell SSL to use the X509 certificate */
   ret = SSL_CTX_use_certificate((SSL_CTX*)sslctx, cert);
   if(ret != 1) {
     printf("Use certificate failed\n");
   }
 
-  /*create a bio for the RSA key*/
+  /* create a bio for the RSA key */
   kbio = BIO_new_mem_buf((char *)mykey, -1);
-  if(kbio == NULL) {
+  if(!kbio) {
     printf("BIO_new_mem_buf failed\n");
   }
 
-  /*read the key bio into an RSA object*/
+  /* read the key bio into an RSA object */
   rsa = PEM_read_bio_RSAPrivateKey(kbio, NULL, 0, NULL);
-  if(rsa == NULL) {
+  if(!rsa) {
     printf("Failed to create key bio\n");
   }
 
-  /*tell SSL to use the RSA key from memory*/
+  /* tell SSL to use the RSA key from memory */
   ret = SSL_CTX_use_RSAPrivateKey((SSL_CTX*)sslctx, rsa);
   if(ret != 1) {
     printf("Use Key failed\n");
@@ -177,30 +179,30 @@ int main(void)
   CURL *ch;
   CURLcode rv;
 
-  rv = curl_global_init(CURL_GLOBAL_ALL);
+  curl_global_init(CURL_GLOBAL_ALL);
   ch = curl_easy_init();
-  rv = curl_easy_setopt(ch, CURLOPT_VERBOSE, 0L);
-  rv = curl_easy_setopt(ch, CURLOPT_HEADER, 0L);
-  rv = curl_easy_setopt(ch, CURLOPT_NOPROGRESS, 1L);
-  rv = curl_easy_setopt(ch, CURLOPT_NOSIGNAL, 1L);
-  rv = curl_easy_setopt(ch, CURLOPT_WRITEFUNCTION, writefunction);
-  rv = curl_easy_setopt(ch, CURLOPT_WRITEDATA, stdout);
-  rv = curl_easy_setopt(ch, CURLOPT_HEADERFUNCTION, writefunction);
-  rv = curl_easy_setopt(ch, CURLOPT_HEADERDATA, stderr);
-  rv = curl_easy_setopt(ch, CURLOPT_SSLCERTTYPE, "PEM");
+  curl_easy_setopt(ch, CURLOPT_VERBOSE, 0L);
+  curl_easy_setopt(ch, CURLOPT_HEADER, 0L);
+  curl_easy_setopt(ch, CURLOPT_NOPROGRESS, 1L);
+  curl_easy_setopt(ch, CURLOPT_NOSIGNAL, 1L);
+  curl_easy_setopt(ch, CURLOPT_WRITEFUNCTION, writefunction);
+  curl_easy_setopt(ch, CURLOPT_WRITEDATA, stdout);
+  curl_easy_setopt(ch, CURLOPT_HEADERFUNCTION, writefunction);
+  curl_easy_setopt(ch, CURLOPT_HEADERDATA, stderr);
+  curl_easy_setopt(ch, CURLOPT_SSLCERTTYPE, "PEM");
 
   /* both VERIFYPEER and VERIFYHOST are set to 0 in this case because there is
-     no CA certificate*/
+     no CA certificate */
 
-  rv = curl_easy_setopt(ch, CURLOPT_SSL_VERIFYPEER, 0L);
-  rv = curl_easy_setopt(ch, CURLOPT_SSL_VERIFYHOST, 0L);
-  rv = curl_easy_setopt(ch, CURLOPT_URL, "https://www.example.com/");
-  rv = curl_easy_setopt(ch, CURLOPT_SSLKEYTYPE, "PEM");
+  curl_easy_setopt(ch, CURLOPT_SSL_VERIFYPEER, 0L);
+  curl_easy_setopt(ch, CURLOPT_SSL_VERIFYHOST, 0L);
+  curl_easy_setopt(ch, CURLOPT_URL, "https://www.example.com/");
+  curl_easy_setopt(ch, CURLOPT_SSLKEYTYPE, "PEM");
 
   /* first try: retrieve page without user certificate and key -> will fail
    */
   rv = curl_easy_perform(ch);
-  if(rv==CURLE_OK) {
+  if(rv == CURLE_OK) {
     printf("*** transfer succeeded ***\n");
   }
   else {
@@ -211,9 +213,9 @@ int main(void)
    * load the certificate and key by installing a function doing the necessary
    * "modifications" to the SSL CONTEXT just before link init
    */
-  rv = curl_easy_setopt(ch, CURLOPT_SSL_CTX_FUNCTION, *sslctx_function);
+  curl_easy_setopt(ch, CURLOPT_SSL_CTX_FUNCTION, sslctx_function);
   rv = curl_easy_perform(ch);
-  if(rv==CURLE_OK) {
+  if(rv == CURLE_OK) {
     printf("*** transfer succeeded ***\n");
   }
   else {

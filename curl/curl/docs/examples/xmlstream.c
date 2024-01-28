@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,6 +18,8 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 /* <DESC>
  * Stream-parse a document using the streaming Expat parser.
@@ -25,7 +27,7 @@
  */
 /* Written by David Strauss
  *
- * Expat => http://www.libexpat.org/
+ * Expat => https://libexpat.github.io/
  *
  * gcc -Wall -I/usr/local/include xmlstream.c -lcurl -lexpat -o xmlstream
  *
@@ -69,14 +71,15 @@ static void characterDataHandler(void *userData, const XML_Char *s, int len)
   struct ParserStruct *state = (struct ParserStruct *) userData;
   struct MemoryStruct *mem = &state->characters;
 
-  mem->memory = realloc(mem->memory, mem->size + len + 1);
-  if(mem->memory == NULL) {
+  char *ptr = realloc(mem->memory, mem->size + len + 1);
+  if(!ptr) {
     /* Out of memory. */
     fprintf(stderr, "Not enough memory (realloc returned NULL).\n");
     state->ok = 0;
     return;
   }
 
+  mem->memory = ptr;
   memcpy(&(mem->memory[mem->size]), s, len);
   mem->size += len;
   mem->memory[mem->size] = 0;
@@ -97,7 +100,7 @@ static size_t parseStreamCallback(void *contents, size_t length, size_t nmemb,
   size_t real_size = length * nmemb;
   struct ParserStruct *state = (struct ParserStruct *) XML_GetUserData(parser);
 
-  /* Only parse if we're not already in a failure state. */
+  /* Only parse if we are not already in a failure state. */
   if(state->ok && XML_Parse(parser, contents, real_size, 0) == 0) {
     int error_code = XML_GetErrorCode(parser);
     fprintf(stderr, "Parsing response buffer of length %lu failed"
@@ -127,10 +130,10 @@ int main(void)
   XML_SetCharacterDataHandler(parser, characterDataHandler);
 
   /* Initialize a libcurl handle. */
-  curl_global_init(CURL_GLOBAL_ALL ^ CURL_GLOBAL_SSL);
+  curl_global_init(CURL_GLOBAL_DEFAULT);
   curl_handle = curl_easy_init();
   curl_easy_setopt(curl_handle, CURLOPT_URL,
-                   "http://www.w3schools.com/xml/simple.xml");
+                   "https://www.w3schools.com/xml/simple.xml");
   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, parseStreamCallback);
   curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)parser);
 

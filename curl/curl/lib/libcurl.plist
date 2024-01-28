@@ -12,10 +12,10 @@
 	<string>curl</string>
 
 	<key>CFBundleIdentifier</key>
-	<string>se.haxx.curl.libcurl</string>
+	<string>se.curl.libcurl</string>
 
 	<key>CFBundleVersion</key>
-	<string>7.54.0</string>
+	<string>8.1.2</string>
 
 	<key>CFBundleName</key>
 	<string>libcurl</string>
@@ -27,9 +27,9 @@
 	<string>????</string>
 
 	<key>CFBundleShortVersionString</key>
-	<string>libcurl 7.54.0</string>
+	<string>libcurl 8.1.2</string>
 
 	<key>CFBundleGetInfoString</key>
-	<string>libcurl.plist 7.54.0</string>
+	<string>libcurl.plist 8.1.2</string>
 </dict>
 </plist>

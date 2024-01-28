@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 /* <DESC>
@@ -31,6 +33,7 @@
 
 #include <curl/curl.h>
 #include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
 
 static CURL *curl;
 
@@ -63,7 +66,7 @@ static size_t wrfu(void *ptr, size_t size, size_t nmemb, void *stream)
                gnutls_x509_crt_import(cert, &chainp[i], GNUTLS_X509_FMT_DER)) {
               if(GNUTLS_E_SUCCESS ==
                  gnutls_x509_crt_print(cert, GNUTLS_CRT_PRINT_FULL, &dn)) {
-                fprintf(stderr, "Certificate #%d: %.*s", i, dn.size, dn.data);
+                fprintf(stderr, "Certificate #%u: %.*s", i, dn.size, dn.data);
 
                 gnutls_free(dn.data);
               }

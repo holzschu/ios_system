@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include <stdio.h>
@@ -44,7 +46,7 @@ int main(void)
   CURL *curl;
   CURLcode res;
   long filetime = -1;
-  double filesize = 0.0;
+  curl_off_t filesize = 0;
   const char *filename = strrchr(ftpurl, '/') + 1;
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -56,7 +58,6 @@ int main(void)
     curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
     /* Ask for filetime */
     curl_easy_setopt(curl, CURLOPT_FILETIME, 1L);
-    /* No header output: TODO 14.1 http-style HEAD output for ftp */
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, throw_away);
     curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
     /* Switch on full protocol/debug output */
@@ -65,16 +66,17 @@ int main(void)
     res = curl_easy_perform(curl);
 
     if(CURLE_OK == res) {
-      /* https://curl.haxx.se/libcurl/c/curl_easy_getinfo.html */
+      /* https://curl.se/libcurl/c/curl_easy_getinfo.html */
       res = curl_easy_getinfo(curl, CURLINFO_FILETIME, &filetime);
       if((CURLE_OK == res) && (filetime >= 0)) {
         time_t file_time = (time_t)filetime;
         printf("filetime %s: %s", filename, ctime(&file_time));
       }
-      res = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD,
+      res = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T,
                               &filesize);
-      if((CURLE_OK == res) && (filesize>0.0))
-        printf("filesize %s: %0.0f bytes\n", filename, filesize);
+      if((CURLE_OK == res) && (filesize>0))
+        printf("filesize %s: %" CURL_FORMAT_CURL_OFF_T " bytes\n",
+               filename, filesize);
     }
     else {
       /* we failed */

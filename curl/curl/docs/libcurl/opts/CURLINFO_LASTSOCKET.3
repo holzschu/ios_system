@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,16 +18,20 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_LASTSOCKET 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_getinfo options"
+.TH CURLINFO_LASTSOCKET 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLINFO_LASTSOCKET \- get the last socket used
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_getinfo(CURL *handle, CURLINFO_LASTSOCKET, long *socket);
+.fi
 .SH DESCRIPTION
 Deprecated since 7.45.0. Use \fICURLINFO_ACTIVESOCKET(3)\fP instead.
 
@@ -44,7 +48,25 @@ type is 64 bits large while its 'long' is 32 bits. Use the
 .SH PROTOCOLS
 All
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  long sockfd; /* does not work on win64! */
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+
+  /* Do not do the transfer - only connect to host */
+  curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
+  res = curl_easy_perform(curl);
+
+  /* Extract the socket from the curl handle */
+  res = curl_easy_getinfo(curl, CURLINFO_LASTSOCKET, &sockfd);
+
+  if(res != CURLE_OK) {
+    printf("Error: %s\\n", curl_easy_strerror(res));
+    return 1;
+  }
+}
+.fi
 .SH AVAILABILITY
 Added in 7.15.2
 .SH RETURN VALUE

@@ -1,6 +1,12 @@
-The 'curl' subdirectory is based on curl 7.51.0
+The 'curl' subdirectory is based on curl 8.1.2
 
-== Updating ==
+== Updating to a new upstream version ==
+
+The upstream code this curl fork is based on is present in the `dev/UPSTREAM` git branch.
+To upgrade to a new upstream version of curl, use autopatch_project.sh from buildtools:
+- https://stashweb.sd.apple.com/users/achivetta/repos/buildtools/browse
+
+== Updating configuration ==
 
 Confirm/update versions in xcconfigs/libcurl-version.xcconfig
  - This will probably require building the regular open source version and running otool on the resulting library.
@@ -23,15 +29,10 @@ Update xcscripts/install_libtest.sh (see comment at top) -- NOTE: This hasn't be
 == Configuration ==
 
 macOS:
-SDKROOT=macosx.internal ./configure --enable-hidden-symbols --enable-threaded-resolver --with-gssapi --with-ssl=/usr/local/libressl
+SDKROOT=macosx.internal ./configure --enable-hidden-symbols --enable-threaded-resolver --with-gssapi --with-ssl=$(xcrun --show-sdk-path)/usr/local/libressl --with-secure-transport
 
 iOS (etc):
-SDKROOT=macosx.internal ./configure --enable-hidden-symbols --enable-threaded-resolver --disable-ldap --with-darwinssl
-
-Changes to include/curl/curlbuild.h post-configure:
-  (1) Add #ifdef __LP64__ for CURL_SIZEOF_LONG.
-  (2) Change CURL_TYPEOF_CURL_OFF_T and associated defines to int64_t (configure gets it wrong for 32-bit).
-		(requires CURL_PULL_STDINT_H, CURL_PULL_INTTYPES_H)
+SDKROOT=macosx.internal ./configure --enable-hidden-symbols --enable-threaded-resolver --disable-ldap --with-secure-transport
 
 Changes to curl_config.h post-configure:
   (1) Add #ifdef __LP64__ for SIZEOF_LONG, SIZEOF_SIZE_T, SIZEOF_TIME_T, SIZEOF_VOIDP
@@ -40,3 +41,7 @@ Changes to curl_config.h post-configure:
   (4) Enable USE_NGHTTP2.  Because our nghttp2 is at a non-standard path and we
       don't install the pkgconfig support, the configure script cannot
       configure it automatically.
+
+Manual Testing:
+
+Right now we don't have automated tests running, even if they did they won't catch every error. In addition to doing basic curl test on well known URLs it's good to test both SSL backends available. This can be done soley on a macOS hosts.  By default macOS use libressl curl can be set to SecureTransport with the follow environment variable change 'CURL_SSL_BACKEND='Secure-Transport'

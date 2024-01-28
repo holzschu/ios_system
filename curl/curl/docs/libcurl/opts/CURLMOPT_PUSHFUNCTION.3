@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,9 +18,11 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLMOPT_PUSHFUNCTION 3 "February 03, 2016" "libcurl 7.54.0" "curl_multi_setopt options"
+.TH CURLMOPT_PUSHFUNCTION 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLMOPT_PUSHFUNCTION \- callback that approves or denies server pushes
@@ -35,7 +37,7 @@ int curl_push_callback(CURL *parent,
                        CURL *easy,
                        size_t num_headers,
                        struct curl_pushheaders *headers,
-                       void *userp);
+                       void *clientp);
 
 CURLMcode curl_multi_setopt(CURLM *handle, CURLMOPT_PUSHFUNCTION,
                             curl_push_callback func);
@@ -48,9 +50,9 @@ pushes will be denied automatically.
 The callback gets its arguments like this:
 
 \fIparent\fP is the handle of the stream on which this push arrives. The new
-handle has been duphandle()d from the parent, meaning that it has gotten all
-its options inherited. It is then up to the application to alter any options
-if desired.
+handle has been duplicated from the parent, meaning that it has gotten all its
+options inherited. It is then up to the application to alter any options if
+desired.
 
 \fIeasy\fP is a newly created handle that represents this upcoming transfer.
 
@@ -62,7 +64,7 @@ functions described below. This only accesses and provides the PUSH_PROMISE
 headers, the normal response headers will be provided in the header callback
 as usual.
 
-\fIuserp\fP is the pointer set with \fICURLMOPT_PUSHDATA(3)\fP
+\fIclientp\fP is the pointer set with \fICURLMOPT_PUSHDATA(3)\fP
 
 If the callback returns CURL_PUSH_OK, the 'easy' handle will be added to the
 multi handle, the callback must not do that by itself.
@@ -72,11 +74,11 @@ functions. These functions can only be used from within this callback and they
 can only access the PUSH_PROMISE headers. The normal response headers will be
 passed to the header callback for pushed streams just as for normal streams.
 .IP curl_pushheader_bynum
-Returns the header at index 'num' (or NULL). The returned pointer points to a
-"name:value" string that will be freed when this callback returns.
+Returns the header at index \fInum\fP (or NULL). The returned pointer points
+to a "name:value" string that will be freed when this callback returns.
 .IP curl_pushheader_byname
 Returns the value for the given header name (or NULL). This is a shortcut so
-that the application doesn't have to loop through all headers to find the one
+that the application does not have to loop through all headers to find the one
 it is interested in. The data pointed will be freed when this callback
 returns. If more than one header field use the same name, this returns only
 the first one.
@@ -87,6 +89,9 @@ the ownership of the CURL handle has been taken over by the application.
 .IP "CURL_PUSH_DENY (1)"
 The callback denies the stream and no data for this will reach the
 application, the easy handle will be destroyed by libcurl.
+.IP "CURL_PUSH_ERROROUT (2)"
+Returning this will reject the pushed stream and return an error back on the
+parent stream making it get closed with an error. (Added in 7.72.0)
 .IP *
 All other return codes are reserved for future use.
 .SH DEFAULT
@@ -100,10 +105,10 @@ int push_callback(CURL *parent,
                   CURL *easy,
                   size_t num_headers,
                   struct curl_pushheaders *headers,
-                  void *userp)
+                  void *clientp)
 {
   char *headp;
-  int *transfers = (int *)userp;
+  int *transfers = (int *)clientp;
   FILE *out;
   headp = curl_pushheader_byname(headers, ":path");
   if(headp && !strncmp(headp, "/push-", 6)) {

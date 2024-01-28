@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 /*
@@ -48,7 +50,7 @@ static int progressKiller(void *arg,
 int test(char *URL)
 {
   CURL *curl;
-  int res=0;
+  int res = 0;
 
   global_init(CURL_GLOBAL_ALL);
 
@@ -57,8 +59,10 @@ int test(char *URL)
   easy_setopt(curl, CURLOPT_URL, URL);
   easy_setopt(curl, CURLOPT_TIMEOUT, (long)7);
   easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
-  easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progressKiller);
-  easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
+  CURL_IGNORE_DEPRECATION(
+    easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progressKiller);
+    easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
+  )
   easy_setopt(curl, CURLOPT_NOPROGRESS, (long)0);
 
   res = curl_easy_perform(curl);

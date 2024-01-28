@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,10 +18,13 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 #include "curlcheck.h"
 
-#include "dotdot.h"
+/* copied from urlapi.c */
+extern int dedotdotify(const char *input, size_t clen, char **out);
 
 #include "memdebug.h"
 
@@ -43,7 +46,7 @@ struct dotdot {
 UNITTEST_START
 
   unsigned int i;
-  int fails=0;
+  int fails = 0;
   const struct dotdot pairs[] = {
     { "/a/b/c/./../../g", "/a/g" },
     { "mid/content=5/../6", "mid/6" },
@@ -55,30 +58,45 @@ UNITTEST_START
     { "/1/./..", "/" },
     { "/1/./../2", "/2" },
     { "/hello/1/./../2", "/hello/2" },
-    { "test/this", "test/this" },
+    { "test/this", NULL },
     { "test/this/../now", "test/now" },
     { "/1../moo../foo", "/1../moo../foo"},
     { "/../../moo", "/moo"},
-    { "/../../moo?andnot/../yay", "/moo?andnot/../yay"},
-    { "/123?foo=/./&bar=/../", "/123?foo=/./&bar=/../"},
-    { "/../moo/..?what", "/?what" },
-    { "/", "/" },
-    { "", "" },
+    { "/../../moo?", "/moo?"},
+    { "/123?", NULL},
+    { "/../moo/..?", "/" },
+    { "/", NULL },
+    { "", NULL },
     { "/.../", "/.../" },
+    { "./moo", "moo" },
+    { "../moo", "moo" },
+    { "/.", "/" },
+    { "/..", "/" },
+    { "/moo/..", "/" },
+    { "/..", "/" },
+    { "/.", "/" },
   };
 
-  for(i=0; i < sizeof(pairs)/sizeof(pairs[0]); i++) {
-    char *out = Curl_dedotdotify((char *)pairs[i].input);
-    abort_unless(out != NULL, "returned NULL!");
+  for(i = 0; i < sizeof(pairs)/sizeof(pairs[0]); i++) {
+    char *out;
+    int err = dedotdotify(pairs[i].input, strlen(pairs[i].input), &out);
+    abort_unless(err == 0, "returned error");
+    abort_if(err && out, "returned error with output");
 
-    if(strcmp(out, pairs[i].output)) {
-      fprintf(stderr, "Test %d: '%s' gave '%s' instead of '%s'\n",
+    if(out && strcmp(out, pairs[i].output)) {
+      fprintf(stderr, "Test %u: '%s' gave '%s' instead of '%s'\n",
               i, pairs[i].input, out, pairs[i].output);
       fail("Test case output mismatched");
       fails++;
     }
+    else if(!out && pairs[i].output) {
+      fprintf(stderr, "Test %u: '%s' gave '%s' instead of NULL\n",
+              i, pairs[i].input, out);
+      fail("Test case output mismatched");
+      fails++;
+    }
     else
-      fprintf(stderr, "Test %d: OK\n", i);
+      fprintf(stderr, "Test %u: OK\n", i);
     free(out);
   }
 

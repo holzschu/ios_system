@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 
@@ -30,9 +32,9 @@
 
 #define POSTLEN 40960
 
-static size_t myreadfunc(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t myreadfunc(char *ptr, size_t size, size_t nmemb, void *stream)
 {
-  static size_t total=POSTLEN;
+  static size_t total = POSTLEN;
   static char buf[1024];
   (void)stream;
 
@@ -60,7 +62,7 @@ int test(char *URL)
   CURL *curl;
   CURLcode res = CURLE_FAILED_INIT;
   int i;
-  struct curl_slist *headerlist=NULL, *hl;
+  struct curl_slist *headerlist = NULL, *hl;
 
   if(curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
     fprintf(stderr, "curl_global_init() failed\n");
@@ -75,9 +77,9 @@ int test(char *URL)
   }
 
   for(i = 0; i < NUM_HEADERS; i++) {
-    int len = snprintf(buf, sizeof(buf), "Header%d: ", i);
+    int len = msnprintf(buf, sizeof(buf), "Header%d: ", i);
     memset(&buf[len], 'A', SIZE_HEADERS);
-    buf[len + SIZE_HEADERS]=0; /* zero terminate */
+    buf[len + SIZE_HEADERS] = 0; /* null-terminate */
     hl = curl_slist_append(headerlist,  buf);
     if(!hl)
       goto test_cleanup;
@@ -92,10 +94,6 @@ int test(char *URL)
   test_setopt(curl, CURLOPT_URL, URL);
   test_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
   test_setopt(curl, CURLOPT_POST, 1L);
-#ifdef CURL_DOES_CONVERSIONS
-  /* Convert the POST data to ASCII */
-  test_setopt(curl, CURLOPT_TRANSFERTEXT, 1L);
-#endif
   test_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)POSTLEN);
   test_setopt(curl, CURLOPT_VERBOSE, 1L);
   test_setopt(curl, CURLOPT_HEADER, 1L);

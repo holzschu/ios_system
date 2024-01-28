@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 
@@ -29,7 +31,7 @@
 
    Requires libuv and (of course) libcurl.
 
-   See https://nikhilm.github.com/uvbook/ for more information on libuv.
+   See https://nikhilm.github.io/uvbook/ for more information on libuv.
 */
 
 #include <stdio.h>
@@ -46,11 +48,11 @@ typedef struct curl_context_s {
   curl_socket_t sockfd;
 } curl_context_t;
 
-static curl_context_t* create_curl_context(curl_socket_t sockfd)
+static curl_context_t *create_curl_context(curl_socket_t sockfd)
 {
   curl_context_t *context;
 
-  context = (curl_context_t *) malloc(sizeof *context);
+  context = (curl_context_t *) malloc(sizeof(*context));
 
   context->sockfd = sockfd;
 
@@ -148,7 +150,7 @@ static void curl_perform(uv_poll_t *req, int status, int events)
   check_multi_info();
 }
 
-static void on_timeout(uv_timer_t *req, int status)
+static void on_timeout(uv_timer_t *req)
 {
   int running_handles;
   curl_multi_socket_action(curl_handle, CURL_SOCKET_TIMEOUT, 0,
@@ -163,7 +165,7 @@ static int start_timeout(CURLM *multi, long timeout_ms, void *userp)
   }
   else {
     if(timeout_ms == 0)
-      timeout_ms = 1; /* 0 means directly call socket_action, but we'll do it
+      timeout_ms = 1; /* 0 means directly call socket_action, but we will do it
                          in a bit */
     uv_timer_start(&timeout, on_timeout, timeout_ms, 0);
   }

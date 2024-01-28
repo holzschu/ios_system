@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,9 +18,11 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_USERNAME 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_USERNAME 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLOPT_USERNAME \- user name to use in authentication
@@ -31,7 +33,7 @@ CURLOPT_USERNAME \- user name to use in authentication
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_USERNAME,
                           char *username);
 .SH DESCRIPTION
-Pass a char * as parameter, which should be pointing to the zero terminated
+Pass a char * as parameter, which should be pointing to the null-terminated
 user name to use for the transfer.
 
 \fICURLOPT_USERNAME(3)\fP sets the user name to be used in protocol
@@ -40,7 +42,7 @@ authentication. You should not use this option together with the (older)
 
 When using Kerberos V5 authentication with a Windows based server, you should
 include the domain name in order for the server to successfully obtain a
-Kerberos Ticket. If you don't then the initial part of the authentication
+Kerberos Ticket. If you do not then the initial part of the authentication
 handshake may fail.
 
 When using NTLM, the user name can be specified simply as the user name
@@ -64,7 +66,18 @@ blank
 .SH PROTOCOLS
 Most
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/foo.bin");
+
+  curl_easy_setopt(curl, CURLOPT_USERNAME, "clark");
+
+  ret = curl_easy_perform(curl);
+
+  curl_easy_cleanup(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.19.1
 .SH RETURN VALUE

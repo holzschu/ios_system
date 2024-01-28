@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,21 +18,25 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSL_VERIFYPEER 3 "February 09, 2017" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_SSL_VERIFYPEER 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLOPT_SSL_VERIFYPEER \- verify the peer's SSL certificate
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_SSL_VERIFYPEER, long verify);
+.fi
 .SH DESCRIPTION
 Pass a long as parameter to enable or disable.
 
 This option determines whether curl verifies the authenticity of the peer's
-certificate. A value of 1 means curl verifies; 0 (zero) means it doesn't.
+certificate. A value of 1 means curl verifies; 0 (zero) means it does not.
 
 When negotiating a TLS or SSL connection, the server sends a certificate
 indicating its identity.  Curl verifies whether the certificate is authentic,
@@ -50,7 +54,7 @@ option is zero, the peer certificate verification succeeds regardless.
 Authenticating the certificate is not enough to be sure about the server. You
 typically also want to ensure that the server is the server you mean to be
 talking to.  Use \fICURLOPT_SSL_VERIFYHOST(3)\fP for that. The check that the
-host name in the certificate is valid for the host name you're connecting to
+host name in the certificate is valid for the host name you are connecting to
 is done independently of the \fICURLOPT_SSL_VERIFYPEER(3)\fP option.
 
 WARNING: disabling verification of the certificate allows bad guys to
@@ -58,6 +62,11 @@ man-in-the-middle the communication without you knowing it. Disabling
 verification makes the communication insecure. Just having encryption on a
 transfer is not enough as you cannot be sure that you are communicating with
 the correct end-point.
+
+When libcurl uses secure protocols it trusts responses and allows for example
+HSTS and Alt-Svc information to be stored and used subsequently. Disabling
+certificate verification can make libcurl trust and use such information from
+malicious servers.
 .SH DEFAULT
 By default, curl assumes a value of 1.
 .SH PROTOCOLS
@@ -82,3 +91,4 @@ Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .BR CURLOPT_SSL_VERIFYHOST "(3), "
 .BR CURLOPT_PROXY_SSL_VERIFYPEER "(3), "
 .BR CURLOPT_PROXY_SSL_VERIFYHOST "(3), "
+.BR CURLOPT_CAINFO "(3), "

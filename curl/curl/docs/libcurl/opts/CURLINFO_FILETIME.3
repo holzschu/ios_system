@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,26 +18,33 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_FILETIME 3 "April 03, 2017" "libcurl 7.54.0" "curl_easy_getinfo options"
+.TH CURLINFO_FILETIME 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLINFO_FILETIME \- get the remote time of the retrieved document
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_getinfo(CURL *handle, CURLINFO_FILETIME, long *timep);
+.fi
 .SH DESCRIPTION
 Pass a pointer to a long to receive the remote time of the retrieved document
-(in number of seconds since 1 jan 1970 in the GMT/UTC time zone). If you get
+in number of seconds since January 1 1970 in the GMT/UTC time zone. If you get
 -1, it can be because of many reasons (it might be unknown, the server might
-hide it or the server doesn't support the command that tells document time
+hide it or the server does not support the command that tells document time
 etc) and the time of the document is unknown.
 
-Note that you must tell the server to collect this information before the
-transfer is made, by using the \fICURLOPT_FILETIME(3)\fP option to
-\fIcurl_easy_setopt(3)\fP or you will unconditionally get a -1 back.
+You must tell libcurl to collect this information before the transfer is made,
+by using the \fICURLOPT_FILETIME(3)\fP option to \fIcurl_easy_setopt(3)\fP or
+you will unconditionally get a -1 back.
+
+Consider using \fICURLINFO_FILETIME_T(3)\fP to be able to extract dates beyond
+the year 2038 on systems using 32 bit longs.
 .SH PROTOCOLS
 HTTP(S), FTP(S), SFTP
 .SH EXAMPLE

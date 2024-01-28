@@ -6,11 +6,11 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 2010-2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at https://curl.haxx.se/docs/copyright.html.
+# are also available at https://curl.se/docs/copyright.html.
 #
 # You may opt to use, copy, modify, merge, publish, distribute and/or sell
 # copies of the Software, and permit persons to whom the Software is
@@ -19,10 +19,12 @@
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
 #
+# SPDX-License-Identifier: curl
+#
 ###########################################################################
 #
 # This script grew out of help from Przemyslaw Iskra and Balint Szilakszi
-# a late evening in the #curl IRC channel on freenode.
+# a late evening in the #curl IRC channel.
 #
 
 use strict;
@@ -51,46 +53,95 @@ my $root=$ARGV[0] || ".";
 # need an include directory when building out-of-tree
 my $i = ($ARGV[1]) ? "-I$ARGV[1] " : '';
 
-my $h = "$root/include/curl/curl.h";
-my $mh = "$root/include/curl/multi.h";
-
 my $verbose=0;
 my $summary=0;
 my $misses=0;
 
+my @manrefs;
 my @syms;
 my %doc;
 my %rem;
 
-open H_IN, "-|", "$Cpreprocessor $i$h" || die "Cannot preprocess curl.h";
-while ( <H_IN> ) {
-    if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
-        s/^\s+//;
-        next unless /^CURL/;
-        chomp;
-        s/[,\s].*//;
-        push @syms, $_;
+# scanenum runs the preprocessor on curl.h so it will process all enums
+# included by it, which *should* be all headers
+sub scanenum {
+    my ($file) = @_;
+    open my $h_in, "-|", "$Cpreprocessor $i$file" || die "Cannot preprocess $file";
+    while ( <$h_in> ) {
+        if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
+            s/^\s+//;
+            next unless /^CURL/;
+            chomp;
+            s/[,\s].*//;
+            push @syms, $_;
+        }
     }
+    close $h_in || die "Error preprocessing $file";
 }
-close H_IN || die "Error preprocessing curl.h";
 
 sub scanheader {
     my ($f)=@_;
-    open H, "<$f";
-    while(<H>) {
-        if (/^#define (CURL[A-Za-z0-9_]*)/) {
+    open my $h, "<", "$f";
+    while(<$h>) {
+        if (/^#define ((LIB|)CURL[A-Za-z0-9_]*)/) {
             push @syms, $1;
         }
     }
-    close H;
+    close $h;
 }
 
-scanheader($h);
-scanheader($mh);
+sub scanallheaders {
+    my $d = "$root/include/curl";
+    opendir(my $dh, $d) ||
+        die "Can't opendir: $!";
+    my @headers = grep { /.h\z/ } readdir($dh);
+    closedir $dh;
+    foreach my $h (@headers) {
+        scanenum("$d/$h");
+        scanheader("$d/$h");
+    }
+}
 
-open S, "<$root/docs/libcurl/symbols-in-versions";
-while(<S>) {
-    if(/(^CURL[^ \n]*) *(.*)/) {
+sub checkmanpage {
+    my ($m) = @_;
+
+    open(my $mh, "<", "$m");
+    my $line = 1;
+    while(<$mh>) {
+        # strip off formatting
+        $_ =~ s/\\f[BPRI]//;
+        # detect global-looking 'CURL[BLABLA]_*' symbols
+        while(s/\W(CURL(AUTH|E|H|MOPT|OPT|SHOPT|UE|M|SSH|SSLBACKEND|HEADER|FORM|FTP|PIPE|MIMEOPT|GSSAPI|ALTSVC|PROTO|PROXY|UPART|USESSL|_READFUNC|_WRITEFUNC|_CSELECT|_FORMADD|_IPRESOLVE|_REDIR|_RTSPREQ|_TIMECOND|_VERSION)_[a-zA-Z0-9_]+)//) {
+            my $s = $1;
+            # skip two "special" ones
+            if($s !~ /^(CURLE_OBSOLETE|CURLOPT_TEMPLATE)/) {
+                push @manrefs, "$1:$m:$line";
+            }
+        }
+        $line++;
+    }
+    close($mh);
+}
+
+sub scanman3dir {
+    my ($d) = @_;
+    opendir(my $dh, $d) ||
+        die "Can't opendir: $!";
+    my @mans = grep { /.3\z/ } readdir($dh);
+    closedir $dh;
+    for my $m (@mans) {
+        checkmanpage("$d/$m");
+    }
+}
+
+
+scanallheaders();
+scanman3dir("$root/docs/libcurl");
+scanman3dir("$root/docs/libcurl/opts");
+
+open my $s, "<", "$root/docs/libcurl/symbols-in-versions";
+while(<$s>) {
+    if(/(^[^ \n]+) +(.*)/) {
         my ($sym, $rest)=($1, $2);
         if($doc{$sym}) {
             print "Detected duplicate symbol: $sym\n";
@@ -106,7 +157,7 @@ while(<S>) {
         }
     }
 }
-close S;
+close $s;
 
 my $ignored=0;
 for my $e (sort @syms) {
@@ -117,11 +168,13 @@ for my $e (sort @syms) {
     # CURL_EXTERN - is a define used for libcurl functions that are external,
     # public. No app or other code should ever use it.
     #
+    # CURLINC_ - defines for header dual-include prevention, ignore those.
+    #
     # *_LAST and *_LASTENTRY are just prefix for the placeholders used for the
     # last entry in many enum series.
     #
 
-    if($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
+    if($e =~ /(OBSOLETE|^CURL_EXTERN|^CURLINC_|_LAST\z|_LASTENTRY\z)/) {
         $ignored++;
         next;
     }
@@ -161,6 +214,17 @@ for my $e (sort keys %doc) {
     }
 }
 
+my %warned;
+for my $r (@manrefs) {
+    if($r =~ /^([^:]+):(.*)/) {
+        my ($sym, $file)=($1, $2);
+        if(!$doc{$sym} && !$warned{$sym, $file}) {
+            print "$file: $sym is not a public symbol\n";
+            $warned{$sym, $file} = 1;
+        }
+    }
+}
+
 if($summary) {
     print "Summary:\n";
     printf "%d symbols in headers (out of which %d are ignored)\n", scalar(@syms),
@@ -172,5 +236,8 @@ if($summary) {
 }
 
 if($misses) {
-    exit 2; # there are stuff to attend to!
+    exit 0; # there are stuff to attend to!
+}
+else {
+    print "OK\n";
 }

@@ -6,11 +6,11 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at https://curl.haxx.se/docs/copyright.html.
+# are also available at https://curl.se/docs/copyright.html.
 #
 # You may opt to use, copy, modify, merge, publish, distribute and/or sell
 # copies of the Software, and permit persons to whom the Software is
@@ -18,6 +18,8 @@
 #
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
+#
+# SPDX-License-Identifier: curl
 #
 ###########################################################################
 
@@ -31,8 +33,8 @@
 # at a regular interval. The output is suitable to be mailed to
 # curl-autocompile@haxx.se to be dealt with automatically (make sure the
 # subject includes the word "autobuild" as the mail gets silently discarded
-# otherwise).  The most current build status (with a resonable backlog) will
-# be published on the curl site, at https://curl.haxx.se/auto/
+# otherwise).  The most current build status (with a reasonable backlog) will
+# be published on the curl site, at https://curl.se/auto/
 
 # USAGE:
 # testcurl.pl [options] [curl-daily-name] > output
@@ -75,7 +77,7 @@ use vars qw($name $email $desc $confopts $runtestopts $setupfile $mktarball
             $timestamp $notes);
 
 # version of this script
-$version='2014-11-25';
+$version='2023-03-28';
 $fixed=0;
 
 # Determine if we're running from git or a canned copy of curl,
@@ -151,7 +153,7 @@ if ($^O eq 'MSWin32' || $targetos) {
     # If no target defined on Win32 lets assume vc
     $targetos = 'vc';
   }
-  if ($targetos =~ /vc/ || $targetos =~ /borland/ || $targetos =~ /watcom/) {
+  if ($targetos =~ /vc/ || $targetos =~ /borland/) {
     $binext = '.exe';
     $libext = '.lib';
   }
@@ -161,21 +163,11 @@ if ($^O eq 'MSWin32' || $targetos) {
       $libext = '.a';
     }
   }
-  elsif ($targetos =~ /netware/) {
-    $configurebuild = 0;
-    $binext = '.nlm';
-    if ($^O eq 'MSWin32') {
-      $libext = '.lib';
-    }
-    else {
-      $libext = '.a';
-    }
-  }
 }
 
-if (($^O eq 'MSWin32' || $^O eq 'msys') &&
+if (($^O eq 'MSWin32' || $^O eq 'cygwin' || $^O eq 'msys') &&
     ($targetos =~ /vc/ || $targetos =~ /mingw32/ ||
-     $targetos =~ /borland/ || $targetos =~ /watcom/)) {
+     $targetos =~ /borland/)) {
 
   # Set these things only when building ON Windows and for Win32 platform.
   # FOR Windows since we might be cross-compiling on another system. Non-
@@ -203,14 +195,14 @@ sub rmtree($) {
 
 sub grepfile($$) {
     my ($target, $fn) = @_;
-    open(F, $fn) or die;
-    while (<F>) {
+    open(my $fh, "<", $fn) or die;
+    while (<$fh>) {
       if (/$target/) {
-        close(F);
+        close($fh);
         return 1;
       }
     }
-    close(F);
+    close($fh);
     return 0;
 }
 
@@ -251,14 +243,14 @@ sub get_host_triplet {
   my $triplet;
   my $configfile = "$pwd/$build/lib/curl_config.h";
 
-  if(-f $configfile && -s $configfile && open(LIBCONFIGH, "<$configfile")) {
-    while(<LIBCONFIGH>) {
+  if(-f $configfile && -s $configfile && open(my $libconfigh, "<", "$configfile")) {
+    while(<$libconfigh>) {
       if($_ =~ /^\#define\s+OS\s+"*([^"][^"]*)"*\s*/) {
         $triplet = $1;
         last;
       }
     }
-    close(LIBCONFIGH);
+    close($libconfigh);
   }
   return $triplet;
 }
@@ -269,13 +261,13 @@ if($name && $email && $desc) {
   $infixed=4;
   $fixed=4;
 }
-elsif (open(F, "$setupfile")) {
-  while (<F>) {
+elsif (open(my $f, "<", "$setupfile")) {
+  while (<$f>) {
     if (/(\w+)=(.*)/) {
       eval "\$$1=$2;";
     }
   }
-  close(F);
+  close($f);
   $infixed=$fixed;
 }
 else {
@@ -306,7 +298,7 @@ if (!$desc) {
 if (!$confopts) {
   if ($infixed < 4) {
     print "please enter your additional arguments to configure\n";
-    print "examples: --with-ssl --enable-debug --enable-ipv6 --with-krb4\n";
+    print "examples: --with-openssl --enable-debug --enable-ipv6\n";
     $confopts = <>;
     chomp $confopts;
   }
@@ -315,14 +307,14 @@ if (!$confopts) {
 
 if ($fixed < 4) {
     $fixed=4;
-    open(F, ">$setupfile") or die;
-    print F "name='$name'\n";
-    print F "email='$email'\n";
-    print F "desc='$desc'\n";
-    print F "confopts='$confopts'\n";
-    print F "notes='$notes'\n";
-    print F "fixed='$fixed'\n";
-    close(F);
+    open(my $f, ">", "$setupfile") or die;
+    print $f "name='$name'\n";
+    print $f "email='$email'\n";
+    print $f "desc='$desc'\n";
+    print $f "confopts='$confopts'\n";
+    print $f "notes='$notes'\n";
+    print $f "fixed='$fixed'\n";
+    close($f);
 }
 
 # Enable picky compiler warnings unless explicitly disabled
@@ -476,26 +468,18 @@ if ($git) {
     unlink "autom4te.cache";
 
     # generate the build files
-    logit "invoke buildconf";
-    open(F, "./buildconf 2>&1 |") or die;
-    open(LOG, ">$buildlog") or die;
-    while (<F>) {
+    logit "invoke autoreconf";
+    open(my $f, "-|", "autoreconf -fi 2>&1") or die;
+    open(my $log, ">", "$buildlog") or die;
+    while (<$f>) {
       my $ll = $_;
-      # ignore messages pertaining to third party m4 files we don't care
-      next if ($ll =~ /aclocal\/gtk\.m4/);
-      next if ($ll =~ /aclocal\/gtkextra\.m4/);
       print $ll;
-      print LOG $ll;
+      print $log $ll;
     }
-    close(F);
-    close(LOG);
+    close($f);
+    close($log);
 
-    if (grepfile("^buildconf: OK", $buildlog)) {
-      logit "buildconf was successful";
-    }
-    else {
-      mydie "buildconf was NOT successful";
-    }
+    logit "buildconf was successful";
   }
   else {
     logit "buildconf was successful (dummy message)";
@@ -504,8 +488,8 @@ if ($git) {
 
 # Set timestamp to the one in curlver.h if this isn't a git test build.
 if ((-f "include/curl/curlver.h") &&
-    (open(F, "<include/curl/curlver.h"))) {
-  while (<F>) {
+    (open(my $f, "<", "include/curl/curlver.h"))) {
+  while (<$f>) {
     chomp;
     if ($_ =~ /^\#define\s+LIBCURL_TIMESTAMP\s+\"(.+)\".*$/) {
       my $stampstring = $1;
@@ -516,7 +500,7 @@ if ((-f "include/curl/curlver.h") &&
       last;
     }
   }
-  close(F);
+  close($f);
 }
 
 # Show timestamp we are using for this test build.
@@ -554,8 +538,6 @@ if(!$make) {
 }
 # force to 'nmake' for VC builds
 $make = "nmake" if ($targetos =~ /vc/);
-# force to 'wmake' for Watcom builds
-$make = "wmake" if ($targetos =~ /watcom/);
 logit "going with $make as make";
 
 # change to build dir
@@ -572,23 +554,13 @@ if ($configurebuild) {
   }
 } else {
   logit "copying files to build dir ...";
-  if (($^O eq 'MSWin32') && ($targetos !~ /netware/)) {
+  if ($^O eq 'MSWin32') {
     system("xcopy /s /q \"$CURLDIR\" .");
     system("buildconf.bat");
-  }
-  elsif ($targetos =~ /netware/) {
-    system("cp -afr $CURLDIR/* .");
-    system("cp -af $CURLDIR/Makefile.dist Makefile");
-    system("$make -i -C lib -f Makefile.netware prebuild");
-    system("$make -i -C src -f Makefile.netware prebuild");
-    if (-d "$CURLDIR/ares") {
-      system("$make -i -C ares -f Makefile.netware prebuild");
-    }
   }
   elsif ($^O eq 'linux') {
     system("cp -afr $CURLDIR/* .");
     system("cp -af $CURLDIR/Makefile.dist Makefile");
-    system("cp -af $CURLDIR/include/curl/curlbuild.h.dist ./include/curl/curlbuild.h");
     system("$make -i -C lib -f Makefile.$targetos prebuild");
     system("$make -i -C src -f Makefile.$targetos prebuild");
     if (-d "$CURLDIR/ares") {
@@ -600,35 +572,21 @@ if ($configurebuild) {
 
 if(-f "./libcurl.pc") {
   logit_spaced "display libcurl.pc";
-  if(open(F, "<./libcurl.pc")) {
-    while(<F>) {
+  if(open(my $f, "<", "libcurl.pc")) {
+    while(<$f>) {
       my $ll = $_;
       print $ll if(($ll !~ /^ *#/) && ($ll !~ /^ *$/));
     }
-    close(F);
+    close($f);
   }
-}
-
-if(-f "./include/curl/curlbuild.h") {
-  logit_spaced "display include/curl/curlbuild.h";
-  if(open(F, "<./include/curl/curlbuild.h")) {
-    while(<F>) {
-      my $ll = $_;
-      print $ll if(($ll =~ /^ *# *define *CURL_/) && ($ll !~ /__CURL_CURLBUILD_H/));
-    }
-    close(F);
-  }
-}
-else {
-  mydie "no curlbuild.h created/found";
 }
 
 logit_spaced "display lib/$confheader";
-open(F, "lib/$confheader") or die "lib/$confheader: $!";
-while (<F>) {
+open(my $f, "<", "lib/$confheader") or die "lib/$confheader: $!";
+while (<$f>) {
   print if /^ *#/;
 }
-close(F);
+close($f);
 
 if (($have_embedded_ares) &&
     (grepfile("^#define USE_ARES", "lib/$confheader"))) {
@@ -637,23 +595,23 @@ if (($have_embedded_ares) &&
 
   if(-f "./ares/libcares.pc") {
     logit_spaced  "display ares/libcares.pc";
-    if(open(F, "<./ares/libcares.pc")) {
-      while(<F>) {
+    if(open($f, "<", "ares/libcares.pc")) {
+      while(<$f>) {
         my $ll = $_;
         print $ll if(($ll !~ /^ *#/) && ($ll !~ /^ *$/));
       }
-      close(F);
+      close($f);
     }
   }
 
   if(-f "./ares/ares_build.h") {
     logit_spaced "display ares/ares_build.h";
-    if(open(F, "<./ares/ares_build.h")) {
-      while(<F>) {
+    if(open($f, "<", "ares/ares_build.h")) {
+      while(<$f>) {
         my $ll = $_;
         print $ll if(($ll =~ /^ *# *define *CARES_/) && ($ll !~ /__CARES_BUILD_H/));
       }
-      close(F);
+      close($f);
     }
   }
   else {
@@ -662,11 +620,11 @@ if (($have_embedded_ares) &&
 
   $confheader =~ s/curl/ares/;
   logit_spaced "display ares/$confheader";
-  if(open(F, "ares/$confheader")) {
-      while (<F>) {
+  if(open($f, "<", "ares/$confheader")) {
+      while (<$f>) {
           print if /^ *#/;
       }
-      close(F);
+      close($f);
   }
 
   print "\n";
@@ -675,17 +633,17 @@ if (($have_embedded_ares) &&
 
   if ($targetos && !$configurebuild) {
       logit "$make -f Makefile.$targetos";
-      open(F, "$make -f Makefile.$targetos 2>&1 |") or die;
+      open($f, "-|", "$make -f Makefile.$targetos 2>&1") or die;
   }
   else {
       logit "$make";
-      open(F, "$make 2>&1 |") or die;
+      open($f, "-|", "$make 2>&1") or die;
   }
-  while (<F>) {
+  while (<$f>) {
     s/$pwd//g;
     print;
   }
-  close(F);
+  close($f);
 
   if (-f "libcares$libext") {
     logit "ares is now built successfully (libcares$libext)";
@@ -699,12 +657,12 @@ if (($have_embedded_ares) &&
 
 my $mkcmd = "$make -i" . ($targetos && !$configurebuild ? " $targetos" : "");
 logit "$mkcmd";
-open(F, "$mkcmd 2>&1 |") or die;
-while (<F>) {
+open(my $f, "-|", "$mkcmd 2>&1") or die;
+while (<$f>) {
   s/$pwd//g;
   print;
 }
-close(F);
+close($f);
 
 if (-f "lib/libcurl$libext") {
   logit "libcurl was created fine (libcurl$libext)";
@@ -723,13 +681,13 @@ else {
 if (!$crosscompile || (($extvercmd ne '') && (-x $extvercmd))) {
   logit "display curl${binext} --version output";
   my $cmd = ($extvercmd ne '' ? $extvercmd.' ' : '')."./src/curl${binext} --version|";
-  open(F, $cmd);
-  while(<F>) {
+  open($f, "<", $cmd);
+  while(<$f>) {
     # strip CR from output on non-win32 platforms (wine on Linux)
     s/\r// if ($^O ne 'MSWin32');
     print;
   }
-  close(F);
+  close($f);
 }
 
 if ($configurebuild && !$crosscompile) {
@@ -741,15 +699,15 @@ if ($configurebuild && !$crosscompile) {
      ($host_triplet =~ /([^-]+)-([^-]+)-solaris2(.*)/)) {
     chdir "$pwd/$build/docs/examples";
     logit_spaced "build examples";
-    open(F, "$make -i 2>&1 |") or die;
-    open(LOG, ">$buildlog") or die;
-    while (<F>) {
+    open($f, "-|", "$make -i 2>&1") or die;
+    open(my $log, ">", "$buildlog") or die;
+    while (<$f>) {
       s/$pwd//g;
       print;
-      print LOG;
+      print $log $_;
     }
-    close(F);
-    close(LOG);
+    close($f);
+    close($log);
     chdir "$pwd/$build";
   }
   # build and run full test suite
@@ -758,15 +716,15 @@ if ($configurebuild && !$crosscompile) {
       $o = "TEST_F=\"$runtestopts\" ";
   }
   logit "$make -k ${o}test-full";
-  open(F, "$make -k ${o}test-full 2>&1 |") or die;
-  open(LOG, ">$buildlog") or die;
-  while (<F>) {
+  open($f, "-|", "$make -k ${o}test-full 2>&1") or die;
+  open(my $log, ">", "$buildlog") or die;
+  while (<$f>) {
     s/$pwd//g;
     print;
-    print LOG;
+    print $log $_;
   }
-  close(F);
-  close(LOG);
+  close($f);
+  close($log);
 
   if (grepfile("^TEST", $buildlog)) {
     logit "tests were run";
@@ -788,30 +746,30 @@ else {
        ($host_triplet =~ /([^-]+)-([^-]+)-android(.*)/)) {
       chdir "$pwd/$build/docs/examples";
       logit_spaced "build examples";
-      open(F, "$make -i 2>&1 |") or die;
-      open(LOG, ">$buildlog") or die;
-      while (<F>) {
+      open($f, "-|", "$make -i 2>&1") or die;
+      open(my $log, ">", "$buildlog") or die;
+      while (<$f>) {
         s/$pwd//g;
         print;
-        print LOG;
+        print $log $_;
       }
-      close(F);
-      close(LOG);
+      close($f);
+      close($log);
       chdir "$pwd/$build";
     }
     # build test harness programs for selected cross-compiles
     if($host_triplet =~ /([^-]+)-([^-]+)-mingw(.*)/) {
       chdir "$pwd/$build/tests";
       logit_spaced "build test harness";
-      open(F, "$make -i 2>&1 |") or die;
-      open(LOG, ">$buildlog") or die;
-      while (<F>) {
+      open(my $f, "-|", "$make -i 2>&1") or die;
+      open(my $log, ">", "$buildlog") or die;
+      while (<$f>) {
         s/$pwd//g;
         print;
-        print LOG;
+        print $log $_;
       }
-      close(F);
-      close(LOG);
+      close($f);
+      close($log);
       chdir "$pwd/$build";
     }
     logit_spaced "cross-compiling, can't run tests";

@@ -2,7 +2,7 @@
 #
 # xc-translit.m4
 #
-# Copyright (c) 2011 Daniel Stenberg <daniel@haxx.se>
+# Copyright (C), Daniel Stenberg <daniel@haxx.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# SPDX-License-Identifier: ISC
 #
 #---------------------------------------------------------------------------
 
@@ -161,4 +163,3 @@ dnl Expands to quoted result of 'translit' expansion.
 
 AC_DEFUN([XC_QTRANSLIT],
 [XC_QUOTE(translit([$1], [$2], [$3]))])
-

@@ -3,6 +3,7 @@
 <keywords>
 HTTP
 HTTP POST
+flaky
 </keywords>
 </info>
 
@@ -15,19 +16,22 @@ HTTP POST
 
 # Client-side
 <client>
+<features>
+Mime
+</features>
 <server>
 http
 </server>
 # tool is what to use instead of 'curl'
 <tool>
-lib587
+lib%TESTNUMBER
 </tool>
 
  <name>
 HTTP multi-part formpost with aborted read callback
  </name>
  <command>
-http://%HOSTIP:%HTTPPORT/587
+http://%HOSTIP:%HTTPPORT/%TESTNUMBER
 </command>
 </client>
 
@@ -39,11 +43,10 @@ s/^--------------------------[a-z0-9]*/------------------------------/
 s/boundary=------------------------[a-z0-9]*/boundary=----------------------------/
 </strippart>
 <protocol>
-POST /587 HTTP/1.1
+POST /%TESTNUMBER HTTP/1.1
 Host: %HOSTIP:%HTTPPORT
 Accept: */*
-Content-Length: 718
-Expect: 100-continue
+Content-Length: 744
 Content-Type: multipart/form-data; boundary=----------------------------
 
 ------------------------------

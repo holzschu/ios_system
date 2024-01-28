@@ -6,6 +6,7 @@ HTTP GET
 HTTP Basic auth
 HTTP NTLM auth
 flaky
+NTLM
 </keywords>
 </info>
 # Server-side
@@ -40,7 +41,7 @@ HTTP/1.1 401 NTLM intermediate (2)
 Server: Microsoft-IIS/5.0
 Content-Type: text/html; charset=iso-8859-1
 Content-Length: 33
-WWW-Authenticate: NTLM TlRMTVNTUAACAAAACAAIADAAAAAGggEAq6U1NAWaJCIAAAAAAAAAAAAAAAA4AAAATlRMTUF1dGg=
+WWW-Authenticate: NTLM TlRMTVNTUAACAAAACAAIADAAAACGgAEAq6U1NAWaJCIAAAAAAAAAAAAAAAA4AAAATlRMTUF1dGg=
 
 This is still not the real page!
 </data1201>
@@ -55,34 +56,9 @@ Finally, this is the real page!
 </data1202>
 
 <datacheck>
-HTTP/1.1 401 Need Basic or NTLM auth
-Server: Microsoft-IIS/5.0
-Content-Type: text/html; charset=iso-8859-1
-Content-Length: 29
-WWW-Authenticate: NTLM
-WWW-Authenticate: Basic realm="testrealm"
-
-This is a bad password page!
-HTTP/1.1 401 Need Basic or NTLM auth
-Server: Microsoft-IIS/5.0
-Content-Type: text/html; charset=iso-8859-1
-Content-Length: 29
-WWW-Authenticate: NTLM
-WWW-Authenticate: Basic realm="testrealm"
-
-This is a bad password page!
-HTTP/1.1 401 NTLM intermediate (2)
-Server: Microsoft-IIS/5.0
-Content-Type: text/html; charset=iso-8859-1
-Content-Length: 33
-WWW-Authenticate: NTLM TlRMTVNTUAACAAAACAAIADAAAAAGggEAq6U1NAWaJCIAAAAAAAAAAAAAAAA4AAAATlRMTUF1dGg=
-
-HTTP/1.1 200 Things are fine in server land
-Server: Microsoft-IIS/5.0
-Content-Type: text/html; charset=iso-8859-1
-Content-Length: 32
-
-Finally, this is the real page!
+Data connection 0: 228
+Data connection 1: 228
+Data connection 2: 402
 </datacheck>
 
 </reply>
@@ -91,6 +67,7 @@ Finally, this is the real page!
 <client>
 <features>
 NTLM
+SSL
 !SSPI
 </features>
 <server>
@@ -100,47 +77,35 @@ http
 libntlmconnect
 </tool>
 
- <name>
+<name>
 NTLM connection mapping
- </name>
- <setenv>
-# we force our own host name, in order to make the test machine independent
-CURL_GETHOSTNAME=curlhost
-# we try to use the LD_PRELOAD hack, if not a debug build
-LD_PRELOAD=%PWD/libtest/.libs/libhostname.so
- </setenv>
- <command>
-http://%HOSTIP:%HTTPPORT/2032
+</name>
+<command>
+http://%HOSTIP:%HTTPPORT/%TESTNUMBER
 </command>
-<precheck>
-chkhostname curlhost
-</precheck>
 </client>
 
 # Verify data after the test has been "shot"
 <verify>
-<strip>
-^User-Agent:.*
-</strip>
 <protocol>
-GET /20320100 HTTP/1.1
-Host: 127.0.0.1:%HTTPPORT
+GET /%TESTNUMBER0100 HTTP/1.1
+Host: %HOSTIP:%HTTPPORT
 Authorization: Basic dGVzdHVzZXI6dGVzdHBhc3M=
 Accept: */*
 
-GET /20320100 HTTP/1.1
-Host: 127.0.0.1:%HTTPPORT
+GET /%TESTNUMBER0100 HTTP/1.1
+Host: %HOSTIP:%HTTPPORT
 Authorization: Basic dGVzdHVzZXI6dGVzdHBhc3M=
 Accept: */*
 
-GET /20320200 HTTP/1.1
-Host: 127.0.0.1:%HTTPPORT
+GET /%TESTNUMBER0200 HTTP/1.1
+Host: %HOSTIP:%HTTPPORT
 Authorization: NTLM TlRMTVNTUAABAAAABoIIAAAAAAAAAAAAAAAAAAAAAAA=
 Accept: */*
 
-GET /20320200 HTTP/1.1
-Host: 127.0.0.1:%HTTPPORT
-Authorization: NTLM TlRMTVNTUAADAAAAGAAYAEAAAAAYABgAWAAAAAAAAABwAAAACAAIAHAAAAAIAAgAeAAAAAAAAAAAAAAABoIBAI+/Fp9IERAQ74OsdNPbBpg7o8CVwLSO4DtFyIcZHUMKVktWIu92s2892OVpd2JzqnRlc3R1c2VyY3VybGhvc3Q=
+GET /%TESTNUMBER0200 HTTP/1.1
+Host: %HOSTIP:%HTTPPORT
+Authorization: NTLM TlRMTVNTUAADAAAAGAAYAEAAAAAYABgAWAAAAAAAAABwAAAACAAIAHAAAAALAAsAeAAAAAAAAAAAAAAAhoABAI+/Fp9IERAQ74OsdNPbBpg7o8CVwLSO4DtFyIcZHUMKVktWIu92s2892OVpd2JzqnRlc3R1c2VyV09SS1NUQVRJT04=
 Accept: */*
 
 </protocol>

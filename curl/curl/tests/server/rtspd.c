@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include "server_setup.h"
@@ -32,6 +34,9 @@
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
@@ -70,11 +75,11 @@ static int serverlogslocked = 0;
 #define REQBUFSIZ 150000
 #define REQBUFSIZ_TXT "149999"
 
-static long prevtestno=-1;    /* previous test number we served */
-static long prevpartno=-1;    /* previous part number we served */
-static bool prevbounce=FALSE; /* instructs the server to increase the part
-                                 number for a test in case the identical
-                                 testno+partno request shows up again */
+static long prevtestno = -1;    /* previous test number we served */
+static long prevpartno = -1;    /* previous part number we served */
+static bool prevbounce = FALSE; /* instructs the server to increase the part
+                                   number for a test in case the identical
+                                   testno+partno request shows up again */
 
 #define RCMD_NORMALREQ 0 /* default request, use the tests file normally */
 #define RCMD_IDLE      1 /* told to sit idle */
@@ -128,11 +133,13 @@ static void storerequest(char *reqbuf, size_t totalsize);
 #endif
 
 const char *serverlogfile = DEFAULT_LOGFILE;
+const char *logdir = "log";
+char loglockfile[256];
 
 #define RTSPDVERSION "curl test suite RTSP server/0.1"
 
-#define REQUEST_DUMP  "log/server.input"
-#define RESPONSE_DUMP "log/server.response"
+#define REQUEST_DUMP  "server.input"
+#define RESPONSE_DUMP "server.response"
 
 /* very-big-path support */
 #define MAXDOCNAMELEN 140000
@@ -156,7 +163,7 @@ enum {
   DOCNUMBER_NOTHING = -7,
   DOCNUMBER_QUIT    = -6,
   DOCNUMBER_BADCONNECT = -5,
-  DOCNUMBER_INTERNAL= -4,
+  DOCNUMBER_INTERNAL = -4,
   DOCNUMBER_CONNECT = -3,
   DOCNUMBER_WERULEZ = -2,
   DOCNUMBER_404     = -1
@@ -196,152 +203,17 @@ static const char *doc404_RTSP = "RTSP/1.0 404 Not Found\r\n"
 
 /* Default size to send away fake RTP data */
 #define RTP_DATA_SIZE 12
-static const char *RTP_DATA = "$_1234\n\0asdf";
-
-/* do-nothing macro replacement for systems which lack siginterrupt() */
-
-#ifndef HAVE_SIGINTERRUPT
-#define siginterrupt(x,y) do {} while(0)
-#endif
-
-/* vars used to keep around previous signal handlers */
-
-typedef RETSIGTYPE (*SIGHANDLER_T)(int);
-
-#ifdef SIGHUP
-static SIGHANDLER_T old_sighup_handler  = SIG_ERR;
-#endif
-
-#ifdef SIGPIPE
-static SIGHANDLER_T old_sigpipe_handler = SIG_ERR;
-#endif
-
-#ifdef SIGALRM
-static SIGHANDLER_T old_sigalrm_handler = SIG_ERR;
-#endif
-
-#ifdef SIGINT
-static SIGHANDLER_T old_sigint_handler  = SIG_ERR;
-#endif
-
-#ifdef SIGTERM
-static SIGHANDLER_T old_sigterm_handler = SIG_ERR;
-#endif
-
-#if defined(SIGBREAK) && defined(WIN32)
-static SIGHANDLER_T old_sigbreak_handler = SIG_ERR;
-#endif
-
-/* var which if set indicates that the program should finish execution */
-
-SIG_ATOMIC_T got_exit_signal = 0;
-
-/* if next is set indicates the first signal handled in exit_signal_handler */
-
-static volatile int exit_signal = 0;
-
-/* signal handler that will be triggered to indicate that the program
-  should finish its execution in a controlled manner as soon as possible.
-  The first time this is called it will set got_exit_signal to one and
-  store in exit_signal the signal that triggered its execution. */
-
-static RETSIGTYPE exit_signal_handler(int signum)
-{
-  int old_errno = errno;
-  if(got_exit_signal == 0) {
-    got_exit_signal = 1;
-    exit_signal = signum;
-  }
-  (void)signal(signum, exit_signal_handler);
-  errno = old_errno;
-}
-
-static void install_signal_handlers(void)
-{
-#ifdef SIGHUP
-  /* ignore SIGHUP signal */
-  old_sighup_handler = signal(SIGHUP, SIG_IGN);
-  if(old_sighup_handler == SIG_ERR)
-    logmsg("cannot install SIGHUP handler: %s", strerror(errno));
-#endif
-#ifdef SIGPIPE
-  /* ignore SIGPIPE signal */
-  old_sigpipe_handler = signal(SIGPIPE, SIG_IGN);
-  if(old_sigpipe_handler == SIG_ERR)
-    logmsg("cannot install SIGPIPE handler: %s", strerror(errno));
-#endif
-#ifdef SIGALRM
-  /* ignore SIGALRM signal */
-  old_sigalrm_handler = signal(SIGALRM, SIG_IGN);
-  if(old_sigalrm_handler == SIG_ERR)
-    logmsg("cannot install SIGALRM handler: %s", strerror(errno));
-#endif
-#ifdef SIGINT
-  /* handle SIGINT signal with our exit_signal_handler */
-  old_sigint_handler = signal(SIGINT, exit_signal_handler);
-  if(old_sigint_handler == SIG_ERR)
-    logmsg("cannot install SIGINT handler: %s", strerror(errno));
-  else
-    siginterrupt(SIGINT, 1);
-#endif
-#ifdef SIGTERM
-  /* handle SIGTERM signal with our exit_signal_handler */
-  old_sigterm_handler = signal(SIGTERM, exit_signal_handler);
-  if(old_sigterm_handler == SIG_ERR)
-    logmsg("cannot install SIGTERM handler: %s", strerror(errno));
-  else
-    siginterrupt(SIGTERM, 1);
-#endif
-#if defined(SIGBREAK) && defined(WIN32)
-  /* handle SIGBREAK signal with our exit_signal_handler */
-  old_sigbreak_handler = signal(SIGBREAK, exit_signal_handler);
-  if(old_sigbreak_handler == SIG_ERR)
-    logmsg("cannot install SIGBREAK handler: %s", strerror(errno));
-  else
-    siginterrupt(SIGBREAK, 1);
-#endif
-}
-
-static void restore_signal_handlers(void)
-{
-#ifdef SIGHUP
-  if(SIG_ERR != old_sighup_handler)
-    (void)signal(SIGHUP, old_sighup_handler);
-#endif
-#ifdef SIGPIPE
-  if(SIG_ERR != old_sigpipe_handler)
-    (void)signal(SIGPIPE, old_sigpipe_handler);
-#endif
-#ifdef SIGALRM
-  if(SIG_ERR != old_sigalrm_handler)
-    (void)signal(SIGALRM, old_sigalrm_handler);
-#endif
-#ifdef SIGINT
-  if(SIG_ERR != old_sigint_handler)
-    (void)signal(SIGINT, old_sigint_handler);
-#endif
-#ifdef SIGTERM
-  if(SIG_ERR != old_sigterm_handler)
-    (void)signal(SIGTERM, old_sigterm_handler);
-#endif
-#if defined(SIGBREAK) && defined(WIN32)
-  if(SIG_ERR != old_sigbreak_handler)
-    (void)signal(SIGBREAK, old_sigbreak_handler);
-#endif
-}
+static const char *RTP_DATA = "$_1234\n\0Rsdf";
 
 static int ProcessRequest(struct httprequest *req)
 {
-  char *line=&req->reqbuf[req->checkindex];
+  char *line = &req->reqbuf[req->checkindex];
   bool chunked = FALSE;
   static char request[REQUEST_KEYWORD_SIZE];
   static char doc[MAXDOCNAMELEN];
   static char prot_str[5];
-  char logbuf[256];
   int prot_major, prot_minor;
-  char *end;
-  int error;
-  end = strstr(line, END_OF_HEADERS);
+  char *end = strstr(line, END_OF_HEADERS);
 
   logmsg("ProcessRequest() called with testno %ld and line [%s]",
          req->testno, line);
@@ -357,6 +229,7 @@ static int ProcessRequest(struct httprequest *req)
             &prot_major,
             &prot_minor) == 5) {
     char *ptr;
+    char logbuf[256];
 
     if(!strcmp(prot_str, "HTTP")) {
       req->protocol = RPROT_HTTP;
@@ -378,14 +251,12 @@ static int ProcessRequest(struct httprequest *req)
     /* get the number after it */
     if(ptr) {
       FILE *stream;
-      char *filename;
-
       if((strlen(doc) + strlen(request)) < 200)
-        snprintf(logbuf, sizeof(logbuf), "Got request: %s %s %s/%d.%d",
-                 request, doc, prot_str, prot_major, prot_minor);
+        msnprintf(logbuf, sizeof(logbuf), "Got request: %s %s %s/%d.%d",
+                  request, doc, prot_str, prot_major, prot_minor);
       else
-        snprintf(logbuf, sizeof(logbuf), "Got a *HUGE* request %s/%d.%d",
-                prot_str, prot_major, prot_minor);
+        msnprintf(logbuf, sizeof(logbuf), "Got a *HUGE* request %s/%d.%d",
+                  prot_str, prot_major, prot_minor);
       logmsg("%s", logbuf);
 
       if(!strncmp("/verifiedserver", ptr, 15)) {
@@ -415,17 +286,15 @@ static int ProcessRequest(struct httprequest *req)
       else
         req->partno = 0;
 
-      snprintf(logbuf, sizeof(logbuf), "Requested test number %ld part %ld",
-               req->testno, req->partno);
+      msnprintf(logbuf, sizeof(logbuf), "Requested test number %ld part %ld",
+                req->testno, req->partno);
       logmsg("%s", logbuf);
 
-      filename = test2file(req->testno);
+      stream = test2fopen(req->testno, logdir);
 
-      stream=fopen(filename, "rb");
       if(!stream) {
-        error = errno;
+        int error = errno;
         logmsg("fopen() failed with error: %d %s", error, strerror(error));
-        logmsg("Error opening file: %s", filename);
         logmsg("Couldn't open test file %ld", req->testno);
         req->open = FALSE; /* closes connection */
         return 1; /* done */
@@ -433,16 +302,16 @@ static int ProcessRequest(struct httprequest *req)
       else {
         char *cmd = NULL;
         size_t cmdsize = 0;
-        int num=0;
+        int num = 0;
 
         int rtp_channel = 0;
         int rtp_size = 0;
+        int rtp_size_err = 0;
         int rtp_partno = -1;
-        int i = 0;
         char *rtp_scratch = NULL;
 
         /* get the custom server control "commands" */
-        error = getpart(&cmd, &cmdsize, "reply", "servercmd", stream);
+        int error = getpart(&cmd, &cmdsize, "reply", "servercmd", stream);
         fclose(stream);
         if(error) {
           logmsg("getpart() failed with error: %d", error);
@@ -454,6 +323,7 @@ static int ProcessRequest(struct httprequest *req)
         if(cmdsize) {
           logmsg("Found a reply-servercmd section!");
           do {
+            rtp_size_err = 0;
             if(!strncmp(CMD_AUTH_REQUIRED, ptr, strlen(CMD_AUTH_REQUIRED))) {
               logmsg("instructed to require authorization header");
               req->auth_req = TRUE;
@@ -479,12 +349,15 @@ static int ProcessRequest(struct httprequest *req)
               logmsg("instructed to skip this number of bytes %d", num);
               req->skip = num;
             }
-            else if(3 == sscanf(ptr, "rtp: part %d channel %d size %d",
-                                &rtp_partno, &rtp_channel, &rtp_size)) {
+            else if(3 <= sscanf(ptr,
+                                "rtp: part %d channel %d size %d size_err %d",
+                                &rtp_partno, &rtp_channel, &rtp_size,
+                                &rtp_size_err)) {
 
               if(rtp_partno == req->partno) {
-                logmsg("RTP: part %d channel %d size %d",
-                       rtp_partno, rtp_channel, rtp_size);
+                int i = 0;
+                logmsg("RTP: part %d channel %d size %d size_err %d",
+                       rtp_partno, rtp_channel, rtp_size, rtp_size_err);
 
                 /* Make our scratch buffer enough to fit all the
                  * desired data and one for padding */
@@ -497,14 +370,14 @@ static int ProcessRequest(struct httprequest *req)
                 SET_RTP_PKT_CHN(rtp_scratch, rtp_channel);
 
                 /* Length follows and is a two byte short in network order */
-                SET_RTP_PKT_LEN(rtp_scratch, rtp_size);
+                SET_RTP_PKT_LEN(rtp_scratch, rtp_size + rtp_size_err);
 
                 /* Fill it with junk data */
-                for(i = 0; i < rtp_size; i+= RTP_DATA_SIZE) {
+                for(i = 0; i < rtp_size; i += RTP_DATA_SIZE) {
                   memcpy(rtp_scratch + 4 + i, RTP_DATA, RTP_DATA_SIZE);
                 }
 
-                if(req->rtp_buffer == NULL) {
+                if(!req->rtp_buffer) {
                   req->rtp_buffer = rtp_scratch;
                   req->rtp_buffersize = rtp_size + 4;
                 }
@@ -539,9 +412,9 @@ static int ProcessRequest(struct httprequest *req)
     else {
       if(sscanf(req->reqbuf, "CONNECT %" MAXDOCNAMELEN_TXT "s HTTP/%d.%d",
                 doc, &prot_major, &prot_minor) == 3) {
-        snprintf(logbuf, sizeof(logbuf),
-                 "Received a CONNECT %s HTTP/%d.%d request",
-                 doc, prot_major, prot_minor);
+        msnprintf(logbuf, sizeof(logbuf),
+                  "Received a CONNECT %s HTTP/%d.%d request",
+                  doc, prot_major, prot_minor);
         logmsg("%s", logbuf);
 
         if(req->prot_version == 10)
@@ -554,8 +427,8 @@ static int ProcessRequest(struct httprequest *req)
           /* if the host name starts with test, the port number used in the
              CONNECT line will be used as test number! */
           char *portp = strchr(doc, ':');
-          if(portp && (*(portp+1) != '\0') && ISDIGIT(*(portp+1)))
-            req->testno = strtol(portp+1, NULL, 10);
+          if(portp && (*(portp + 1) != '\0') && ISDIGIT(*(portp + 1)))
+            req->testno = strtol(portp + 1, NULL, 10);
           else
             req->testno = DOCNUMBER_CONNECT;
         }
@@ -583,10 +456,10 @@ static int ProcessRequest(struct httprequest *req)
 
   /* **** Persistence ****
    *
-   * If the request is a HTTP/1.0 one, we close the connection unconditionally
+   * If the request is an HTTP/1.0 one, we close the connection unconditionally
    * when we're done.
    *
-   * If the request is a HTTP/1.1 one, we MUST check for a "Connection:"
+   * If the request is an HTTP/1.1 one, we MUST check for a "Connection:"
    * header that might say "close". If it does, we close a connection when
    * this request is processed. Otherwise, we keep the connection alive for X
    * seconds.
@@ -596,7 +469,7 @@ static int ProcessRequest(struct httprequest *req)
     if(got_exit_signal)
       return 1; /* done */
 
-    if((req->cl==0) && strncasecompare("Content-Length:", line, 15)) {
+    if((req->cl == 0) && strncasecompare("Content-Length:", line, 15)) {
       /* If we don't ignore content-length, we read it and we read the whole
          request including the body before we return. If we've been told to
          ignore the content-length, we will return as soon as all headers
@@ -687,7 +560,6 @@ static int ProcessRequest(struct httprequest *req)
   if(!req->pipe &&
      req->open &&
      req->prot_version >= 11 &&
-     end &&
      req->reqbuf + req->offset > end + strlen(END_OF_HEADERS) &&
      (!strncmp(req->reqbuf, "GET", strlen("GET")) ||
       !strncmp(req->reqbuf, "HEAD", strlen("HEAD")))) {
@@ -734,19 +606,22 @@ static void storerequest(char *reqbuf, size_t totalsize)
   size_t written;
   size_t writeleft;
   FILE *dump;
+  char dumpfile[256];
 
-  if(reqbuf == NULL)
+  msnprintf(dumpfile, sizeof(dumpfile), "%s/%s", logdir, REQUEST_DUMP);
+
+  if(!reqbuf)
     return;
   if(totalsize == 0)
     return;
 
   do {
-    dump = fopen(REQUEST_DUMP, "ab");
-  } while((dump == NULL) && ((error = errno) == EINTR));
-  if(dump == NULL) {
+    dump = fopen(dumpfile, "ab");
+  } while(!dump && ((error = errno) == EINTR));
+  if(!dump) {
     logmsg("Error opening file %s error: %d %s",
-           REQUEST_DUMP, error, strerror(error));
-    logmsg("Failed to write request input to " REQUEST_DUMP);
+           dumpfile, error, strerror(error));
+    logmsg("Failed to write request input to %s", dumpfile);
     return;
   }
 
@@ -761,12 +636,12 @@ static void storerequest(char *reqbuf, size_t totalsize)
   } while((writeleft > 0) && ((error = errno) == EINTR));
 
   if(writeleft == 0)
-    logmsg("Wrote request (%zu bytes) input to " REQUEST_DUMP, totalsize);
+    logmsg("Wrote request (%zu bytes) input to %s", totalsize, dumpfile);
   else if(writeleft > 0) {
     logmsg("Error writing file %s error: %d %s",
-           REQUEST_DUMP, error, strerror(error));
+           dumpfile, error, strerror(error));
     logmsg("Wrote only (%zu bytes) of (%zu bytes) request input to %s",
-           totalsize-writeleft, totalsize, REQUEST_DUMP);
+           totalsize-writeleft, totalsize, dumpfile);
   }
 
 storerequest_cleanup:
@@ -776,7 +651,7 @@ storerequest_cleanup:
   } while(res && ((error = errno) == EINTR));
   if(res)
     logmsg("Error closing file %s error: %d %s",
-           REQUEST_DUMP, error, strerror(error));
+           dumpfile, error, strerror(error));
 }
 
 /* return 0 on success, non-zero on failure */
@@ -896,20 +771,20 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
   ssize_t written;
   size_t count;
   const char *buffer;
-  char *ptr=NULL;
-  FILE *stream;
-  char *cmd=NULL;
-  size_t cmdsize=0;
+  char *ptr = NULL;
+  char *cmd = NULL;
+  size_t cmdsize = 0;
   FILE *dump;
-  bool persistant = TRUE;
+  bool persistent = TRUE;
   bool sendfailure = FALSE;
   size_t responsesize;
   int error = 0;
   int res;
-
   static char weare[256];
+  char responsedump[256];
 
-  char partbuf[80]="data";
+  msnprintf(responsedump, sizeof(responsedump), "%s/%s",
+            logdir, RESPONSE_DUMP);
 
   logmsg("Send response number %ld part %ld", req->testno, req->partno);
 
@@ -949,12 +824,12 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
     case DOCNUMBER_WERULEZ:
       /* we got a "friends?" question, reply back that we sure are */
       logmsg("Identifying ourselves as friends");
-      snprintf(msgbuf, sizeof(msgbuf), "RTSP_SERVER WE ROOLZ: %ld\r\n",
-               (long)getpid());
+      msnprintf(msgbuf, sizeof(msgbuf), "RTSP_SERVER WE ROOLZ: %"
+                CURL_FORMAT_CURL_OFF_T "\r\n", our_getpid());
       msglen = strlen(msgbuf);
-      snprintf(weare, sizeof(weare),
-               "HTTP/1.1 200 OK\r\nContent-Length: %zu\r\n\r\n%s",
-               msglen, msgbuf);
+      msnprintf(weare, sizeof(weare),
+                "HTTP/1.1 200 OK\r\nContent-Length: %zu\r\n\r\n%s",
+                msglen, msgbuf);
       buffer = weare;
       break;
     case DOCNUMBER_INTERNAL:
@@ -983,16 +858,13 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
     count = strlen(buffer);
   }
   else {
-    char *filename = test2file(req->testno);
-
+    FILE *stream = test2fopen(req->testno, logdir);
+    char partbuf[80]="data";
     if(0 != req->partno)
-      snprintf(partbuf, sizeof(partbuf), "data%ld", req->partno);
-
-    stream=fopen(filename, "rb");
+      msnprintf(partbuf, sizeof(partbuf), "data%ld", req->partno);
     if(!stream) {
       error = errno;
       logmsg("fopen() failed with error: %d %s", error, strerror(error));
-      logmsg("Error opening file: %s", filename);
       logmsg("Couldn't open test file");
       return 0;
     }
@@ -1012,11 +884,10 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
     }
 
     /* re-open the same file again */
-    stream=fopen(filename, "rb");
+    stream = test2fopen(req->testno, logdir);
     if(!stream) {
       error = errno;
       logmsg("fopen() failed with error: %d %s", error, strerror(error));
-      logmsg("Error opening file: %s", filename);
       logmsg("Couldn't open test file");
       free(ptr);
       return 0;
@@ -1043,7 +914,7 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
      connection will be closed after the data has been sent to the requesting
      client... */
   if(strstr(buffer, "swsclose") || !count) {
-    persistant = FALSE;
+    persistent = FALSE;
     logmsg("connection close instruction \"swsclose\" found in response");
   }
   if(strstr(buffer, "swsbounce")) {
@@ -1053,12 +924,12 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
   else
     prevbounce = FALSE;
 
-  dump = fopen(RESPONSE_DUMP, "ab");
+  dump = fopen(responsedump, "ab");
   if(!dump) {
     error = errno;
     logmsg("fopen() failed with error: %d %s", error, strerror(error));
-    logmsg("Error opening file: %s", RESPONSE_DUMP);
-    logmsg("couldn't create logfile: " RESPONSE_DUMP);
+    logmsg("Error opening file: %s", responsedump);
+    logmsg("couldn't create logfile: %s", responsedump);
     free(ptr);
     free(cmd);
     return -1;
@@ -1115,7 +986,7 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
   } while(res && ((error = errno) == EINTR));
   if(res)
     logmsg("Error closing file %s error: %d %s",
-           RESPONSE_DUMP, error, strerror(error));
+           responsedump, error, strerror(error));
 
   if(got_exit_signal) {
     free(ptr);
@@ -1132,15 +1003,15 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
     return -1;
   }
 
-  logmsg("Response sent (%zu bytes) and written to " RESPONSE_DUMP,
-         responsesize);
+  logmsg("Response sent (%zu bytes) and written to %s",
+         responsesize, responsedump);
   free(ptr);
 
   if(cmdsize > 0) {
     char command[32];
     int quarters;
     int num;
-    ptr=cmd;
+    ptr = cmd;
     do {
       if(2 == sscanf(ptr, "%31s %d", command, &num)) {
         if(!strcmp("wait", command)) {
@@ -1173,7 +1044,7 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
     } while(ptr && *ptr);
   }
   free(cmd);
-  req->open = persistant;
+  req->open = persistent;
 
   prevtestno = req->testno;
   prevpartno = req->partno;
@@ -1188,14 +1059,17 @@ int main(int argc, char *argv[])
   curl_socket_t sock = CURL_SOCKET_BAD;
   curl_socket_t msgsock = CURL_SOCKET_BAD;
   int wrotepidfile = 0;
+  int wroteportfile = 0;
   int flag;
   unsigned short port = DEFAULT_PORT;
-  char *pidname= (char *)".rtsp.pid";
+  const char *pidname = ".rtsp.pid";
+  const char *portname = NULL; /* none by default */
   struct httprequest req;
   int rc;
   int error;
-  int arg=1;
-  long pid;
+  int arg = 1;
+
+  memset(&req, 0, sizeof(req));
 
   while(argc>arg) {
     if(!strcmp("--version", argv[arg])) {
@@ -1215,10 +1089,20 @@ int main(int argc, char *argv[])
       if(argc>arg)
         pidname = argv[arg++];
     }
+    else if(!strcmp("--portfile", argv[arg])) {
+      arg++;
+      if(argc>arg)
+        portname = argv[arg++];
+    }
     else if(!strcmp("--logfile", argv[arg])) {
       arg++;
       if(argc>arg)
         serverlogfile = argv[arg++];
+    }
+    else if(!strcmp("--logdir", argv[arg])) {
+      arg++;
+      if(argc>arg)
+        logdir = argv[arg++];
     }
     else if(!strcmp("--ipv4", argv[arg])) {
 #ifdef ENABLE_IPV6
@@ -1239,12 +1123,6 @@ int main(int argc, char *argv[])
       if(argc>arg) {
         char *endptr;
         unsigned long ulnum = strtoul(argv[arg], &endptr, 10);
-        if((endptr != argv[arg] + strlen(argv[arg])) ||
-           (ulnum < 1025UL) || (ulnum > 65535UL)) {
-          fprintf(stderr, "rtspd: invalid --port argument (%s)\n",
-                  argv[arg]);
-          return 0;
-        }
         port = curlx_ultous(ulnum);
         arg++;
       }
@@ -1260,7 +1138,9 @@ int main(int argc, char *argv[])
       puts("Usage: rtspd [option]\n"
            " --version\n"
            " --logfile [file]\n"
+           " --logdir [directory]\n"
            " --pidfile [file]\n"
+           " --portfile [file]\n"
            " --ipv4\n"
            " --ipv6\n"
            " --port [port]\n"
@@ -1269,14 +1149,15 @@ int main(int argc, char *argv[])
     }
   }
 
+  msnprintf(loglockfile, sizeof(loglockfile), "%s/%s",
+            logdir, SERVERLOGS_LOCK);
+
 #ifdef WIN32
   win32_init();
   atexit(win32_cleanup);
 #endif
 
-  install_signal_handlers();
-
-  pid = (long)getpid();
+  install_signal_handlers(false);
 
 #ifdef ENABLE_IPV6
   if(!use_ipv6)
@@ -1328,6 +1209,49 @@ int main(int argc, char *argv[])
     goto server_cleanup;
   }
 
+  if(!port) {
+    /* The system was supposed to choose a port number, figure out which
+       port we actually got and update the listener port value with it. */
+    curl_socklen_t la_size;
+    srvr_sockaddr_union_t localaddr;
+#ifdef ENABLE_IPV6
+    if(!use_ipv6)
+#endif
+      la_size = sizeof(localaddr.sa4);
+#ifdef ENABLE_IPV6
+    else
+      la_size = sizeof(localaddr.sa6);
+#endif
+    memset(&localaddr.sa, 0, (size_t)la_size);
+    if(getsockname(sock, &localaddr.sa, &la_size) < 0) {
+      error = SOCKERRNO;
+      logmsg("getsockname() failed with error: (%d) %s",
+             error, strerror(error));
+      sclose(sock);
+      goto server_cleanup;
+    }
+    switch(localaddr.sa.sa_family) {
+    case AF_INET:
+      port = ntohs(localaddr.sa4.sin_port);
+      break;
+#ifdef ENABLE_IPV6
+    case AF_INET6:
+      port = ntohs(localaddr.sa6.sin6_port);
+      break;
+#endif
+    default:
+      break;
+    }
+    if(!port) {
+      /* Real failure, listener port shall not be zero beyond this point. */
+      logmsg("Apparently getsockname() succeeded, with listener port zero.");
+      logmsg("A valid reason for this failure is a binary built without");
+      logmsg("proper network library linkage. This might not be the only");
+      logmsg("reason, but double check it before anything else.");
+      sclose(sock);
+      goto server_cleanup;
+    }
+  }
   logmsg("Running %s version on port %d", ipv_inuse, (int)port);
 
   /* start accepting connections */
@@ -1348,6 +1272,12 @@ int main(int argc, char *argv[])
   if(!wrotepidfile)
     goto server_cleanup;
 
+  if(portname) {
+    wroteportfile = write_portfile(portname, port);
+    if(!wroteportfile)
+      goto server_cleanup;
+  }
+
   for(;;) {
     msgsock = accept(sock, NULL, NULL);
 
@@ -1366,7 +1296,7 @@ int main(int argc, char *argv[])
     ** logs should not be read until this lock is removed by this server.
     */
 
-    set_advisor_read_lock(SERVERLOGS_LOCK);
+    set_advisor_read_lock(loglockfile);
     serverlogslocked = 1;
 
     logmsg("====> Client connect");
@@ -1425,7 +1355,7 @@ int main(int argc, char *argv[])
       }
 
       if(req.open)
-        logmsg("=> persistant connection request ended, awaits new request");
+        logmsg("=> persistent connection request ended, awaits new request");
       /* if we got a CONNECT, loop and get another request as well! */
     } while(req.open || (req.testno == DOCNUMBER_CONNECT));
 
@@ -1438,7 +1368,7 @@ int main(int argc, char *argv[])
 
     if(serverlogslocked) {
       serverlogslocked = 0;
-      clear_advisor_read_lock(SERVERLOGS_LOCK);
+      clear_advisor_read_lock(loglockfile);
     }
 
     if(req.testno == DOCNUMBER_QUIT)
@@ -1458,17 +1388,19 @@ server_cleanup:
 
   if(wrotepidfile)
     unlink(pidname);
+  if(wroteportfile)
+    unlink(portname);
 
   if(serverlogslocked) {
     serverlogslocked = 0;
-    clear_advisor_read_lock(SERVERLOGS_LOCK);
+    clear_advisor_read_lock(loglockfile);
   }
 
-  restore_signal_handlers();
+  restore_signal_handlers(false);
 
   if(got_exit_signal) {
     logmsg("========> %s rtspd (port: %d pid: %ld) exits with signal (%d)",
-           ipv_inuse, (int)port, pid, exit_signal);
+           ipv_inuse, (int)port, (long)getpid(), exit_signal);
     /*
      * To properly set the return status of the process we
      * must raise the same signal SIGINT or SIGTERM that we
@@ -1480,4 +1412,3 @@ server_cleanup:
   logmsg("========> rtspd quits");
   return 0;
 }
-

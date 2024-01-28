@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include "test.h"
@@ -28,10 +30,10 @@
 #define TEST_HANG_TIMEOUT 60 * 1000
 
 /*
- * Simply download a HTTPS file!
+ * Simply download an HTTPS file!
  *
  * This test was added after the HTTPS-using-multi-interface with OpenSSL
- * regression of 7.19.1 to hopefully prevent this embarassing mistake from
+ * regression of 7.19.1 to hopefully prevent this embarrassing mistake from
  * appearing again... Unfortunately the bug wasn't triggered by this test,
  * which presumably is because the connect to a local server is too
  * fast/different compared to the real/distant servers we saw the bug happen
@@ -91,7 +93,7 @@ int test(char *URL)
 
     /* At this point, maxfd is guaranteed to be greater or equal than -1. */
 
-    select_test(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
+    select_test(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
 
     abort_on_test_timeout();
 

@@ -5,6 +5,9 @@ FTP
 PORT
 RETR
 NODATACONN150
+flaky
+timeout
+FAILURE
 </keywords>
 </info>
 # Server-side
@@ -26,7 +29,7 @@ ftp
 FTP PORT download, no data conn and no transient negative reply
  </name>
  <command>
---max-time %FTPTIME2 ftp://%HOSTIP:%FTPPORT/1208 -P -
+--max-time %FTPTIME2 ftp://%HOSTIP:%FTPPORT/%TESTNUMBER -P -
 </command>
 
 </client>
@@ -39,7 +42,7 @@ s/^EPRT \|1\|(.*)/EPRT \|1\|/
 
 # This test doesn't send a QUIT because the main state machine in multi.c
 # triggers the timeout and sets the CURLE_OPERATION_TIMEDOUT error (28) for
-# which the FTP disconect code generically has to assume could mean the
+# which the FTP disconnect code generically has to assume could mean the
 # control the connection and thus it cannot send any command.
 <protocol>
 USER anonymous
@@ -47,8 +50,8 @@ PASS ftp@example.com
 PWD
 EPRT |1|
 TYPE I
-SIZE 1208
-RETR 1208
+SIZE %TESTNUMBER
+RETR %TESTNUMBER
 </protocol>
 <errorcode>
 28

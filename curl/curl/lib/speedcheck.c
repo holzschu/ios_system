@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 
@@ -30,15 +32,19 @@
 
 void Curl_speedinit(struct Curl_easy *data)
 {
-  memset(&data->state.keeps_speed, 0, sizeof(struct timeval));
+  memset(&data->state.keeps_speed, 0, sizeof(struct curltime));
 }
 
 /*
  * @unittest: 1606
  */
 CURLcode Curl_speedcheck(struct Curl_easy *data,
-                         struct timeval now)
+                         struct curltime now)
 {
+  if(data->req.keepon & KEEP_RECV_PAUSE)
+    /* A paused transfer is not qualified for speed checks */
+    return CURLE_OK;
+
   if((data->progress.current_speed >= 0) && data->set.low_speed_time) {
     if(data->progress.current_speed < data->set.low_speed_limit) {
       if(!data->state.keeps_speed.tv_sec)
@@ -46,7 +52,7 @@ CURLcode Curl_speedcheck(struct Curl_easy *data,
         data->state.keeps_speed = now;
       else {
         /* how long has it been under the limit */
-        time_t howlong = Curl_tvdiff(now, data->state.keeps_speed);
+        timediff_t howlong = Curl_timediff(now, data->state.keeps_speed);
 
         if(howlong >= data->set.low_speed_time * 1000) {
           /* too long */
@@ -67,7 +73,7 @@ CURLcode Curl_speedcheck(struct Curl_easy *data,
   if(data->set.low_speed_limit)
     /* if low speed limit is enabled, set the expire timer to make this
        connection's speed get checked again in a second */
-    Curl_expire_latest(data, 1000);
+    Curl_expire(data, 1000, EXPIRE_SPEEDCHECK);
 
   return CURLE_OK;
 }

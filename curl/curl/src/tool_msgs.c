@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include "tool_setup.h"
@@ -28,32 +30,43 @@
 #include "tool_cfgable.h"
 #include "tool_msgs.h"
 
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#include "ios_error.h"
+#undef stderr
+#define stderr thread_stderr
+#endif
+
 #include "memdebug.h" /* keep this as LAST include */
 
 #define WARN_PREFIX "Warning: "
 #define NOTE_PREFIX "Note: "
+#define ERROR_PREFIX "curl: "
 
 static void voutf(struct GlobalConfig *config,
                   const char *prefix,
                   const char *fmt,
                   va_list ap)
 {
-  size_t width = (79 - (int)strlen(prefix));
-  if(!config->mute) {
+  size_t width = (79 - strlen(prefix));
+  if(!config->silent) {
     size_t len;
     char *ptr;
-    char print_buffer[256];
+    char *print_buffer;
 
-    len = vsnprintf(print_buffer, sizeof(print_buffer), fmt, ap);
+    print_buffer = curlx_mvaprintf(fmt, ap);
+    if(!print_buffer)
+      return;
+    len = strlen(print_buffer);
 
     ptr = print_buffer;
     while(len > 0) {
-      fputs(prefix, config->errors);
+      fputs(prefix, stderr);
 
       if(len > width) {
         size_t cut = width-1;
 
-        while(!ISSPACE(ptr[cut]) && cut) {
+        while(!ISBLANK(ptr[cut]) && cut) {
           cut--;
         }
         if(0 == cut)
@@ -61,16 +74,17 @@ static void voutf(struct GlobalConfig *config,
              max text width then! */
           cut = width-1;
 
-        (void)fwrite(ptr, cut + 1, 1, config->errors);
-        fputs("\n", config->errors);
-        ptr += cut+1; /* skip the space too */
-        len -= cut;
+        (void)fwrite(ptr, cut + 1, 1, stderr);
+        fputs("\n", stderr);
+        ptr += cut + 1; /* skip the space too */
+        len -= cut + 1;
       }
       else {
-        fputs(ptr, config->errors);
+        fputs(ptr, stderr);
         len = 0;
       }
     }
+    curl_free(print_buffer);
   }
 }
 
@@ -100,13 +114,13 @@ void warnf(struct GlobalConfig *config, const char *fmt, ...)
   va_end(ap);
 }
 /*
- * Emit help formatted message on given stream.
+ * Emit help formatted message on given stream. This is for errors with or
+ * related to command line arguments.
  */
-
 void helpf(FILE *errors, const char *fmt, ...)
 {
-  va_list ap;
   if(fmt) {
+    va_list ap;
     va_start(ap, fmt);
     fputs("curl: ", errors); /* prefix it */
     vfprintf(errors, fmt, ap);
@@ -119,3 +133,16 @@ void helpf(FILE *errors, const char *fmt, ...)
           "for more information\n");
 }
 
+/*
+ * Emit error message on error stream if not muted. When errors are not tied
+ * to command line arguments, use helpf() for such errors.
+ */
+void errorf(struct GlobalConfig *config, const char *fmt, ...)
+{
+  if(!config->silent) {
+    va_list ap;
+    va_start(ap, fmt);
+    voutf(config, ERROR_PREFIX, fmt, ap);
+    va_end(ap);
+  }
+}

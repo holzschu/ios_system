@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include <stdio.h>
@@ -48,18 +50,19 @@
    DLL, you MUST also provide a read callback with CURLOPT_READFUNCTION.
    Failing to do so will give you a crash since a DLL may not use the
    variable's memory when passed in to it from an app like this. */
-static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 {
-  curl_off_t nread;
+  unsigned long nread;
   /* in real-world cases, this would probably get this data differently
      as this fread() stuff is exactly what the library already would do
      by default internally */
   size_t retcode = fread(ptr, size, nmemb, stream);
 
-  nread = (curl_off_t)retcode;
+  if(retcode > 0) {
+    nread = (unsigned long)retcode;
+    fprintf(stderr, "*** We read %lu bytes from file\n", nread);
+  }
 
-  fprintf(stderr, "*** We read %" CURL_FORMAT_CURL_OFF_T
-          " bytes from file\n", nread);
   return retcode;
 }
 
@@ -69,20 +72,20 @@ int main(void)
   CURLcode res;
   FILE *hd_src;
   struct stat file_info;
-  curl_off_t fsize;
+  unsigned long fsize;
 
-  struct curl_slist *headerlist=NULL;
+  struct curl_slist *headerlist = NULL;
   static const char buf_1 [] = "RNFR " UPLOAD_FILE_AS;
   static const char buf_2 [] = "RNTO " RENAME_FILE_TO;
 
   /* get the file size of the local file */
   if(stat(LOCAL_FILE, &file_info)) {
-    printf("Couldnt open '%s': %s\n", LOCAL_FILE, strerror(errno));
+    printf("Couldn't open '%s': %s\n", LOCAL_FILE, strerror(errno));
     return 1;
   }
-  fsize = (curl_off_t)file_info.st_size;
+  fsize = (unsigned long)file_info.st_size;
 
-  printf("Local file size: %" CURL_FORMAT_CURL_OFF_T " bytes.\n", fsize);
+  printf("Local file size: %lu bytes.\n", fsize);
 
   /* get a FILE * of the same file */
   hd_src = fopen(LOCAL_FILE, "rb");
@@ -119,7 +122,7 @@ int main(void)
     curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
                      (curl_off_t)fsize);
 
-    /* Now run off and do what you've been told! */
+    /* Now run off and do what you have been told! */
     res = curl_easy_perform(curl);
     /* Check for errors */
     if(res != CURLE_OK)

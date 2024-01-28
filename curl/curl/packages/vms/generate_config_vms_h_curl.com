@@ -1,7 +1,5 @@
 $! File: GENERATE_CONFIG_H_CURL.COM
 $!
-$! $Id$
-$!
 $! Curl like most open source products uses a variant of a config.h file.
 $! Depending on the curl version, this could be config.h or curl_config.h.
 $!
@@ -16,8 +14,7 @@ $! which is used to supplement that file.  Note that the config_vms.h file
 $! and the [.lib]config-vms.h file do two different tasks and that the
 $! filenames are slightly different.
 $!
-$!
-$! Copyright 2013, John Malmberg
+$! Copyright (C) John Malmberg
 $!
 $! Permission to use, copy, modify, and/or distribute this software for any
 $! purpose with or without fee is hereby granted, provided that the above
@@ -31,8 +28,7 @@ $! WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 $! ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 $! OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 $!
-$!
-$! 06-Jan-2013	J. Malmberg
+$! SPDX-License-Identifier: ISC
 $!
 $!=========================================================================
 $!
@@ -223,7 +219,7 @@ $write cvh "/* Location of default ca path */"
 $write cvh "#define curl_ca_path ""gnv$curl_ca_path"""
 $!
 $! NTLM_WB_ENABLED requires fork() but configure does not know this
-$! We have to disble this in th configure command line.
+$! We have to disable this in the configure command line.
 $! config_h.com finds that configure defaults to it being enabled so
 $! reports it.  So we need to turn it off here.
 $!
@@ -325,20 +321,11 @@ $! configure defaults to USE_*, a real configure on VMS chooses different.
 $write cvh "#ifdef USE_ARES"
 $write cvh "#undef USE_ARES"
 $write cvh "#endif"
-$write cvh "#ifdef USE_AXTLS"
-$write cvh "#undef USE_AXTLS"
-$write cvh "#endif"
-$write cvh "#ifdef USE_CYASSL"
-$write cvh "#undef USE_CYASSL"
-$write cvh "#endif"
-$write cvh "#ifdef USE_DARWINSSL"
-$write cvh "#undef USE_DARWINSSL"
+$write cvh "#ifdef USE_WOLFSSL"
+$write cvh "#undef USE_WOLFSSL"
 $write cvh "#endif"
 $write cvh "#ifdef USE_GNUTLS"
 $write cvh "#undef USE_GNUTLS"
-$write cvh "#endif"
-$write cvh "#ifdef USE_GNUTLS_NETTLE"
-$write cvh "#undef USE_GNUTLS_NETTLE"
 $write cvh "#endif"
 $write cvh "#ifdef USE_LIBRTMP"
 $write cvh "#undef USE_LIBRTMP"
@@ -355,12 +342,6 @@ $write cvh "#endif"
 $write cvh "#ifdef USE_OPENLDAP"
 $write cvh "#undef USE_OPENLDAP"
 $write cvh "#endif"
-$write cvh "#ifdef USE_POLARSSL"
-$write cvh "#undef USE_POLARSSL"
-$write cvh "#endif"
-$write cvh "#ifdef USE_SCHANNEL"
-$write cvh "#undef USE_SCHANNEL"
-$write cvh "#endif"
 $write cvh "#ifdef USE_THREADS_POSIX"
 $write cvh "#undef USE_THREADS_POSIX"
 $write cvh "#endif"
@@ -369,9 +350,6 @@ $write cvh "#undef USE_TLS_SRP"
 $write cvh "#endif"
 $write cvh "#ifdef USE_UNIX_SOCKETS"
 $write cvh "#undef USE_UNIX_SOCKETS"
-$write cvh "#endif"
-$write cvh "#ifdef USE_WINDOWS_SSPI"
-$write cvh "#undef USE_WINDOWS_SSPI"
 $write cvh "#endif"
 $!
 $write cvh "#ifndef HAVE_OLD_GSSMIT"
@@ -407,12 +385,9 @@ $!
 $   write cvh "#ifndef USE_OPENSSL"
 $   write cvh "#define USE_OPENSSL 1"
 $   write cvh "#endif"
-$   write cvh "#ifndef USE_SSLEAY"
-$   write cvh "#define USE_SSLEAY 1"
-$   write cvh "#endif"
 $   if arch_name .eqs. "VAX"
 $   then
-$       old_mes = f$enviroment("message")
+$       old_mes = f$environment("message")
 $       set message/notext/nofaci/noseve/noident
 $       search/output=nla0: ssl$include:*.h CONF_MFLAGS_IGNORE_MISSING_FILE
 $       status = $severity
@@ -446,12 +421,10 @@ $! Allow explicit experimentation.
 $if libssh2
 $then
 $   write cvh "#define HAVE_LIBSSH2_EXIT 1"
-$   write cvh "#define HAVE_LIBSSH2_H 1"
 $   write cvh "#define HAVE_LIBSSH2_INIT 1"
 $   write cvh "#define HAVE_LIBSSH2_SCP_SEND64 1"
 $   write cvh "#define HAVE_LIBSSH2_SESSION_HANDSHAKE 1"
 $   write cvh "#define HAVE_LIBSSH2_VERSION 1
-$   write cvh "#define HAVE_LIBSSH2 1
 $!
 $   write cvh "#ifndef USE_LIBSSH2"
 $   write cvh "#define USE_LIBSSH2 1"
@@ -467,7 +440,6 @@ $!
 $if .not. nozlib
 $then
 $   write cvh "#define HAVE_LIBZ 1"
-$   write cvh "#define HAVE_ZLIB_H 1"
 $endif
 $!
 $!

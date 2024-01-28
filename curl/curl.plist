@@ -5,25 +5,22 @@
 	<key>OpenSourceProject</key>
 	<string>curl</string>
 	<key>OpenSourceVersion</key>
-	<string>7.54.0</string>
+	<string>8.1.2</string>
 	<key>OpenSourceWebsiteURL</key>
-	<string>http://curl.haxx.se/</string>
+	<string>http://curl.se/</string>
 	<key>OpenSourceURL</key>
-	<string>http://curl.haxx.se/download/curl-7.54.0.tar.gz</string>
-	<key>OpenSourceSHA1</key>
-	<string>be5b7f10fc34722e324e8c552fcdfe120e164836</string>
+	<string>https://github.com/curl/curl/releases/download/curl-8_1_2/curl-8.1.2.tar.xz</string>
+	<key>OpenSourceSHA256</key>
+	<string>31b1118eb8bfd43cd95d9a3f146f814ff874f6ed3999b29d94f4d1e7dbac5ef6</string>
 	<key>OpenSourceImportDate</key>
-	<string>2017-05-15</string>
+	<string>2023-06-08</string>
 	<key>OpenSourceModifications</key>
 	<array>
-		<string>curl-config.in: remove -I, -L, and static library info</string>
-		<string>docs/curl.1: remove references to netrc(4) and wget(1)</string>
-		<string>include/curl/multi.h: Add availability to curl_multi_wait (13158909)</string>
-		<string>lib/curl_gssapi.c: revert upstream 3b4ee0d to work around alignment problems (27287483)</string>
-		<string>lib/ldap.c: 5648196</string>
-		<string>lib/vtls/openssl.c: Add checks to handle weak-linking LibreSSL/OpenSSL (24620014)</string>
-		<string>lib/vtls/openssl.c: Convert checksum functions to use CommonCrypto (24620014)</string>
-		<string>lib/vtls/darwinssl.c: 32267048</string>
+	  <string>include/curl/curl.h: Moved CURLE_SSL_CACERT back to being an enum value instead of a macro. (#43091584)</string>
+	  <string>lib/curl_gssapi.c: Address pointer alignment issue in gss_OID_desc structs. (#27287483)</string>
+	  <string>lib/vtls: On macOS, use openssl if present, secure-transport if not. (#43091584)</string>
+	  <string>lib/vtls/sectransp.c: Support finding identities by public key to support Yubikey auth on Big Sur. (#72186096)</string>
+	  <string>lib/easy_lock.h: include sched.h (98886899)</string>
 	</array>
 	<key>OpenSourceLicense</key>
 	<string>MIT</string>

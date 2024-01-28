@@ -8,9 +8,17 @@ CURL_PREPROCESSOR_DEFINITIONS = BUILDING_LIBCURL CURL_HIDDEN_SYMBOLS
 LIBRARY_SEARCH_PATHS[sdk=macosx*] = $(inherited) /usr/local/libressl/lib
 HEADER_SEARCH_PATHS[sdk=macosx*] = $(inherited) /usr/local/libressl/include
 
-OTHER_LDFLAGS[sdk=iphone*] = $(inherited) -framework Security -framework CoreFoundation
-OTHER_LDFLAGS[sdk=macosx*] = $(inherited) -weak-lcrypto -weak-lssl -weak_framework LDAP -weak_framework Kerberos
+OTHER_LDFLAGS[sdk=iphone*] = $(inherited) -Wl,-unaligned_pointers,error -framework Security -framework CoreFoundation
+OTHER_LDFLAGS[sdk=macosx*] = $(inherited) -Wl,-unaligned_pointers,error -framework Security -framework CoreFoundation -weak-lcrypto -weak-lssl -weak_framework LDAP -weak_framework Kerberos
 
 USER_HEADER_SEARCH_PATHS = $(PROJECT_DIR)/curl/lib
 USER_HEADER_SEARCH_PATHS[sdk=iphone*] = $(inherited) $(PROJECT_DIR)/config_iphone
 USER_HEADER_SEARCH_PATHS[sdk=macosx*] = $(inherited) $(PROJECT_DIR)/config_mac
+
+IS_ZIPPERED = YES
+
+SUPPORTS_TEXT_BASED_API = YES
+TAPI_VERIFY_MODE = Pedantic
+OTHER_TAPI_FLAGS = -UBUILDING_LIBCURL
+
+INSTALLHDRS_SCRIPT_PHASE = YES

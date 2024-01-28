@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,17 +18,20 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 #include "test.h"
 
 #include "testutil.h"
+#include "timediff.h"
 #include "warnless.h"
 #include "memdebug.h"
 
 #define TEST_HANG_TIMEOUT 60 * 1000
 
-char const testData[] = ".abc\0xyz";
-off_t const testDataSize = sizeof(testData) - 1;
+static char const testData[] = ".abc\0xyz";
+static off_t const testDataSize = sizeof(testData) - 1;
 
 int test(char *URL)
 {
@@ -37,6 +40,11 @@ int test(char *URL)
   int still_running; /* keep number of running handles */
   CURLMsg *msg; /* for picking up messages with the transfer status */
   int msgs_left; /* how many messages are left */
+  int res = CURLE_OK;
+
+  start_test_timing();
+
+  global_init(CURL_GLOBAL_ALL);
 
   /* Allocate one CURL handle per transfer */
   easy = curl_easy_init();
@@ -55,6 +63,8 @@ int test(char *URL)
 
   /* we start some action by calling perform right away */
   curl_multi_perform(multi_handle, &still_running);
+
+  abort_on_test_timeout();
 
   do {
     struct timeval timeout;
@@ -78,11 +88,11 @@ int test(char *URL)
 
     curl_multi_timeout(multi_handle, &curl_timeo);
     if(curl_timeo >= 0) {
-      timeout.tv_sec = curl_timeo / 1000;
-      if(timeout.tv_sec > 1)
+      curlx_mstotv(&timeout, curl_timeo);
+      if(timeout.tv_sec > 1) {
         timeout.tv_sec = 1;
-      else
-        timeout.tv_usec = (curl_timeo % 1000) * 1000;
+        timeout.tv_usec = 0;
+      }
     }
 
     /* get file descriptors from the transfers */
@@ -100,7 +110,7 @@ int test(char *URL)
        curl_multi_fdset() doc. */
 
     if(maxfd == -1) {
-#ifdef _WIN32
+#if defined(WIN32) || defined(_WIN32)
       Sleep(100);
       rc = 0;
 #else
@@ -112,7 +122,7 @@ int test(char *URL)
     else {
       /* Note that on some platforms 'timeout' may be modified by select().
          If you need access to the original value save a copy beforehand. */
-      rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
+      rc = select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
     }
 
     switch(rc) {
@@ -124,21 +134,27 @@ int test(char *URL)
       curl_multi_perform(multi_handle, &still_running);
       break;
     }
+
+    abort_on_test_timeout();
   } while(still_running);
 
   /* See how the transfers went */
-  while((msg = curl_multi_info_read(multi_handle, &msgs_left))) {
-    if(msg->msg == CURLMSG_DONE) {
+  do {
+    msg = curl_multi_info_read(multi_handle, &msgs_left);
+    if(msg && msg->msg == CURLMSG_DONE) {
       printf("HTTP transfer completed with status %d\n", msg->data.result);
       break;
     }
-  }
 
+    abort_on_test_timeout();
+  } while(msg);
+
+test_cleanup:
   curl_multi_cleanup(multi_handle);
 
   /* Free the CURL handles */
   curl_easy_cleanup(easy);
+  curl_global_cleanup();
 
-  return 0;
+  return res;
 }
-

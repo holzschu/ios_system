@@ -4,16 +4,18 @@
 HTTP
 HTTP POST
 Content-Length
+chunked Transfer-Encoding
 </keywords>
 </info>
 
 # Server-side
 <reply>
 <data nocheck="yes">
-HTTP/1.1 411 Length Required
+HTTP/1.1 200 OK
 Date: Sun, 19 Jan 2014 18:50:58 GMT
 Server: test-server/fake swsclose
 Connection: close
+
 </data>
 </reply>
 
@@ -23,25 +25,39 @@ Connection: close
 http
 </server>
 <tool>
-lib1514
+lib%TESTNUMBER
 </tool>
 <name>
 HTTP POST with read callback and unknown data size
 </name>
 <command>
-http://%HOSTIP:%HTTPPORT/1514
+http://%HOSTIP:%HTTPPORT/%TESTNUMBER
 </command>
 </client>
 
 # Verify data after the test has been "shot"
 <verify>
 # Content-Length header is not present
+# Transfer-Encoding header is added automatically
 <protocol>
-POST /1514 HTTP/1.1
+POST /%TESTNUMBER HTTP/1.1
 Host: %HOSTIP:%HTTPPORT
 Accept: */*
+Transfer-Encoding: chunked
 Content-Type: application/x-www-form-urlencoded
 Expect: 100-continue
+
+1
+d
+1
+u
+1
+m
+1
+m
+1
+y
+0
 
 </protocol>
 </verify>

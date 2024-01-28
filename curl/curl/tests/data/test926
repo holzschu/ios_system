@@ -24,19 +24,19 @@ smtp
 SMTP unknown user VRFY
  </name>
  <command>
-smtp://%HOSTIP:%SMTPPORT/926 --mail-rcpt recipient
+smtp://%HOSTIP:%SMTPPORT/%TESTNUMBER --mail-rcpt recipient
 </command>
 </client>
 
 #
 # Verify data after the test has been "shot"
 <verify>
-# 56 - CURLE_RECV_ERROR
+# 8 - CURLE_WEIRD_SERVER_REPLY
 <errorcode>
-56
+8
 </errorcode>
 <protocol>
-EHLO 926
+EHLO %TESTNUMBER
 VRFY recipient
 QUIT
 </protocol>

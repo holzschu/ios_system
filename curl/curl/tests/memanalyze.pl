@@ -6,11 +6,11 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at https://curl.haxx.se/docs/copyright.html.
+# are also available at https://curl.se/docs/copyright.html.
 #
 # You may opt to use, copy, modify, merge, publish, distribute and/or sell
 # copies of the Software, and permit persons to whom the Software is
@@ -18,6 +18,8 @@
 #
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
+#
+# SPDX-License-Identifier: curl
 #
 ###########################################################################
 #
@@ -33,6 +35,9 @@ my $reallocs=0;
 my $strdups=0;
 my $wcsdups=0;
 my $showlimit;
+my $sends=0;
+my $recvs=0;
+my $sockets=0;
 
 while(1) {
     if($ARGV[0] eq "-v") {
@@ -53,7 +58,8 @@ while(1) {
     }
 }
 
-my $maxmem;
+my $memsum; # the total number of memory allocated over the lifetime
+my $maxmem; # the high water mark
 
 sub newtotal {
     my ($newtot)=@_;
@@ -75,22 +81,22 @@ if(! -f $file) {
     exit;
 }
 
-open(FILE, "<$file");
+open(my $fileh, "<", "$file");
 
 if($showlimit) {
-    while(<FILE>) {
+    while(<$fileh>) {
         if(/^LIMIT.*memlimit$/) {
             print $_;
             last;
         }
     }
-    close(FILE);
+    close($fileh);
     exit;
 }
 
 
 my $lnum=0;
-while(<FILE>) {
+while(<$fileh>) {
     chomp $_;
     $line = $_;
     $lnum++;
@@ -147,6 +153,7 @@ while(<FILE>) {
 
             $sizeataddr{$addr}=$size;
             $totalmem += $size;
+            $memsum += $size;
 
             if($trace) {
                 print "MALLOC: malloc($size) at $source:$linenum",
@@ -172,6 +179,7 @@ while(<FILE>) {
 
             $sizeataddr{$addr}=$size;
             $totalmem += $size;
+            $memsum += $size;
 
             if($trace) {
                 print "CALLOC: calloc($arg1,$arg2) at $source:$linenum",
@@ -193,6 +201,7 @@ while(<FILE>) {
             $sizeataddr{$oldaddr}=0;
 
             $totalmem += $newsize;
+            $memsum += $size;
             $sizeataddr{$newaddr}=$newsize;
 
             if($trace) {
@@ -215,6 +224,7 @@ while(<FILE>) {
             $sizeataddr{$addr}=$size;
 
             $totalmem += $size;
+            $memsum += $size;
 
             if($trace) {
                 printf("STRDUP: $size bytes at %s, makes totally: %d bytes\n",
@@ -234,6 +244,7 @@ while(<FILE>) {
             $sizeataddr{$addr}=$size;
 
             $totalmem += $size;
+            $memsum += $size;
 
             if($trace) {
                 printf("WCSDUP: $size bytes at %s, makes totally: %d bytes\n",
@@ -258,6 +269,7 @@ while(<FILE>) {
             $filedes{$1}=1;
             $getfile{$1}="$source:$linenum";
             $openfile++;
+            $sockets++; # number of socket() calls
         }
         elsif($function =~ /socketpair\(\) = (\d*) (\d*)/) {
             $filedes{$1}=1;
@@ -314,6 +326,14 @@ while(<FILE>) {
     elsif($_ =~ /^GETNAME ([^ ]*):(\d*) (.*)/) {
         # not much to do
     }
+    # SEND url.c:1901 send(83) = 83
+    elsif($_ =~ /^SEND ([^ ]*):(\d*) (.*)/) {
+        $sends++;
+    }
+    # RECV url.c:1901 recv(102400) = 256
+    elsif($_ =~ /^RECV ([^ ]*):(\d*) (.*)/) {
+        $recvs++;
+    }
 
     # ADDR url.c:1282 getaddrinfo() = 0x5ddd
     elsif($_ =~ /^ADDR ([^ ]*):(\d*) (.*)/) {
@@ -355,7 +375,7 @@ while(<FILE>) {
         print "Not recognized prefix line: $line\n";
     }
 }
-close(FILE);
+close($fileh);
 
 if($totalmem) {
     print "Leak detected: memory still allocated: $totalmem bytes\n";
@@ -398,12 +418,17 @@ if($addrinfos) {
 
 if($verbose) {
     print "Mallocs: $mallocs\n",
-    "Reallocs: $reallocs\n",
-    "Callocs: $callocs\n",
-    "Strdups:  $strdups\n",
-    "Wcsdups:  $wcsdups\n",
-    "Frees: $frees\n",
-    "Allocations: ".($mallocs + $callocs + $reallocs + $strdups + $wcsdups)."\n";
+        "Reallocs: $reallocs\n",
+        "Callocs: $callocs\n",
+        "Strdups:  $strdups\n",
+        "Wcsdups:  $wcsdups\n",
+        "Frees: $frees\n",
+        "Sends: $sends\n",
+        "Recvs: $recvs\n",
+        "Sockets: $sockets\n",
+        "Allocations: ".($mallocs + $callocs + $reallocs + $strdups + $wcsdups)."\n",
+        "Operations: ".($mallocs + $callocs + $reallocs + $strdups + $wcsdups + $sends + $recvs + $sockets)."\n";
 
     print "Maximum allocated: $maxmem\n";
+    print "Total allocated: $memsum\n";
 }

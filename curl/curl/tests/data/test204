@@ -15,10 +15,10 @@ file
  <name>
 "upload" with file://
  </name>
- <command>
-file://localhost/%PWD/log/result204.txt -T log/upload204.txt
+<command option="no-include">
+file://localhost%FILE_PWD/%LOGDIR/result%TESTNUMBER.txt -T %LOGDIR/upload%TESTNUMBER.txt
 </command>
-<file name="log/upload204.txt">
+<file name="%LOGDIR/upload%TESTNUMBER.txt">
 data
 in
 file
@@ -29,7 +29,7 @@ write
 
 # Verify data after the test has been "shot"
 <verify>
-<file name="log/result204.txt">
+<file name="%LOGDIR/result%TESTNUMBER.txt">
 data
 in
 file

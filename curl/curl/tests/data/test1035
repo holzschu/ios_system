@@ -12,24 +12,18 @@ FAILURE
 #
 # Server-side
 <reply>
-<data>
-HTTP/1.0 503 Service Unavailable
-Date: Thu, 09 Nov 2010 14:49:00 GMT
-Server: test-server/fake swsclose
-Content-Type: text/html
-Funny-head: yesyes
-
-</data>
 </reply>
 
 #
 # Client-side
 <client>
 <server>
-http
+none
 </server>
 <features>
 idn
+http
+proxy
 </features>
 <setenv>
 LC_ALL=
@@ -42,22 +36,15 @@ perl -MI18N::Langinfo=langinfo,CODESET -e 'die "Needs a UTF-8 locale" if (lc(lan
 HTTP over proxy with too long IDN host name
  </name>
  <command>
-http://too-long-IDN-name-cürl-rüles-la-la-la-dee-da-flooby-nooby.local/page/1035 -x %HOSTIP:%HTTPPORT
+http://too-long-IDN-name-cürl-rüles-la-la-la-dee-da-flooby-nooby.local/page/%TESTNUMBER -x %HOSTIP:%NOLISTENPORT
 </command>
 </client>
 
 #
 # Verify data after the test has been "shot"
 <verify>
-<strip>
-^User-Agent:.*
-</strip>
-<protocol>
-GET http://too-long-IDN-name-cürl-rüles-la-la-la-dee-da-flooby-nooby.local/page/1035 HTTP/1.1
-Host: too-long-IDN-name-cürl-rüles-la-la-la-dee-da-flooby-nooby.local
-Accept: */*
-Proxy-Connection: Keep-Alive
-
-</protocol>
+<errorcode>
+3
+</errorcode>
 </verify>
 </testcase>

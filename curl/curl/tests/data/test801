@@ -25,10 +25,10 @@ body
 imap
 </server>
  <name>
-IMAP FETCH message by UID and SECTION
+IMAP FETCH message by MAILINDEX and SECTION
  </name>
  <command>
-'imap://%HOSTIP:%IMAPPORT/801/;UID=123/;SECTION=1' -u user:secret
+'imap://%HOSTIP:%IMAPPORT/%TESTNUMBER/;MAILINDEX=123/;SECTION=1' -u user:secret
 </command>
 </client>
 
@@ -38,7 +38,7 @@ IMAP FETCH message by UID and SECTION
 <protocol>
 A001 CAPABILITY
 A002 LOGIN user secret
-A003 SELECT 801
+A003 SELECT %TESTNUMBER
 A004 FETCH 123 BODY[1]
 A005 LOGOUT
 </protocol>

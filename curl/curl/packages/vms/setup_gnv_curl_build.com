@@ -1,13 +1,11 @@
 $! File: setup_gnv_curl_build.com
 $!
-$! $Id$
-$!
 $! Set up build environment for building Curl under GNV on VMS.
 $!
 $! GNV needs some files moved into the other directories to help with
 $! the configure script and the build.
 $!
-$! Copyright 2009, John Malmberg
+$! Copyright (C) John Malmberg
 $!
 $! Permission to use, copy, modify, and/or distribute this software for any
 $! purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +19,7 @@ $! WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 $! ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 $! OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 $!
-$! 30-May-2009  J. Malmberg
+$! SPDX-License-Identifier: ISC
 $!
 $!=======================================================================
 $!
@@ -60,7 +58,7 @@ $!
 $! We want detailed build logs.
 $ clist = "/list/show=(expan,includ)"
 $!
-$! We want full symbol names in exact case.  Need a commmon
+$! We want full symbol names in exact case.  Need a common
 $! repository for all directories.
 $ cnames = "/names=(shortened,as_is)/repository=''base_dir'"
 $!
@@ -207,7 +205,7 @@ $   example_apps = example_apps + ",ftpupload,getinfo,getinmemory"
 $   example_apps = example_apps + ",http-post,httpcustomheader,httpput"
 $   example_apps = example_apps + ",https,multi-app,multi-debugcallback"
 $   example_apps = example_apps + ",multi-double,multi-post,multi-single"
-$   example_apps = example_apps + ",persistant,post-callback,postit2"
+$   example_apps = example_apps + ",persistent,post-callback,postit2"
 $   example_apps = example_apps + ",sendrecv,sepheaders,simple,simplepost"
 $   example_apps = example_apps + ",simplessl"
 $!

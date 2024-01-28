@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 /* <DESC>
@@ -136,9 +138,9 @@ static void StartElement(void *voidContext,
                          const xmlChar *name,
                          const xmlChar **attributes)
 {
-  Context *context = (Context *)voidContext;
+  Context *context = static_cast<Context *>(voidContext);
 
-  if(COMPARE((char *)name, "TITLE")) {
+  if(COMPARE(reinterpret_cast<char *>(name), "TITLE")) {
     context->title = "";
     context->addTitle = true;
   }
@@ -152,9 +154,9 @@ static void StartElement(void *voidContext,
 static void EndElement(void *voidContext,
                        const xmlChar *name)
 {
-  Context *context = (Context *)voidContext;
+  Context *context = static_cast<Context *>(voidContext);
 
-  if(COMPARE((char *)name, "TITLE"))
+  if(COMPARE(reinterpret_cast<char *>(name), "TITLE"))
     context->addTitle = false;
 }
 
@@ -167,7 +169,7 @@ static void handleCharacters(Context *context,
                              int length)
 {
   if(context->addTitle)
-    context->title.append((char *)chars, length);
+    context->title.append(reinterpret_cast<char *>(chars), length);
 }
 
 //
@@ -178,7 +180,7 @@ static void Characters(void *voidContext,
                        const xmlChar *chars,
                        int length)
 {
-  Context *context = (Context *)voidContext;
+  Context *context = static_cast<Context *>(voidContext);
 
   handleCharacters(context, chars, length);
 }
@@ -191,7 +193,7 @@ static void cdata(void *voidContext,
                   const xmlChar *chars,
                   int length)
 {
-  Context *context = (Context *)voidContext;
+  Context *context = static_cast<Context *>(voidContext);
 
   handleCharacters(context, chars, length);
 }
@@ -270,7 +272,7 @@ int main(int argc, char *argv[])
   // Initialize CURL connection
 
   if(!init(conn, argv[1])) {
-    fprintf(stderr, "Connection initializion failed\n");
+    fprintf(stderr, "Connection initialization failed\n");
     exit(EXIT_FAILURE);
   }
 

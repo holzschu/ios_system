@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,10 +18,13 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 #include "test.h"
 
 #include "testutil.h"
+#include "timediff.h"
 #include "warnless.h"
 #include "memdebug.h"
 
@@ -35,30 +38,13 @@
 
 #define MULTI_PERFORM_HANG_TIMEOUT 60 * 1000
 
-static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *userp)
+static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *userp)
 {
   (void)ptr;
   (void)size;
   (void)nmemb;
   (void)userp;
   return CURL_READFUNC_ABORT;
-}
-
-static struct timeval tvnow(void)
-{
-  /*
-  ** time() returns the value of time in seconds since the Epoch.
-  */
-  struct timeval now;
-  now.tv_sec = (long)time(NULL);
-  now.tv_usec = 0;
-  return now;
-}
-
-static long tvdiff(struct timeval newer, struct timeval older)
-{
-  return (newer.tv_sec-older.tv_sec)*1000+
-    (newer.tv_usec-older.tv_usec)/1000;
 }
 
 int test(char *URL)
@@ -93,7 +79,7 @@ int test(char *URL)
    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
    multi_add_handle(mcurl, curl);
 
-   mp_start = tvnow();
+   mp_start = tutil_tvnow();
 
   /* we start some action by calling perform right away */
   curl_multi_perform(mcurl, &still_running);
@@ -119,11 +105,11 @@ int test(char *URL)
 
     curl_multi_timeout(mcurl, &curl_timeo);
     if(curl_timeo >= 0) {
-      timeout.tv_sec = curl_timeo / 1000;
-      if(timeout.tv_sec > 1)
+      curlx_mstotv(&timeout, curl_timeo);
+      if(timeout.tv_sec > 1) {
         timeout.tv_sec = 1;
-      else
-        timeout.tv_usec = (curl_timeo % 1000) * 1000;
+        timeout.tv_usec = 0;
+      }
     }
 
     /* get file descriptors from the transfers */
@@ -135,9 +121,9 @@ int test(char *URL)
        case of (maxfd == -1), we call select(0, ...), which is basically equal
        to sleep. */
 
-    rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
+    rc = select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
 
-    if(tvdiff(tvnow(), mp_start) > MULTI_PERFORM_HANG_TIMEOUT) {
+    if(tutil_tvdiff(tutil_tvnow(), mp_start) > MULTI_PERFORM_HANG_TIMEOUT) {
       fprintf(stderr, "ABORTING TEST, since it seems "
               "that it would have run forever.\n");
       break;
@@ -164,5 +150,3 @@ test_cleanup:
 
   return res;
 }
-
-

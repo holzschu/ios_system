@@ -5,11 +5,11 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 2006, David Shaw <dshaw@jabberwocky.com>
+# Copyright (C) David Shaw <dshaw@jabberwocky.com>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at https://curl.haxx.se/docs/copyright.html.
+# are also available at https://curl.se/docs/copyright.html.
 #
 # You may opt to use, copy, modify, merge, publish, distribute and/or sell
 # copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
 #
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
+#
+# SPDX-License-Identifier: curl
 #
 ###########################################################################
 # LIBCURL_CHECK_CONFIG ([DEFAULT-ACTION], [MINIMUM-VERSION],
@@ -197,9 +199,10 @@ if (x) {;}
            _libcurl_save_libs=$LIBS
            LIBS="$LIBS $LIBCURL"
 
-           AC_CHECK_FUNC(curl_free,,
-              AC_DEFINE(curl_free,free,
-                [Define curl_free() as free() if our version of curl lacks curl_free.]))
+           AC_CHECK_DECL([curl_free],[],
+              [AC_DEFINE([curl_free],[free],
+                [Define curl_free() as free() if our version of curl lacks curl_free.])],
+              [[#include <curl/curl.h>]])
 
            CPPFLAGS=$_libcurl_save_cppflags
            LIBS=$_libcurl_save_libs
@@ -269,4 +272,4 @@ if (x) {;}
   fi
 
   unset _libcurl_with
-])dnl
+])

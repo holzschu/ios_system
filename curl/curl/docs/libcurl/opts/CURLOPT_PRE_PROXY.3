@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,19 +18,23 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PRE_PROXY 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_PRE_PROXY 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
-CURLOPT_PRE_PROXY \- set pre-proxy to use
+CURLOPT_PRE_PROXY \- pre-proxy host to use
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_PRE_PROXY, char *preproxy);
+.fi
 .SH DESCRIPTION
 Set the \fIpreproxy\fP to use for the upcoming request. The parameter
-should be a char * to a zero terminated string holding the host name or dotted
+should be a char * to a null-terminated string holding the host name or dotted
 numerical IP address. A numerical IPv6 address must be written within
 [brackets].
 
@@ -60,9 +64,17 @@ Default is NULL, meaning no pre proxy is used.
 When you set a host name to use, do not assume that there's any particular
 single port number used widely for proxies. Specify it!
 .SH PROTOCOLS
-All except file://. Note that some protocols don't do very well over proxy.
+All except file://. Note that some protocols do not work well over proxy.
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/file.txt");
+  curl_easy_setopt(curl, CURLOPT_PRE_PROXY, "socks4://socks-proxy:1080");
+  curl_easy_setopt(curl, CURLOPT_PROXY, "http://proxy:80");
+  curl_easy_perform(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.52.0
 .SH RETURN VALUE
@@ -70,4 +82,3 @@ Returns CURLE_OK if proxies are supported, CURLE_UNKNOWN_OPTION if not, or
 CURLE_OUT_OF_MEMORY if there was insufficient heap space.
 .SH "SEE ALSO"
 .BR CURLOPT_PROXY "(3), " CURLOPT_HTTPPROXYTUNNEL "(3), "
-

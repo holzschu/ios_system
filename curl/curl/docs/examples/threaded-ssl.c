@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,6 +18,8 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 /* <DESC>
  * Show the required mutex callback setups for GnuTLS and OpenSSL when using
@@ -25,11 +27,11 @@
  * </DESC>
  */
 /* A multi-threaded example that uses pthreads and fetches 4 remote files at
- * once over HTTPS. The lock callbacks and stuff assume OpenSSL or GnuTLS
+ * once over HTTPS. The lock callbacks and stuff assume OpenSSL <1.1 or GnuTLS
  * (libgcrypt) so far.
  *
  * OpenSSL docs for this:
- *   https://www.openssl.org/docs/crypto/threads.html
+ *   https://www.openssl.org/docs/man1.0.2/man3/CRYPTO_num_locks.html
  * gcrypt docs for this:
  *   https://gnupg.org/documentation/manuals/gcrypt/Multi_002dThreading.html
  */
@@ -63,7 +65,7 @@ static unsigned long thread_id(void)
 {
   unsigned long ret;
 
-  ret=(unsigned long)pthread_self();
+  ret = (unsigned long)pthread_self();
   return ret;
 }
 
@@ -71,9 +73,9 @@ static void init_locks(void)
 {
   int i;
 
-  lockarray=(pthread_mutex_t *)OPENSSL_malloc(CRYPTO_num_locks() *
-                                            sizeof(pthread_mutex_t));
-  for(i=0; i<CRYPTO_num_locks(); i++) {
+  lockarray = (pthread_mutex_t *)OPENSSL_malloc(CRYPTO_num_locks() *
+                                                sizeof(pthread_mutex_t));
+  for(i = 0; i<CRYPTO_num_locks(); i++) {
     pthread_mutex_init(&(lockarray[i]), NULL);
   }
 
@@ -86,7 +88,7 @@ static void kill_locks(void)
   int i;
 
   CRYPTO_set_locking_callback(NULL);
-  for(i=0; i<CRYPTO_num_locks(); i++)
+  for(i = 0; i<CRYPTO_num_locks(); i++)
     pthread_mutex_destroy(&(lockarray[i]));
 
   OPENSSL_free(lockarray);
@@ -121,7 +123,7 @@ static void *pull_one_url(void *url)
 
   curl = curl_easy_init();
   curl_easy_setopt(curl, CURLOPT_URL, url);
-  /* this example doesn't verify the server's certificate, which means we
+  /* this example does not verify the server's certificate, which means we
      might be downloading stuff from an impostor */
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
@@ -135,8 +137,7 @@ int main(int argc, char **argv)
 {
   pthread_t tid[NUMT];
   int i;
-  int error;
-  (void)argc; /* we don't use any arguments in this example */
+  (void)argc; /* we do not use any arguments in this example */
   (void)argv;
 
   /* Must initialize libcurl before any threads are started */
@@ -144,11 +145,11 @@ int main(int argc, char **argv)
 
   init_locks();
 
-  for(i=0; i< NUMT; i++) {
-    error = pthread_create(&tid[i],
-                           NULL, /* default attributes please */
-                           pull_one_url,
-                           (void *)urls[i]);
+  for(i = 0; i< NUMT; i++) {
+    int error = pthread_create(&tid[i],
+                               NULL, /* default attributes please */
+                               pull_one_url,
+                               (void *)urls[i]);
     if(0 != error)
       fprintf(stderr, "Couldn't run thread number %d, errno %d\n", i, error);
     else
@@ -156,8 +157,8 @@ int main(int argc, char **argv)
   }
 
   /* now wait for all threads to terminate */
-  for(i=0; i< NUMT; i++) {
-    error = pthread_join(tid[i], NULL);
+  for(i = 0; i< NUMT; i++) {
+    pthread_join(tid[i], NULL);
     fprintf(stderr, "Thread %d terminated\n", i);
   }
 

@@ -6,11 +6,11 @@ rem *                             / __| | | | |_) | |
 rem *                            | (__| |_| |  _ <| |___
 rem *                             \___|\___/|_| \_\_____|
 rem *
-rem * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+rem * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 rem *
 rem * This software is licensed as described in the file COPYING, which
 rem * you should have received as part of this distribution. The terms
-rem * are also available at https://curl.haxx.se/docs/copyright.html.
+rem * are also available at https://curl.se/docs/copyright.html.
 rem *
 rem * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 rem * copies of the Software, and permit persons to whom the Software is
@@ -18,6 +18,8 @@ rem * furnished to do so, under the terms of the COPYING file.
 rem *
 rem * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 rem * KIND, either express or implied.
+rem *
+rem * SPDX-License-Identifier: curl
 rem *
 rem ***************************************************************************
 
@@ -73,7 +75,6 @@ rem
     echo Generating prerequisite files
 
     call :generate
-    if errorlevel 4 goto nogencurlbuild
     if errorlevel 3 goto nogenhugehelp
     if errorlevel 2 goto nogenmakefile
     if errorlevel 1 goto warning
@@ -83,7 +84,6 @@ rem
     echo Removing prerequisite files
 
     call :clean
-    if errorlevel 3 goto nocleancurlbuild
     if errorlevel 2 goto nocleanhugehelp
     if errorlevel 1 goto nocleanmakefile
   )
@@ -95,10 +95,9 @@ rem
 rem Returns:
 rem
 rem 0 - success
-rem 1 - success with simplified tool_hugehelp.c 
+rem 1 - success with simplified tool_hugehelp.c
 rem 2 - failed to generate Makefile
 rem 3 - failed to generate tool_hugehelp.c
-rem 4 - failed to generate curlbuild.h
 rem
 :generate
   if "%OS%" == "Windows_NT" setlocal
@@ -126,16 +125,6 @@ rem
   )
   cmd /c exit 0
 
-  rem Create curlbuild.h
-  echo * %CD%\include\curl\curlbuild.h
-  if exist include\curl\curlbuild.h.dist (
-    copy /Y include\curl\curlbuild.h.dist include\curl\curlbuild.h 1>NUL 2>&1
-    if errorlevel 1 (
-      if "%OS%" == "Windows_NT" endlocal
-      exit /B 4
-    )
-  )
-
   rem Setup c-ares git tree
   if exist ares\buildconf.bat (
     echo.
@@ -160,7 +149,6 @@ rem
 rem 0 - success
 rem 1 - failed to clean Makefile
 rem 2 - failed to clean tool_hugehelp.c
-rem 3 - failed to clean curlbuild.h
 rem
 :clean
   rem Remove Makefile
@@ -178,15 +166,6 @@ rem
     del src\tool_hugehelp.c 2>NUL
     if exist src\tool_hugehelp.c (
       exit /B 2
-    )
-  )
-
-  rem Remove curlbuild.h
-  echo * %CD%\include\curl\curlbuild.h
-  if exist include\curl\curlbuild.h (
-    del include\curl\curlbuild.h 2>NUL
-    if exist include\curl\curlbuild.h (
-      exit /B 3
     )
   )
 
@@ -216,7 +195,7 @@ rem
 
   if defined ROFFCMD (
     echo #include "tool_setup.h"> src\tool_hugehelp.c
-    echo #include "tool_hugehelp.h">> src\tool_hugehelp.c 
+    echo #include "tool_hugehelp.h">> src\tool_hugehelp.c
 
     if defined HAVE_GZIP (
       echo #ifndef HAVE_LIBZ>> src\tool_hugehelp.c
@@ -235,7 +214,7 @@ rem
       copy /Y src\tool_hugehelp.c.cvs src\tool_hugehelp.c 1>NUL 2>&1
     ) else (
       echo #include "tool_setup.h"> src\tool_hugehelp.c
-      echo #include "tool_hugehelp.hd">> src\tool_hugehelp.c
+      echo #include "tool_hugehelp.h">> src\tool_hugehelp.c
       echo.>> src\tool_hugehelp.c
       echo void hugehelp(void^)>> src\tool_hugehelp.c
       echo {>> src\tool_hugehelp.c
@@ -304,11 +283,6 @@ rem
   echo Error: Unable to generate src\tool_hugehelp.c
   goto error
 
-:nogencurlbuild
-  echo.
-  echo Error: Unable to generate include\curl\curlbuild.h
-  goto error
-
 :nocleanmakefile
   echo.
   echo Error: Unable to clean Makefile
@@ -317,11 +291,6 @@ rem
 :nocleanhugehelp
   echo.
   echo Error: Unable to clean src\tool_hugehelp.c
-  goto error
-
-:nocleancurlbuild
-  echo.
-  echo Error: Unable to clean include\curl\curlbuild.h
   goto error
 
 :warning

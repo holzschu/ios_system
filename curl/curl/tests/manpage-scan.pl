@@ -6,11 +6,11 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at https://curl.haxx.se/docs/copyright.html.
+# are also available at https://curl.se/docs/copyright.html.
 #
 # You may opt to use, copy, modify, merge, publish, distribute and/or sell
 # copies of the Software, and permit persons to whom the Software is
@@ -18,6 +18,8 @@
 #
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
+#
+# SPDX-License-Identifier: curl
 #
 ###########################################################################
 #
@@ -31,7 +33,7 @@
 #
 # src/tool_getparam.c lists all options curl can parse
 # docs/curl.1 documents all command line options
-# src/tool_help.c outputs all options with curl -h
+# src/tool_listhelp.c outputs all options with curl -h
 # - make sure they're all in sync
 #
 # Output all deviances to stderr.
@@ -65,13 +67,20 @@ my %alias = (
 sub scanmanpage {
     my ($file, @words) = @_;
 
-    open(M, "<$file");
-    my @m = <M>;
-    close(M);
+    open(my $mh, "<", "$file");
+    my @m;
+    while(<$mh>) {
+        if($_ =~ /^\.IP (.*)/) {
+            my $w = $1;
+            # "unquote" minuses
+            $w =~ s/\\-/-/g;
+            push @m, $w;
+        }
+    }
+    close($mh);
 
     foreach my $m (@words) {
-
-        my @g = grep(/^\.IP $m/, @m);
+        my @g = grep(/$m/, @m);
         if(!$g[0]) {
             print STDERR "Missing mention of $m in $file\n";
             $errors++;
@@ -79,22 +88,24 @@ sub scanmanpage {
     }
 }
 
+my $r;
+
 # check for define alises
-open(R, "<$curlh") ||
+open($r, "<", "$curlh") ||
     die "no curl.h";
-while(<R>) {
+while(<$r>) {
     if(/^\#define (CURL(OPT|INFO|MOPT)_\w+) (.*)/) {
         $alias{$1}=$3;
     }
 }
-close(R);
+close($r);
 
 my @curlopt;
 my @curlinfo;
 my @curlmopt;
-open(R, "<$syms") ||
+open($r, "<", "$syms") ||
     die "no input file";
-while(<R>) {
+while(<$r>) {
     chomp;
     my $l= $_;
     if($l =~ /(CURL(OPT|INFO|MOPT)_\w+) *([0-9.]*) *([0-9.-]*) *([0-9.]*)/) {
@@ -124,13 +135,13 @@ while(<R>) {
         }
     }
 }
-close(R);
+close($r);
 
 scanmanpage("$root/docs/libcurl/curl_easy_setopt.3", @curlopt);
 scanmanpage("$root/docs/libcurl/curl_easy_getinfo.3", @curlinfo);
 scanmanpage("$root/docs/libcurl/curl_multi_setopt.3", @curlmopt);
 
-# using this hash array, we can whitelist specific options
+# using this hash array, we can skip specific options
 my %opts = (
     # pretend these --no options exists in tool_getparam.c
     '--no-alpn' => 1,
@@ -138,8 +149,10 @@ my %opts = (
     '-N, --no-buffer' => 1,
     '--no-sessionid' => 1,
     '--no-keepalive' => 1,
+    '--no-progress-meter' => 1,
+    '--no-clobber' => 1,
 
-    # pretend these options without -no exist in curl.1 and tool_help.c
+    # pretend these options without -no exist in curl.1 and tool_listhelp.c
     '--alpn' => 6,
     '--npn' => 6,
     '--eprt' => 6,
@@ -147,6 +160,8 @@ my %opts = (
     '--keepalive' => 6,
     '-N, --buffer' => 6,
     '--sessionid' => 6,
+    '--progress-meter' => 6,
+    '--clobber' => 6,
 
     # deprecated options do not need to be in tool_help.c nor curl.1
     '--krb4' => 6,
@@ -161,12 +176,12 @@ my %opts = (
 
 #########################################################################
 # parse the curl code that parses the command line arguments!
-open(R, "<$root/src/tool_getparam.c") ||
+open($r, "<", "$root/src/tool_getparam.c") ||
     die "no input file";
 my $list;
 my @getparam; # store all parsed parameters
 
-while(<R>) {
+while(<$r>) {
     chomp;
     my $l= $_;
     if(/struct LongShort aliases/) {
@@ -193,18 +208,19 @@ while(<R>) {
         }
     }
 }
-close(R);
+close($r);
 
 #########################################################################
 # parse the curl.1 man page, extract all documented command line options
 # The man page may or may not be rebuilt, so check both possible locations
-open(R, "<$buildroot/docs/curl.1") || open(R, "<$root/docs/curl.1") ||
+open($r, "<", "$buildroot/docs/curl.1") || open($r, "<", "$root/docs/curl.1") ||
     die "no input file";
 my @manpage; # store all parsed parameters
-while(<R>) {
+while(<$r>) {
     chomp;
     my $l= $_;
-    if(/^\.IP \"(-[^\"]*)\"/) {
+    $l =~ s/\\-/-/g;
+    if($l =~ /^\.IP \"(-[^\"]*)\"/) {
         my $str = $1;
         my $combo;
         if($str =~ /^-(.), --([a-z0-9.-]*)/) {
@@ -221,18 +237,18 @@ while(<R>) {
         }
     }
 }
-close(R);
+close($r);
 
 
 #########################################################################
 # parse the curl code that outputs the curl -h list
-open(R, "<$root/src/tool_help.c") ||
+open($r, "<", "$root/src/tool_listhelp.c") ||
     die "no input file";
 my @toolhelp; # store all parsed parameters
-while(<R>) {
+while(<$r>) {
     chomp;
     my $l= $_;
-    if(/^  \" *(.*)/) {
+    if(/^  \{\" *(.*)/) {
         my $str=$1;
         my $combo;
         if($str =~ /^-(.), --([a-z0-9.-]*)/) {
@@ -250,7 +266,7 @@ while(<R>) {
 
     }
 }
-close(R);
+close($r);
 
 #
 # Now we have three arrays with options to cross-reference.
@@ -276,14 +292,14 @@ foreach my $o (keys %opts) {
             $missing.= " curl.1";
         }
         if($where & 4) {
-            $exists .= " tool_help.c";
+            $exists .= " tool_listhelp.c";
         }
         else {
-            $missing .= " tool_help.c";
+            $missing .= " tool_listhelp.c";
         }
 
         print STDERR "$o is not in$missing (but in$exists)\n";
     }
 }
 
-exit $errors;
+print STDERR "$errors\n";

@@ -39,7 +39,7 @@ pop3
 POP3 plain authentication with initial response
  </name>
  <command>
-pop3://%HOSTIP:%POP3PORT/871 -u user:secret --sasl-ir
+pop3://%HOSTIP:%POP3PORT/%TESTNUMBER -u user:secret --sasl-ir
 </command>
 </client>
 
@@ -48,8 +48,8 @@ pop3://%HOSTIP:%POP3PORT/871 -u user:secret --sasl-ir
 <verify>
 <protocol>
 CAPA
-AUTH PLAIN dXNlcgB1c2VyAHNlY3JldA==
-RETR 871
+AUTH PLAIN AHVzZXIAc2VjcmV0
+RETR %TESTNUMBER
 QUIT
 </protocol>
 </verify>

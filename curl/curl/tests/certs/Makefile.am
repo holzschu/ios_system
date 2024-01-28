@@ -5,11 +5,11 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at https://curl.haxx.se/docs/copyright.html.
+# are also available at https://curl.se/docs/copyright.html.
 #
 # You may opt to use, copy, modify, merge, publish, distribute and/or sell
 # copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
 #
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
+#
+# SPDX-License-Identifier: curl
 #
 ###########################################################################
 AUTOMAKE_OPTIONS = foreign
@@ -28,7 +30,10 @@ CERTCONFIGS = \
   EdelCurlRoot-ca.cnf \
   Server-localhost-sv.prm \
   Server-localhost.nn-sv.prm \
-  Server-localhost0h-sv.prm
+  Server-localhost0h-sv.prm \
+  Server-localhost-firstSAN-sv.prm \
+  Server-localhost-lastSAN-sv.prm \
+  stunnel-sv.prm
 
 GENERATEDCERTS = \
   EdelCurlRoot-ca.cacert \
@@ -62,7 +67,34 @@ GENERATEDCERTS = \
   Server-localhost0h-sv.key \
   Server-localhost0h-sv.pem \
   Server-localhost0h-sv.pub.der \
-  Server-localhost0h-sv.pub.pem
+  Server-localhost0h-sv.pub.pem \
+  Server-localhost-firstSAN-sv.crl \
+  Server-localhost-firstSAN-sv.crt \
+  Server-localhost-firstSAN-sv.csr \
+  Server-localhost-firstSAN-sv.der \
+  Server-localhost-firstSAN-sv.dhp \
+  Server-localhost-firstSAN-sv.key \
+  Server-localhost-firstSAN-sv.pem \
+  Server-localhost-firstSAN-sv.pub.der \
+  Server-localhost-firstSAN-sv.pub.pem \
+  Server-localhost-lastSAN-sv.crl \
+  Server-localhost-lastSAN-sv.crt \
+  Server-localhost-lastSAN-sv.csr \
+  Server-localhost-lastSAN-sv.der \
+  Server-localhost-lastSAN-sv.dhp \
+  Server-localhost-lastSAN-sv.key \
+  Server-localhost-lastSAN-sv.pem \
+  Server-localhost-lastSAN-sv.pub.der \
+  Server-localhost-lastSAN-sv.pub.pem \
+  stunnel-sv.crl \
+  stunnel-sv.crt \
+  stunnel-sv.csr \
+  stunnel-sv.der \
+  stunnel-sv.dhp \
+  stunnel-sv.key \
+  stunnel-sv.pem \
+  stunnel-sv.der \
+  stunnel-sv.pub.pem
 
 SRPFILES = \
   srp-verifier-conf \
@@ -76,7 +108,9 @@ clean-certs:
 	cd $(srcdir); rm -f $(GENERATEDCERTS)
 
 build-certs: $(srcdir)/EdelCurlRoot-ca.cacert $(srcdir)/Server-localhost-sv.pem \
-	$(srcdir)/Server-localhost.nn-sv.pem $(srcdir)/Server-localhost0h-sv.pem
+	$(srcdir)/Server-localhost.nn-sv.pem $(srcdir)/Server-localhost0h-sv.pem \
+	$(srcdir)/Server-localhost-firstSAN-sv.pem $(srcdir)/Server-localhost-lastSAN-sv.pem \
+	$(srcdir)/stunnel-sv.pem ../stunnel.pem
 
 $(srcdir)/EdelCurlRoot-ca.cacert:
 	cd $(srcdir); scripts/genroot.sh EdelCurlRoot
@@ -89,3 +123,15 @@ $(srcdir)/Server-localhost.nn-sv.pem: $(srcdir)/EdelCurlRoot-ca.cacert
 
 $(srcdir)/Server-localhost0h-sv.pem: $(srcdir)/EdelCurlRoot-ca.cacert
 	cd $(srcdir); scripts/genserv.sh Server-localhost0h EdelCurlRoot
+
+$(srcdir)/Server-localhost-firstSAN-sv.pem: $(srcdir)/EdelCurlRoot-ca.cacert
+	cd $(srcdir); scripts/genserv.sh Server-localhost-firstSAN EdelCurlRoot
+
+$(srcdir)/Server-localhost-lastSAN-sv.pem: $(srcdir)/EdelCurlRoot-ca.cacert
+	cd $(srcdir); scripts/genserv.sh Server-localhost-lastSAN EdelCurlRoot
+
+$(srcdir)/stunnel-sv.pem: $(srcdir)/EdelCurlRoot-ca.cacert
+	cd $(srcdir); scripts/genserv.sh stunnel EdelCurlRoot
+
+../stunnel.pem: $(srcdir)/stunnel-sv.pem
+	cp $< $@

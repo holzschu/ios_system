@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,16 +18,19 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
-.TH curl_multi_cleanup 3 "February 03, 2016" "libcurl 7.54.0" "libcurl Manual"
+.TH curl_multi_cleanup 3 "April 26, 2023" "libcurl 8.1.2" "libcurl"
 
 .SH NAME
 curl_multi_cleanup - close down a multi session
 .SH SYNOPSIS
-.B #include <curl/curl.h>
-.sp
-.BI "CURLMcode curl_multi_cleanup( CURLM *multi_handle );"
-.ad
+.nf
+#include <curl/curl.h>
+
+CURLMcode curl_multi_cleanup(CURLM *multi_handle);
+.fi
 .SH DESCRIPTION
 Cleans up and removes a whole multi stack. It does not free or touch any
 individual easy handles in any way - they still need to be closed
@@ -41,6 +44,18 @@ handle is no longer connected to the multi handle
 
 3 - \fIcurl_multi_cleanup(3)\fP should be called when all easy handles are
 removed
+
+Passing in a NULL pointer in \fImulti_handle\fP will make this function return
+CURLM_BAD_HANDLE immediately with no other action.
+.SH EXAMPLE
+.nf
+ /* when the multi transfer is done ... */
+
+ /* remove all easy handles, then: */
+ curl_multi_cleanup(multi_handle);
+.fi
+.SH AVAILABILITY
+Added in 7.9.6
 .SH RETURN VALUE
 CURLMcode type, general libcurl multi interface error code. On success,
 CURLM_OK is returned.

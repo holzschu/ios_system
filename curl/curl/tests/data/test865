@@ -16,7 +16,7 @@ RFC5034
 <servercmd>
 AUTH PLAIN
 REPLY AUTH +
-REPLY dXNlcgB1c2VyAHNlY3JldA== +OK Login successful
+REPLY AHVzZXIAc2VjcmV0 +OK Login successful
 </servercmd>
 <data>
 From: me@somewhere
@@ -39,7 +39,7 @@ pop3
 POP3 plain authentication
  </name>
  <command>
-pop3://%HOSTIP:%POP3PORT/865 -u user:secret
+pop3://%HOSTIP:%POP3PORT/%TESTNUMBER -u user:secret
 </command>
 </client>
 
@@ -49,8 +49,8 @@ pop3://%HOSTIP:%POP3PORT/865 -u user:secret
 <protocol>
 CAPA
 AUTH PLAIN
-dXNlcgB1c2VyAHNlY3JldA==
-RETR 865
+AHVzZXIAc2VjcmV0
+RETR %TESTNUMBER
 QUIT
 </protocol>
 </verify>

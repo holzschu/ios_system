@@ -5,6 +5,8 @@ FTP
 PORT
 RETR
 421
+timeout
+FAILURE
 </keywords>
 </info>
 # Server-side
@@ -23,7 +25,7 @@ ftp
 FTP with 421 timeout response
  </name>
  <command>
-ftp://%HOSTIP:%FTPPORT/a/path/1120
+ftp://%HOSTIP:%FTPPORT/a/path/%TESTNUMBER
 </command>
 </client>
 

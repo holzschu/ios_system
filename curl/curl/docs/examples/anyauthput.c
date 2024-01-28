@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,101 +18,66 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 /* <DESC>
- * HTTP PUT upload with authentiction using "any" method. libcurl picks the
+ * HTTP PUT upload with authentication using "any" method. libcurl picks the
  * one the server supports/wants.
  * </DESC>
  */
 #include <stdio.h>
 #include <fcntl.h>
-#ifdef WIN32
-#  include <io.h>
-#else
-#  ifdef __VMS
-     typedef int intptr_t;
-#  endif
-#  if !defined(_AIX) && !defined(__sgi) && !defined(__osf__)
-#    include <stdint.h>
-#  endif
-#  include <unistd.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef _MSC_VER
-#  ifdef _WIN64
-     typedef __int64 intptr_t;
-#  else
-     typedef int intptr_t;
-#  endif
-#endif
-
 #include <curl/curl.h>
+
+#ifdef WIN32
+#  define FILENO(fp) _fileno(fp)
+#else
+#  define FILENO(fp) fileno(fp)
+#endif
 
 #if LIBCURL_VERSION_NUM < 0x070c03
 #error "upgrade your libcurl to no less than 7.12.3"
 #endif
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#if defined(_AIX) || defined(__sgi) || defined(__osf__)
-#ifndef intptr_t
-#define intptr_t long
-#endif
-#endif
-
 /*
- * This example shows a HTTP PUT operation with authentiction using "any"
+ * This example shows an HTTP PUT operation with authentication using "any"
  * type. It PUTs a file given as a command line argument to the URL also given
  * on the command line.
  *
- * Since libcurl 7.12.3, using "any" auth and POST/PUT requires a set ioctl
+ * Since libcurl 7.12.3, using "any" auth and POST/PUT requires a set seek
  * function.
  *
  * This example also uses its own read callback.
  */
 
-/* ioctl callback function */
-static curlioerr my_ioctl(CURL *handle, curliocmd cmd, void *userp)
+/* seek callback function */
+static int my_seek(void *userp, curl_off_t offset, int origin)
 {
-  int *fdp = (int *)userp;
-  int fd = *fdp;
+  FILE *fp = (FILE *) userp;
 
-  (void)handle; /* not used in here */
+  if(-1 == fseek(fp, (long) offset, origin))
+    /* couldn't seek */
+    return CURL_SEEKFUNC_CANTSEEK;
 
-  switch(cmd) {
-  case CURLIOCMD_RESTARTREAD:
-    /* mr libcurl kindly asks as to rewind the read data stream to start */
-    if(-1 == lseek(fd, 0, SEEK_SET))
-      /* couldn't rewind */
-      return CURLIOE_FAILRESTART;
-
-    break;
-
-  default: /* ignore unknown commands */
-    return CURLIOE_UNKNOWNCMD;
-  }
-  return CURLIOE_OK; /* success! */
+  return CURL_SEEKFUNC_OK; /* success! */
 }
 
 /* read callback function, fread() look alike */
-static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 {
   ssize_t retcode;
-  curl_off_t nread;
+  unsigned long nread;
 
-  int *fdp = (int *)stream;
-  int fd = *fdp;
+  retcode = fread(ptr, size, nmemb, stream);
 
-  retcode = read(fd, ptr, size * nmemb);
-
-  nread = (curl_off_t)retcode;
-
-  fprintf(stderr, "*** We read %" CURL_FORMAT_CURL_OFF_T
-          " bytes from file\n", nread);
+  if(retcode > 0) {
+    nread = (unsigned long)retcode;
+    fprintf(stderr, "*** We read %lu bytes from file\n", nread);
+  }
 
   return retcode;
 }
@@ -121,7 +86,7 @@ int main(int argc, char **argv)
 {
   CURL *curl;
   CURLcode res;
-  int hd;
+  FILE *fp;
   struct stat file_info;
 
   char *file;
@@ -130,12 +95,12 @@ int main(int argc, char **argv)
   if(argc < 3)
     return 1;
 
-  file= argv[1];
+  file = argv[1];
   url = argv[2];
 
   /* get the file size of the local file */
-  hd = open(file, O_RDONLY);
-  fstat(hd, &file_info);
+  fp = fopen(file, "rb");
+  fstat(FILENO(fp), &file_info);
 
   /* In windows, this will init the winsock stuff */
   curl_global_init(CURL_GLOBAL_ALL);
@@ -147,13 +112,13 @@ int main(int argc, char **argv)
     curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
 
     /* which file to upload */
-    curl_easy_setopt(curl, CURLOPT_READDATA, (void *)&hd);
+    curl_easy_setopt(curl, CURLOPT_READDATA, (void *) fp);
 
-    /* set the ioctl function */
-    curl_easy_setopt(curl, CURLOPT_IOCTLFUNCTION, my_ioctl);
+    /* set the seek function */
+    curl_easy_setopt(curl, CURLOPT_SEEKFUNCTION, my_seek);
 
-    /* pass the file descriptor to the ioctl callback as well */
-    curl_easy_setopt(curl, CURLOPT_IOCTLDATA, (void *)&hd);
+    /* pass the file descriptor to the seek callback as well */
+    curl_easy_setopt(curl, CURLOPT_SEEKDATA, (void *) fp);
 
     /* enable "uploading" (which means PUT when doing HTTP) */
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
@@ -175,7 +140,7 @@ int main(int argc, char **argv)
     /* set user name and password for the authentication */
     curl_easy_setopt(curl, CURLOPT_USERPWD, "user:password");
 
-    /* Now run off and do what you've been told! */
+    /* Now run off and do what you have been told! */
     res = curl_easy_perform(curl);
     /* Check for errors */
     if(res != CURLE_OK)
@@ -185,7 +150,7 @@ int main(int argc, char **argv)
     /* always cleanup */
     curl_easy_cleanup(curl);
   }
-  close(hd); /* close the local file */
+  fclose(fp); /* close the local file */
 
   curl_global_cleanup();
   return 0;

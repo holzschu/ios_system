@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,18 +18,23 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_TRANSFER_ENCODING 3 "May 02, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_TRANSFER_ENCODING 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLOPT_TRANSFER_ENCODING \- ask for HTTP Transfer Encoding
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
-CURLcode curl_easy_setopt(CURL *handle, CURLOPT_TRANSFER_ENCODING, long enable);
+CURLcode curl_easy_setopt(CURL *handle, CURLOPT_TRANSFER_ENCODING,
+                          long enable);
+.fi
 .SH DESCRIPTION
-Pass a long set to 1 to \fIenable\fP or 0 to disable.
+Pass a long set to 1L to \fIenable\fP or 0 to disable.
 
 Adds a request for compressed Transfer Encoding in the outgoing HTTP
 request. If the server supports this and so desires, it can respond with the
@@ -46,7 +51,14 @@ by both HTTP clients and HTTP servers.
 .SH PROTOCOLS
 HTTP
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+  curl_easy_setopt(curl, CURLOPT_TRANSFER_ENCODING, 1L);
+  curl_easy_perform(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.21.6
 .SH RETURN VALUE

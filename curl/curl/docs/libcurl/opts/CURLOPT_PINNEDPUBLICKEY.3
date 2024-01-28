@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,18 +18,23 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PINNEDPUBLICKEY 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_PINNEDPUBLICKEY 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
-CURLOPT_PINNEDPUBLICKEY \- set pinned public key
+CURLOPT_PINNEDPUBLICKEY \- pinned public key
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
-CURLcode curl_easy_setopt(CURL *handle, CURLOPT_PINNEDPUBLICKEY, char *pinnedpubkey);
+CURLcode curl_easy_setopt(CURL *handle, CURLOPT_PINNEDPUBLICKEY,
+                          char *pinnedpubkey);
+.fi
 .SH DESCRIPTION
-Pass a pointer to a zero terminated string as parameter. The string can be the
+Pass a pointer to a null-terminated string as parameter. The string can be the
 file name of your pinned public key. The file format expected is "PEM" or "DER".
 The string can also be any number of base64 encoded sha256 hashes preceded by
 "sha256//" and separated by ";"
@@ -65,14 +70,14 @@ if(curl) {
 If you do not have the server's public key file you can extract it from the
 server's certificate.
 .nf
-# retrieve the server's certificate if you don't already have it
+# retrieve the server's certificate if you do not already have it
 #
 # be sure to examine the certificate to see if it is what you expected
 #
 # Windows-specific:
 # - Use NUL instead of /dev/null.
 # - OpenSSL may wait for input instead of disconnecting. Hit enter.
-# - If you don't have sed, then just copy the certificate into a file:
+# - If you do not have sed, then just copy the certificate into a file:
 #   Lines from -----BEGIN CERTIFICATE----- to -----END CERTIFICATE-----.
 #
 openssl s_client -servername www.example.com -connect www.example.com:443 < /dev/null | sed -n "/-----BEGIN/,/-----END/p" > www.example.com.pem
@@ -96,21 +101,27 @@ footer:
 .SH AVAILABILITY
 PEM/DER support:
 
-  7.39.0: OpenSSL, GnuTLS and GSKit
+  7.39.0: OpenSSL, GnuTLS
 
-  7.43.0: NSS and wolfSSL/CyaSSL
+  7.39.0-7.48.0,7.58.1+: GSKit
 
-  7.47.0: mbedtls
+  7.43.0: NSS and wolfSSL
 
-  7.49.0: PolarSSL
+  7.47.0: mbedTLS
+
+  7.54.1: Secure Transport on macOS 10.7+/iOS 10+
+
+  7.58.1: Schannel
 
 sha256 support:
 
-  7.44.0: OpenSSL, GnuTLS, NSS and wolfSSL/CyaSSL
+  7.44.0: OpenSSL, GnuTLS, NSS and wolfSSL
 
-  7.47.0: mbedtls
+  7.47.0: mbedTLS
 
-  7.49.0: PolarSSL
+  7.54.1: Secure Transport on macOS 10.7+/iOS 10+
+
+  7.58.1: Schannel Windows XP SP3+
 
 Other SSL backends not supported.
 .SH RETURN VALUE

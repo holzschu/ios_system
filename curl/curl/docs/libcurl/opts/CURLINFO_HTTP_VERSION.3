@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,20 +18,25 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_HTTP_VERSION 3 "May 11, 2016" "libcurl 7.54.0" "curl_easy_getinfo options"
+.TH CURLINFO_HTTP_VERSION 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLINFO_HTTP_VERSION \- get the http version used in the connection
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_getinfo(CURL *handle, CURLINFO_HTTP_VERSION, long *p);
+.fi
 .SH DESCRIPTION
-Pass a pointer to a long to receive the version used in the last http connection.
-The returned value will be CURL_HTTP_VERSION_1_0, CURL_HTTP_VERSION_1_1, or
-CURL_HTTP_VERSION_2_0, or 0 if the version can't be determined.
+Pass a pointer to a long to receive the version used in the last http
+connection.  The returned value will be CURL_HTTP_VERSION_1_0,
+CURL_HTTP_VERSION_1_1, CURL_HTTP_VERSION_2_0, CURL_HTTP_VERSION_3 or 0 if the
+version cannot be determined.
 .SH PROTOCOLS
 HTTP
 .SH EXAMPLE
@@ -39,7 +44,7 @@ HTTP
 CURL *curl = curl_easy_init();
 if(curl) {
   CURLcode res;
-  curl_easy_setopt(curl, CURLOPT_URL, "http://example.com");
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
   res = curl_easy_perform(curl);
   if(res == CURLE_OK) {
     long http_version;

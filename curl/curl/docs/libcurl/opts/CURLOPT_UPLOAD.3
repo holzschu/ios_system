@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,16 +18,20 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_UPLOAD 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_UPLOAD 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
-CURLOPT_UPLOAD \- enable data upload
+CURLOPT_UPLOAD \- data upload
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_UPLOAD, long upload);
+.fi
 .SH DESCRIPTION
 The long parameter \fIupload\fP set to 1 tells the library to prepare for and
 perform an upload. The \fICURLOPT_READDATA(3)\fP and
@@ -38,7 +42,7 @@ the PUT request unless you tell libcurl otherwise.
 Using PUT with HTTP 1.1 implies the use of a "Expect: 100-continue" header.
 You can disable this header with \fICURLOPT_HTTPHEADER(3)\fP as usual.
 
-If you use PUT to a HTTP 1.1 server, you can upload data without knowing the
+If you use PUT to an HTTP 1.1 server, you can upload data without knowing the
 size before starting the transfer if you use chunked encoding. You enable this
 by adding a header like "Transfer-Encoding: chunked" with
 \fICURLOPT_HTTPHEADER(3)\fP. With HTTP 1.0 or without chunked transfer, you
@@ -66,7 +70,7 @@ if(curl) {
   /* Set the size of the file to upload */
   curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fsize);
 
-  /* Now run off and do what you've been told! */
+  /* Now run off and do what you have been told! */
   curl_easy_perform(curl);
 }
 .fi

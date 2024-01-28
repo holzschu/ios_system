@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,8 +18,10 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
-.TH libcurl-share 3 "February 03, 2016" "libcurl 7.54.0" "libcurl share interface"
+.TH libcurl-share 3 "April 26, 2023" "libcurl 8.1.2" "libcurl"
 
 .SH NAME
 libcurl-share \- how to use the share interface
@@ -35,10 +37,9 @@ The share interface was added to enable sharing of data between curl
 \&"handles".
 .SH "ONE SET OF DATA - MANY TRANSFERS"
 You can have multiple easy handles share data between them. Have them update
-and use the \fBsame\fP cookie database, DNS cache, TLS session cache! This
-way, each single transfer will take advantage from data updates made by the
-other transfer(s). The sharing interface, however, does not share active or
-persistent connections between different easy handles.
+and use the \fBsame\fP cookie database, DNS cache, TLS session cache and/or
+connection cache! This way, each single transfer will take advantage from data
+updates made by the other transfer(s).
 .SH "SHARE OBJECT"
 You create a shared object with \fIcurl_share_init(3)\fP. It returns a handle
 for a newly created one.
@@ -47,7 +48,7 @@ You tell the shared object what data you want it to share by using
 \fIcurl_share_setopt(3)\fP.
 
 Since you can use this share from multiple threads, and libcurl has no
-internal thread synchronization, you must provide mutex callbacks if you're
+internal thread synchronization, you must provide mutex callbacks if you are
 using this multi-threaded. You set lock and unlock functions with
 \fIcurl_share_setopt(3)\fP too.
 
@@ -60,7 +61,7 @@ To make an easy handle stop using that particular share, you set
 \fICURLOPT_SHARE(3)\fP to NULL for that easy handle. To make a handle stop
 sharing a particular data, you can \fICURLSHOPT_UNSHARE\fP it.
 
-When you're done using the share, make sure that no easy handle is still using
+When you are done using the share, make sure that no easy handle is still using
 it, and call \fIcurl_share_cleanup(3)\fP on the handle.
 .SH "SEE ALSO"
 .BR curl_share_init "(3), " curl_share_setopt "(3), " curl_share_cleanup "(3)"

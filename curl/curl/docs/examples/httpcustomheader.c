@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 /* <DESC>
@@ -45,11 +47,11 @@ int main(void)
     chunk = curl_slist_append(chunk, "Host: example.com");
 
     /* Add a header with "blank" contents to the right of the colon. Note that
-       we're then using a semicolon in the string we pass to curl! */
+       we are then using a semicolon in the string we pass to curl! */
     chunk = curl_slist_append(chunk, "X-silly-header;");
 
     /* set our custom set of headers */
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 
     curl_easy_setopt(curl, CURLOPT_URL, "localhost");
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);

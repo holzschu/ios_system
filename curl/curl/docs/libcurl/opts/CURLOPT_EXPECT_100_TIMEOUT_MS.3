@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,9 +18,11 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_EXPECT_100_TIMEOUT_MS 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_EXPECT_100_TIMEOUT_MS 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLOPT_EXPECT_100_TIMEOUT_MS \- timeout for Expect: 100-continue response
@@ -33,7 +35,7 @@ CURLcode curl_easy_setopt(CURL *handle, CURLOPT_EXPECT_100_TIMEOUT_MS,
 .SH DESCRIPTION
 Pass a long to tell libcurl the number of \fImilliseconds\fP to wait for a
 server response with the HTTP status 100 (Continue), 417 (Expectation Failed)
-or similar after sending a HTTP request containing an Expect: 100-continue
+or similar after sending an HTTP request containing an Expect: 100-continue
 header. If this times out before a response is received, the request body is
 sent anyway.
 .SH DEFAULT
@@ -41,7 +43,17 @@ sent anyway.
 .SH PROTOCOLS
 HTTP
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+
+  /* wait 3 seconds for 100-continue */
+  curl_easy_setopt(curl, CURLOPT_EXPECT_100_TIMEOUT_MS, 3000L);
+
+  curl_easy_perform(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.36.0
 .SH RETURN VALUE

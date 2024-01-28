@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include "test.h"
@@ -39,7 +41,6 @@ struct WriteThis {
 static int progress_callback(void *clientp, double dltotal, double dlnow,
                              double ultotal, double ulnow)
 {
-  FILE *moo;
   static int prev_ultotal = -1;
   static int prev_ulnow = -1;
   (void)clientp; /* UNUSED */
@@ -53,7 +54,7 @@ static int progress_callback(void *clientp, double dltotal, double dlnow,
   if((prev_ultotal != (int)ultotal) ||
      (prev_ulnow != (int)ulnow)) {
 
-    moo = fopen(libtest_arg2, "ab");
+    FILE *moo = fopen(libtest_arg2, "ab");
     if(moo) {
       fprintf(moo, "Progress callback called with UL %d out of %d\n",
               (int)ulnow, (int)ultotal);
@@ -65,7 +66,7 @@ static int progress_callback(void *clientp, double dltotal, double dlnow,
   return 0;
 }
 
-static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *userp)
+static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *userp)
 {
   struct WriteThis *pooh = (struct WriteThis *)userp;
   const char *data;
@@ -87,7 +88,7 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *userp)
 int test(char *URL)
 {
   CURL *curl;
-  CURLcode res=CURLE_OK;
+  CURLcode res = CURLE_OK;
   struct curl_slist *slist = NULL;
   struct WriteThis pooh;
   pooh.counter = 0;
@@ -105,7 +106,7 @@ int test(char *URL)
   }
 
   slist = curl_slist_append(slist, "Transfer-Encoding: chunked");
-  if(slist == NULL) {
+  if(!slist) {
     fprintf(stderr, "curl_slist_append() failed\n");
     curl_easy_cleanup(curl);
     curl_global_cleanup();
@@ -117,11 +118,6 @@ int test(char *URL)
 
   /* Now specify we want to POST data */
   test_setopt(curl, CURLOPT_POST, 1L);
-
-#ifdef CURL_DOES_CONVERSIONS
-  /* Convert the POST data to ASCII */
-  test_setopt(curl, CURLOPT_TRANSFERTEXT, 1L);
-#endif
 
   /* we want to use our own read function */
   test_setopt(curl, CURLOPT_READFUNCTION, read_callback);
@@ -143,7 +139,9 @@ int test(char *URL)
 
   /* we want to use our own progress function */
   test_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-  test_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_callback);
+  CURL_IGNORE_DEPRECATION(
+    test_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_callback);
+  )
 
   /* Perform the request, res will get the return code */
   res = curl_easy_perform(curl);

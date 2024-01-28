@@ -1,14 +1,27 @@
 # Ciphers
 
-With curl's options `CURLOPT_SSL_CIPHER_LIST` and `--ciphers` users can
-control which ciphers to consider when negotiating TLS connections.
+With curl's options
+[`CURLOPT_SSL_CIPHER_LIST`](https://curl.se/libcurl/c/CURLOPT_SSL_CIPHER_LIST.html)
+and
+[`--ciphers`](https://curl.se/docs/manpage.html#--ciphers)
+users can control which ciphers to consider when negotiating TLS connections.
+
+TLS 1.3 ciphers are supported since curl 7.61 for OpenSSL 1.1.1+, and since
+curl 7.85 for Schannel with options
+[`CURLOPT_TLS13_CIPHERS`](https://curl.se/libcurl/c/CURLOPT_TLS13_CIPHERS.html)
+and
+[`--tls13-ciphers`](https://curl.se/docs/manpage.html#--tls13-ciphers)
+. If you are using a different SSL backend you can try setting TLS 1.3 cipher
+suites by using the respective regular cipher option.
 
 The names of the known ciphers differ depending on which TLS backend that
 libcurl was built to use. This is an attempt to list known cipher names.
 
 ## OpenSSL
 
-(based on [OpenSSL docs](https://www.openssl.org/docs/man1.1.0/apps/ciphers.html))
+(based on [OpenSSL docs](https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html))
+
+When specifying multiple cipher names, separate them with colon (`:`).
 
 ### SSL3 cipher suites
 
@@ -38,7 +51,7 @@ libcurl was built to use. This is an attempt to list known cipher names.
 `ADH-RC4-MD5`
 `ADH-DES-CBC3-SHA`
 
-### AES ciphersuites from RFC3268, extending TLS v1.0
+### AES cipher suites from RFC3268, extending TLS v1.0
 
 `AES128-SHA`
 `AES256-SHA`
@@ -53,7 +66,7 @@ libcurl was built to use. This is an attempt to list known cipher names.
 `ADH-AES128-SHA`
 `ADH-AES256-SHA`
 
-### SEED ciphersuites from RFC4162, extending TLS v1.0
+### SEED cipher suites from RFC4162, extending TLS v1.0
 
 `SEED-SHA`
 `DH-DSS-SEED-SHA`
@@ -62,7 +75,7 @@ libcurl was built to use. This is an attempt to list known cipher names.
 `DHE-RSA-SEED-SHA`
 `ADH-SEED-SHA`
 
-### GOST ciphersuites, extending TLS v1.0
+### GOST cipher suites, extending TLS v1.0
 
 `GOST94-GOST89-GOST89`
 `GOST2001-GOST89-GOST89`
@@ -135,12 +148,22 @@ libcurl was built to use. This is an attempt to list known cipher names.
 `ECDHE-ECDSA-AES128-CCM8`
 `ECDHE-ECDSA-AES256-CCM8`
 
-### Camellia HMAC-Based ciphersuites from RFC6367, extending TLS v1.2
+### Camellia HMAC-Based cipher suites from RFC6367, extending TLS v1.2
 
 `ECDHE-ECDSA-CAMELLIA128-SHA256`
 `ECDHE-ECDSA-CAMELLIA256-SHA384`
 `ECDHE-RSA-CAMELLIA128-SHA256`
 `ECDHE-RSA-CAMELLIA256-SHA384`
+
+### TLS 1.3 cipher suites
+
+(Note these ciphers are set with `CURLOPT_TLS13_CIPHERS` and `--tls13-ciphers`)
+
+`TLS_AES_256_GCM_SHA384`
+`TLS_CHACHA20_POLY1305_SHA256`
+`TLS_AES_128_GCM_SHA256`
+`TLS_AES_128_CCM_8_SHA256`
+`TLS_AES_128_CCM_SHA256`
 
 ## NSS
 
@@ -154,7 +177,7 @@ libcurl was built to use. This is an attempt to list known cipher names.
 `des`
 `desede3`
 
-###  SSL3/TLS cipher suites
+### SSL3/TLS cipher suites
 
 `rsa_rc4_128_md5`
 `rsa_rc4_128_sha`
@@ -248,10 +271,17 @@ libcurl was built to use. This is an attempt to list known cipher names.
 `ecdhe_ecdsa_chacha20_poly1305_sha_256`
 `dhe_rsa_chacha20_poly1305_sha_256`
 
+### TLS 1.3 cipher suites
+
+`aes_128_gcm_sha_256`
+`aes_256_gcm_sha_384`
+`chacha20_poly1305_sha_256`
+
 ## GSKit
 
-Ciphers are internally defined as numeric codes (http://www.ibm.com/support/knowledgecenter/ssw_ibm_i_73/apis/gsk_attribute_set_buffer.htm),
-but libcurl maps them to the following case-insensitive names.
+Ciphers are internally defined as [numeric
+codes](https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_73/apis/gsk_attribute_set_buffer.htm). libcurl
+maps them to the following case-insensitive names.
 
 ### SSL2 cipher suites (insecure: disabled by default)
 
@@ -424,3 +454,138 @@ but libcurl maps them to the following case-insensitive names.
 `ECDHE-PSK-CHACHA20-POLY1305`,
 `DHE-PSK-CHACHA20-POLY1305`,
 `EDH-RSA-DES-CBC3-SHA`,
+
+## Schannel
+
+Schannel allows the enabling and disabling of encryption algorithms, but not
+specific cipher suites. They are
+[defined](https://docs.microsoft.com/windows/desktop/SecCrypto/alg-id) by
+Microsoft.
+
+There is also the case that the selected algorithm is not supported by the
+protocol or does not match the ciphers offered by the server during the SSL
+negotiation. In this case curl will return error
+`CURLE_SSL_CONNECT_ERROR (35) SEC_E_ALGORITHM_MISMATCH`
+and the request will fail.
+
+`CALG_MD2`,
+`CALG_MD4`,
+`CALG_MD5`,
+`CALG_SHA`,
+`CALG_SHA1`,
+`CALG_MAC`,
+`CALG_RSA_SIGN`,
+`CALG_DSS_SIGN`,
+`CALG_NO_SIGN`,
+`CALG_RSA_KEYX`,
+`CALG_DES`,
+`CALG_3DES_112`,
+`CALG_3DES`,
+`CALG_DESX`,
+`CALG_RC2`,
+`CALG_RC4`,
+`CALG_SEAL`,
+`CALG_DH_SF`,
+`CALG_DH_EPHEM`,
+`CALG_AGREEDKEY_ANY`,
+`CALG_HUGHES_MD5`,
+`CALG_SKIPJACK`,
+`CALG_TEK`,
+`CALG_CYLINK_MEK`,
+`CALG_SSL3_SHAMD5`,
+`CALG_SSL3_MASTER`,
+`CALG_SCHANNEL_MASTER_HASH`,
+`CALG_SCHANNEL_MAC_KEY`,
+`CALG_SCHANNEL_ENC_KEY`,
+`CALG_PCT1_MASTER`,
+`CALG_SSL2_MASTER`,
+`CALG_TLS1_MASTER`,
+`CALG_RC5`,
+`CALG_HMAC`,
+`CALG_TLS1PRF`,
+`CALG_HASH_REPLACE_OWF`,
+`CALG_AES_128`,
+`CALG_AES_192`,
+`CALG_AES_256`,
+`CALG_AES`,
+`CALG_SHA_256`,
+`CALG_SHA_384`,
+`CALG_SHA_512`,
+`CALG_ECDH`,
+`CALG_ECMQV`,
+`CALG_ECDSA`,
+`CALG_ECDH_EPHEM`,
+
+As of curl 7.77.0, you can also pass `SCH_USE_STRONG_CRYPTO` as a cipher name
+to [constrain the set of available ciphers as specified in the Schannel
+documentation](https://docs.microsoft.com/en-us/windows/win32/secauthn/tls-cipher-suites-in-windows-server-2022).
+Note that the supported ciphers in this case follow the OS version, so if you
+are running an outdated OS you might still be supporting weak ciphers.
+
+### TLS 1.3 cipher suites
+
+(Note these ciphers are set with `CURLOPT_TLS13_CIPHERS` and `--tls13-ciphers`)
+
+`TLS_AES_256_GCM_SHA384`
+`TLS_AES_128_GCM_SHA256`
+`TLS_CHACHA20_POLY1305_SHA256`
+`TLS_AES_128_CCM_8_SHA256`
+`TLS_AES_128_CCM_SHA256`
+
+## BearSSL
+
+BearSSL ciphers can be specified by either the OpenSSL name (`ECDHE-RSA-AES128-GCM-SHA256`) or the IANA name (`TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`).
+
+Since BearSSL 0.1:
+
+`DES-CBC3-SHA`
+`AES128-SHA`
+`AES256-SHA`
+`AES128-SHA256`
+`AES256-SHA256`
+`AES128-GCM-SHA256`
+`AES256-GCM-SHA384`
+`ECDH-ECDSA-DES-CBC3-SHA`
+`ECDH-ECDSA-AES128-SHA`
+`ECDH-ECDSA-AES256-SHA`
+`ECDHE-ECDSA-DES-CBC3-SHA`
+`ECDHE-ECDSA-AES128-SHA`
+`ECDHE-ECDSA-AES256-SHA`
+`ECDH-RSA-DES-CBC3-SHA`
+`ECDH-RSA-AES128-SHA`
+`ECDH-RSA-AES256-SHA`
+`ECDHE-RSA-DES-CBC3-SHA`
+`ECDHE-RSA-AES128-SHA`
+`ECDHE-RSA-AES256-SHA`
+`ECDHE-ECDSA-AES128-SHA256`
+`ECDHE-ECDSA-AES256-SHA384`
+`ECDH-ECDSA-AES128-SHA256`
+`ECDH-ECDSA-AES256-SHA384`
+`ECDHE-RSA-AES128-SHA256`
+`ECDHE-RSA-AES256-SHA384`
+`ECDH-RSA-AES128-SHA256`
+`ECDH-RSA-AES256-SHA384`
+`ECDHE-ECDSA-AES128-GCM-SHA256`
+`ECDHE-ECDSA-AES256-GCM-SHA384`
+`ECDH-ECDSA-AES128-GCM-SHA256`
+`ECDH-ECDSA-AES256-GCM-SHA384`
+`ECDHE-RSA-AES128-GCM-SHA256`
+`ECDHE-RSA-AES256-GCM-SHA384`
+`ECDH-RSA-AES128-GCM-SHA256`
+`ECDH-RSA-AES256-GCM-SHA384`
+
+Since BearSSL 0.2:
+
+`ECDHE-RSA-CHACHA20-POLY1305`
+`ECDHE-ECDSA-CHACHA20-POLY1305`
+
+Since BearSSL 0.6:
+
+`AES128-CCM`
+`AES256-CCM`
+`AES128-CCM8`
+`AES256-CCM8`
+`ECDHE-ECDSA-AES128-CCM`
+`ECDHE-ECDSA-AES256-CCM`
+`ECDHE-ECDSA-AES128-CCM8`
+`ECDHE-ECDSA-AES256-CCM8`

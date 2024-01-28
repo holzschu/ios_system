@@ -19,10 +19,10 @@ file
  <name>
 two file:// URLs to stdout
  </name>
- <command>
-file://localhost/%PWD/log/test202.txt FILE://localhost/%PWD/log/test202.txt
+<command option="no-include">
+file://localhost%FILE_PWD/%LOGDIR/test%TESTNUMBER.txt FILE://localhost%FILE_PWD/%LOGDIR/test%TESTNUMBER.txt
 </command>
-<file name="log/test202.txt">
+<file name="%LOGDIR/test%TESTNUMBER.txt">
 contents in a single file
 </file>
 </client>

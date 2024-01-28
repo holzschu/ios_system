@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,20 +18,26 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 #include "curlcheck.h"
 
-CURL *hnd;
+static CURL *hnd;
 
 static CURLcode unit_setup(void)
 {
-  return CURLE_OK;
+  CURLcode res = CURLE_OK;
+
+  global_init(CURL_GLOBAL_ALL);
+  return res;
 }
 
 static void unit_stop(void)
 {
   if(hnd)
     curl_easy_cleanup(hnd);
+  curl_global_cleanup();
 }
 
 struct test {
@@ -77,7 +83,7 @@ UNITTEST_START
 
   hnd = curl_easy_init();
   abort_unless(hnd != NULL, "returned NULL!");
-  for(i=0; list1[i].in; i++) {
+  for(i = 0; list1[i].in; i++) {
     int outlen;
     char *out = curl_easy_unescape(hnd,
                                    list1[i].in, list1[i].inlen,
@@ -93,7 +99,7 @@ UNITTEST_START
     curl_free(out);
   }
 
-  for(i=0; list2[i].in; i++) {
+  for(i = 0; list2[i].in; i++) {
     int outlen;
     char *out = curl_easy_escape(hnd, list2[i].in, list2[i].inlen);
     abort_unless(out != NULL, "returned NULL!");

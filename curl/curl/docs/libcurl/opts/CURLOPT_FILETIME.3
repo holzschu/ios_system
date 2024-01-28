@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,16 +18,20 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_FILETIME 3 "April 03, 2017" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_FILETIME 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLOPT_FILETIME \- get the modification time of the remote resource
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_FILETIME, long gettime);
+.fi
 .SH DESCRIPTION
 Pass a long. If it is 1, libcurl will attempt to get the modification time of
 the remote document in this operation. This requires that the remote server
@@ -37,7 +41,7 @@ argument can be used after a transfer to extract the received time (if any).
 .SH DEFAULT
 0
 .SH PROTOCOLS
-HTTP, FTP, SFTP, FILE
+HTTP(S), FTP(S), SFTP, FILE, SMB(S)
 .SH EXAMPLE
 .nf
 curl = curl_easy_init();

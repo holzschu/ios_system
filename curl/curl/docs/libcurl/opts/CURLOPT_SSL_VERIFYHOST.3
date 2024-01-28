@@ -5,11 +5,11 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
-.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" * are also available at https://curl.se/docs/copyright.html.
 .\" *
 .\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
 .\" * copies of the Software, and permit persons to whom the Software is
@@ -18,16 +18,20 @@
 .\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 .\" * KIND, either express or implied.
 .\" *
+.\" * SPDX-License-Identifier: curl
+.\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSL_VERIFYHOST 3 "February 02, 2017" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_SSL_VERIFYHOST 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
 
 .SH NAME
 CURLOPT_SSL_VERIFYHOST \- verify the certificate's name against host
 .SH SYNOPSIS
+.nf
 #include <curl/curl.h>
 
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_SSL_VERIFYHOST, long verify);
+.fi
 .SH DESCRIPTION
 Pass a long as parameter specifying what to \fIverify\fP.
 
@@ -46,11 +50,15 @@ Curl considers the server the intended one when the Common Name field or a
 Subject Alternate Name field in the certificate matches the host name in the
 URL to which you told Curl to connect.
 
-When the \fIverify\fP value is 1, \fIcurl_easy_setopt\fP will return an error
-and the option value will not be changed.  It was previously (in 7.28.0 and
-earlier) a debug option of some sorts, but it is no longer supported due to
-frequently leading to programmer mistakes. Future versions will stop returning
-an error for 1 and just treat 1 and 2 the same.
+If \fIverify\fP value is set to 1:
+
+In 7.28.0 and earlier: treated as a debug option of some sorts, not supported
+anymore due to frequently leading to programmer mistakes.
+
+From 7.28.1 to 7.65.3: setting it to 1 made curl_easy_setopt() return an error
+and leaving the flag untouched.
+
+From 7.66.0: treats 1 and 2 the same.
 
 When the \fIverify\fP value is 0, the connection succeeds regardless of the
 names in the certificate. Use that ability with caution!
@@ -60,9 +68,20 @@ The default value for this option is 2.
 This option controls checking the server's certificate's claimed identity.
 The server could be lying.  To control lying, see
 \fICURLOPT_SSL_VERIFYPEER(3)\fP.
+
+WARNING: disabling verification of the certificate allows bad guys to
+man-in-the-middle the communication without you knowing it. Disabling
+verification makes the communication insecure. Just having encryption on a
+transfer is not enough as you cannot be sure that you are communicating with
+the correct end-point.
+
+When libcurl uses secure protocols it trusts responses and allows for example
+HSTS and Alt-Svc information to be stored and used subsequently. Disabling
+certificate verification can make libcurl trust and use such information from
+malicious servers.
 .SH LIMITATIONS
-DarwinSSL: If \fIverify\fP value is 0, then SNI is also disabled. SNI is a TLS
-extension that sends the hostname to the server. The server may use that
+Secure Transport: If \fIverify\fP value is 0, then SNI is also disabled. SNI is
+a TLS extension that sends the hostname to the server. The server may use that
 information to do such things as sending back a specific certificate for the
 hostname, or forwarding the request to a specific origin server. Some hostnames
 may be inaccessible if SNI is not sent.

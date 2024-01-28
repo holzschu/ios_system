@@ -20,7 +20,7 @@ AUTH DIGEST-MD5 PLAIN
 REPLY "AUTH DIGEST-MD5" + Rubbish
 REPLY * -ERR AUTH exchange cancelled by client
 REPLY "AUTH PLAIN" +
-REPLY dXNlcgB1c2VyAHNlY3JldA== +OK Login successful
+REPLY AHVzZXIAc2VjcmV0 +OK Login successful
 </servercmd>
 <data>
 From: me@somewhere
@@ -48,7 +48,7 @@ crypto
 POP3 DIGEST-MD5 authentication with SASL downgrade
  </name>
  <command>
-pop3://%HOSTIP:%POP3PORT/881 -u user:secret
+pop3://%HOSTIP:%POP3PORT/%TESTNUMBER -u user:secret
 </command>
 </client>
 
@@ -60,8 +60,8 @@ CAPA
 AUTH DIGEST-MD5
 *
 AUTH PLAIN
-dXNlcgB1c2VyAHNlY3JldA==
-RETR 881
+AHVzZXIAc2VjcmV0
+RETR %TESTNUMBER
 QUIT
 </protocol>
 </verify>
