@@ -59,7 +59,9 @@ __thread int	 env_verbosity;
 
 static void usage(void);
 
-
+#if TARGET_OS_IPHONE
+extern void clearEnvironment(pid_t pid);
+#endif
 
 int
 env_main(int argc, char **argv)
@@ -107,8 +109,12 @@ env_main(int argc, char **argv)
 			usage();
 		}
 	if (want_clear) {
+#if TARGET_OS_IPHONE
+        clearEnvironment(ios_currentPid());
+#else
 		environ = cleanenv;
 		cleanenv[0] = NULL;
+#endif
 		if (env_verbosity)
 			fprintf(thread_stderr, "#env clearing environ\n");
 	}

@@ -43,11 +43,12 @@ int webAssemblyCommandOrder(void) {
 }
 
 void finishedPreparingWebAssemblyCommand(void) {
-    preparingWebAssemblyCommands -= 1;
+    if (preparingWebAssemblyCommands > 0)
+        preparingWebAssemblyCommands -= 1;
 }
 
 static void executeWebAssemblyCommandsInOrder(void) {
-    void (*function)() = NULL;
+    void (*function)(void) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "executeWebAssemblyCommands");
     if (function != NULL) {
         while (preparingWebAssemblyCommands > 0) {
@@ -81,7 +82,7 @@ int fprintf(FILE * restrict stream, const char * restrict format, ...) {
     if (fileno(stream) == STDOUT_FILENO) done = vfprintf (thread_stdout, format, arg);
     else if (fileno(stream) == STDERR_FILENO) done = vfprintf (thread_stderr, format, arg);
     // iOS, debug:
-    // else if (fileno(stream) == STDERR_FILENO) done = vfprintf (stderr, format, arg);
+    // else if ((fileno(stream) == STDERR_FILENO) || (fileno(stream) == fileno(thread_stderr))) done = vfprintf (stderr, format, arg);
     else done = vfprintf (stream, format, arg);
     va_end (arg);
     
@@ -122,7 +123,6 @@ size_t ios_fwrite(const void *restrict ptr, size_t size, size_t nitems, FILE *re
     if (thread_stdout == NULL) thread_stdout = stdout;
     if (thread_stderr == NULL) thread_stderr = stderr;
     if (fileno(stream) == STDOUT_FILENO) return fwrite(ptr, size, nitems, thread_stdout);
-    // iOS, debug:
     if (fileno(stream) == STDERR_FILENO) return fwrite(ptr, size, nitems, thread_stderr);
     return fwrite(ptr, size, nitems, stream);
 }
@@ -198,7 +198,7 @@ void newPreviousDirectory(void) {
 
 // We do not recycle process ids too quickly to avoid collisions.
 void storeEnvironment(char* envp[]);
-static inline const pid_t ios_nextAvailablePid() {
+static inline const pid_t ios_nextAvailablePid(void) {
     while (cleanup_counter > 0) { } // Don't start a command while another is ending.
     // fprintf(stderr, "Locking in ios_nextAvailablePid\n");
     pthread_mutex_lock(&pid_mtx);
@@ -482,6 +482,20 @@ void resetEnvironment(pid_t pid) {
     }
 }
 
+// Used by "env -i": clear all environment variables, but don't clear the environment itself
+void clearEnvironment(pid_t pid) {
+    if (environment[pid] != NULL) {
+        // Free the variables allocated:
+        for (int i = 0; i < numVariablesSet[pid]; i++) {
+            if (environment[pid][i] == NULL) { continue; }
+            free(environment[pid][i]);
+            environment[pid][i] = NULL;
+        }
+        numVariablesSet[pid] = 0;
+    }
+}
+
+
 char** environmentVariables(pid_t pid) {
     if (environment[pid] != NULL) {
         return environment[pid];
@@ -539,7 +553,7 @@ void ios_releaseThreadId(pid_t pid) {
     }
 }
 
-pid_t ios_currentPid() {
+pid_t ios_currentPid(void) {
     return current_pid;
 }
 

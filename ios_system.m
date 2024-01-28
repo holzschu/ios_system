@@ -305,7 +305,7 @@ void ios_IsMainThread(bool value) {
     currentSession->isMainThread = value;
 }
 
-int ios_getCommandStatus() {
+int ios_getCommandStatus(void) {
     if (currentSession != NULL) return currentSession->global_errno;
     else return 0;
 }
@@ -365,6 +365,8 @@ static void cleanup_function(void* parameters) {
     bool backgroundCommand = p->backgroundCommand;
     char* commandName = p->argv[0];
     char* currentSessionCommandName = NULL;
+    bool toNonInteractive = false;
+    
     if (currentSession->numCommand <= 0)
         currentSessionCommandName = currentSession->commandName[0];
     else
@@ -388,6 +390,9 @@ static void cleanup_function(void* parameters) {
                  (strncmp(currentSession->commandName[currentSession->numCommand - 2], "isympy", 6) == 0) ||
                  (strncmp(currentSession->commandName[currentSession->numCommand - 2], "python", 6) == 0))) {
                 while (fgetc(thread_stdin) != EOF) { } // flush input to help() command
+                if (strncmp(currentSession->commandName[currentSession->numCommand - 2], "python", 6) == 0) {
+                    toNonInteractive = true;
+                }
             }
         }
         currentSession->activePager = FALSE;
@@ -450,9 +455,7 @@ static void cleanup_function(void* parameters) {
     free(p->argv_ref);
     free(p->argv);
     bool isLastThread = (currentSession->lastThreadId == current_thread);
-    // Required for Jupyter. Must check for Blink/LibTerm/iVim:
-    // Is that the issue in iVim?
-    bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout));
+    bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout))  && (fileno(p->stdout) != fileno(p->stdin));
     if (!isSh) {
         mustCloseStderr &= p->isPipeErr;
         if (currentSession != nil) {
@@ -469,7 +472,8 @@ static void cleanup_function(void* parameters) {
         NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
         int res = fclose(p->stderr);
     }
-    bool mustCloseStdout = fileno(p->stdout) != fileno(stdout);
+    // In some cases, we find that stdout is equal to stdin after executing the command. We should not close stdin!
+    bool mustCloseStdout = (fileno(p->stdout) != fileno(stdout)) && (fileno(p->stdout) != fileno(p->stdin));
     if (!isSh) {
         mustCloseStdout &= p->isPipeOut;
         if (currentSession != nil) {
@@ -512,6 +516,9 @@ static void cleanup_function(void* parameters) {
         // NSLog(@"Releasing a backgroundCommand\n");
         ios_releaseBackgroundThread(current_thread);
     } else {
+        if (toNonInteractive) {
+            ios_stopInteractive();
+        }
         ios_releaseThread(current_thread);
     }
     if (currentSession->current_command_root_thread == current_thread) {
@@ -607,7 +614,7 @@ NSArray *backgroundCommandList = nil;
 static NSString* fullCommandPath = @"";
 static NSArray *directoriesInPath;
 
-void initializeEnvironment() {
+void initializeEnvironment(void) {
     // setup a few useful environment variables
     // Initialize paths for application files, including history.txt and keys
     NSString *docsPath;
@@ -877,7 +884,7 @@ static const char* ios_expandFilename(const char *filename) {
 
 
 
-static void initializeCommandList()
+static void initializeCommandList(void)
 {
     // Loads command names and where to find them (digital library, function name) from plist dictionaries:
     //
@@ -1953,7 +1960,7 @@ int ios_execve(const char *path, char* const argv[], char* envp[]) {
 }
 
 extern char** environmentVariables(pid_t pid);
-NSArray* environmentAsArray() {
+NSArray* environmentAsArray(void) {
     char** env_pid = environmentVariables(ios_currentPid());
     NSMutableArray<NSString*> *dictionary = [[NSMutableArray alloc]init];
     int i = 0;
@@ -1965,7 +1972,7 @@ NSArray* environmentAsArray() {
     return [dictionary copy];
 }
 
-pthread_t ios_getLastThreadId() {
+pthread_t ios_getLastThreadId(void) {
     if (!currentSession) return nil;
     return (currentSession->lastThreadId);
 }
@@ -2066,7 +2073,7 @@ void ios_activateChildStreams(FILE** old_stdin, FILE** old_stdout,  FILE ** old_
     }
 }
 
-int ios_kill()
+int ios_kill(void)
 {
     if (currentSession == NULL) return ESRCH;
     if (currentSession->current_command_root_thread > 0) {
@@ -2187,7 +2194,7 @@ void ios_settty(FILE* _tty) {
     currentSession->tty = _tty;
 }
 
-int ios_gettty() {
+int ios_gettty(void) {
     if (currentSession == NULL) return -1;
     if (currentSession->tty == NULL) return -1;
     return fileno(currentSession->tty);
@@ -2206,7 +2213,7 @@ void ios_closetty(void) {
     currentSession->activePager = false;
 }
 
-int ios_activePager() {
+int ios_activePager(void) {
     // All commands that read from tty instead of stdin:
     if (currentSession == nil) { return 0; }
     char* currentSessionCommandName;
@@ -2225,7 +2232,7 @@ int ios_activePager() {
 void ios_stopInteractive(void) {
     // Some commands, like sftp, start as "interactive" (they handle all input), then become non-interactive (they let the shell handle input)
     // This could be merged with opentty / closetty above, but stopInteractive involves one more trip to WKWebView->evaluateJS, so it's better not to call it too often.
-    void (*function)() = NULL;
+    void (*function)(void) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "stopInteractive");
     if (function != NULL) {
         function();
@@ -2236,7 +2243,7 @@ void ios_stopInteractive(void) {
 
 int ios_storeInteractive(void) {
     // Some commands, like dash, can be started from inside interactive or non-interactive commands. They need to restore the status afterwards.
-    int (*function)() = NULL;
+    int (*function)(void) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "storeInteractive");
     if (function != NULL) {
         return function();
@@ -2278,7 +2285,7 @@ void ios_setContext(const void *context) {
     currentSession->context = context;
 }
 
-void* ios_getContext() {
+void* ios_getContext(void) {
     if (currentSession == NULL) return NULL;
     if (currentSession->context != sh_session)
         return currentSession->context;
@@ -2360,7 +2367,7 @@ NSError* addCommandList(NSString* fileLocation) {
 }
 
 
-NSString* commandsAsString() {
+NSString* commandsAsString(void) {
     
     if (commandList == nil) initializeCommandList();
     
@@ -2371,7 +2378,7 @@ NSString* commandsAsString() {
     return myString;
 }
 
-NSArray* commandsAsArray() {
+NSArray* commandsAsArray(void) {
     if (commandList == nil) initializeCommandList();
     return commandList.allKeys;
 }
@@ -2948,7 +2955,7 @@ int ios_system(const char* inputCmd) {
             } else {
                 newStream = fopen(ios_expandFilename(outputFileName), "w");
             }
-            // NSLog(@"Opened %s as output file: %x", outputFileName, newStream);
+            NSLog(@"Opened %s as output file: %x", outputFileName, newStream);
             if (newStream) {
                 if (params->stdout != NULL) {
                     if (fileno(params->stdout) != fileno(currentSession->stdout)) fclose(params->stdout);
@@ -3205,6 +3212,8 @@ int ios_system(const char* inputCmd) {
                                 scriptNameString = scriptComponents.lastObject;
                                 if ([scriptNameString isEqualToString:@"sh"])
                                     scriptNameString = @"dash";
+                                if ([scriptNameString isEqualToString:@"node"])
+                                    scriptNameString = @"jsc";
                                 // If scriptNameString is a file that exists in PATH and has webAssembly signature, then insert "wasm script". Other cases?
                                 components[0] = scriptNameString;
                                 NSString* beforeCommand = beforeScriptCommandName(scriptNameString);
@@ -3268,7 +3277,7 @@ int ios_system(const char* inputCmd) {
                 strcpy(argv[0], newName);
             }
         }
-        // NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
+        NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
         // fprintf(thread_stderr, "Command after parsing: ");
         // for (int i = 0; i < argc; i++)
         //    fprintf(thread_stderr, "[%s] ", argv[i]);
@@ -3526,7 +3535,7 @@ int ios_system(const char* inputCmd) {
             params->isPipeIn = (params->stdin != thread_stdin);
             params->isPipeOut = (params->stdout != thread_stdout);
             if (params->stdout != NULL)
-            NSLog(@"params->stdout: %d thread_stdout: %d \n", fileno(params->stdout), fileno(thread_stdout));
+                NSLog(@"params->stdout: %d thread_stdout: %d \n", fileno(params->stdout), fileno(thread_stdout));
             if (params->stdin != NULL)
                 NSLog(@"params->stdin: %d thread_stdin: %d \n", fileno(params->stdin), fileno(thread_stdin));
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
