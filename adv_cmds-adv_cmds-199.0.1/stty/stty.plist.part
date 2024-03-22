@@ -1,0 +1,20 @@
+	<dict>
+		<key>OpenSourceProject</key>
+		<string>stty</string>
+		<key>OpenSourceVersion</key>
+		<string>2020-12-26</string>
+		<key>OpenSourceWebsiteURL</key>
+		<string>https://cgit.freebsd.org/src/tree/bin/stty?id=50fcb4ee771cabbae99bb3150b26484f3e573fab</string>
+		<key>OpenSourceImportDate</key>
+		<string>2021-08-28</string>
+		<key>OpenSourceModifications</key>
+		<array>
+			<string>stty.c: remove unsupported modes (3159260, 84626054)</string>
+			<string>modes.c: Unix conformance (3701033)</string>
+			<string>modes.c, print.c, stty.1: add iutf8 flag (4252063)</string>
+			<string>stty.1: reorder lists alphabetically (4748039)</string>
+			<string>stty.1: discuss legacy mode (5589089)</string>
+		</array>
+		<key>OpenSourceLicense</key>
+		<string>bsd</string>
+	</dict>
