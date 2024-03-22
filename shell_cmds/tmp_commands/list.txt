@@ -1,0 +1,13 @@
+# TODO: create pkg + uninstall files for all these, commit, push.
+
+basename	
+dirname		
+false		
+getopt		
+hexdump	od hd (single package)
+jot
+mktemp
+printf
+seq
+which
+
