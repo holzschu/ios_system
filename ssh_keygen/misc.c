@@ -1124,7 +1124,10 @@ tilde_expand_filename(const char *filename, uid_t uid)
 			fatal("tilde_expand_filename: No such user %s", user);
 	} else if ((pw = getpwuid(uid)) == NULL)	/* ~/path */
 		fatal("tilde_expand_filename: No such uid %ld", (long)uid);
-
+#if TARGET_OS_IPHONE
+    if (getenv("HOME"))
+        pw->pw_dir = getenv("HOME");
+#endif
 	/* Make sure directory has a trailing '/' */
 	len = strlen(pw->pw_dir);
 	if (len == 0 || pw->pw_dir[len - 1] != '/')

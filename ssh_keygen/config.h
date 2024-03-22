@@ -1719,7 +1719,7 @@
 /* #undef IP_TOS_IS_BROKEN */
 
 /* Define if you want Kerberos 5 support */
-#define KRB5 1
+// #define KRB5 1
 
 /* Define if pututxline updates lastlog too */
 #define LASTLOG_WRITE_PUTUTXLINE 1
@@ -1950,7 +1950,7 @@
 /* #undef USE_AFS */
 
 /* Use BSM audit module */
-#define USE_BSM_AUDIT 1
+// #define USE_BSM_AUDIT 1
 
 /* Use btmp to log bad logins */
 /* #undef USE_BTMP */
@@ -1965,7 +1965,7 @@
 /* #undef USE_OPENSSL_ENGINE */
 
 /* Define if you want to enable PAM support */
-#define USE_PAM 1
+// #define USE_PAM 1 // not on iOS
 
 /* Use PIPES instead of a socketpair() */
 #define USE_PIPES 1

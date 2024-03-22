@@ -215,7 +215,7 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 
 	log_on_stderr = on_stderr;
 #if TARGET_OS_IPHONE
-    log_stderr_fd = fileno(thread_stderr);
+        log_stderr_fd = fileno(thread_stderr);
 #endif
 
 	if (on_stderr)
@@ -402,7 +402,7 @@ do_log(const char *file, const char *func, int line, LogLevel level,
 		snprintf(fmtbuf, sizeof(fmtbuf), "%s: %s", msgbuf, suffix);
 		strlcpy(msgbuf, fmtbuf, sizeof(msgbuf));
 	}
-	strnvis(fmtbuf, msgbuf, sizeof(fmtbuf),
+    strnvis(fmtbuf, msgbuf, sizeof(fmtbuf),   // This is the line that fails. 
 	    log_on_stderr ? LOG_STDERR_VIS : LOG_SYSLOG_VIS);
 	if (log_handler != NULL) {
 		/* Avoid recursion */

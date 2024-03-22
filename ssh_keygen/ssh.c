@@ -873,9 +873,9 @@ ssh_main(int ac, char **av)
 #endif
 			break;
 		case 'J':
-#if TARGET_OS_IPHONE
-            fatal("-J option is not supported at the moment.");
-#endif
+// #if TARGET_OS_IPHONE
+//             fatal("-J option is not supported at the moment.");
+// #endif
 			if (options.jump_host != NULL) {
 				fatal("Only a single -J option is permitted "
 				    "(use commas to separate multiple "

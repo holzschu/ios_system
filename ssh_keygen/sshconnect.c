@@ -135,6 +135,40 @@ ssh_proxy_fdpass_connect(struct ssh *ssh, const char *host,
 	debug("Executing proxy dialer command: %.500s", command_string);
 
 	/* Fork and execute the proxy command. */
+#if TARGET_OS_IPHONE
+    pid = fork();
+    // child process first:
+    /* Redirect stdin and stdout. */
+    if (sp[0] != 0) {
+        if (dup2(sp[0], 0) == -1)
+            perror("dup2 stdin");
+    }
+    if (sp[0] != 1) {
+        if (dup2(sp[0], 1) == -1)
+            perror("dup2 stdout");
+    }
+
+    /*
+     * Stderr is left for non-ControlPersist connections is so
+     * error messages may be printed on the user's terminal.
+     */
+    if (!debug_flag && options.control_path != NULL &&
+        options.control_persist && stdfd_devnull(0, 0, 1) == -1)
+        error_f("stdfd_devnull failed");
+
+    /*
+     * Execute the proxy command.
+     * Note that we gave up any extra privileges above.
+     */
+    char *argv[2];
+    if (strncmp("exec ", command_string, 5) == 0) {
+        argv[0] = command_string + 5; // skip past "exec "
+    } else {
+        argv[0] = command_string;
+    }
+    argv[1] = NULL;
+    execv(command_string, argv);
+#else
 	if ((pid = fork()) == 0) {
 		char *argv[10];
 
@@ -172,20 +206,29 @@ ssh_proxy_fdpass_connect(struct ssh *ssh, const char *host,
 		perror(argv[0]);
 		exit(1);
 	}
+#endif
 	/* Parent. */
 	if (pid == -1)
 		fatal("fork failed: %.100s", strerror(errno));
+#if !TARGET_OS_IPHONE
 	close(sp[0]);
+#endif
 	free(command_string);
 
 	if ((sock = mm_receive_fd(sp[1])) == -1)
 		fatal("proxy dialer did not pass back a connection");
-	close(sp[1]);
+#if !TARGET_OS_IPHONE
+    close(sp[0]);
+#endif
 
 	while (waitpid(pid, NULL, 0) == -1)
 		if (errno != EINTR)
 			fatal("Couldn't wait for child: %s", strerror(errno));
 
+#if TARGET_OS_IPHONE
+    close(sp[0]);
+    close(sp[0]);
+#endif
 	/* Set the connection file descriptors. */
 	if (ssh_packet_set_connection(ssh, sock, sock) == NULL)
 		return -1; /* ssh_packet_set_connection logs error */
@@ -218,6 +261,39 @@ ssh_proxy_connect(struct ssh *ssh, const char *host, const char *host_arg,
 	debug("Executing proxy command: %.500s", command_string);
 
 	/* Fork and execute the proxy command. */
+#if TARGET_OS_IPHONE
+    pid = fork();
+    char *argv[2];
+
+    /* Redirect stdin and stdout. */
+    if (pin[0] != 0) {
+        if (dup2(pin[0], 0) == -1)
+            perror("dup2 stdin");
+    }
+    if (dup2(pout[1], 1) == -1)
+        perror("dup2 stdout");
+
+    /*
+     * Stderr is left for non-ControlPersist connections is so
+     * error messages may be printed on the user's terminal.
+     */
+    if (!debug_flag && options.control_path != NULL &&
+        options.control_persist && stdfd_devnull(0, 0, 1) == -1)
+        error_f("stdfd_devnull failed");
+
+    if (strncmp("exec ", command_string, 5) == 0) {
+        argv[0] = command_string + 5; // skip past "exec "
+    } else {
+        argv[0] = command_string;
+    }
+    argv[1] = NULL;
+
+    /* Execute the proxy command.  Note that we gave up any
+       extra privileges above. */
+    ssh_signal(SIGPIPE, SIG_DFL);
+    execv(argv[0], argv);
+
+#else
 	if ((pid = fork()) == 0) {
 		char *argv[10];
 
@@ -254,15 +330,18 @@ ssh_proxy_connect(struct ssh *ssh, const char *host, const char *host_arg,
 		perror(argv[0]);
 		exit(1);
 	}
+#endif
 	/* Parent. */
 	if (pid == -1)
 		fatal("fork failed: %.100s", strerror(errno));
 	else
 		proxy_command_pid = pid; /* save pid to clean up later */
 
+#if !TARGET_OS_IPHONE
 	/* Close child side of the descriptors. */
 	close(pin[0]);
 	close(pout[1]);
+#endif
 
 	/* Free the command name. */
 	free(command_string);
