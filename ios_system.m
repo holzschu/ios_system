@@ -194,6 +194,12 @@ static const int MaxDashCommands = 6; // const so we can allocate an array
 int numDashCommands = MaxDashCommands; // Apps can overwrite this
 static bool dashIsRunning[MaxDashCommands];
 static int currentDashCommand = 0;
+// multiple ssh (limit to 2):
+static const int MaxSshCommands = 2; // const so we can allocate an array
+int numSshCommands = MaxSshCommands; // Apps can overwrite this
+static bool sshIsRunning[MaxSshCommands];
+static int currentSshCommand = 0;
+
 
 // pointers for sh sessions:
 char* sh_session = "sh_session";
@@ -441,6 +447,9 @@ static void cleanup_function(void* parameters) {
     } else if (strcmp(commandName, "dash") == 0) {
         NSLog(@"Ending a dash command: %d", p->numInterpreter);
         dashIsRunning[p->numInterpreter] = false;
+    } else if (strcmp(commandName, "ssh") == 0) {
+        NSLog(@"Ending a ssh command: %d", p->numInterpreter);
+        sshIsRunning[p->numInterpreter] = false;
     }
     if (currentSession->numCommand > 0)
         currentSession->numCommand -= 1;
@@ -2459,6 +2468,7 @@ static char* getLastCharacterOfArgument(const char* argument) {
         return NULL;
     } else if (argument[0] == recordSeparator) {
         char* endquote = strchr(argument + 1, recordSeparator);
+        if (endquote == NULL) return NULL; // be safe (see #153)
         return endquote + 1;
     }
     // TODO: the last character of the argument could also be '<' or '>' (vim does that, with no space after file name)
@@ -3495,6 +3505,47 @@ int ios_system(const char* inputCmd) {
                         suffix[1] = 0;
                         commandName = [@"dash" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
                         libraryName = [libraryName stringByReplacingOccurrencesOfString:@"dash" withString:commandName];
+                    }
+                }
+            } else if ([commandName isEqualToString: @"ssh"] || [commandName isEqualToString: @"scp"] || [commandName isEqualToString: @"sftp"]) {
+                // Ability to start multiple ssh commands:
+                // start by increasing the number of the interpreter, until we're out.
+                int numInterpreter = 0;
+                if (currentSshCommand < numSshCommands) {
+                    numInterpreter = currentSshCommand;
+                    currentSshCommand++;
+                } else {
+                    NSDate *start = [NSDate date];
+                    NSDate *now = [NSDate date];
+                    NSTimeInterval timeInterval = [now timeIntervalSinceDate:start];
+                    while (timeInterval < 1) { // keep trying for 1 second
+                        while  (numInterpreter < numSshCommands) {
+                            if (sshIsRunning[numInterpreter] == false) break;
+                            numInterpreter++;
+                        }
+                        if (numInterpreter < numSshCommands) break;
+                        numInterpreter = 0;
+                        now = [NSDate date];
+                        timeInterval = [now timeIntervalSinceDate:start];
+                    }
+                    if (numInterpreter >= numSshCommands) {
+                        display_alert(@"Too many ssh commands", @"There are too many ssh commands running at the same time. Try closing some of them.");
+                        NSLog(@"%@", @"Too many ssh scripts running simultaneously.\n");
+                        functionName = @"notAValidCommand";
+                        currentSession->global_errno = ENOENT;
+                        argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
+                    }
+                }
+                if ((numInterpreter >= 0) && (numInterpreter < numSshCommands)) {
+                    params->numInterpreter = numInterpreter;
+                    sshIsRunning[numInterpreter] = true;
+                    NSLog(@"Starting a ssh command: %d", params->numInterpreter);
+                    if (numInterpreter > 0) {
+                        char suffix[2];
+                        suffix[0] = 'A' + (numInterpreter - 1);
+                        suffix[1] = 0;
+                        commandName = [@"ssh_cmd" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                        libraryName = [libraryName stringByReplacingOccurrencesOfString:@"ssh_cmd" withString:commandName];
                     }
                 }
             }
