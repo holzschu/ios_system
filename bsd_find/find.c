@@ -57,7 +57,7 @@ __FBSDID("$FreeBSD$");
 #include "ios_error.h"
 
 
-static int find_compare(const FTSENT * const *s1, const FTSENT * const *s2);
+static int find_compare(const FTSENT **s1, const FTSENT **s2);
 
 /*
  * find_compare --
@@ -66,7 +66,7 @@ static int find_compare(const FTSENT * const *s1, const FTSENT * const *s2);
  *	order within each directory.
  */
 static int
-find_compare(const FTSENT * const *s1, const FTSENT * const *s2)
+find_compare(const FTSENT **s1, const FTSENT **s2)
 {
 
 	return (strcoll((*s1)->fts_name, (*s2)->fts_name));
