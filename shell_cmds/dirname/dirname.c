@@ -48,11 +48,14 @@ static const char sccsid[] = "@(#)dirname.c	8.4 (Berkeley) 5/4/95";
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "ios_error.h"
+
+#define usage dirname_usage
 
 void usage(void);
 
 int
-main(int argc, char **argv)
+dirname_main(int argc, char **argv)
 {
 	char *p;
 	int ch;
@@ -71,7 +74,7 @@ main(int argc, char **argv)
 
 	if ((p = dirname(*argv)) == NULL)
 		err(1, "%s", *argv);
-	(void)printf("%s\n", p);
+	(void)fprintf(thread_stdout,"%s\n", p);
 	exit(0);
 }
 
@@ -79,6 +82,6 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dirname path\n");
+	(void)fprintf(thread_stderr, "usage: dirname path\n");
 	exit(1);
 }

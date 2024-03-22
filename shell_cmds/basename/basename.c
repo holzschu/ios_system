@@ -52,11 +52,13 @@ static char sccsid[] = "@(#)basename.c	8.4 (Berkeley) 5/4/95";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "ios_error.h"
+#define usage basename_usage
 
 void usage(void);
 
 int
-main(int argc, char **argv)
+basename_main(int argc, char **argv)
 {
 	char *p, *q, *suffix;
 	size_t suffixlen;
@@ -103,7 +105,7 @@ main(int argc, char **argv)
 		    strcmp(suffix, q) == 0)
 			*q = '\0';
 		argv++;
-		(void)printf("%s\n", p);
+		(void)fprintf(thread_stdout, "%s\n", p);
 	}
 	exit(0);
 }
@@ -112,7 +114,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr,
+	(void)fprintf(thread_stderr,
 "usage: basename string [suffix]\n"
 "       basename [-a] [-s suffix] string [...]\n");
 	exit(1);
