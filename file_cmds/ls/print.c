@@ -984,12 +984,15 @@ colorquit(int sig)
 {
 	endcolor(sig);
 
-	// (void)signal(sig, SIG_DFL);
+#if !TARGET_OS_IPHONE
+	(void)signal(sig, SIG_DFL);
     // back to default behaviour on both signals:
     (void)signal(SIGINT, SIG_DFL);
     (void)signal(SIGQUIT, SIG_DFL);
+    (void)kill(getpid(), sig);
+#else
     ios_exit(0);
-	// (void)kill(getpid(), sig);
+#endif
 }
 
 #endif /* COLORLS */

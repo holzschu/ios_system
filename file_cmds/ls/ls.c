@@ -465,11 +465,11 @@ ls_main(int argc, char *argv[])
 		 * column number will be incremented incorrectly
 		 * for "stty oxtabs" mode.
 		 */
-#ifndef TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE
 		f_notabs = 1;
+		(void)signal(SIGINT, colorquit);
+		(void)signal(SIGQUIT, colorquit);
 #endif
-		// (void)signal(SIGINT, colorquit);
-		// (void)signal(SIGQUIT, colorquit);
 		parsecolors(getenv("LSCOLORS"));
 	}
 #endif
@@ -554,8 +554,10 @@ ls_main(int argc, char *argv[])
 	else
 		traverse(1, dotav, fts_options);
     // reset signal:
+#if !TARGET_OS_IPHONE
     (void)signal(SIGINT, SIG_DFL);
     (void)signal(SIGQUIT, SIG_DFL);
+#endif
     exit(rval);
 }
 

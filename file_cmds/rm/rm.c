@@ -306,6 +306,7 @@ rm_tree(argv)
 
 			default:
 #ifdef __APPLE__
+                {
 				if (Pflag) {
 					if (removefile(p->fts_accpath, NULL, REMOVEFILE_SECURE_7_PASS)) /* overwrites and unlinks */
 						eval = rval = 1;
@@ -316,11 +317,12 @@ rm_tree(argv)
 					rm_overwrite(p->fts_accpath, NULL);
 				rval = unlink(p->fts_accpath);
 #endif	/* __APPLE__ */
-				if (rval == 0 || (fflag && errno == ENOENT)) {
-					if (rval == 0 && vflag)
-						(void)fprintf(thread_stdout, "%s\n",
-						    p->fts_path);
-					continue;
+                    if (rval == 0 || (fflag && errno == ENOENT)) {
+                        if (rval == 0 && vflag)
+                            (void)fprintf(thread_stdout, "%s\n",
+                                          p->fts_path);
+                        continue;
+                    }
 				}
 			}
 		}
@@ -383,6 +385,8 @@ rm_file(argv)
 				rval = rmdir(f);
 			else {
 #ifdef __APPLE__
+                // added a call to FileManager() to set immutable to false so that rm can work.
+                // related to bug fix in "Get File" for a-Shell
 				if (Pflag) {
 					if (removefile(f, NULL, REMOVEFILE_SECURE_7_PASS)) /* overwrites and unlinks */
 						eval = rval = 1;
