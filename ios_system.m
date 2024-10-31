@@ -79,7 +79,7 @@ typedef struct _sessionParameters {
     FILE* stdout;
     FILE* stderr;
     FILE* tty;
-    void* context;
+    const void* context;
     int global_errno;
     int numCommandsAllocated;
     int numCommand;
@@ -167,7 +167,7 @@ static NSMutableDictionary* aliasDictionary;
 
 // pointer to sessionParameters. thread-local variable so the entire system is thread-safe.
 // The sessionParameters pointer is shared by all threads in the same session.
-static __thread sessionParameters* currentSession;
+static __thread sessionParameters* currentSession = NULL;
 // Python3 multiple interpreters:
 // limit to 6 = 1 kernel, 4 notebooks, one extra.
 static const int MaxPythonInterpreters = 6; // const so we can allocate an array
@@ -231,20 +231,25 @@ void _exit(int n) {
 }
 //
 
-void ios_signal(int signal) {
-    // This function is probably obsolete now. If we keep using it, remember that currentSession is not necessarily the currentSession
-    // (if currentSession started sh_session, then we might be sending the signal to the wrong session).
-    // Signals the threads of the current session:
-    if (currentSession != NULL) {
-        if (currentSession->current_command_root_thread != NULL) {
-            pthread_kill(currentSession->current_command_root_thread, signal);
-        }
-        if (currentSession->lastThreadId != NULL) {
-            pthread_kill(currentSession->lastThreadId, signal);
-        }
-        if (currentSession->mainThreadId != NULL) {
-            pthread_kill(currentSession->mainThreadId, signal);
-        }
+int canSetSignal() {
+    if (currentSession == NULL) {
+        return 1;
+    }
+    char* sessionId = (char*)currentSession->context;
+    if (strcmp(sessionId, "inExtension") == 0) {
+        return 0;
+    }
+    return 1;
+}
+
+#undef signal
+sig_t ios_signal(int value, sig_t function) {
+    // intercept calls to signal, prevent signal from doing anything when running in-extension.
+    // So that an in-extension command cannot break the signal handling from an in-app command.
+    if (canSetSignal()) {
+        return signal(value, function);
+    } else {
+        return NULL;
     }
 }
 
@@ -290,6 +295,7 @@ void ios_setWindowSize(int width, int height, const void* sessionId) {
 }
 
 extern char* libc_getenv(const char* variableName);
+static char randomValue[6];
 char * ios_getenv(const char *name) {
     // intercept calls to getenv("COLUMNS") / getenv("LINES")
     if (strcmp(name, "COLUMNS") == 0) {
@@ -303,6 +309,10 @@ char * ios_getenv(const char *name) {
     }
     if (strcmp(name, "PWD") == 0) {
         return currentSession->currentDir;
+    }
+    if (strcmp(name, "RANDOM") == 0) {
+        sprintf(randomValue, "%d", random()&0x7FFF);
+        return randomValue;
     }
     return libc_getenv(name);
 }
@@ -490,16 +500,23 @@ static void cleanup_function(void* parameters) {
         }
     }
     if (mustCloseStdout) {
+        int fd = fileno(p->stdout);
         NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
         int res = fclose(p->stdout);
+        // Add close(fd) as well? 
+        NSLog(@"Result of closing stdout (mustCloseStdout): %d flag: %d\n", res, fcntl(fd, F_GETFD, 0));
     }
     if (!isSh) {
         mustCloseStdin &= p->isPipeIn;
         if (currentSession != nil) {
             mustCloseStdin &= fileno(p->stdin) != fileno(currentSession->stdin);
         }
-        // we cannot close stdin for wasm commands:
-        mustCloseStdin &= !isWasm;
+        if (isWasm) {
+            // Don't close stdin for Wasm commands piped into others, but do it for files
+            char filePath[MAXPATHLEN];
+            if (fcntl(fileno(p->stdin), F_GETPATH, filePath) < 0)
+                mustCloseStdin &= false;
+        }
         // commands started by Python: Python will close stdin (Lua and Perl? not broken, AFAIK)
         if ((currentSession->numCommand > 0) && (strncmp(currentSession->commandName[currentSession->numCommand - 1], "python", 6) == 0)) {
             // NSLog(@"Command started by Python, not closing stdin: %d \n", fileno(p->stdin));
@@ -537,7 +554,7 @@ static void cleanup_function(void* parameters) {
         currentSession->mainThreadId = 0;
     }
     cleanup_counter--;
-    NSLog(@"returning from cleanup_function\n");
+    NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
 }
 
 // Avoir calling crash_handler several times:
@@ -666,6 +683,7 @@ void initializeEnvironment(void) {
     // XDG setup directories (~/Library/Caches, ~/Library/Preferences):
     setenv("XDG_CACHE_HOME", [libPath stringByAppendingPathComponent:@"Caches"].UTF8String, 0);
     setenv("XDG_CONFIG_HOME", [libPath stringByAppendingPathComponent:@"Preferences"].UTF8String, 0);
+    setenv("XDG_STATE_HOME", libPath.UTF8String, 0);
     setenv("XDG_DATA_HOME", libPath.UTF8String, 0);
     // if we use Python, we define a few more environment variables:
     setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
@@ -1363,7 +1381,7 @@ static __thread FILE* child_stdout = NULL;
 static __thread FILE* child_stderr = NULL;
 
 FILE* ios_popen(const char* inputCmd, const char* type) {
-    // NSLog(@"ios_popen: %s mode %s", inputCmd, type);
+    NSLog(@"ios_popen: %s mode %s", inputCmd, type);
     // Save existing streams:
     int fd[2] = {0};
     const char* command = inputCmd;
@@ -1978,6 +1996,13 @@ NSArray* environmentAsArray(void) {
         [dictionary addObject:variable];
         i++;
     }
+    // Add our own variables: ROWS, PWD (COLUMNS and LINES are already set):
+    NSString* rowVariable = @"ROWS=";
+    rowVariable = [rowVariable stringByAppendingString: [NSString stringWithCString: currentSession->columns]];
+    [dictionary addObject: rowVariable];
+    NSString* pwdVariable = @"PWD=";
+    pwdVariable = [pwdVariable stringByAppendingString: [NSString stringWithCString: currentSession->currentDir]];
+    [dictionary addObject: pwdVariable];
     return [dictionary copy];
 }
 
@@ -2116,6 +2141,7 @@ int ios_killpid(pid_t pid, int sig) {
 
 void ios_switchSession(const void* sessionId) {
     char* sessionName = (char*) sessionId;
+    // NSLog(@"Switching to session: %s\n", sessionName);
     if ((currentSession != nil) && (parentSession != nil)) {
         if ((currentSession->context == sh_session) && (parentSession->context == sessionName)) {
             // If we are running a sh_session inside the requested sessionId, there is no need to change:
@@ -2209,6 +2235,12 @@ int ios_gettty(void) {
     return fileno(currentSession->tty);
 }
 
+int ios_getstdin(void) {
+    if (currentSession == NULL) return -1;
+    if (currentSession->stdin == NULL) return -1;
+    return fileno(currentSession->stdin);
+}
+
 // Allows commands that are not usually tty-based to get the tty (for password input in ssh/scp/sftp):
 int ios_opentty(void) {
     if (currentSession == nil) { return -1; }
@@ -2291,18 +2323,18 @@ static int isInteractive(const char* command) {
 
 void ios_setContext(const void *context) {
     if (currentSession == NULL) return;
+    // NSLog(@"Setting session context to: %s\n", (char*)context);
     currentSession->context = context;
 }
 
-void* ios_getContext(void) {
+const void* ios_getContext(void) {
     if (currentSession == NULL) return NULL;
+    // NSLog(@"getting session context, %x currentSession->context: %s\n", currentSession, (char*)currentSession->context);
     if (currentSession->context != sh_session)
         return currentSession->context;
     else
         return parentSession->context;
 }
-
-
 
 // For customization:
 // replaces a function  (e.g. ls_main) with another one, provided by the user (ls_mine_main)
@@ -2316,7 +2348,7 @@ void replaceCommand(NSString* commandName, NSString* functionName, bool allOccur
     int (*function)(int ac, char** av) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, functionName.UTF8String);
     if (!function) {
-        NSLog(@"replaceCommand: %@ does not exist", functionName);
+        NSLog(@"replaceCommand: %@ (%s) does not exist", functionName, functionName.UTF8String);
         return; // if not, we don't replace.
     }
     if (commandList == nil) initializeCommandList();
@@ -2575,10 +2607,15 @@ NSString* beforeScriptCommandName(NSString* scriptName) {
         if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
         if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
         NSString* locationName;
-        // search for 2 possibilities: name and name.wasm
+        // search for 3 possibilities: name, name.wasm3 and name.wasm
         locationName = [path stringByAppendingPathComponent:scriptName];
         bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
         fileFound = fileFound && !isDir;
+        if (!fileFound) {
+            locationName = [[path stringByAppendingPathComponent:scriptName] stringByAppendingString:@".wasm3"];
+            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+            fileFound = fileFound && !isDir;
+        }
         if (!fileFound) {
             locationName = [[path stringByAppendingPathComponent:scriptName] stringByAppendingString:@".wasm"];
             fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
@@ -2617,9 +2654,8 @@ NSString* beforeScriptCommandName(NSString* scriptName) {
 }
 
 
-
 int ios_system(const char* inputCmd) {
-    NSLog(@"command= %s pid= %d\n", inputCmd, ios_currentPid());
+    NSLog(@"command = %s pid= %d\n", inputCmd, ios_currentPid());
 
     char* command;
     // The names of the files for stdin, stdout, stderr
@@ -2695,6 +2731,16 @@ int ios_system(const char* inputCmd) {
         firstSpace = strstrquoted(commandForParsing, " ");
     }
     free(commandForParsingFree);
+    // Is the command an environment variable?
+    if (command[0] == '$') {
+        const char* newName = ios_getenv(command + 1);
+        if (newName != NULL) {
+            free(originalCommand);
+            originalCommand = strdup(newName);
+            cmd = originalCommand;
+            command = originalCommand;
+        }
+    }
     // alias expansion *before* input, output and error redirection.
     if ((command[0] != '\\') && (aliasDictionary != nil)) {
         // \command = cancel aliasing, get the original command
@@ -2774,11 +2820,16 @@ int ios_system(const char* inputCmd) {
     if (!inputFileMarker) inputFileMarker = command;
     outputFileMarker = inputFileMarker;
     functionParameters *params = (functionParameters*) malloc(sizeof(functionParameters));
+    if (params == NULL) {
+        NSLog(@"Unable to allocate params in ios_system");
+        return -1;
+    }
     // If child_streams have been defined (in dup2 or popen), the new thread takes them.
     params->stdin = child_stdin;
     params->stdout = child_stdout;
     params->stderr = child_stderr;
     params->session = currentSession;
+    NSLog(@"After params creation, stdout %x stderr %x \n", params->stdout,  params->stderr);
     params->backgroundCommand = isBackgroundCommand(command);
     params->numInterpreter = 0;
 
@@ -2995,6 +3046,7 @@ int ios_system(const char* inputCmd) {
     if (params->stdin == NULL) params->stdin = thread_stdin;
     if (params->stdout == NULL) params->stdout = thread_stdout;
     if (params->stderr == NULL) params->stderr = thread_stderr;
+    NSLog(@"After files parsing, stdout %x stderr %x \n", params->stdout,  params->stderr);
     int argc = 0;
     size_t numSpaces = 0;
     // the number of arguments is *at most* the number of spaces plus one
@@ -3143,6 +3195,11 @@ int ios_system(const char* inputCmd) {
                             fileFound = fileFound && !isDir;
                         }
                         if (!fileFound) {
+                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".wasm3"];
+                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            fileFound = fileFound && !isDir;
+                        }
+                        if (!fileFound) {
                             locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".wasm"];
                             fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
                             fileFound = fileFound && !isDir;
@@ -3177,6 +3234,17 @@ int ios_system(const char* inputCmd) {
                         argv[1] = realloc(argv[1], locationName.length + 1);
                         strcpy(argv[1], locationName.UTF8String);
                         argv[0] = strdup("wasm"); // this argument is new
+                        break;
+                    } else if ([locationName hasSuffix:@".wasm3"]) {
+                        // insert wasm3 in front of argument list:
+                        // wasm3 is a WebAssembly interpreter that is faster than wasm, but does not handle exceptions or setjmp.
+                        argc += 1;
+                        argv = (char **)realloc(argv, sizeof(char*) * (argc + 1));
+                        // Move everything one step up
+                        for (int i = argc-1; i >= 1; i--) { argv[i] = argv[i-1]; }
+                        argv[1] = realloc(argv[1], locationName.length + 1);
+                        strcpy(argv[1], locationName.UTF8String);
+                        argv[0] = strdup("wasm3"); // this argument is new
                         break;
                     } else {
                         if (isRealCommand(locationName.UTF8String)) {
@@ -3287,7 +3355,9 @@ int ios_system(const char* inputCmd) {
                 strcpy(argv[0], newName);
             }
         }
-        NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
+        NSLog(@"After command parsing, stdout %x stderr %x \n", params->stdout,  params->stderr);
+        // This line causes an error, and the previous one is not executed. Recompile.
+        // NSLog(@"After command parsing, stdout %d stderr %d \n", fileno(params->stdout),  fileno(params->stderr));
         // fprintf(thread_stderr, "Command after parsing: ");
         // for (int i = 0; i < argc; i++)
         //    fprintf(thread_stderr, "[%s] ", argv[i]);
@@ -3594,11 +3664,19 @@ int ios_system(const char* inputCmd) {
             // params->session = currentSession;
             // Before starting, do we have enough file descriptors available?
             int numFileDescriptorsOpen = 0;
+            bool debugPath = false; // to understand where the file descr was allocated
             for (int fd = 0; fd < limitFilesOpen.rlim_cur; fd++) {
                 errno = 0;
                 int flags = fcntl(fd, F_GETFD, 0);
                 if (flags == -1 && errno) {
                     continue;
+                }
+                if (debugPath) {
+                    char filePath[MAXPATHLEN];
+                    if (fcntl(fd, F_GETPATH, filePath) >= 0)
+                        NSLog(@"Descriptor still open = %d path= %s\n", fd, filePath);
+                    else
+                        NSLog(@"Descriptor still open = %d (no path)\n", fd);
                 }
                 ++numFileDescriptorsOpen ;
             }
@@ -3610,8 +3688,8 @@ int ios_system(const char* inputCmd) {
                 int res = setrlimit(RLIMIT_NOFILE, &limitFilesOpen);
                 // Check the result:
                 getrlimit(RLIMIT_NOFILE, &limitFilesOpen);
-                if (res == 0) NSLog(@"[Info] Increased file descriptor limit to = %llu OPEN_MAX= %d\n", limitFilesOpen.rlim_cur, OPEN_MAX);
-                else NSLog(@"[Warning] Failed to increased file descriptor limit to = %llu\n", limitFilesOpen.rlim_cur);
+                if (res == 0) NSLog(@"[Info] Increased file descriptors limit to = %llu OPEN_MAX= %d\n", limitFilesOpen.rlim_cur, OPEN_MAX);
+                else NSLog(@"[Warning] Failed to increased file descriptors limit to = %llu\n", limitFilesOpen.rlim_cur);
             }
             NSLog(@"Starting command: %s, currentSession->isMainThread: %d", commandName.UTF8String, currentSession->isMainThread);
             if ([commandName isEqualToString:@"wasm"])

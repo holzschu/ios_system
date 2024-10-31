@@ -72,6 +72,8 @@ int printf (const char *format, ...) {
     
     return done;
 }
+
+// #define debugPrint
 int fprintf(FILE * restrict stream, const char * restrict format, ...) {
     va_list arg;
     int done;
@@ -80,9 +82,12 @@ int fprintf(FILE * restrict stream, const char * restrict format, ...) {
 
     va_start (arg, format);
     if (fileno(stream) == STDOUT_FILENO) done = vfprintf (thread_stdout, format, arg);
+#ifndef debugPrint
     else if (fileno(stream) == STDERR_FILENO) done = vfprintf (thread_stderr, format, arg);
     // iOS, debug:
-    // else if ((fileno(stream) == STDERR_FILENO) || (fileno(stream) == fileno(thread_stderr))) done = vfprintf (stderr, format, arg);
+#else
+    else if ((fileno(stream) == STDERR_FILENO) || (fileno(stream) == fileno(thread_stderr))) done = vfprintf (stderr, format, arg);
+#endif
     else done = vfprintf (stream, format, arg);
     va_end (arg);
     
@@ -120,6 +125,9 @@ ssize_t ios_write(int fildes, const void *buf, size_t nbyte) {
     return write(fildes, buf, nbyte);
 }
 size_t ios_fwrite(const void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream) {
+#ifdef debugPrint
+    return fwrite(ptr, size, nitems, stderr);
+#endif
     if (thread_stdout == NULL) thread_stdout = stdout;
     if (thread_stderr == NULL) thread_stderr = stderr;
     if (fileno(stream) == STDOUT_FILENO) return fwrite(ptr, size, nitems, thread_stdout);
@@ -134,6 +142,9 @@ int ios_puts(const char *s) {
     return returnValue;
 }
 int ios_fputs(const char* s, FILE *stream) {
+#ifdef debugPrint
+    return fputs(s, stderr);
+#endif
     if (thread_stdout == NULL) thread_stdout = stdout;
     if (thread_stderr == NULL) thread_stderr = stderr;
     if (fileno(stream) == STDOUT_FILENO) return fputs(s, thread_stdout);
@@ -141,6 +152,9 @@ int ios_fputs(const char* s, FILE *stream) {
     return fputs(s, stream);
 }
 int ios_fputc(int c, FILE *stream) {
+#ifdef debugPrint
+    return fputc(c, stderr);
+#endif
     if (thread_stdout == NULL) thread_stdout = stdout;
     if (thread_stderr == NULL) thread_stderr = stderr;
     if (fileno(stream) == STDOUT_FILENO) return fputc(c, thread_stdout);

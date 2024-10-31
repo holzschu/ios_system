@@ -628,15 +628,21 @@ exec:
     default:   // ios_system: go through both branches
 	// case 0:
 		if (oflag) {
+#if !TARGET_OS_IPHONE
 			if ((fd = open(_PATH_TTY, O_RDONLY)) == -1)
-				err(1, "can't open /dev/tty");
+#else
+            if ((fd = ios_getstdin()) == -1) 
+#endif
+            err(1, "can't open /dev/tty");
 		} else {
 			fd = open(_PATH_DEVNULL, O_RDONLY);
 		}
 		if (fd > STDIN_FILENO) {
 			if (dup2(fd, STDIN_FILENO) != 0)
 				err(1, "can't dup2 to stdin");
-			close(fd);
+#if !TARGET_OS_IPHONE
+            close(fd);
+#endif
 		}
 #if !TARGET_OS_IPHONE
 		execvp(argv[0], argv);

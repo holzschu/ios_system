@@ -467,6 +467,9 @@ sig_handler(int sig __unused, siginfo_t *siginfo __unused,
 static void
 set_signal_handler(void)
 {
+#if TARGET_OS_IPHONE
+    if (canSetSignal()) {
+#endif
 	struct sigaction sa;
 
 	memset(&sa, 0, sizeof(sa));
@@ -509,6 +512,9 @@ set_signal_handler(void)
 		perror("sigaction");
 		return;
 	}
+#if TARGET_OS_IPHONE
+    }
+#endif
 }
 
 /*
