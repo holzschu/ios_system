@@ -1496,8 +1496,8 @@ static char* concatenateArgv(char* const argv[]) {
     argc = 1;
     char recordSeparator = 0x1e;
     while (argv[argc] != NULL) {
-        if (strstrquoted(argv[argc], " ")) {
-            // argument contains spaces. Enclose it into quotes:
+        if (strstrquoted(argv[argc], " ") || strstrquoted(argv[argc], "\\")) {
+            // argument contains spaces or escaped characters. Enclose it into quotes:
             if (strstr(argv[argc], "\"") == NULL) { // We're looking for quotes, so strstr, not strstrquoted
                 // argument does not contain ". Enclose with "
                 strcat(cmd, " \"");
@@ -2119,12 +2119,24 @@ int ios_kill(void)
             // This might be problematic with multiple commands running at the same time that all define SIGINT
             // ...such as ls.
             // !! this is called from the main thread. So make sure the signal handler does *not* call phtread_exit();
+            // For the same reason, thread_stdout is not defined!
+            FILE* main_stdin = thread_stdin;
+            FILE* main_stdout = thread_stdout;
+            FILE* main_stderr = thread_stderr;
+            thread_stdin = currentSession->stdin;
+            thread_stdout = currentSession->stdout;
+            thread_stderr = currentSession->stderr;
             query_action.sa_handler(SIGINT);
+            thread_stdin = main_stdin;
+            thread_stdout = main_stdout;
+            thread_stderr = main_stderr;
             // kill(getpid(), SIGINT); // infinite loop?
         } else {
             // Send pthread_cancel with the given signal to the current main thread, if there is one.
             if (currentSession->current_command_root_thread != NULL)
-                return pthread_cancel(currentSession->current_command_root_thread);
+                // This works better than pthread_cancel with lua. Is it always good?
+                return pthread_kill(currentSession->current_command_root_thread, SIGINT);
+                // return pthread_cancel(currentSession->current_command_root_thread);
         }
     }
     // No process running
