@@ -199,6 +199,8 @@ static const int MaxSshCommands = 2; // const so we can allocate an array
 int numSshCommands = MaxSshCommands; // Apps can overwrite this
 static bool sshIsRunning[MaxSshCommands];
 static int currentSshCommand = 0;
+// prevent the user from running multiple curl commands too:
+static bool curlIsRunning = false;
 
 
 // pointers for sh sessions:
@@ -460,6 +462,9 @@ static void cleanup_function(void* parameters) {
     } else if (strcmp(commandName, "ssh") == 0) {
         NSLog(@"Ending a ssh command: %d", p->numInterpreter);
         sshIsRunning[p->numInterpreter] = false;
+    } else if (strcmp(commandName, "curl") == 0) {
+        NSLog(@"Ending a curl command.");
+        curlIsRunning = false;
     }
     if (currentSession->numCommand > 0)
         currentSession->numCommand -= 1;
@@ -1280,7 +1285,7 @@ int too_many_scripts(int argc, char** argv) {
     if (currentSession->global_errno == 0) {
         return 0; // show the warning only once for PythonNum commands stored:
     }
-    fprintf(thread_stderr, "%s: too many scripts already running\n", argv[0]);
+    fprintf(thread_stderr, "Too many instances of this command are already running. Please quit some of them or wait for them to end.\n");
     NSLog(@"%s: command not found\n", argv[0]);
     return currentSession->global_errno;
 }
@@ -1496,7 +1501,9 @@ static char* concatenateArgv(char* const argv[]) {
     argc = 1;
     char recordSeparator = 0x1e;
     while (argv[argc] != NULL) {
-        if (strstrquoted(argv[argc], " ") || strstrquoted(argv[argc], "\\")) {
+        // Always enclose the arguments into something (either "...", '...' or recordSeparator...recordSeparator
+        // if (strstrquoted(argv[argc], " ") || strstrquoted(argv[argc], "\\"))
+        {
             // argument contains spaces or escaped characters. Enclose it into quotes:
             if (strstr(argv[argc], "\"") == NULL) { // We're looking for quotes, so strstr, not strstrquoted
                 // argument does not contain ". Enclose with "
@@ -1521,7 +1528,8 @@ static char* concatenateArgv(char* const argv[]) {
                 argc++;
                 continue;
             }
-            NSLog(@"Argument contains spaces, double quotes, single quotes and recordSeparator");
+            if (strstrquoted(argv[argc], " "))
+                NSLog(@"Argument contains spaces, double quotes, single quotes and recordSeparator");
         }
         strcat(cmd, " ");
         strcat(cmd, argv[argc]);
@@ -3419,17 +3427,20 @@ int ios_system(const char* inputCmd) {
                     NSDate *start = [NSDate date];
                     NSDate *now = [NSDate date];
                     NSTimeInterval timeInterval = [now timeIntervalSinceDate:start];
+                    bool timeout = true;
                     while (timeInterval < 1) { // keep trying for 1 second
                         while  (numInterpreter < numPythonInterpreters) {
-                            if (PythonIsRunning[numInterpreter] == false) break;
+                            if (PythonIsRunning[numInterpreter] == false) {
+                                timeout = false;
+                                break;
+                            }
                             numInterpreter++;
                         }
-                        if (numInterpreter < numPythonInterpreters) break;
                         numInterpreter = 0;
                         now = [NSDate date];
                         timeInterval = [now timeIntervalSinceDate:start];
                     }
-                    if (numInterpreter >= numPythonInterpreters) {
+                    if (timeout) {
                         if (showPythonInterpreterAlert) {
                             // Only show this alert once per session:
                             display_alert(@"Too many Python scripts", @"There are too many Python interpreters running at the same time. Try closing some of them.");
@@ -3559,19 +3570,23 @@ int ios_system(const char* inputCmd) {
                     NSDate *start = [NSDate date];
                     NSDate *now = [NSDate date];
                     NSTimeInterval timeInterval = [now timeIntervalSinceDate:start];
+                    bool timeout = true;
                     while (timeInterval < 1) { // keep trying for 1 second
                         while  (numInterpreter < numDashCommands) {
-                            if (dashIsRunning[numInterpreter] == false) break;
+                            if (dashIsRunning[numInterpreter] == false) {
+                                timeout = false;
+                                break;
+                            }
                             numInterpreter++;
                         }
-                        if (numInterpreter < numDashCommands) break;
                         numInterpreter = 0;
                         now = [NSDate date];
                         timeInterval = [now timeIntervalSinceDate:start];
                     }
-                    if (numInterpreter >= numDashCommands) {
+                    if (timeout) {
                         display_alert(@"Too many dash scripts", @"There are too many dash scripts running at the same time. Try closing some of them.");
                         NSLog(@"%@", @"Too many dash scripts running simultaneously.\n");
+                        function = &too_many_scripts;
                         functionName = @"notAValidCommand";
                         currentSession->global_errno = ENOENT;
                         argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
@@ -3600,54 +3615,72 @@ int ios_system(const char* inputCmd) {
                     NSDate *start = [NSDate date];
                     NSDate *now = [NSDate date];
                     NSTimeInterval timeInterval = [now timeIntervalSinceDate:start];
+                    bool timeout = true;
                     while (timeInterval < 1) { // keep trying for 1 second
                         while  (numInterpreter < numSshCommands) {
-                            if (sshIsRunning[numInterpreter] == false) break;
+                            if (sshIsRunning[numInterpreter] == false) {
+                                timeout = false;
+                                break;
+                            }
                             numInterpreter++;
                         }
-                        if (numInterpreter < numSshCommands) break;
                         numInterpreter = 0;
                         now = [NSDate date];
                         timeInterval = [now timeIntervalSinceDate:start];
                     }
-                    if (numInterpreter >= numSshCommands) {
+                    if (timeout) {
                         display_alert(@"Too many ssh commands", @"There are too many ssh commands running at the same time. Try closing some of them.");
                         NSLog(@"%@", @"Too many ssh scripts running simultaneously.\n");
+                        function = &too_many_scripts;
                         functionName = @"notAValidCommand";
                         currentSession->global_errno = ENOENT;
                         argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
                     }
-                }
-                if ((numInterpreter >= 0) && (numInterpreter < numSshCommands)) {
-                    params->numInterpreter = numInterpreter;
-                    sshIsRunning[numInterpreter] = true;
-                    NSLog(@"Starting a ssh command: %d", params->numInterpreter);
-                    if (numInterpreter > 0) {
-                        char suffix[2];
-                        suffix[0] = 'A' + (numInterpreter - 1);
-                        suffix[1] = 0;
-                        commandName = [@"ssh_cmd" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
-                        libraryName = [libraryName stringByReplacingOccurrencesOfString:@"ssh_cmd" withString:commandName];
+                    if ((numInterpreter >= 0) && (numInterpreter < numSshCommands)) {
+                        params->numInterpreter = numInterpreter;
+                        sshIsRunning[numInterpreter] = true;
+                        NSLog(@"Starting a ssh command: %d", params->numInterpreter);
+                        if (numInterpreter > 0) {
+                            char suffix[2];
+                            suffix[0] = 'A' + (numInterpreter - 1);
+                            suffix[1] = 0;
+                            commandName = [@"ssh_cmd" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                            libraryName = [libraryName stringByReplacingOccurrencesOfString:@"ssh_cmd" withString:commandName];
+                        }
                     }
                 }
+            } else if ([commandName isEqualToString: @"curl"]) {
+                if (curlIsRunning) {
+                    display_alert(@"Only one curl command at a time", @"Please wait for the other one to end.");
+                    NSLog(@"%@", @"Too many curl commands running simultaneously.\n");
+                    function = &too_many_scripts;
+                    functionName = @"notAValidCommand";
+                    currentSession->global_errno = ENOENT;
+                    argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
+                } else {
+                    curlIsRunning = true;
+                }
             }
-            if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
-            else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
-            else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_GLOBAL); // commands defined in dynamic library
-            if (handle == NULL) {
-                char* errorLoading = strdup(dlerror());
-                fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, errorLoading);
-                NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, errorLoading);
-                NSString* fileLocation = [[NSBundle mainBundle] pathForResource:libraryName ofType:nil];
-                free(errorLoading);
-            } else {
-                function = dlsym(handle, functionName.UTF8String);
-                NSLog(@"Loading %s from %s", functionName.UTF8String, libraryName.UTF8String);
-                if (function == NULL) {
+            // Don't load the function if we already set it to &too_many_scripts.
+            if (function == NULL) {
+                if ([libraryName isEqualToString: @"SELF"]) handle = RTLD_SELF;  // commands defined in ios_system.framework
+                else if ([libraryName isEqualToString: @"MAIN"]) handle = RTLD_MAIN_ONLY; // commands defined in main program
+                else handle = dlopen(libraryName.UTF8String, RTLD_LAZY | RTLD_GLOBAL); // commands defined in dynamic library
+                if (handle == NULL) {
                     char* errorLoading = strdup(dlerror());
-                    fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", functionName.UTF8String, libraryName.UTF8String, errorLoading);
+                    fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, errorLoading);
                     NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, errorLoading);
+                    NSString* fileLocation = [[NSBundle mainBundle] pathForResource:libraryName ofType:nil];
                     free(errorLoading);
+                } else {
+                    function = dlsym(handle, functionName.UTF8String);
+                    NSLog(@"Loading %s from %s", functionName.UTF8String, libraryName.UTF8String);
+                    if (function == NULL) {
+                        char* errorLoading = strdup(dlerror());
+                        fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", functionName.UTF8String, libraryName.UTF8String, errorLoading);
+                        NSLog(@"Failed loading %s from %s, cause = %s\n", commandName.UTF8String, libraryName.UTF8String, errorLoading);
+                        free(errorLoading);
+                    }
                 }
             }
         }

@@ -1323,6 +1323,8 @@
 		2261379521F0E5C40097B3A0 /* bsd-setres_id.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "bsd-setres_id.c"; path = "ssh_keygen/openbsd-compat/bsd-setres_id.c"; sourceTree = "<group>"; };
 		2261379721F0E5DE0097B3A0 /* vis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vis.c; path = "ssh_keygen/openbsd-compat/vis.c"; sourceTree = "<group>"; };
 		2261379921F0E5FE0097B3A0 /* readpassphrase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = readpassphrase.c; path = "ssh_keygen/openbsd-compat/readpassphrase.c"; sourceTree = "<group>"; };
+		226192702CD51B0E00D1199C /* wasmer.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = wasmer.c; path = wasmer/wasmer.c; sourceTree = SOURCE_ROOT; };
+		226192722CD51CAB00D1199C /* libwasmer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwasmer.a; path = wasmer/libwasmer.a; sourceTree = "<group>"; };
 		2263780C1FDB3EE100AE8827 /* rmdir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rmdir.c; sourceTree = "<group>"; };
 		2263780D1FDB3EE100AE8827 /* termcap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = termcap.h; sourceTree = SOURCE_ROOT; };
 		226378101FDB3EE100AE8827 /* mv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mv.c; sourceTree = "<group>"; };
@@ -1765,6 +1767,7 @@
 		223497AB1FD6CF7A007ED1A9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				226192722CD51CAB00D1199C /* libwasmer.a */,
 				224DF7332B757AE200F13C58 /* libresolv.9.tbd */,
 				22B114742817CABD00A5BF16 /* libtermcap.tbd */,
 				D212F99525B06810007F5D2D /* openssl.xcframework */,
@@ -2293,6 +2296,14 @@
 			path = tee;
 			sourceTree = "<group>";
 		};
+		2261926F2CD5184900D1199C /* wasmer */ = {
+			isa = PBXGroup;
+			children = (
+				226192702CD51B0E00D1199C /* wasmer.c */,
+			);
+			path = wasmer;
+			sourceTree = "<group>";
+		};
 		226378091FDB3EC700AE8827 /* file_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
@@ -2498,6 +2509,7 @@
 		226378CA1FDB3F2B00AE8827 /* shell_cmds_ios */ = {
 			isa = PBXGroup;
 			children = (
+				2261926F2CD5184900D1199C /* wasmer */,
 				225E4F132C56986F00D5E1A9 /* wasm3 */,
 				2276339E29B0A5DE00DBF1C6 /* stty */,
 				22F0803620973712003C3BF0 /* sleep.c */,
@@ -5079,12 +5091,17 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/wasmer",
+				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
 					"-Wunused-const-variable",
 					"-Wincompatible-pointer-types-discards-qualifiers",
+					"\"-I ../\"",
 				);
 				OTHER_LDFLAGS = (
 					"-Xlinker",
@@ -5130,11 +5147,16 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/wasmer",
+				);
 				OTHER_CFLAGS = (
 					"-Wshorten-64-to-32",
 					"-Wno-ambiguous-macro",
 					"-Wunused-const-variable",
 					"-Wincompatible-pointer-types-discards-qualifiers",
+					"\"-I ../\"",
 				);
 				OTHER_LDFLAGS = (
 					"-Xlinker",
