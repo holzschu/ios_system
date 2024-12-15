@@ -417,7 +417,10 @@ static void cleanup_function(void* parameters) {
     }
     // If the command was started as a pipe, we wait for the first command to finish sending data
     // There is an exception for ssh, which can be started by scp or sftp. They will wait for it.
-    if ((!joinMainThread) && p->isPipeOut && (strcmp(commandName, "ssh") != 0)) {
+    // Another exception for "dash -c": one command is reading its output
+    if ((!joinMainThread) && p->isPipeOut
+        && (strcmp(commandName, "ssh") != 0) // not ssh
+        && (! ((strcmp(commandName, "dash") == 0) && (p->argc >= 2) && (strcmp(p->argv_ref[1], "-c") == 0)))) { // not "dash -c something"
         if (currentSession->current_command_root_thread != 0) {
             if (currentSession->current_command_root_thread != current_thread) {
                 NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
@@ -459,7 +462,7 @@ static void cleanup_function(void* parameters) {
     } else if (strcmp(commandName, "dash") == 0) {
         NSLog(@"Ending a dash command: %d", p->numInterpreter);
         dashIsRunning[p->numInterpreter] = false;
-    } else if (strcmp(commandName, "ssh") == 0) {
+    } else if ((strcmp(commandName, "ssh") == 0) || (strcmp(commandName, "scp") == 0) || (strcmp(commandName, "sftp") == 0)) {
         NSLog(@"Ending a ssh command: %d", p->numInterpreter);
         sshIsRunning[p->numInterpreter] = false;
     } else if (strcmp(commandName, "curl") == 0) {
@@ -3436,6 +3439,7 @@ int ios_system(const char* inputCmd) {
                             }
                             numInterpreter++;
                         }
+                        if (!timeout) break; // need to break twice!
                         numInterpreter = 0;
                         now = [NSDate date];
                         timeInterval = [now timeIntervalSinceDate:start];
@@ -3579,6 +3583,7 @@ int ios_system(const char* inputCmd) {
                             }
                             numInterpreter++;
                         }
+                        if (!timeout) break; // need to break twice!
                         numInterpreter = 0;
                         now = [NSDate date];
                         timeInterval = [now timeIntervalSinceDate:start];
@@ -3624,6 +3629,7 @@ int ios_system(const char* inputCmd) {
                             }
                             numInterpreter++;
                         }
+                        if (!timeout) break; // need to break twice!
                         numInterpreter = 0;
                         now = [NSDate date];
                         timeInterval = [now timeIntervalSinceDate:start];
@@ -3636,17 +3642,17 @@ int ios_system(const char* inputCmd) {
                         currentSession->global_errno = ENOENT;
                         argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
                     }
-                    if ((numInterpreter >= 0) && (numInterpreter < numSshCommands)) {
-                        params->numInterpreter = numInterpreter;
-                        sshIsRunning[numInterpreter] = true;
-                        NSLog(@"Starting a ssh command: %d", params->numInterpreter);
-                        if (numInterpreter > 0) {
-                            char suffix[2];
-                            suffix[0] = 'A' + (numInterpreter - 1);
-                            suffix[1] = 0;
-                            commandName = [@"ssh_cmd" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
-                            libraryName = [libraryName stringByReplacingOccurrencesOfString:@"ssh_cmd" withString:commandName];
-                        }
+                }
+                if ((numInterpreter >= 0) && (numInterpreter < numSshCommands)) {
+                    params->numInterpreter = numInterpreter;
+                    sshIsRunning[numInterpreter] = true;
+                    NSLog(@"Starting a ssh command: %d", params->numInterpreter);
+                    if (numInterpreter > 0) {
+                        char suffix[2];
+                        suffix[0] = 'A' + (numInterpreter - 1);
+                        suffix[1] = 0;
+                        commandName = [@"ssh_cmd" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                        libraryName = [libraryName stringByReplacingOccurrencesOfString:@"ssh_cmd" withString:commandName];
                     }
                 }
             } else if ([commandName isEqualToString: @"curl"]) {
