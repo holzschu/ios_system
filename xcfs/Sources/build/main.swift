@@ -47,6 +47,9 @@ for scheme in schemes {
         try sh("zip --symlinks -r \(zip) \(scheme).xcframework")
         let chksum = try sha(path: zip)
         checksums.append([zip, chksum])
+        try sh("rm -rf \(scheme)")
+        try sh("mkdir \(scheme)")
+        try sh("mv \(scheme).xcframework \(scheme)")
     }
 }
 
