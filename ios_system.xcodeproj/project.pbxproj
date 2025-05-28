@@ -277,6 +277,7 @@
 		223EF3402B972EDF00A8ED5A /* getrrsetbyname.c in Sources */ = {isa = PBXBuildFile; fileRef = 228D204E21CB9EE600A9B528 /* getrrsetbyname.c */; };
 		223EF3412B972EF000A8ED5A /* glob.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B3126243A3700C399A5 /* glob.c */; };
 		223EF3422B972EFB00A8ED5A /* fmt_scaled.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B3B26243C1D00C399A5 /* fmt_scaled.c */; };
+		22480B9F2DE739F200BF9F3F /* realpath.c in Sources */ = {isa = PBXBuildFile; fileRef = 22480B9E2DE739F200BF9F3F /* realpath.c */; };
 		224A4B3226243A3700C399A5 /* glob.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B3126243A3700C399A5 /* glob.c */; };
 		224A4B3C26243C1D00C399A5 /* fmt_scaled.c in Sources */ = {isa = PBXBuildFile; fileRef = 224A4B3B26243C1D00C399A5 /* fmt_scaled.c */; };
 		224AAC5C21CB931300F8C22F /* reallocarray.c in Sources */ = {isa = PBXBuildFile; fileRef = 224AAC5B21CB931300F8C22F /* reallocarray.c */; };
@@ -985,6 +986,7 @@
 		223EF30B2B972B7E00A8ED5A /* auth-passwd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "auth-passwd.c"; path = "ssh_keygen/auth-passwd.c"; sourceTree = SOURCE_ROOT; };
 		223EF30D2B972BEB00A8ED5A /* auth2-passwd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "auth2-passwd.c"; path = "ssh_keygen/auth2-passwd.c"; sourceTree = SOURCE_ROOT; };
 		223EF30F2B972C6900A8ED5A /* xcrypt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xcrypt.c; path = "ssh_keygen/openbsd-compat/xcrypt.c"; sourceTree = "<group>"; };
+		22480B9E2DE739F200BF9F3F /* realpath.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = realpath.c; sourceTree = "<group>"; };
 		22484B022434C5BB00D6BDDA /* jsc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = jsc.swift; sourceTree = "<group>"; };
 		2248DB002004A5F800F2944C /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = text_cmds/ed/main.c; sourceTree = SOURCE_ROOT; };
 		2248DB012004A5F800F2944C /* glbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glbl.c; path = text_cmds/ed/glbl.c; sourceTree = SOURCE_ROOT; };
@@ -1810,6 +1812,15 @@
 			path = "ssh-agent";
 			sourceTree = "<group>";
 		};
+		22480B9D2DE7399D00BF9F3F /* realpath */ = {
+			isa = PBXGroup;
+			children = (
+				22480B9E2DE739F200BF9F3F /* realpath.c */,
+			);
+			name = realpath;
+			path = shell_cmds/realpath;
+			sourceTree = SOURCE_ROOT;
+		};
 		2248DAFF2004A58600F2944C /* ed */ = {
 			isa = PBXGroup;
 			children = (
@@ -2530,6 +2541,7 @@
 				22CF27771FDB3FDA0087DDAD /* pwd */,
 				22CF277A1FDB3FDA0087DDAD /* uname */,
 				22CF277D1FDB3FDA0087DDAD /* w */,
+				22480B9D2DE7399D00BF9F3F /* realpath */,
 			);
 			path = shell_cmds_ios;
 			sourceTree = "<group>";
@@ -3993,6 +4005,7 @@
 				224DF7532B7956FF00F13C58 /* basename.c in Sources */,
 				22C5058C2098ADD800FDDFA9 /* main.c in Sources */,
 				22F6A1202068395B00E618F9 /* proc_compare.c in Sources */,
+				22480B9F2DE739F200BF9F3F /* realpath.c in Sources */,
 				225E4F252C569AB400D5E1A9 /* m3_compile.c in Sources */,
 				224DF7512B7945E600F13C58 /* dirname.c in Sources */,
 				22F6A11B2068394E00E618F9 /* printenv.c in Sources */,

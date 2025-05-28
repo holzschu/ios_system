@@ -97,6 +97,8 @@ extern int ios_getCommandStatus(void);
 extern const char* ios_progname(void);
 extern pid_t ios_fork(void);
 extern void ios_waitpid(pid_t pid);
+extern pid_t ios_full_waitpid(pid_t pid, int *stat_loc, int options);
+
 // Catch signal definition:
 extern int canSetSignal(void);
 extern sig_t ios_signal(int signal, sig_t function);

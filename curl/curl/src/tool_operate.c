@@ -219,7 +219,7 @@ static curl_off_t VmsSpecialSize(const char *name,
 
 #define BUFFER_SIZE (100*1024)
 
-struct per_transfer *transfers; /* first node */
+__thread struct per_transfer *transfers; /* first node */
 static struct per_transfer *transfersl; /* last node */
 static long all_pers;
 

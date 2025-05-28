@@ -1339,6 +1339,10 @@ int cd_main(int argc, char** argv) {
         // Do it in Swift (new dictionary each time), then store it, then move to Objective-C?
         void (*function)(NSString*) = NULL;
         function = dlsym(RTLD_MAIN_ONLY, "storeDirectoryUsed");
+        if (function == NULL) {
+            // more extensive search, but more expensive too.
+            function = dlsym(RTLD_DEFAULT, "storeDirectoryUsed");
+        }
         if (function != NULL) {
             NSString *key = @(ios_getBookmarkedVersion(newDir.UTF8String));
             function(key);
@@ -2144,10 +2148,20 @@ int ios_kill(void)
             // kill(getpid(), SIGINT); // infinite loop?
         } else {
             // Send pthread_cancel with the given signal to the current main thread, if there is one.
-            if (currentSession->current_command_root_thread != NULL)
-                // This works better than pthread_cancel with lua. Is it always good?
-                return pthread_kill(currentSession->current_command_root_thread, SIGINT);
-                // return pthread_cancel(currentSession->current_command_root_thread);
+            if (currentSession->current_command_root_thread != NULL) {
+                const char* commandName = ios_progname();
+                // pthread_kill for lua, bc, dc:
+                if ((strcmp(commandName, "lua") == 0) ||
+                    (strcmp(commandName, "bc") == 0) ||
+                    (strcmp(commandName, "dc") == 0)) {
+                    // Send a SIGINT interrupt to the command:
+                    // This works better than pthread_cancel with lua, bc and dc. #858
+                    return pthread_kill(currentSession->current_command_root_thread, SIGINT);
+                } else {
+                    // For the other commands, we use pthread_cancel, otherwise they don't stop. #900
+                    return pthread_cancel(currentSession->current_command_root_thread);
+                }
+            }
         }
     }
     // No process running
@@ -2298,6 +2312,10 @@ void ios_stopInteractive(void) {
     // This could be merged with opentty / closetty above, but stopInteractive involves one more trip to WKWebView->evaluateJS, so it's better not to call it too often.
     void (*function)(void) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "stopInteractive");
+    if (function == NULL) {
+        // more extensive search, but more expensive too.
+        function = dlsym(RTLD_DEFAULT, "stopInteractive");
+    }
     if (function != NULL) {
         function();
     } else {
@@ -2309,6 +2327,10 @@ int ios_storeInteractive(void) {
     // Some commands, like dash, can be started from inside interactive or non-interactive commands. They need to restore the status afterwards.
     int (*function)(void) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "storeInteractive");
+    if (function == NULL) {
+        // more extensive search, but more expensive too.
+        function = dlsym(RTLD_DEFAULT, "storeInteractive");
+    }
     if (function != NULL) {
         return function();
     } else {
@@ -2321,10 +2343,14 @@ void ios_startInteractive(void) {
     // With aliasing, we can have commands that are interactive and not detected by the command-line interpreter.
     void (*function)() = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "startInteractive");
+    if (function == NULL) {
+        // more extensive search, but more expensive too.
+        function = dlsym(RTLD_DEFAULT, "startInteractive");
+    }
     if (function != NULL) {
         function();
     } else {
-        NSLog(@"Could not find function startInteractive");
+        NSLog(@"Could not find function startInteractive.");
     }
 }
 
@@ -2370,6 +2396,10 @@ void replaceCommand(NSString* commandName, NSString* functionName, bool allOccur
     // Does that function exist / is reachable? We've had problems with stripping.
     int (*function)(int ac, char** av) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, functionName.UTF8String);
+    if (function == NULL) {
+        // more extensive search, but more expensive too.
+        function = dlsym(RTLD_DEFAULT, functionName.UTF8String);
+    }
     if (!function) {
         NSLog(@"replaceCommand: %@ (%s) does not exist", functionName, functionName.UTF8String);
         return; // if not, we don't replace.
@@ -2459,6 +2489,10 @@ NSArray* commandsAsArray(void) {
 // Aux function:
 static void* nextUnescapedCharacter(const char* str, const char c) {
     char* nextOccurence = strchr(str, c);
+    if ((str[0] == '\\') && (str[1] == c)) {
+        // str *starts* with the escaped character, no need to search before that '\'
+        nextOccurence = strchr(str + 2, c);
+    }
     while (nextOccurence != NULL) {
         if ((nextOccurence > str + 1) && (*(nextOccurence - 1) == '\\')) {
             // There is a backlash before the character.
@@ -3084,6 +3118,19 @@ int ios_system(const char* inputCmd) {
         dontExpand[argc] = false;
         argc += 1;
         if ((argc == 2) && (strcmp(argv[0], "export") == 0)) break; // don't try to unquote the argument of export.
+        if ((argc == 2) && (strcmp(argv[0], "alias") == 0)) {
+            // avoid issues with the syntax alias thing="other ~stuff", where ~stuff gets expanded.
+            // We do that by changing it into alias thing "other ~stuff"
+            char* equalSignPosition = strchr(str, '=');
+            char* spacePosition = strchr(str, ' ');
+            if ((spacePosition != NULL) && (equalSignPosition != NULL)) {
+                // There is both a space and an equal sign
+                if (spacePosition > equalSignPosition) {
+                    // the space happens after the equal sign
+                    *equalSignPosition = ' ';
+                }
+            }
+        }
         char* end = getLastCharacterOfArgument(str);
         bool mustBreak = (end == NULL) || (strlen(end) == 0);
         if (!mustBreak) end[0] = 0x0;
@@ -3680,6 +3727,9 @@ int ios_system(const char* inputCmd) {
                     free(errorLoading);
                 } else {
                     function = dlsym(handle, functionName.UTF8String);
+                    // RTLD_MAIN_ONLY fail in some cases (iOS 18?), but RTLD_DEFAULT works:
+                    if ((function == NULL) && (handle == RTLD_MAIN_ONLY))
+                        function = dlsym(RTLD_DEFAULT, functionName.UTF8String);
                     NSLog(@"Loading %s from %s", functionName.UTF8String, libraryName.UTF8String);
                     if (function == NULL) {
                         char* errorLoading = strdup(dlerror());

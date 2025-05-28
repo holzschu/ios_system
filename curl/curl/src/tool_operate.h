@@ -80,6 +80,6 @@ struct per_transfer {
 CURLcode operate(struct GlobalConfig *config, int argc, argv_item_t argv[]);
 void single_transfer_cleanup(struct OperationConfig *config);
 
-extern struct per_transfer *transfers; /* first node */
+extern __thread struct per_transfer *transfers; /* first node */
 
 #endif /* HEADER_CURL_TOOL_OPERATE_H */

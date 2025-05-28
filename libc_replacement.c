@@ -50,6 +50,10 @@ void finishedPreparingWebAssemblyCommand(void) {
 static void executeWebAssemblyCommandsInOrder(void) {
     void (*function)(void) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "executeWebAssemblyCommands");
+    if (function == NULL) {
+        // more extensive search, but more expensive too.
+        function = dlsym(RTLD_DEFAULT, "executeWebAssemblyCommands");
+    }
     if (function != NULL) {
         while (preparingWebAssemblyCommands > 0) {
             // Empty loops create problems in Release mode.
@@ -603,6 +607,37 @@ __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
 }
 
 __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
+    // pthread_join won't work,  because the thread might have been detached.
+    // (and you can't re-join a detached thread).
+    // -1 = the call waits for any child process (not good yet)
+    //  0 = the call waits for any child process in the process group of the caller
+    
+    if (options && WNOHANG) {
+        executeWebAssemblyCommandsInOrder(); // start executing webAssembly commands
+        // WNOHANG: just check that the process is still running:
+        pthread_t threadToWaitFor;
+        if ((pid == -1) || (pid == 0)) threadToWaitFor = ios_getLastThreadId();
+        else threadToWaitFor = ios_getThreadId(pid);
+        if (threadToWaitFor != 0) // the process is still running
+            return 0;
+        else {
+            if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+            fflush(thread_stdout);
+            fflush(thread_stderr);
+            return pid; // was "-1". See man page and https://github.com/holzschu/ios_system/issues/89
+        }
+    } else {
+        // Wait until the process is terminated:
+        ios_waitpid(pid);
+        if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+        return pid;
+    }
+}
+
+// The previous function is designed to override the standard version of waitpid.
+// With Python 3.13, it doesn't work and the standard version is called instead.
+// When that happens, we explicitly call this function (a copy of the previous one).
+__attribute__ ((optnone)) pid_t ios_full_waitpid(pid_t pid, int *stat_loc, int options) {
     // pthread_join won't work,  because the thread might have been detached.
     // (and you can't re-join a detached thread).
     // -1 = the call waits for any child process (not good yet)
