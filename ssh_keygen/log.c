@@ -202,7 +202,7 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 #endif
 
-	argv0 = av0;
+	argv0 = strdup(av0);
 
 	if (log_change_level(level) != 0) {
 		fprintf(stderr, "Unrecognized internal syslog level code %d\n",
@@ -276,8 +276,10 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 	openlog_r(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility, &sdata);
 	closelog_r(&sdata);
 #else
+#if !TARGET_OS_IPHONE
 	openlog(argv0 ? argv0 : ssh_progname, LOG_PID, log_facility);
 	closelog();
+#endif
 #endif
 }
 

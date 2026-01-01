@@ -1286,9 +1286,13 @@ get_term()
 	 * the underline sequence, the end underline sequence,
 	 * the boldface sequence, and the end boldface sequence.
 	 */
-    // iOS: printing width = 4 (esc + [ + 1 + m)
-	if ((so_s_width = 4 /* ltgetnum("sg") */ ) < 0)
+#if TARGET_OS_IPHONE
+    // iOS: Printing width = width of control sequence, once printed on screen, so 0.
+    so_s_width = 0;
+#else
+	if ((so_s_width = ltgetnum("sg")) < 0)
 		so_s_width = 0;
+#endif
 	so_e_width = so_s_width;
 
 	bo_s_width = bo_e_width = so_s_width;

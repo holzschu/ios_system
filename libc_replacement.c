@@ -48,8 +48,10 @@ void finishedPreparingWebAssemblyCommand(void) {
 }
 
 static void executeWebAssemblyCommandsInOrder(void) {
-    void (*function)(void) = NULL;
-    function = dlsym(RTLD_MAIN_ONLY, "executeWebAssemblyCommands");
+    static void (*function)(void) = NULL;
+    if (function == NULL) {
+        function = dlsym(RTLD_MAIN_ONLY, "executeWebAssemblyCommands");
+    }
     if (function == NULL) {
         // more extensive search, but more expensive too.
         function = dlsym(RTLD_DEFAULT, "executeWebAssemblyCommands");
@@ -88,8 +90,8 @@ int fprintf(FILE * restrict stream, const char * restrict format, ...) {
     if (fileno(stream) == STDOUT_FILENO) done = vfprintf (thread_stdout, format, arg);
 #ifndef debugPrint
     else if (fileno(stream) == STDERR_FILENO) done = vfprintf (thread_stderr, format, arg);
-    // iOS, debug:
 #else
+    // iOS, debug:
     else if ((fileno(stream) == STDERR_FILENO) || (fileno(stream) == fileno(thread_stderr))) done = vfprintf (stderr, format, arg);
 #endif
     else done = vfprintf (stream, format, arg);
@@ -637,6 +639,7 @@ __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
 // The previous function is designed to override the standard version of waitpid.
 // With Python 3.13, it doesn't work and the standard version is called instead.
 // When that happens, we explicitly call this function (a copy of the previous one).
+// Also useful in Swift calls
 __attribute__ ((optnone)) pid_t ios_full_waitpid(pid_t pid, int *stat_loc, int options) {
     // pthread_join won't work,  because the thread might have been detached.
     // (and you can't re-join a detached thread).

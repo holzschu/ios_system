@@ -37,6 +37,7 @@ bool sideLoading = false;
 // Should be set to false if significant user interaction is carried by the app and 
 // the app takes responsibility for waiting for the command to terminate. 
 bool joinMainThread = true;
+bool enableLLVMInterpreter = false;
 static NSString* ios_bookmarkDictionaryName = @"bookmarkNames";
 // Include file for getrlimit/setrlimit:
 #include <sys/resource.h>
@@ -90,12 +91,12 @@ typedef struct _sessionParameters {
 } sessionParameters;
 
 static void initSessionParameters(sessionParameters* sp) {
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
     sp->isMainThread = TRUE;
     sp->current_command_root_thread = 0;
     sp->lastThreadId = 0;
     sp->mainThreadId = 0;
-    NSString* currentDirectory = [fileManager currentDirectoryPath];
+    NSString* currentDirectory = [NSFileManager.defaultManager currentDirectoryPath];
     strcpy(sp->currentDir, [currentDirectory UTF8String]);
     strcpy(sp->previousDirectory, [currentDirectory UTF8String]);
     sp->localMiniRoot[0] = 0;
@@ -199,8 +200,15 @@ static const int MaxSshCommands = 2; // const so we can allocate an array
 int numSshCommands = MaxSshCommands; // Apps can overwrite this
 static bool sshIsRunning[MaxSshCommands];
 static int currentSshCommand = 0;
+// we need the ability to run 2 rsync commands for local rsync:
+static const int MaxRsyncCommands = 2; // const so we can allocate an array
+int numRsyncCommands = MaxRsyncCommands; // Apps can overwrite this
+static bool rsyncIsRunning[MaxRsyncCommands];
+static int currentRsyncCommand = 0;
 // prevent the user from running multiple curl commands too:
 static bool curlIsRunning = false;
+// prevent the user from running multiple scp commands as well (one is fine):
+static bool scpIsRunning = false;
 
 
 // pointers for sh sessions:
@@ -234,7 +242,7 @@ void _exit(int n) {
 //
 
 int canSetSignal() {
-    if (currentSession == NULL) {
+    if ((currentSession == NULL) || (currentSession->context == NULL)) {
         return 1;
     }
     char* sessionId = (char*)currentSession->context;
@@ -462,12 +470,18 @@ static void cleanup_function(void* parameters) {
     } else if (strcmp(commandName, "dash") == 0) {
         NSLog(@"Ending a dash command: %d", p->numInterpreter);
         dashIsRunning[p->numInterpreter] = false;
-    } else if ((strcmp(commandName, "ssh") == 0) || (strcmp(commandName, "scp") == 0) || (strcmp(commandName, "sftp") == 0)) {
+    } else if ((strcmp(commandName, "ssh") == 0)) {
         NSLog(@"Ending a ssh command: %d", p->numInterpreter);
         sshIsRunning[p->numInterpreter] = false;
     } else if (strcmp(commandName, "curl") == 0) {
         NSLog(@"Ending a curl command.");
         curlIsRunning = false;
+    } else if ((strcmp(commandName, "scp") == 0) || (strcmp(commandName, "sftp") == 0)) {
+        NSLog(@"Ending a scp/sftp command.");
+        scpIsRunning = false;
+    } else if ((strcmp(commandName, "rsync") == 0) || (strcmp(commandName, "openrsync") == 0)) {
+        NSLog(@"Ending a rsync command.");
+        rsyncIsRunning[p->numInterpreter] = false;
     }
     if (currentSession->numCommand > 0)
         currentSession->numCommand -= 1;
@@ -555,11 +569,19 @@ static void cleanup_function(void* parameters) {
         }
         ios_releaseThread(current_thread);
     }
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_DFL;
+
     if (currentSession->current_command_root_thread == current_thread) {
         currentSession->current_command_root_thread = 0;
+        // Since we ended the root thread for this session, reset SIGWINCH if it was set:
+        sigaction (SIGWINCH, &sa, NULL);
     }
     if (currentSession->mainThreadId == current_thread) {
         currentSession->mainThreadId = 0;
+        // Since we ended the main thread for this session, reset SIGWINCH if it was set:
+        sigaction (SIGWINCH, &sa, NULL);
     }
     cleanup_counter--;
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
@@ -663,11 +685,31 @@ void initializeEnvironment(void) {
     if (! [fullCommandPath isEqualToString:checkingPath]) {
         fullCommandPath = checkingPath;
     }
-    if (![fullCommandPath containsString:@"Documents/bin"]) {
-        NSString *binPath = [docsPath stringByAppendingPathComponent:@"bin"];
+    if (!sideLoading) {
+        // If we're not sideloading, executebles will also be in the Application directory
+        // These go first, so home-dir path (~/Documents/bin and ~/Library/bin) are ahead of them.
+        NSString *mainBundlePath = [[NSBundle mainBundle] resourcePath];
+        NSString *mainBundleLibPath = [mainBundlePath stringByAppendingPathComponent:@"Library"];
+        // if we're not sideloading, all "executable" files are in the AppDir:
+        // $APPDIR/Library/bin
+        NSString *binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+        // $APPDIR/bin
+        binPath = [mainBundlePath stringByAppendingPathComponent:@"bin"];
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+    }
+    NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
+    NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
+    if (![fullCommandPath containsString:binPath]) {
+        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
+    }
+    binPath = [docsPath stringByAppendingPathComponent:@"bin"];
+    if (![fullCommandPath containsString:binPath]) {
         fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
         setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     }
+    directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
+    setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     setenv("APPDIR", [[NSBundle mainBundle] resourcePath].UTF8String, 1);
     setenv("PATH_LOCALE", docsPath.UTF8String, 0); // CURL config in ~/Documents/ or [Cloud Drive]/
 
@@ -685,7 +727,6 @@ void initializeEnvironment(void) {
     // iOS already defines "HOME" as the home dir of the application
     for (int i = 0; i < MaxPythonInterpreters; i++) PythonIsRunning[i] = false;
     for (int i = 0; i < MaxPerlInterpreters; i++) PerlIsRunning[i] = false;
-    NSString *libPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject];
     // environment variables for Python:
     setenv("PYTHONHOME", libPath.UTF8String, 0);  // Python files are in ~/Library/lib/python[23].x/
     // XDG setup directories (~/Library/Caches, ~/Library/Preferences):
@@ -695,32 +736,13 @@ void initializeEnvironment(void) {
     setenv("XDG_DATA_HOME", libPath.UTF8String, 0);
     // if we use Python, we define a few more environment variables:
     setenv("PYTHONEXECUTABLE", "python3", 0);  // Python executable name for python3
-    setenv("PYZMQ_BACKEND", "cffi", 0);
+    // setenv("PYZMQ_BACKEND", "cffi", 0);
     // Configuration files are in $HOME (and hidden)
     setenv("JUPYTER_CONFIG_DIR", [docsPath stringByAppendingPathComponent:@".jupyter"].UTF8String, 0);
     setenv("IPYTHONDIR", [docsPath stringByAppendingPathComponent:@".ipython"].UTF8String, 0);
     setenv("MPLCONFIGDIR", [docsPath stringByAppendingPathComponent:@".config/matplotlib"].UTF8String, 0);
     // hg config file in ~/Documents/.hgrc
     setenv("HGRCPATH", [docsPath stringByAppendingPathComponent:@".hgrc"].UTF8String, 0);
-    if (![fullCommandPath containsString:@"Library/bin"]) {
-        NSString *binPath = [libPath stringByAppendingPathComponent:@"bin"];
-        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-    }
-    if (!sideLoading) {
-        // If we're not sideloading, executeables will also be in the Application directory
-        NSString *mainBundlePath = [[NSBundle mainBundle] resourcePath];
-        NSString *mainBundleLibPath = [mainBundlePath stringByAppendingPathComponent:@"Library"];
-        // if we're not sideloading, all "executable" files are in the AppDir:
-        // $APPDIR/Library/bin3
-        NSString *binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin3"];
-        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-        // $APPDIR/Library/bin
-        binPath = [mainBundleLibPath stringByAppendingPathComponent:@"bin"];
-        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-        // $APPDIR/bin
-        binPath = [mainBundlePath stringByAppendingPathComponent:@"bin"];
-        fullCommandPath = [[binPath stringByAppendingString:@":"] stringByAppendingString:fullCommandPath];
-    }
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     setenv("PATH", fullCommandPath.UTF8String, 1); // 1 = override existing value
     // Store the maximum number of file descriptors allowed:
@@ -969,9 +991,9 @@ static void initializeCommandList(void)
 
 int ios_setMiniRoot(NSString* mRoot) {
     BOOL isDir;
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
 
-    if (![fileManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
+    if (![NSFileManager.defaultManager fileExistsAtPath:mRoot isDirectory:&isDir]) {
       return 0;
     }
 
@@ -981,16 +1003,16 @@ int ios_setMiniRoot(NSString* mRoot) {
 
     // fileManager has different ways of expressing the same directory.
     // We need to actually change to the directory to get its "real name".
-    NSString* currentDir = [fileManager currentDirectoryPath];
+    NSString* currentDir = [NSFileManager.defaultManager currentDirectoryPath];
 
-    if (![fileManager changeCurrentDirectoryPath:mRoot]) {
+    if (![NSFileManager.defaultManager changeCurrentDirectoryPath:mRoot]) {
       return 0;
     }
     // also don't set the miniRoot if we can't go in there
     // get the real name for miniRoot:
-    miniRoot = [fileManager currentDirectoryPath];
+    miniRoot = [NSFileManager.defaultManager currentDirectoryPath];
     // Back to where we we before:
-    [fileManager changeCurrentDirectoryPath:currentDir];
+    [NSFileManager.defaultManager changeCurrentDirectoryPath:currentDir];
     if (currentSession != nil) {
         strcpy(currentSession->currentDir, [miniRoot UTF8String]);
         strcpy(currentSession->previousDirectory, [miniRoot UTF8String]);
@@ -1000,7 +1022,7 @@ int ios_setMiniRoot(NSString* mRoot) {
 
 // Called when 
 int ios_setMiniRootURL(NSURL* mRoot) {
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
     if (currentSession == NULL) {
         currentSession = malloc(sizeof(sessionParameters));
         initSessionParameters(currentSession);
@@ -1008,7 +1030,7 @@ int ios_setMiniRootURL(NSURL* mRoot) {
     strcpy(currentSession->localMiniRoot, [mRoot.path UTF8String]);
     strcpy(currentSession->previousDirectory, currentSession->currentDir);
     strcpy(currentSession->currentDir, [[mRoot path] UTF8String]);
-    [fileManager changeCurrentDirectoryPath:[mRoot path]];
+    [NSFileManager.defaultManager changeCurrentDirectoryPath:[mRoot path]];
     return 1; // mission accomplished
 }
 
@@ -1101,8 +1123,8 @@ int ios_fchdir(const int fd) {
     // We managed to change the directory. Update currentSession as well:
     // Was that allowed?
     // Allowed "cd" = below miniRoot *or* below localMiniRoot
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    NSString* resultDir = [fileManager currentDirectoryPath];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSString* resultDir = [NSFileManager.defaultManager currentDirectoryPath];
     // NSLog(@"Inside fchdir, path: %s for session: %s\n", resultDir.UTF8String, (char*)currentSession->context);
 
     if (__allowed_cd_to_path(resultDir)) {
@@ -1117,12 +1139,12 @@ int ios_fchdir(const int fd) {
     errno = EACCES; // Permission denied
     // If the user tried to go above the miniRoot, set it to miniRoot
     if ([miniRoot hasPrefix:resultDir]) {
-        [fileManager changeCurrentDirectoryPath:miniRoot];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:miniRoot];
         strcpy(currentSession->currentDir, [miniRoot UTF8String]);
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
     } else {
         // go back to where we were before:
-        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
     }
     // NSLog(@"Unlocking for thread %x in ios_fchdir\n", pthread_self());
     pthread_mutex_unlock(&pid_mtx);
@@ -1140,8 +1162,8 @@ int ios_fchdir_nolock(const int fd) {
     // We managed to change the directory. Update currentSession as well:
     // Was that allowed?
     // Allowed "cd" = below miniRoot *or* below localMiniRoot
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    NSString* resultDir = [fileManager currentDirectoryPath];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSString* resultDir = [NSFileManager.defaultManager currentDirectoryPath];
     // NSLog(@"fchdir_nolock, success: %s\n", resultDir.UTF8String);
 
     if (__allowed_cd_to_path(resultDir)) {
@@ -1154,12 +1176,12 @@ int ios_fchdir_nolock(const int fd) {
     errno = EACCES; // Permission denied
     // If the user tried to go above the miniRoot, set it to miniRoot
     if ([miniRoot hasPrefix:resultDir]) {
-        [fileManager changeCurrentDirectoryPath:miniRoot];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:miniRoot];
         strcpy(currentSession->currentDir, [miniRoot UTF8String]);
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
     } else {
         // go back to where we were before:
-        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
     }
     // NSLog(@"fchdir_nolock, failure\n");
     return -1;
@@ -1168,11 +1190,11 @@ int ios_fchdir_nolock(const int fd) {
 int chdir_nolock(const char* path) {
     // NSLog(@"chdir_nolock: %s thread %x\n", path, pthread_self());
     // Same function as chdir, except it does not lock. To be called from ios_releaseThread*()
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
     NSString* newDir = @(path);
     BOOL isDir;
     // Check for permission and existence:
-    if (![fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
+    if (![NSFileManager.defaultManager fileExistsAtPath:newDir isDirectory:&isDir]) {
         errno = ENOENT; // No such file or directory
         return -1;
     }
@@ -1180,8 +1202,8 @@ int chdir_nolock(const char* path) {
         errno = ENOTDIR; // Not a directory
         return -1;
     }
-    if (![fileManager isReadableFileAtPath:newDir] ||
-        ![fileManager changeCurrentDirectoryPath:newDir]) {
+    if (![NSFileManager.defaultManager isReadableFileAtPath:newDir] ||
+        ![NSFileManager.defaultManager changeCurrentDirectoryPath:newDir]) {
         errno = EACCES; // Permission denied
         return -1;
     }
@@ -1189,7 +1211,7 @@ int chdir_nolock(const char* path) {
     // We managed to change the directory.
     // Was that allowed?
     // Allowed "cd" = below miniRoot *or* below localMiniRoot
-    NSString* resultDir = [fileManager currentDirectoryPath];
+    NSString* resultDir = [NSFileManager.defaultManager currentDirectoryPath];
     if (resultDir == nil) {
         resultDir = newDir;
     }
@@ -1206,12 +1228,12 @@ int chdir_nolock(const char* path) {
     errno = EACCES; // Permission denied
     // If the user tried to go above the miniRoot, set it to miniRoot
     if ([miniRoot hasPrefix:resultDir]) {
-        [fileManager changeCurrentDirectoryPath:miniRoot];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:miniRoot];
         strcpy(currentSession->currentDir, [miniRoot UTF8String]);
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
     } else {
         // go back to where we were before:
-        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
     }
     return -1;
 }
@@ -1224,11 +1246,11 @@ int chdir(const char* path) {
     // We cannot have someone change the current directory while a command is starting or terminating.
     // hence the mutex_lock here.
     pthread_mutex_lock(&pid_mtx);
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
     NSString* newDir = @(path);
     BOOL isDir;
     // Check for permission and existence:
-    if (![fileManager fileExistsAtPath:newDir isDirectory:&isDir]) {
+    if (![NSFileManager.defaultManager fileExistsAtPath:newDir isDirectory:&isDir]) {
         errno = ENOENT; // No such file or directory
         // NSLog(@"Unlocking for thread %x in chdir (no such directory)\n", pthread_self());
         pthread_mutex_unlock(&pid_mtx);
@@ -1240,8 +1262,8 @@ int chdir(const char* path) {
         pthread_mutex_unlock(&pid_mtx);
         return -1;
     }
-    if (![fileManager isReadableFileAtPath:newDir] ||
-        ![fileManager changeCurrentDirectoryPath:newDir]) {
+    if (![NSFileManager.defaultManager isReadableFileAtPath:newDir] ||
+        ![NSFileManager.defaultManager changeCurrentDirectoryPath:newDir]) {
         errno = EACCES; // Permission denied
         // NSLog(@"Unlocking for thread %x in chdir (not readable)\n", pthread_self());
         pthread_mutex_unlock(&pid_mtx);
@@ -1251,7 +1273,7 @@ int chdir(const char* path) {
     // We managed to change the directory.
     // Was that allowed?
     // Allowed "cd" = below miniRoot *or* below localMiniRoot
-    NSString* resultDir = [fileManager currentDirectoryPath];
+    NSString* resultDir = [NSFileManager.defaultManager currentDirectoryPath];
     // NSLog(@"After changing directory, result= %s\n", resultDir.UTF8String);
 
     if (__allowed_cd_to_path(resultDir)) {
@@ -1270,12 +1292,12 @@ int chdir(const char* path) {
     }
     // If the user tried to go above the miniRoot, set it to miniRoot
     if ([miniRoot hasPrefix:resultDir]) {
-        [fileManager changeCurrentDirectoryPath:miniRoot];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:miniRoot];
         strcpy(currentSession->currentDir, [miniRoot UTF8String]);
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
     } else {
         // go back to where we were before:
-        [fileManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:[NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding]];
     }
     // NSLog(@"Unlocking for thread %lx in chdir (not allowed)\n", (unsigned long)pthread_self());
     pthread_mutex_unlock(&pid_mtx);
@@ -1323,7 +1345,7 @@ int cd_main(int argc, char** argv) {
     if (currentSession == NULL) {
       return 1;
     }
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
   
     if (argc > 1) {
         NSString* newDir = @(argv[1]);
@@ -1347,15 +1369,15 @@ int cd_main(int argc, char** argv) {
             NSString *key = @(ios_getBookmarkedVersion(newDir.UTF8String));
             function(key);
         }
-        __cd_to_dir(newDir, fileManager);
+        __cd_to_dir(newDir, NSFileManager.defaultManager);
     } else { // [cd] Help, I'm lost, bring me back home
         if (miniRoot != nil) {
-            [fileManager changeCurrentDirectoryPath:miniRoot];
+            [NSFileManager.defaultManager changeCurrentDirectoryPath:miniRoot];
         } else {
-            [fileManager changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
+            [NSFileManager.defaultManager changeCurrentDirectoryPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
         }
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
-        strcpy(currentSession->currentDir, fileManager.currentDirectoryPath.UTF8String);
+        strcpy(currentSession->currentDir, NSFileManager.defaultManager.currentDirectoryPath.UTF8String);
     }
 
     newPreviousDirectory(); // If a command is running, this changes the directory it goes back to.
@@ -1924,15 +1946,15 @@ int sh_main(int argc, char** argv) {
             }
         }
     }
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    NSLog(@"parentSession = %x currentSession = %x currentDir = %s\n", parentSession, currentSession, [fileManager currentDirectoryPath].UTF8String);
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
+    NSLog(@"parentSession = %x currentSession = %x currentDir = %s\n", parentSession, currentSession, [NSFileManager.defaultManager currentDirectoryPath].UTF8String);
     if (currentSession->context == sh_session) {
         NSLog(@"We cannot have a sh command starting a sh command");
         return 1; // We cannot have a sh command starting a sh command.
     }
     if (parentSession == NULL) {
         parentSession = currentSession;
-        parentDir = [fileManager currentDirectoryPath];
+        parentDir = [NSFileManager.defaultManager currentDirectoryPath];
     }
     ios_switchSession(sh_session); // create a new session
     // NSLog(@"after switchSession, currentDir = %s\n", [fileManager currentDirectoryPath].UTF8String);
@@ -1973,9 +1995,9 @@ int sh_main(int argc, char** argv) {
         command += (i+1);
     }
     // NSLog(@"Closing shell session; last_thread= %x root= %x", currentSession->lastThreadId, currentSession->current_command_root_thread);
-    if (![parentDir isEqualToString:[fileManager currentDirectoryPath]]) {
+    if (![parentDir isEqualToString:[NSFileManager.defaultManager currentDirectoryPath]]) {
         // NSLog(@"Reset current Dir to= %s instead of %s", parentDir.UTF8String, [fileManager currentDirectoryPath].UTF8String);
-        [fileManager changeCurrentDirectoryPath:parentDir];
+        [NSFileManager.defaultManager changeCurrentDirectoryPath:parentDir];
     }
     ios_closeSession(sh_session);
     currentSession = parentSession;
@@ -2191,7 +2213,7 @@ void ios_switchSession(const void* sessionId) {
         return;
     }
 
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
     id sessionKey = @((NSUInteger)sessionId);
     if (sessionList == nil) {
         sessionList = [NSMutableDictionary new];
@@ -2206,8 +2228,8 @@ void ios_switchSession(const void* sessionId) {
         currentSession = newSession;
     } else {
         NSString* currentSessionDir = [NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding];
-        if (![currentSessionDir isEqualToString:[fileManager currentDirectoryPath]]) {
-            [fileManager changeCurrentDirectoryPath:currentSessionDir];
+        if (![currentSessionDir isEqualToString:[NSFileManager.defaultManager currentDirectoryPath]]) {
+            [NSFileManager.defaultManager changeCurrentDirectoryPath:currentSessionDir];
         }
         // Da fuck???? Yeah, that would hurt. Why is it there?
         currentSession->stdin = stdin;
@@ -2217,11 +2239,11 @@ void ios_switchSession(const void* sessionId) {
 }
 
 void ios_setDirectoryURL(NSURL* workingDirectoryURL) {
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    [fileManager changeCurrentDirectoryPath:[workingDirectoryURL path]];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
+    [NSFileManager.defaultManager changeCurrentDirectoryPath:[workingDirectoryURL path]];
     if (currentSession != NULL) {
         NSString* currentSessionDir = [NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding];
-        if ([currentSessionDir isEqualToString:[fileManager currentDirectoryPath]]) return;
+        if ([currentSessionDir isEqualToString:[NSFileManager.defaultManager currentDirectoryPath]]) return;
         strcpy(currentSession->previousDirectory, currentSession->currentDir);
         strcpy(currentSession->currentDir, [[workingDirectoryURL path] UTF8String]);
     }
@@ -2236,7 +2258,10 @@ void ios_closeSession(const void* sessionId) {
 }
 
 int ios_isatty(int fd) {
+    // NSLog(@"Entering ios_isatty, fd= %d", fd);
     if (currentSession == NULL) return 0;
+    // Anything running inside "sh -c" is not a tty:
+    if (currentSession->context == sh_session) return 0;
     // 2 possibilities: 0, 1, 2 (classical) or fileno(thread_stdout)
     if (thread_stdin != NULL) {
         if ((fd == STDIN_FILENO) || (fd == fileno(currentSession->stdin)) || (fd == fileno(thread_stdin)))
@@ -2657,25 +2682,26 @@ NSString* beforeScriptCommandName(NSString* scriptName) {
     // scans the PATH for a binary that has the name script and non-null size,
     // checks whether it has wasm signature, if so insert "wasm" before script name.
     BOOL isDir = false;
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
     for (NSString* path in directoriesInPath) {
         // If we don't have access to the path component, there's no point in continuing:
-        if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
+        if (![NSFileManager.defaultManager fileExistsAtPath:path isDirectory:&isDir]) continue;
         if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
-        NSString* locationName;
         // search for 3 possibilities: name, name.wasm3 and name.wasm
-        locationName = [path stringByAppendingPathComponent:scriptName];
-        bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+        NSString* locationName;
+        NSString* locationNameBasis = [path stringByAppendingPathComponent:scriptName];
+        bool fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationNameBasis isDirectory:&isDir];
         fileFound = fileFound && !isDir;
+        if (fileFound) locationName = locationNameBasis;
         if (!fileFound) {
-            locationName = [[path stringByAppendingPathComponent:scriptName] stringByAppendingString:@".wasm3"];
-            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+            locationName = [locationNameBasis stringByAppendingString:@".wasm3"];
+            fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationName isDirectory:&isDir];
             fileFound = fileFound && !isDir;
         }
         if (!fileFound) {
-            locationName = [[path stringByAppendingPathComponent:scriptName] stringByAppendingString:@".wasm"];
-            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+            locationName = [locationNameBasis stringByAppendingString:@".wasm"];
+            fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationName isDirectory:&isDir];
             fileFound = fileFound && !isDir;
         }
         if (!fileFound) continue;
@@ -2726,7 +2752,8 @@ int ios_system(const char* inputCmd) {
     char* errorFileMarker = 0;
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // NSFileManager *fileManager = [[NSFileManager alloc] init];
+    // if (fileManager == NULL) return 0; // for stability, early commands don't have it.
     // NSLog(@"ios_system, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
     // NSLog(@"ios_system, stderr %d \n", thread_stderr == NULL ? 0 : fileno(thread_stderr));
     if (currentSession == NULL) {
@@ -3183,6 +3210,9 @@ int ios_system(const char* inputCmd) {
             }
         }
         free(dontExpand);
+        //
+        // NH, TODO: this is probably the place where we separate between parsing the command (above) and execv (below)
+        // ios_execv(argv[0], argv);
         // Now call the actual command:
         // - is argv[0] a command that refers to a file? (either absolute path, or in $PATH)
         //   if so, does it exist, does it have +x bit set, does it have #! python or #! lua on the first line?
@@ -3224,13 +3254,13 @@ int ios_system(const char* inputCmd) {
                 NSString* test_string = @"~";
                 commandName = [commandName stringByReplacingOccurrencesOfString:test_string withString:replacement_string options:NULL range:NSMakeRange(0, 1)];
             }
-            if ([fileManager fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
+            if ([NSFileManager.defaultManager fileExistsAtPath:commandName isDirectory:&isDir]  && (!isDir)) {
                 // File exists, is a file.
                 struct stat sb;
                 if (stat(commandName.UTF8String, &sb) == 0) {
                     // File exists, is executable, not a directory.
                     cmdIsAFile = true;
-                    // We can have an empty file with the same name in the path, to fool which():
+                    // We can hexitexitave an empty file with the same name in the path, to fool which():
                     // We can also have a Mach-O binary with the same name in the path (in simulator, mostly)
                     cmdIsReal = isRealCommand(commandName.UTF8String);
                 }
@@ -3246,32 +3276,35 @@ int ios_system(const char* inputCmd) {
                 }
                 for (NSString* path in directoriesInPath) {
                     // If we don't have access to the path component, there's no point in continuing:
-                    if (![fileManager fileExistsAtPath:path isDirectory:&isDir]) continue;
+                    if (![NSFileManager.defaultManager fileExistsAtPath:path isDirectory:&isDir]) continue;
                     if (!isDir) continue; // same in the (unlikely) event the path component is not a directory
                     NSString* locationName;
                     if (!cmdIsAFile) {
                         // search for 4 possibilities: name, name.bc, name.ll and name.wasm
-                        locationName = [path stringByAppendingPathComponent:commandName];
-                        bool fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                        NSString* locationNameBasis = [path stringByAppendingPathComponent:commandName];
+                        bool fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationNameBasis isDirectory:&isDir];
                         fileFound = fileFound && !isDir;
+                        if (fileFound) locationName = locationNameBasis;
+                        if (enableLLVMInterpreter) {
+                            if (!fileFound) {
+                                locationName = [locationNameBasis stringByAppendingString:@".bc"];
+                                fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationName isDirectory:&isDir];
+                                fileFound = fileFound && !isDir;
+                            }
+                            if (!fileFound) {
+                                locationName = [locationNameBasis stringByAppendingString:@".ll"];
+                                fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationName isDirectory:&isDir];
+                                fileFound = fileFound && !isDir;
+                            }
+                        }
                         if (!fileFound) {
-                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".bc"];
-                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            locationName = [locationNameBasis stringByAppendingString:@".wasm3"];
+                            fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationName isDirectory:&isDir];
                             fileFound = fileFound && !isDir;
                         }
                         if (!fileFound) {
-                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".ll"];
-                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
-                            fileFound = fileFound && !isDir;
-                        }
-                        if (!fileFound) {
-                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".wasm3"];
-                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
-                            fileFound = fileFound && !isDir;
-                        }
-                        if (!fileFound) {
-                            locationName = [[path stringByAppendingPathComponent:commandName] stringByAppendingString:@".wasm"];
-                            fileFound = [fileManager fileExistsAtPath:locationName isDirectory:&isDir];
+                            locationName = [locationNameBasis stringByAppendingString:@".wasm"];
+                            fileFound = [NSFileManager.defaultManager fileExistsAtPath:locationName isDirectory:&isDir];
                             fileFound = fileFound && !isDir;
                         }
                         if (!fileFound) continue;
@@ -3285,7 +3318,7 @@ int ios_system(const char* inputCmd) {
                     } else
                         // if (cmdIsAFile) we are now ready to execute this file:
                         locationName = commandName;
-                    if (([locationName hasSuffix:@".bc"]) || ([locationName hasSuffix:@".ll"])) {
+                    if (enableLLVMInterpreter && (([locationName hasSuffix:@".bc"]) || ([locationName hasSuffix:@".ll"]))) {
                         // CLANG bitcode. insert lli in front of argument list:
                         argc += 1;
                         argv = (char **)realloc(argv, sizeof(char*) * argc);
@@ -3656,7 +3689,7 @@ int ios_system(const char* inputCmd) {
                         libraryName = [libraryName stringByReplacingOccurrencesOfString:@"dash" withString:commandName];
                     }
                 }
-            } else if ([commandName isEqualToString: @"ssh"] || [commandName isEqualToString: @"scp"] || [commandName isEqualToString: @"sftp"]) {
+            } else if ([commandName isEqualToString: @"ssh"]) {
                 // Ability to start multiple ssh commands:
                 // start by increasing the number of the interpreter, until we're out.
                 int numInterpreter = 0;
@@ -3703,7 +3736,7 @@ int ios_system(const char* inputCmd) {
                     }
                 }
             } else if ([commandName isEqualToString: @"curl"]) {
-                if (curlIsRunning) {
+                if (curlIsRunning) {
                     display_alert(@"Only one curl command at a time", @"Please wait for the other one to end.");
                     NSLog(@"%@", @"Too many curl commands running simultaneously.\n");
                     function = &too_many_scripts;
@@ -3712,6 +3745,50 @@ int ios_system(const char* inputCmd) {
                     argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
                 } else {
                     curlIsRunning = true;
+                }
+            } else if ([commandName isEqualToString: @"scp"] || [commandName isEqualToString: @"sftp"]) {
+                if (scpIsRunning) {
+                    display_alert(@"Only one scp or sftp command at a time", @"Please wait for the other one to end.");
+                    NSLog(@"%@", @"Too many scp/sftp commands running simultaneously.\n");
+                    function = &too_many_scripts;
+                    functionName = @"notAValidCommand";
+                    currentSession->global_errno = ENOENT;
+                    argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
+                } else {
+                    scpIsRunning = true;
+                }
+            } else if ([commandName isEqualToString: @"rsync"] || [commandName isEqualToString: @"openrsync"]) {
+                // It's a rsync command. rsync between local directories requires two different commands.
+                // start by increasing the number of the interpreter, until we're out.
+                int numInterpreter = 0;
+                if (currentRsyncCommand < numRsyncCommands) {
+                    numInterpreter = currentRsyncCommand;
+                    currentRsyncCommand++;
+                } else {
+                    while  (numInterpreter < numRsyncCommands) {
+                        if (rsyncIsRunning[numInterpreter] == false) break;
+                        numInterpreter++;
+                    }
+                    if (numInterpreter >= numRsyncCommands) {
+                        display_alert(@"Too many rsync commands", @"There are too many rsync commands running at the same time. Try closing some of them.");
+                        NSLog(@"%@", @"Too many rsync running simultaneously.\n");
+                        function = &too_many_scripts;
+                        functionName = @"notAValidCommand";
+                        currentSession->global_errno = ENOENT;
+                        argv[0][0] = 'x'; // prevent reinitialization in cleanup_function
+                    }
+                }
+                if ((numInterpreter >= 0) && (numInterpreter < numRsyncCommands)) {
+                    params->numInterpreter = numInterpreter;
+                    rsyncIsRunning[numInterpreter] = true;
+                    NSLog(@"Starting a rsync command: %d", params->numInterpreter);
+                    if (numInterpreter > 0) {
+                        char suffix[2];
+                        suffix[0] = 'A' + (numInterpreter - 1);
+                        suffix[1] = 0;
+                        commandName = [@"openrsync" stringByAppendingString: [NSString stringWithCString: suffix encoding:NSUTF8StringEncoding]];
+                        libraryName = [libraryName stringByReplacingOccurrencesOfString:@"openrsync" withString:commandName];
+                    }
                 }
             }
             // Don't load the function if we already set it to &too_many_scripts.
@@ -3730,7 +3807,7 @@ int ios_system(const char* inputCmd) {
                     // RTLD_MAIN_ONLY fail in some cases (iOS 18?), but RTLD_DEFAULT works:
                     if ((function == NULL) && (handle == RTLD_MAIN_ONLY))
                         function = dlsym(RTLD_DEFAULT, functionName.UTF8String);
-                    NSLog(@"Loading %s from %s", functionName.UTF8String, libraryName.UTF8String);
+                    // NSLog(@"Loading %s from %s", functionName.UTF8String, libraryName.UTF8String);
                     if (function == NULL) {
                         char* errorLoading = strdup(dlerror());
                         fprintf(thread_stderr, "Failed loading %s from %s, cause = %s\n", functionName.UTF8String, libraryName.UTF8String, errorLoading);
@@ -3805,7 +3882,7 @@ int ios_system(const char* inputCmd) {
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
                                                [commandStructure[3] isEqualToString:@"directory"] ||
                                                params->isPipeOut || params->isPipeErr);
-                NSString* currentPath = [fileManager currentDirectoryPath];
+                NSString* currentPath = [NSFileManager.defaultManager currentDirectoryPath];
                 commandOperatesOnFiles &= (currentPath != nil);
                 if (commandOperatesOnFiles) {
                     // Send a signal to the system that we're going to change the current directory:
@@ -3986,7 +4063,7 @@ char* ios_getPythonLibraryName(void) {
             libraryName = strdup("pythonA");
             libraryName[6] = 'A' + (numInterpreter - 1);
         } else {
-            libraryName = strdup("python3_ios");
+            libraryName = strdup("Python");
         }
         NSLog(@"ios_getPythonLibraryName: returning %s\n", libraryName);
         return libraryName;
@@ -3997,9 +4074,10 @@ char* ios_getPythonLibraryName(void) {
 
 void ios_releasePythonLibraryName(char* name) {
     NSLog(@"ios_releasePythonLibraryName: releasing %s\n", name);
-    char libNumber = name[6];
-    if (libNumber == '3') PythonIsRunning[0] = false;
-    else {
+    if (strlen(name) == 6) {
+        PythonIsRunning[0] = false;
+    } else {
+        char libNumber = name[6];
         libNumber -= 'A' - 1;
         if ((libNumber > 0) && (libNumber < MaxPythonInterpreters))
             PythonIsRunning[libNumber] = false;

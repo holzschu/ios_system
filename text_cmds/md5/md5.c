@@ -417,7 +417,7 @@ MDFilter(Algorithm_t *alg, int tee)
 		errx(EX_IOERR, NULL);
 	}
 #ifdef __APPLE__
-	printf("%s\n", Digest_End(&context, buf));
+	fprintf(thread_stdout, "%s\n", Digest_End(&context, buf));
 #else
 	printf("%s\n", alg->End(&context, buf));
 #endif
