@@ -1,19 +1,34 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 
 import PackageDescription
 
 let package = Package(
     name: "ios_system",
+    platforms: [
+        .iOS(.v15)
+    ],
     products: [
-        .library(name: "ios_system", targets: ["ios_system", "awk", "curl_ios", "files", "shell", "ssh_cmd", "tar", "text", "mandoc", "perl", "perlA", "perlB"])
+        .library(name: "ios_system", targets: ["IOSSystem", "awk", "curl_ios", "files", "shell", "ssh_cmd", "tar", "text", "mandoc", "perl", "perlA", "perlB"])
     ],
     dependencies: [
     ],
     targets: [
-        .binaryTarget(
-            name: "ios_system",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/ios_system.xcframework.zip",
-            checksum: "6973c1c14a66cdc110a5be7d62991af4546124bd0d9773b5391694b3a93a5be0"
+        .target(
+            name: "IOSSystem",
+            dependencies: [
+                "awk", "curl_ios", "files", "shell", "ssh_cmd", "tar", "text",
+                "mandoc", "perl", "perlA", "perlB"
+            ],
+            path: "Sources/IOSSystem",
+            resources: [
+                .copy("Resources/commandDictionary.plist"),
+                .copy("Resources/extraCommandsDictionary.plist")
+            ],
+            publicHeadersPath: "include"
+        ),
+        .testTarget(
+            name: "IOSSystemTests",
+            dependencies: ["IOSSystem"]
         ),
         .binaryTarget(
             name: "awk",
@@ -78,13 +93,3 @@ let package = Package(
         )
     ]
 )
-/* checksums computed by github action, from https://github.com/holzschu/ios_system/releases/tag/v3.0.1 
-ios_system.xcframework.zip	f8e1364037de546809065ecdf804277fa7b95faffc32604e91ecb4de44d6294e
-awk.xcframework.zip	73abc0d502eab50e6bbdd0e49b0cf592f3a85b3843c43de6d7f42c27cde9b953
-curl_ios.xcframework.zip	7338fb9ae8094356c8cd523cfda9e4c60b52d710488432eb64cf57731b388dd2
-files.xcframework.zip	d0643e2244009fc5279f1f969c6da47ca197b4e7c9dac27dea09ba0a5f1567d7
-shell.xcframework.zip	876b709c1b76cbc1748d434fcbc2cea1aea2e281572e5fadc40244dd8a549757
-ssh_cmd.xcframework.zip	342065209123f54c92eb78a0fbda579e61948443e5f60e41d8fe356a3fe8f2ff
-tar.xcframework.zip	6ffe4ed265060f971df229dd1d2bff90e7bc78c80c50dcc3a0a633face440bc4
-text.xcframework.zip	697bee697b509d0dc8acc156a7430f453c29878d8af273adfb8902643c70ea0f
-*/
