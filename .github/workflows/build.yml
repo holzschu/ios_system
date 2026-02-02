@@ -19,6 +19,9 @@ jobs:
     - name: xcode-select
       run: sudo xcode-select -s /Applications/Xcode.app
 
+    - name: xcode-version
+      run: xcodebuild -version
+
     - name: build-ios_system
       run: swift run --package-path xcfs build
 

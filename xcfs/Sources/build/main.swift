@@ -4,7 +4,8 @@
 import FMake
 import class Foundation.ProcessInfo
 
-OutputLevel.default = .error
+// OutputLevel.default = .error
+OutputLevel.default = .debug
 
 // TODO: We can add more platforms here
 let platforms: [Platform] = [.iPhoneOS, .iPhoneSimulator, .Catalyst]
