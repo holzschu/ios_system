@@ -19,7 +19,7 @@ jobs:
       run: xcodebuild -version
 
     - name: build-ios_system
-      run: swift run --package-path xcfs build
+      run: swift run --verbose --package-path xcfs build
 
     - name: Create Release
       id: create_release
