@@ -14,7 +14,9 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        xcode-version: latest-stable
+
+    - name: xcode-version
+      run: xcodebuild -version
 
     - name: xcode-select
       run: sudo xcode-select -s /Applications/Xcode.app
