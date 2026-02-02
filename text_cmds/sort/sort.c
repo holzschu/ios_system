@@ -458,7 +458,12 @@ sig_handler(int sig __unused, siginfo_t *siginfo __unused,
 {
 
 	clear_tmp_files();
+#if TARGET_OS_IPHONE
+    pthread_t thread_pid = ios_getThreadId(ios_currentPid());
+    pthread_kill(thread_pid, sig);
+#else
 	exit(-1);
+#endif
 }
 
 /*

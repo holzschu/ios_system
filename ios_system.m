@@ -31,11 +31,11 @@
 // If false, you get a smaller set, but compliance with AppStore rules.
 // *Must* be false in the main branch releases.
 // Commands that can be enabled only if sideLoading: chgrp, chown, df, id, w.
-bool sideLoading = false; 
-// Should the main thread be joined (which means it takes priority over other tasks)? 
+bool sideLoading = false;
+// Should the main thread be joined (which means it takes priority over other tasks)?
 // Default value is true, which makes sense for shell-like applications.
-// Should be set to false if significant user interaction is carried by the app and 
-// the app takes responsibility for waiting for the command to terminate. 
+// Should be set to false if significant user interaction is carried by the app and
+// the app takes responsibility for waiting for the command to terminate.
 bool joinMainThread = true;
 bool enableLLVMInterpreter = false;
 static NSString* ios_bookmarkDictionaryName = @"bookmarkNames";
@@ -525,7 +525,7 @@ static void cleanup_function(void* parameters) {
         int fd = fileno(p->stdout);
         NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
         int res = fclose(p->stdout);
-        // Add close(fd) as well? 
+        // Add close(fd) as well?
         NSLog(@"Result of closing stdout (mustCloseStdout): %d flag: %d\n", res, fcntl(fd, F_GETFD, 0));
     }
     if (!isSh) {
@@ -1020,7 +1020,7 @@ int ios_setMiniRoot(NSString* mRoot) {
     return 1; // mission accomplished
 }
 
-// Called when 
+// Called when
 int ios_setMiniRootURL(NSURL* mRoot) {
     // NSFileManager *fileManager = [[NSFileManager alloc] init];
     if (currentSession == NULL) {
@@ -2040,6 +2040,9 @@ NSArray* environmentAsArray(void) {
     NSString* pwdVariable = @"PWD=";
     pwdVariable = [pwdVariable stringByAppendingString: [NSString stringWithCString: currentSession->currentDir]];
     [dictionary addObject: pwdVariable];
+    NSString* randomVariable = @"RANDOM=";
+    sprintf(randomValue, "%d", random()&0x7FFF);
+    randomVariable = [randomVariable stringByAppendingString: [NSString stringWithCString: randomValue]];
     return [dictionary copy];
 }
 
@@ -2168,6 +2171,10 @@ int ios_kill(void)
             thread_stdout = main_stdout;
             thread_stderr = main_stderr;
             // kill(getpid(), SIGINT); // infinite loop?
+            // This kills the process after we ran the cleanup function (if it's still running):
+            if (pthread_kill(currentSession->current_command_root_thread, 0) == 0) {
+                pthread_cancel(currentSession->current_command_root_thread);
+            }
         } else {
             // Send pthread_cancel with the given signal to the current main thread, if there is one.
             if (currentSession->current_command_root_thread != NULL) {
@@ -2500,6 +2507,13 @@ NSString* commandsAsString(void) {
 NSArray* commandsAsArray(void) {
     if (commandList == nil) initializeCommandList();
     return commandList.allKeys;
+}
+
+NSArray* aliasesAsArray(void) {
+    if (aliasDictionary == nil) {
+        aliasDictionary = [NSMutableDictionary new];
+    }
+    return aliasDictionary.allKeys;
 }
 
 // for output file names, arguments: returns a pointer to
@@ -3194,7 +3208,7 @@ int ios_system(const char* inputCmd) {
                     for (int j = argc; j - gt.gl_matchc + 1 > i; j--) {
                         argv[j] = argv[j - gt.gl_matchc + 1];
                         dontExpand[j] = dontExpand[j - gt.gl_matchc + 1];
-                    }   
+                    }
                     for (int j = 0; j < gt.gl_matchc; j++) {
                         argv[i + j] = strdup(gt.gl_pathv[j]);
                     }
