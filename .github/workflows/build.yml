@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Building release assets
-    runs-on: macOS-latest
+    runs-on: macOS-26
 
     steps:
     - uses: actions/checkout@v2
