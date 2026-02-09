@@ -127,7 +127,7 @@ jobs:
         asset_content_type: application/zip
         
     - name: Upload ssh_cmdA.xcframework
-      id: upload-ssh
+      id: upload-sshA
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
