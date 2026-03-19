@@ -62,3 +62,9 @@ dkms.conf
 xcuserdata/
 .build
 .DS_Store
+
+# CMake build output
+/build/
+
+# Editor settings
+.vscode/

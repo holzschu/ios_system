@@ -1,0 +1,45 @@
+name: iOS Simulator Build
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  build-simulator:
+    name: Build for iOS Simulator
+    runs-on: macos-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build ios_system for iOS Simulator (Debug)
+        run: |
+          xcodebuild \
+            -project ios_system.xcodeproj \
+            -scheme ios_system \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -quiet \
+            build \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Validate Swift Package resolution
+        run: swift package resolve

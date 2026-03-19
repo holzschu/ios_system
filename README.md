@@ -4,6 +4,7 @@
 <p align="center">
 <img src="https://img.shields.io/badge/Platform-iOS%2014.0+-lightgrey.svg" alt="Platform: iOS">
 <a href="https://github.com/holzschu/ios_system/actions"><img src="https://github.com/holzschu/ios_system/workflows/CI/badge.svg" alt="Build Status"/></a>
+<a href="https://github.com/PhungKhacVu/ios_system/actions/workflows/ios-ci.yml"><img src="https://github.com/PhungKhacVu/ios_system/actions/workflows/ios-ci.yml/badge.svg" alt="iOS Simulator Build"/></a>
 <a href="http://twitter.com/nholzschuch"><img src="https://img.shields.io/badge/Twitter-@nholzschuch-blue.svg?style=flat" alt="Twitter"/></a>
 </p>
 
@@ -41,6 +42,83 @@ setenv HGRCPATH = $HOME/Documents/.hgrc/
 setenv SSL_CERT_FILE = $HOME/Documents/cacert.pem
 ```
 Your Mileage May Vary. Note that iOS already defines `$HOME` and `$PATH`. 
+
+## Prerequisites
+
+- **macOS** 12.0 or later
+- **Xcode** 14.0 or later (available from the [Mac App Store](https://apps.apple.com/app/xcode/id497799835))
+- **iOS SDK** 15.0+ (included with Xcode)
+- **Swift** 5.5+ (included with Xcode)
+
+To verify your setup:
+```bash
+xcodebuild -version   # Should print Xcode 14.0 or later
+swift --version       # Should print Swift 5.5 or later
+```
+
+## Development Setup
+
+### Clone the repository
+
+```bash
+git clone --recurse-submodules https://github.com/PhungKhacVu/ios_system.git
+cd ios_system
+```
+
+If you already cloned without `--recurse-submodules`, initialise submodules manually:
+```bash
+git submodule update --init --recursive
+```
+
+### Build for iOS Simulator
+
+Build the core `ios_system` framework using Xcode (no code signing required for simulator builds):
+
+```bash
+xcodebuild \
+  -project ios_system.xcodeproj \
+  -scheme ios_system \
+  -sdk iphonesimulator \
+  -configuration Debug \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGN_IDENTITY="" \
+  build
+```
+
+To build **all** command frameworks at once:
+```bash
+xcodebuild \
+  -project ios_system.xcodeproj \
+  -alltargets \
+  -sdk iphonesimulator \
+  -configuration Debug \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGN_IDENTITY="" \
+  -quiet \
+  build
+```
+
+Built frameworks are placed under `~/Library/Developer/Xcode/DerivedData/` by default.
+
+### Build for iOS Device (Release)
+
+```bash
+xcodebuild \
+  -project ios_system.xcodeproj \
+  -alltargets \
+  -sdk iphoneos \
+  -configuration Release \
+  -quiet \
+  build
+```
+
+### Build XCFrameworks (for distribution)
+
+```bash
+swift run --package-path xcfs build
+```
+
+This downloads `libssh2` and `openssl` and produces XCFramework bundles under `.build/`.
 
 ## Installation:
 
@@ -134,9 +212,39 @@ To add a command:
 - `git`: [WorkingCopy](https://workingcopyapp.com) does it very well, and you can transfer directories to your app, then transfer back to WorkingCopy. Also difficult to compile. 
 
 
+## Troubleshooting
+
+### Build errors
+
+**`'system' is unavailable: not available on iOS`**  
+Include `ios_error.h` in your source file and add `#define system ios_system` (see [Integration](#integration-with-your-app)).
+
+**Code signing errors during build**  
+For simulator builds, pass `CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""` to `xcodebuild`. For device builds, configure a valid Apple Developer Team in the Xcode project's Signing & Capabilities tab.
+
+**`Module 'ios_system' not found` in Swift**  
+Make sure you are importing the package via Swift Package Manager and the `ios_system` product is linked to your app target. Xcode → Project → Package Dependencies → verify `ios_system` is listed.
+
+**Command not found at runtime**  
+Confirm that `commandDictionary.plist` and `extraCommandsDictionary.plist` are listed under **Build Phases → Copy Bundle Resources** in your app target, then call `initializeEnvironment()` on startup.
+
+**`fork()` / `exec()` errors at runtime**  
+iOS does not support `fork` or `exec`. These calls must be replaced with `ios_system` equivalents. See `ios_error.h` for the full list of macro replacements.
+
+**App writes fail with permission errors**  
+iOS restricts writes to `~/Documents/`, `~/Library/` and `~/tmp/`. Redirect `$HOME` and other environment variables with `initializeEnvironment()`, or call `ios_setMiniRoot()` to sandbox the file system view.
+
+### CI / GitHub Actions
+
+The `iOS Simulator Build` workflow (`.github/workflows/ios-ci.yml`) runs on every push to `master`/`main` and on every pull request. If it fails:
+
+1. Check the **Actions** tab in GitHub for the full build log.
+2. Ensure the `ios_system` scheme is shared (Xcode → Manage Schemes → ☑ Shared).
+3. Make sure no new source files require manual framework linkage that is not already present in `ios_system.xcodeproj`.
+
 ### Licensing:
 
-`ios_system` itself is released under the  <a href='https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")'>Revised BSD License</a> (3-clause BSD license). Foe the other tools, I've used the BSD version as often as possible: 
+`ios_system` itself is released under the  <a href='https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_("BSD_License_2.0",_"Revised_BSD_License",_"New_BSD_License",_or_"Modified_BSD_License")'>Revised BSD License</a> (3-clause BSD license). For the other tools, I've used the BSD version as often as possible: 
 - awk: <a href="https://github.com/onetrueawk/awk/blob/master/LICENSE">OpenSource license</a>.
 - curl, scp, sftp: <a href="https://curl.haxx.se/docs/copyright.html">MIT/X derivate license</a>.
 - lua: <a href="https://www.lua.org/license.html">MIT License</a>.
