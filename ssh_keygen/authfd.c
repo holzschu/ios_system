@@ -118,6 +118,7 @@ ssh_get_authentication_socket_path(const char *authsocket, int *fdp)
  * Opens the default authentication socket and stores the file descriptor in
  * fdp. Returns 0 on success and an error on failure.
  */
+#undef getenv
 int
 ssh_get_authentication_socket(int *fdp)
 {

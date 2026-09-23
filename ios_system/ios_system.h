@@ -95,5 +95,7 @@ extern int numTeXInterpreters;
 extern int cd_main(int argc, char** argv);
 extern const char* ios_getBookmarkedVersion(const char* p);
 extern void ios_stopInteractive(void);
+extern void ios_startInteractive(void);
+extern int ios_storeInteractive(void);
 extern void finishedPreparingWebAssemblyCommand(void);
 extern int webAssemblyCommandOrder(void);

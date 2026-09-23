@@ -736,10 +736,14 @@ ltgetstr(capname, pp)
     if (strcmp(capname, "ke") == 0) // end keypad mode
         return NULL;
     if (strcmp(capname, "ti") == 0) // Startup terminal initialization
-    	return "\033[?47h";
+        // esc + [?1047h = activate alt screen
+        // esc + [2J = clear screen
+        // est + [1;1H = move to top of screenstdin_file_input
+        
+    	return "\033[?1047h\033[2J\033[1;1H";
         // return NULL;
     if (strcmp(capname, "te") == 0) // End terminal initialization
-    	return "\033[?47l";
+    	return "\033[?1047l";
         // return NULL;
     if (strcmp(capname, "ce") == 0) // Clear to end of line
         return "\033[K";

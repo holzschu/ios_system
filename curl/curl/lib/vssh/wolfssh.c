@@ -42,6 +42,9 @@
 #include "select.h"
 #include "multiif.h"
 #include "warnless.h"
+// iOS specifics:
+extern __thread FILE* thread_stderr;
+#define stderr thread_stderr;
 
 /* The last 3 #include files should be in this order */
 #include "curl_printf.h"

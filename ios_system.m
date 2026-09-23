@@ -2152,6 +2152,7 @@ int ios_kill(void)
     if (currentSession == NULL) return ESRCH;
     if (currentSession->current_command_root_thread > 0) {
         struct sigaction query_action;
+        const char* commandName = ios_progname();
         if ((sigaction (SIGINT, NULL, &query_action) >= 0) &&
             (query_action.sa_handler != SIG_DFL) &&
             (query_action.sa_handler != SIG_IGN)) {
@@ -2171,14 +2172,15 @@ int ios_kill(void)
             thread_stdout = main_stdout;
             thread_stderr = main_stderr;
             // kill(getpid(), SIGINT); // infinite loop?
-            // This kills the process after we ran the cleanup function (if it's still running):
-            if (pthread_kill(currentSession->current_command_root_thread, 0) == 0) {
-                pthread_cancel(currentSession->current_command_root_thread);
+            if (strcmp(commandName, "ffmpeg") != 0) { // leave some time for ffmpeg to clean up
+                // This kills the process after we ran the cleanup function (if it's still running):
+                if (pthread_kill(currentSession->current_command_root_thread, 0) == 0) {
+                    pthread_cancel(currentSession->current_command_root_thread);
+                }
             }
         } else {
             // Send pthread_cancel with the given signal to the current main thread, if there is one.
             if (currentSession->current_command_root_thread != NULL) {
-                const char* commandName = ios_progname();
                 // pthread_kill for lua, bc, dc:
                 if ((strcmp(commandName, "lua") == 0) ||
                     (strcmp(commandName, "bc") == 0) ||
@@ -3150,9 +3152,9 @@ int ios_system(const char* inputCmd) {
     // the number of arguments is *at most* the number of spaces plus one
     char* str = command;
     while(*str) if (*str++ == ' ') ++numSpaces;
-    char** argv = (char **)malloc(sizeof(char*) * (numSpaces + 2));
-    bool* dontExpand = malloc(sizeof(bool) * (numSpaces + 2));
-    // n spaces = n+1 arguments, plus null at the end
+    char** argv = (char **)malloc(sizeof(char*) * (numSpaces + 3));
+    bool* dontExpand = malloc(sizeof(bool) * (numSpaces + 3));
+    // n spaces = n+1 arguments, plus null at the end, plus an extra slot for "alias a=c d"
     str = command;
     while (*str) {
         argv[argc] = str;

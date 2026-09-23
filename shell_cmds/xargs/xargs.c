@@ -207,7 +207,8 @@ xargs_main(int argc, char *argv[])
 		case 'n':
 			nflag = 1;
 			if ((nargs = strtol(optarg, NULL, 10)) <= 0)
-				errx(1, "illegal argument count");
+                fprintf(stderr, "illegal argument count\n");
+				// errx(1, "illegal argument count");
 			if (COMPAT_MODE("bin/xargs", "Unix2003")) {
 				Lflag = 0; /* Override */
 			}
@@ -217,7 +218,8 @@ xargs_main(int argc, char *argv[])
 			break;
 		case 'P':
 			if ((maxprocs = atoi(optarg)) <= 0)
-				errx(1, "max. processes must be >0");
+				// errx(1, "max. processes must be >0");
+                fprintf(stderr, "max. processes must be >0\n");
 			break;
 		case 'p':
 			pflag = 1;
@@ -225,7 +227,8 @@ xargs_main(int argc, char *argv[])
 		case 'R':
 			Rflag = strtol(optarg, &endptr, 10);
 			if (*endptr != '\0')
-				errx(1, "replacements must be a number");
+				// errx(1, "replacements must be a number");
+                fprintf(stderr, "replacements must be a number\n");
 			break;
 		case 's':
 			nline = atoi(optarg);
@@ -265,7 +268,7 @@ xargs_main(int argc, char *argv[])
 	 */
 	linelen = 1 + argc + nargs + 1;
 	if ((av = bxp = malloc(linelen * sizeof(char **))) == NULL)
-		errx(1, "malloc failed");
+        errx(1, "malloc failed");
 
 	/*
 	 * Use the user's name for the utility as argv[0], just like the
@@ -368,7 +371,8 @@ parse_input(int argc, char *argv[])
 
 		/* Quotes do not escape newlines. */
 arg1:		if (insingle || indouble)
-			errx(1, "unterminated quote");
+                errx(1, "unterminated quote");
+			
 arg2:
 		foundeof = *eofstr != '\0' &&
 		    strcmp(argp, eofstr) == 0;
@@ -468,7 +472,8 @@ arg2:
 			goto addch;
 		/* Backslash escapes anything, is escaped by quotes. */
 		if (!insingle && !indouble && (ch = getchar()) == EOF)
-			errx(1, "backslash at EOF");
+            // errx(1, "backslash at EOF");
+			fprintf(stderr, "backslash at EOF\n");
 		/* FALLTHROUGH */
 	default:
 addch:		if (p < ebp) {
