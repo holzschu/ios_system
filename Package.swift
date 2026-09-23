@@ -12,43 +12,43 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "ios_system",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/ios_system.xcframework.zip",
-            checksum: "6973c1c14a66cdc110a5be7d62991af4546124bd0d9773b5391694b3a93a5be0"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/ios_system.xcframework.zip",
+            checksum: "d2deb9f77dff839e069f21efdb11f16864a8173e33956cd1b4d174a76f1b0e99"
         ),
         .binaryTarget(
             name: "awk",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/awk.xcframework.zip",
-            checksum: "6898b01913261eee194edcb464212d4af6bc33355b1e286bbbd17f3f878c1706"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/awk.xcframework.zip",
+            checksum: "560f786c77d487a482de7fcd1caa4736a95979783483685d53a8503a7514e53f"
         ),
         .binaryTarget(
             name: "curl_ios",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/curl_ios.xcframework.zip",
-            checksum: "2a0020ce4904ea71e83c8daa86e99515b322981abc8ab2092b700661bcc880cd"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/curl_ios.xcframework.zip",
+            checksum: "62b153f4536987f9fd50852b29400dd083f07fb7e3155a44e8d181a25a44dcf4"
         ),
         .binaryTarget(
             name: "files",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/files.xcframework.zip",
-            checksum: "02d6522f5e1adc3b472f7aaa53910f049e6c5829e07c7e3005cf2a0d5f9f423a"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/files.xcframework.zip",
+            checksum: "4e36aeb7242592a848a7ee3b74109dc45f63e16fa9fa4d07bc80026ec30897e3"
         ),
         .binaryTarget(
             name: "shell",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/shell.xcframework.zip",
-            checksum: "78d71828b89c83741a8f7e857f0d065da72952558fd7deb806f5748c3801fd95"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/shell.xcframework.zip",
+            checksum: "bdace8281617602f1f0da7c90d933388085e31de9f31964467671f212966f76a"
         ),
         .binaryTarget(
             name: "ssh_cmd",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/ssh_cmd.xcframework.zip",
-            checksum: "190597a3ec09d6bc250e31caa8b08ecc2b6f27ecbd6b24fda84065ccd2be309e"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/ssh_cmd.xcframework.zip",
+            checksum: "fbc3ed1e2e0b62e9631f660b42a8739aee90b2643812987bb2e66c10032825fb"
         ),
         .binaryTarget(
             name: "tar",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/tar.xcframework.zip",
-            checksum: "9bf482b29ea95bc643bfaa06b249394afed188e40482db055625f4928ffedc48"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/tar.xcframework.zip",
+            checksum: "a44176ba8a016630fcf75dc9e2a961a17b5433196fff19d0a270a8b23d550f93"
         ),
         .binaryTarget(
             name: "text",
-            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.4/text.xcframework.zip",
-            checksum: "2450f309d0793490136a24f9af02c42fb712b327571cb44312fe330e87a156f2"
+            url: "https://github.com/holzschu/ios_system/releases/download/v3.0.6/text.xcframework.zip",
+            checksum: "93ed6410a972b3dd9dfa2ff93e4260f2b5401168c52c78ae1bb08f16d6b74533"
         ),
         // Other frameworks (no auto-build, so still at .../2.7/...)
         .binaryTarget(
@@ -78,13 +78,18 @@ let package = Package(
         )
     ]
 )
-/* checksums computed by github action, from https://github.com/holzschu/ios_system/releases/tag/v3.0.1 
-ios_system.xcframework.zip	f8e1364037de546809065ecdf804277fa7b95faffc32604e91ecb4de44d6294e
-awk.xcframework.zip	73abc0d502eab50e6bbdd0e49b0cf592f3a85b3843c43de6d7f42c27cde9b953
-curl_ios.xcframework.zip	7338fb9ae8094356c8cd523cfda9e4c60b52d710488432eb64cf57731b388dd2
-files.xcframework.zip	d0643e2244009fc5279f1f969c6da47ca197b4e7c9dac27dea09ba0a5f1567d7
-shell.xcframework.zip	876b709c1b76cbc1748d434fcbc2cea1aea2e281572e5fadc40244dd8a549757
-ssh_cmd.xcframework.zip	342065209123f54c92eb78a0fbda579e61948443e5f60e41d8fe356a3fe8f2ff
-tar.xcframework.zip	6ffe4ed265060f971df229dd1d2bff90e7bc78c80c50dcc3a0a633face440bc4
-text.xcframework.zip	697bee697b509d0dc8acc156a7430f453c29878d8af273adfb8902643c70ea0f
+
+
+/* checksums computed by github action, from https://github.com/holzschu/ios_system/releases/tag/v3.0.6 
+ios_system.xcframework.zip	d2deb9f77dff839e069f21efdb11f16864a8173e33956cd1b4d174a76f1b0e99
+awk.xcframework.zip	560f786c77d487a482de7fcd1caa4736a95979783483685d53a8503a7514e53f
+curl_ios.xcframework.zip	62b153f4536987f9fd50852b29400dd083f07fb7e3155a44e8d181a25a44dcf4
+files.xcframework.zip	4e36aeb7242592a848a7ee3b74109dc45f63e16fa9fa4d07bc80026ec30897e3
+shell.xcframework.zip	bdace8281617602f1f0da7c90d933388085e31de9f31964467671f212966f76a
+ssh_cmd.xcframework.zip	fbc3ed1e2e0b62e9631f660b42a8739aee90b2643812987bb2e66c10032825fb
+ssh_cmdA.xcframework.zip	2211ae73b7dcc0a1de8f260d9d776da89e12ca0bf565e88d9ef1c3373ac2f6b6
+ssh_agent.xcframework.zip	2a689e727d925444cf2a686d8bdee9b9f0e8875adc2f85851c7795b85961b92f
+sshd.xcframework.zip	1bd145b92ec01ab68c32dc7082337744b2068c4e3154123466dd14c99efb3eb3
+tar.xcframework.zip	a44176ba8a016630fcf75dc9e2a961a17b5433196fff19d0a270a8b23d550f93
+text.xcframework.zip	93ed6410a972b3dd9dfa2ff93e4260f2b5401168c52c78ae1bb08f16d6b74533
 */
