@@ -135,6 +135,8 @@ static int
 print_matches(char *path, char *filename)
 {
 	char candidate[PATH_MAX];
+	static const char *suffixes[] = { "", ".wasm3", ".wasm", NULL };
+	const char **s;
 	const char *d;
 	int found;
 
@@ -144,13 +146,17 @@ print_matches(char *path, char *filename)
 	while ((d = strsep(&path, ":")) != NULL) {
 		if (*d == '\0')
 			d = ".";
-		if (snprintf(candidate, sizeof(candidate), "%s/%s", d,
-		    filename) >= (int)sizeof(candidate))
-			continue;
-		if (is_there(candidate)) {
-			found = 1;
-			if (!allpaths)
-				break;
+		// a-Shell resolves "name" as name, name.wasm3, name.wasm in each
+		// PATH directory (ios_system.m), so which must try the same.
+		for (s = suffixes; *s != NULL; s++) {
+			if (snprintf(candidate, sizeof(candidate), "%s/%s%s", d,
+			    filename, *s) >= (int)sizeof(candidate))
+				continue;
+			if (is_there(candidate)) {
+				found = 1;
+				if (!allpaths)
+					return (0);
+			}
 		}
 	}
 	return (found ? 0 : -1);
