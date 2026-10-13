@@ -423,26 +423,6 @@ static void cleanup_function(void* parameters) {
         }
         currentSession->activePager = FALSE;
     }
-    // If the command was started as a pipe, we wait for the first command to finish sending data
-    // There is an exception for ssh, which can be started by scp or sftp. They will wait for it.
-    // Another exception for "dash -c": one command is reading its output
-    if ((!joinMainThread) && p->isPipeOut
-        && (strcmp(commandName, "ssh") != 0) // not ssh
-        && (! ((strcmp(commandName, "dash") == 0) && (p->argc >= 2) && (strcmp(p->argv_ref[1], "-c") == 0)))) { // not "dash -c something"
-        if (currentSession->current_command_root_thread != 0) {
-            if (currentSession->current_command_root_thread != current_thread) {
-                NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
-                while ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != current_thread)) {
-                    fflush(thread_stdout);
-                    fflush(thread_stderr);
-                }
-                NSLog(@"Thread %x is done waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
-            } else {
-                NSLog(@"Terminating root_thread of currentSession %x \n", current_thread);
-                currentSession->current_command_root_thread = 0;
-            }
-        }
-    }
     fcntl(fileno(thread_stdin), F_SETNOSIGPIPE);
     fcntl(fileno(thread_stdout), F_SETNOSIGPIPE);
     fcntl(fileno(thread_stderr), F_SETNOSIGPIPE);
@@ -451,51 +431,11 @@ static void cleanup_function(void* parameters) {
     fflush(thread_stderr);
     // release parameters:
     NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d isPipeOut %d", commandName, current_thread, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
-    // Specific to run multiple python3 interpreters:
-    NSString* commandNameString = [NSString stringWithCString: commandName encoding:NSUTF8StringEncoding];
     // Can we close stdin too?
     bool mustCloseStdin = fileno(p->stdin) != fileno(stdin);
-    if (strncmp(commandName, "python", 6) == 0) {
-        // It could be one of the multiple python3 interpreters
-        PythonIsRunning[p->numInterpreter] = false;
-        mustCloseStdin = false;
-    }
-    // Same with multiple perl or TeX interpreters:
-    else if (strncmp(commandName, "perl", 4) == 0) {
-        NSLog(@"Ending a Perl interpreter: %d", p->numInterpreter);
-        PerlIsRunning[p->numInterpreter] = false;
-    } else if ([TeXcommands containsObject: commandNameString]) {
-        NSLog(@"Ending a TeX command: %d", p->numInterpreter);
-        TeXIsRunning[p->numInterpreter] = false;
-    } else if (strcmp(commandName, "dash") == 0) {
-        NSLog(@"Ending a dash command: %d", p->numInterpreter);
-        dashIsRunning[p->numInterpreter] = false;
-    } else if ((strcmp(commandName, "ssh") == 0)) {
-        NSLog(@"Ending a ssh command: %d", p->numInterpreter);
-        sshIsRunning[p->numInterpreter] = false;
-    } else if (strcmp(commandName, "curl") == 0) {
-        NSLog(@"Ending a curl command.");
-        curlIsRunning = false;
-    } else if ((strcmp(commandName, "scp") == 0) || (strcmp(commandName, "sftp") == 0)) {
-        NSLog(@"Ending a scp/sftp command.");
-        scpIsRunning = false;
-    } else if ((strcmp(commandName, "rsync") == 0) || (strcmp(commandName, "openrsync") == 0)) {
-        NSLog(@"Ending a rsync command.");
-        rsyncIsRunning[p->numInterpreter] = false;
-    }
-    if (currentSession->numCommand > 0)
-        currentSession->numCommand -= 1;
-    else
-        currentSession->commandName[0][0] = 0;
-    // if (strcmp(currentSession->commandName, commandName) == 0) {
-    //     currentSession->commandName[0] = 0;
-    // }
+    if (strncmp(commandName, "python", 6) == 0) mustCloseStdin = false;
     bool isSh = strcmp(p->argv[0], "sh") == 0;
     bool isWasm = strcmp(p->argv[0], "wasm") == 0;
-    for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
-    free(p->argv_ref);
-    free(p->argv);
-    bool isLastThread = (currentSession->lastThreadId == current_thread);
     bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout))  && (fileno(p->stdout) != fileno(p->stdin));
     if (!isSh) {
         mustCloseStderr &= p->isPipeErr;
@@ -540,7 +480,8 @@ static void cleanup_function(void* parameters) {
                 mustCloseStdin &= false;
         }
         // commands started by Python: Python will close stdin (Lua and Perl? not broken, AFAIK)
-        if ((currentSession->numCommand > 0) && (strncmp(currentSession->commandName[currentSession->numCommand - 1], "python", 6) == 0)) {
+        // The current command is still counted until after the root-thread wait.
+        if ((currentSession->numCommand > 1) && (strncmp(currentSession->commandName[currentSession->numCommand - 2], "python", 6) == 0)) {
             // NSLog(@"Command started by Python, not closing stdin: %d \n", fileno(p->stdin));
             mustCloseStdin &= false;
         }
@@ -549,6 +490,70 @@ static void cleanup_function(void* parameters) {
         NSLog(@"Closing stdin (mustCloseStdin): %d \n", fileno(p->stdin));
         int res = fclose(p->stdin);
     }
+    // Upstream commands may still need ios_fork/chdir while we wait.
+    cleanup_counter--;
+    // Close our streams before waiting: an early reader must unblock upstream writers.
+    // If the command was started as a pipe, we wait for the first command to finish sending data
+    // There is an exception for ssh, which can be started by scp or sftp. They will wait for it.
+    // Another exception for "dash -c": one command is reading its output
+    if ((!joinMainThread) && p->isPipeOut
+        && (strcmp(commandName, "ssh") != 0) // not ssh
+        && (! ((strcmp(commandName, "dash") == 0) && (p->argc >= 2) && (strcmp(p->argv_ref[1], "-c") == 0)))) { // not "dash -c something"
+        if (currentSession->current_command_root_thread != 0) {
+            if (currentSession->current_command_root_thread != current_thread) {
+                NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
+                while ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != current_thread)) {
+                    fflush(currentSession->stdout);
+                    fflush(currentSession->stderr);
+                }
+                NSLog(@"Thread %x is done waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
+            } else {
+                NSLog(@"Terminating root_thread of currentSession %x \n", current_thread);
+                currentSession->current_command_root_thread = 0;
+            }
+        }
+    }
+    cleanup_counter++;
+    // Specific to run multiple python3 interpreters:
+    NSString* commandNameString = [NSString stringWithCString: commandName encoding:NSUTF8StringEncoding];
+    if (strncmp(commandName, "python", 6) == 0) {
+        // It could be one of the multiple python3 interpreters
+        PythonIsRunning[p->numInterpreter] = false;
+    }
+    // Same with multiple perl or TeX interpreters:
+    else if (strncmp(commandName, "perl", 4) == 0) {
+        NSLog(@"Ending a Perl interpreter: %d", p->numInterpreter);
+        PerlIsRunning[p->numInterpreter] = false;
+    } else if ([TeXcommands containsObject: commandNameString]) {
+        NSLog(@"Ending a TeX command: %d", p->numInterpreter);
+        TeXIsRunning[p->numInterpreter] = false;
+    } else if (strcmp(commandName, "dash") == 0) {
+        NSLog(@"Ending a dash command: %d", p->numInterpreter);
+        dashIsRunning[p->numInterpreter] = false;
+    } else if ((strcmp(commandName, "ssh") == 0)) {
+        NSLog(@"Ending a ssh command: %d", p->numInterpreter);
+        sshIsRunning[p->numInterpreter] = false;
+    } else if (strcmp(commandName, "curl") == 0) {
+        NSLog(@"Ending a curl command.");
+        curlIsRunning = false;
+    } else if ((strcmp(commandName, "scp") == 0) || (strcmp(commandName, "sftp") == 0)) {
+        NSLog(@"Ending a scp/sftp command.");
+        scpIsRunning = false;
+    } else if ((strcmp(commandName, "rsync") == 0) || (strcmp(commandName, "openrsync") == 0)) {
+        NSLog(@"Ending a rsync command.");
+        rsyncIsRunning[p->numInterpreter] = false;
+    }
+    if (currentSession->numCommand > 0)
+        currentSession->numCommand -= 1;
+    else
+        currentSession->commandName[0][0] = 0;
+    // if (strcmp(currentSession->commandName, commandName) == 0) {
+    //     currentSession->commandName[0] = 0;
+    // }
+    bool isLastThread = (currentSession->lastThreadId == current_thread);
+    for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
+    free(p->argv_ref);
+    free(p->argv);
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
         dlclose(p->dlHandle);
