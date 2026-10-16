@@ -304,6 +304,16 @@ void ios_setWindowSize(int width, int height, const void* sessionId) {
     }
 }
 
+int ios_getWindowSize(int *columns, int *rows, const void* sessionId) {
+    if ((columns == NULL) || (rows == NULL) || (sessionId == NULL)) return EINVAL;
+    id sessionKey = @((NSUInteger)sessionId);
+    sessionParameters* session = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
+    if (session == NULL) return ENOENT;
+    *columns = atoi(session->columns);
+    *rows = atoi(session->lines);
+    return 0;
+}
+
 extern char* libc_getenv(const char* variableName);
 static char randomValue[6];
 char * ios_getenv(const char *name) {

@@ -61,6 +61,9 @@ extern void ios_waitpid(pid_t pid);
 extern pid_t ios_full_waitpid(pid_t pid, int *stat_loc, int options);
 extern NSString *ios_getLogicalPWD(const void* sessionId);
 void ios_setWindowSize(int width, int height, const void* sessionId);
+// Returns 0, EINVAL for a null argument, or ENOENT for an unknown session.
+// Leaves outputs unchanged on error. The caller must keep the session alive.
+int ios_getWindowSize(int *columns, int *rows, const void* sessionId);
 
 extern NSString* commandsAsString(void);
 extern NSArray* commandsAsArray(void);      // set of all commands, in an NSArray
