@@ -3520,6 +3520,7 @@ int ios_system(const char* inputCmd) {
         //
         NSArray* commandStructure = [commandList objectForKey: commandName];
         void* handle = NULL;
+        bool isDash = [commandName isEqualToString:@"dash"];
         if (commandStructure != nil) {
             NSString* libraryName = commandStructure[0];
             NSString* functionName = commandStructure[1];
@@ -3902,7 +3903,7 @@ int ios_system(const char* inputCmd) {
                 params->storeRootThread = true;
                 // I'm still not sure why this is needed specially for dash and no other commands:
                 // Needed for pipes
-                if ([commandName isEqualToString: @"dash"]) {
+                if (isDash) {
                     params->storeRootThread = false;
                 }
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
@@ -3914,25 +3915,24 @@ int ios_system(const char* inputCmd) {
                     // Send a signal to the system that we're going to change the current directory:
                     NSURL* currentURL = [NSURL fileURLWithPath:currentPath];
                     NSFileCoordinator *fileCoordinator =  [[NSFileCoordinator alloc] initWithFilePresenter:nil];
+                    __block volatile pthread_t _tid = NULL;
                     [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
                         currentSession->isMainThread = false;
-                        volatile pthread_t _tid = NULL;
                         pthread_create(&_tid, NULL, run_function, params);
                         while (_tid == NULL) { }
                         // ios_storeThreadId(_tid);
                         if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
-                        // Wait for this process to finish:
-						if (joinMainThread) {
-							pthread_join(_tid, NULL);
-							// If there are auxiliary process, also wait for them:
-							if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
-							currentSession->lastThreadId = 0;
-							currentSession->current_command_root_thread = 0;
-						} else {
-							pthread_detach(_tid); // a thread must be either joined or detached
-						}
-                        currentSession->isMainThread = true;
+                        if (!joinMainThread) pthread_detach(_tid); // a thread must be either joined or detached
                     }];
+                    // Wait for this process to finish:
+					if (joinMainThread && (_tid != NULL)) {
+						pthread_join(_tid, NULL);
+						// If there are auxiliary process, also wait for them:
+						if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
+						currentSession->lastThreadId = 0;
+						currentSession->current_command_root_thread = 0;
+					}
+                    currentSession->isMainThread = true;
                 } else {
                     currentSession->isMainThread = false;
                     volatile pthread_t _tid = NULL;
