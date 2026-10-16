@@ -3520,6 +3520,7 @@ int ios_system(const char* inputCmd) {
         //
         NSArray* commandStructure = [commandList objectForKey: commandName];
         void* handle = NULL;
+        bool isDash = [commandName isEqualToString:@"dash"];
         if (commandStructure != nil) {
             NSString* libraryName = commandStructure[0];
             NSString* functionName = commandStructure[1];
@@ -3902,7 +3903,7 @@ int ios_system(const char* inputCmd) {
                 params->storeRootThread = true;
                 // I'm still not sure why this is needed specially for dash and no other commands:
                 // Needed for pipes
-                if ([commandName isEqualToString: @"dash"]) {
+                if (isDash) {
                     params->storeRootThread = false;
                 }
                 bool commandOperatesOnFiles = ([commandStructure[3] isEqualToString:@"file"] ||
