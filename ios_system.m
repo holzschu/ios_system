@@ -2326,22 +2326,23 @@ void ios_switchSession(const void* sessionId) {
         sessionList = [NSMutableDictionary new];
         if (currentSession != NULL) [sessionList setObject: [NSValue valueWithPointer:currentSession] forKey: sessionKey];
     }
-    currentSession = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
-    
-    if (currentSession == NULL) {
-        sessionParameters* newSession =  malloc(sizeof(sessionParameters));
-        initSessionParameters(newSession);
-        [sessionList setObject: [NSValue valueWithPointer:newSession] forKey: sessionKey];
-        currentSession = newSession;
-    } else {
-        NSString* currentSessionDir = [NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding];
-        if (![currentSessionDir isEqualToString:[NSFileManager.defaultManager currentDirectoryPath]]) {
-            [NSFileManager.defaultManager changeCurrentDirectoryPath:currentSessionDir];
+    // The UI creates sessionList before concurrent command sessions.
+    @synchronized(sessionList) {
+        currentSession = (sessionParameters*)[[sessionList objectForKey: sessionKey] pointerValue];
+
+        if (currentSession == NULL) {
+            sessionParameters* newSession =  malloc(sizeof(sessionParameters));
+            initSessionParameters(newSession);
+            [sessionList setObject: [NSValue valueWithPointer:newSession] forKey: sessionKey];
+            currentSession = newSession;
+        } else {
+            NSString* currentSessionDir = [NSString stringWithCString:currentSession->currentDir encoding:NSUTF8StringEncoding];
+            if (![currentSessionDir isEqualToString:[NSFileManager.defaultManager currentDirectoryPath]]) {
+                [NSFileManager.defaultManager changeCurrentDirectoryPath:currentSessionDir];
+            }
+            // Selecting a live session preserves its caller-installed streams.
+            // New sessions receive process defaults in initSessionParameters.
         }
-        // Da fuck???? Yeah, that would hurt. Why is it there?
-        currentSession->stdin = stdin;
-        currentSession->stdout = stdout;
-        currentSession->stderr = stderr;
     }
 }
 
@@ -2360,7 +2361,9 @@ void ios_closeSession(const void* sessionId) {
     // delete information associated with current session:
     if (sessionList == nil) return;
     id sessionKey = @((NSUInteger)sessionId);
-    [sessionList removeObjectForKey: sessionKey];
+    @synchronized(sessionList) {
+        [sessionList removeObjectForKey: sessionKey];
+    }
     currentSession = NULL;
 }
 

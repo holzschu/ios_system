@@ -57,3 +57,8 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/cwd-check/cwd-order" "$PWD/.bu
 ```
 
 Expected: exit 0 and `relative write: shell=1 command=0 PASS`. Without the restoration-order fix: exit 1 and `relative write: shell=0 command=1 FAIL`. The ten-second alarm bounds a stalled command wait. This Simulator test does not qualify physical-device behavior.
+# Reselecting session streams
+
+`session-streams.m` creates two sessions, installs caller streams in the first, selects the second and reselects the first. It checks the public input descriptor and runs a registered command whose exact `SESSION\n` output must reach the original caller stream. It clears the caller thread's TLS streams before dispatch so the selected session supplies them.
+
+Use the framework build and test compiler command above, replacing the source and executable name with `session-streams.m` and `session-streams`, adding `-fobjc-arc -Wl,-export_dynamic`, and copying `Resources/commandDictionary.plist` next to the executable. Success prints `bytes=8 PASS`; the broken session reselection resets stdin to fd 0 and leaves the capture empty. Session-list initialization must finish before concurrent use, and callers must keep sessions alive while commands or window-size readers use them.
