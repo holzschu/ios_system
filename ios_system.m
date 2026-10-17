@@ -387,6 +387,10 @@ typedef struct _functionParameters {
     int  numInterpreter;
     bool storeRootThread;
     sessionParameters* session;
+    struct sigaction savedSignalActions[NSIG];
+    bool savedSignalActionsValid[NSIG];
+    void *savedSignalImageBases[NSIG];
+    char *savedSignalImagePaths[NSIG];
 } functionParameters;
 
 extern pthread_mutex_t pid_mtx;
@@ -564,9 +568,39 @@ static void cleanup_function(void* parameters) {
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
     free(p->argv_ref);
     free(p->argv);
+    bool restoredWindowSignal = false;
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
-        && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT))
+        && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT)) {
+        Dl_info commandImage;
+        if (dladdr(p->function, &commandImage)) {
+            for (int number = 1; number < NSIG; number++) {
+                struct sigaction action;
+                Dl_info handlerImage;
+                if (p->savedSignalActionsValid[number] &&
+                    sigaction(number, NULL, &action) == 0 &&
+                    dladdr(action.sa_handler, &handlerImage) &&
+                    handlerImage.dli_fbase == commandImage.dli_fbase) {
+                    // Do not leave a callback pointing into the image we are unloading.
+                    struct sigaction saved = p->savedSignalActions[number];
+                    if (p->savedSignalImagePaths[number] != NULL) {
+                        Dl_info savedImage;
+                        if (!dladdr(saved.sa_handler, &savedImage) ||
+                            savedImage.dli_fbase != p->savedSignalImageBases[number] ||
+                            strcmp(savedImage.dli_fname, p->savedSignalImagePaths[number]) != 0) {
+                            // Another command may already have unloaded the previous handler.
+                            memset(&saved, 0, sizeof(saved));
+                            sigemptyset(&saved.sa_mask);
+                            saved.sa_handler = SIG_DFL;
+                        }
+                    }
+                    if (sigaction(number, &saved, NULL) == 0 && number == SIGWINCH)
+                        restoredWindowSignal = true;
+                }
+            }
+        }
         dlclose(p->dlHandle);
+    }
+    for (int number = 1; number < NSIG; number++) free(p->savedSignalImagePaths[number]);
     free(parameters); // This was malloc'ed in ios_system
     if (isLastThread) {
         NSLog(@"Terminating lastthread of currentSession %x lastThreadId %x pid: %d\n", current_thread, currentSession->lastThreadId, ios_currentPid());
@@ -591,12 +625,12 @@ static void cleanup_function(void* parameters) {
     if (currentSession->current_command_root_thread == current_thread) {
         currentSession->current_command_root_thread = 0;
         // Since we ended the root thread for this session, reset SIGWINCH if it was set:
-        sigaction (SIGWINCH, &sa, NULL);
+        if (!restoredWindowSignal) sigaction (SIGWINCH, &sa, NULL);
     }
     if (currentSession->mainThreadId == current_thread) {
         currentSession->mainThreadId = 0;
         // Since we ended the main thread for this session, reset SIGWINCH if it was set:
-        sigaction (SIGWINCH, &sa, NULL);
+        if (!restoredWindowSignal) sigaction (SIGWINCH, &sa, NULL);
     }
     cleanup_counter--;
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
@@ -654,6 +688,22 @@ static void* run_function(void* parameters) {
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
+    for (int number = 1; number < NSIG; number++) {
+        p->savedSignalActionsValid[number] = sigaction(number, NULL, &p->savedSignalActions[number]) == 0;
+        p->savedSignalImagePaths[number] = NULL;
+        if (p->savedSignalActionsValid[number]) {
+            Dl_info image;
+            if (dladdr(p->savedSignalActions[number].sa_handler, &image)) {
+                p->savedSignalImageBases[number] = image.dli_fbase;
+                p->savedSignalImagePaths[number] = strdup(image.dli_fname);
+                if (p->savedSignalImagePaths[number] == NULL) {
+                    memset(&p->savedSignalActions[number], 0, sizeof(struct sigaction));
+                    sigemptyset(&p->savedSignalActions[number].sa_mask);
+                    p->savedSignalActions[number].sa_handler = SIG_DFL;
+                }
+            }
+        }
+    }
     pthread_cleanup_push(cleanup_function, parameters);
     @try
     {

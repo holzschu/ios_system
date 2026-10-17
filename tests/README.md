@@ -15,3 +15,21 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/window-size-check/window-size"
 Xcode 27 rejects deployment targets below iOS 15 in its build planner. For that SDK, pass `IPHONEOS_DEPLOYMENT_TARGET=15.0` to the local framework build and use `arm64-apple-ios15.0-simulator` for the test executable. This does not change the framework project's deployment settings. A run on a newer Simulator does not qualify runtime behavior on older iOS versions.
 
 The caller must keep the queried session alive and coordinate session creation/closure with other users of the session APIs.
+
+# Command signal handlers
+
+`signal-handlers.m` loads a real command framework through `ios_system`. It checks that command-installed SIGINT, SIGUSR1 and SIGWINCH handlers are removed at command completion, the previous mask and flags are restored, and ignored or unrelated host dispositions survive. It uses synchronous command completion so assertions run after cleanup.
+
+After building `ios_system.framework` as above, prepare the command fixture and executable (the paths below use the same framework build directory):
+
+```sh
+mkdir -p .build/signal-handlers/Frameworks/SignalHandler.framework
+cp -R .build/window-size/Release-iphonesimulator/ios_system.framework .build/signal-handlers/Frameworks/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -Wall -Wextra -Werror -dynamiclib tests/signal-handler-command.c -install_name @rpath/SignalHandler.framework/SignalHandler -o .build/signal-handlers/Frameworks/SignalHandler.framework/SignalHandler
+plutil -create xml1 .build/signal-handlers/commandDictionary.plist
+plutil -insert signal-handler -json '["@rpath/SignalHandler.framework/SignalHandler","signal_handler_main","","none"]' .build/signal-handlers/commandDictionary.plist
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -fobjc-arc -Wall -Wextra -Werror -I ios_system -F .build/signal-handlers/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks tests/signal-handlers.m -o .build/signal-handlers/signal-handlers
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/signal-handlers/signal-handlers"
+```
+
+A successful run exits 0 and prints `PASS: command handlers restored; masks, flags and unrelated handlers preserved`. The unpatched framework fails the first SIGINT restoration assertion. Signal dispositions remain process-wide; callers must still coordinate concurrent changes to the same signal.
