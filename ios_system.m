@@ -80,6 +80,7 @@ typedef struct _sessionParameters {
     FILE* stdout;
     FILE* stderr;
     FILE* tty;
+    bool nativeTTY; // Native jobs use the actual descriptor terminal state.
     const void* context;
     int global_errno;
     int numCommandsAllocated;
@@ -105,6 +106,7 @@ static void initSessionParameters(sessionParameters* sp) {
     sp->stdout = stdout;
     sp->stderr = stderr;
     sp->tty = stdin;
+    sp->nativeTTY = false;
     sp->context = nil;
     sp->numCommandsAllocated = 10; // 10 slots available to store commands, will realloc if more needed.
     sp->commandName = malloc(sizeof(char*) * sp->numCommandsAllocated);
@@ -1975,6 +1977,7 @@ int sh_main(int argc, char** argv) {
     // NSLog(@"after switchSession, currentDir = %s\n", [fileManager currentDirectoryPath].UTF8String);
     currentSession->isMainThread = false;
     currentSession->context = sh_session;
+    currentSession->nativeTTY = parentSession->nativeTTY;
     currentSession->stdin = thread_stdin;
     currentSession->stdout = thread_stdout;
     currentSession->stderr = thread_stderr;
@@ -2284,6 +2287,12 @@ void ios_closeSession(const void* sessionId) {
 int ios_isatty(int fd) {
     // NSLog(@"Entering ios_isatty, fd= %d", fd);
     if (currentSession == NULL) return 0;
+    if (currentSession->nativeTTY) {
+        if (fd == STDIN_FILENO && thread_stdin) fd = fileno(thread_stdin);
+        else if (fd == STDOUT_FILENO && thread_stdout) fd = fileno(thread_stdout);
+        else if (fd == STDERR_FILENO && thread_stderr) fd = fileno(thread_stderr);
+        return isatty(fd);
+    }
     // Anything running inside "sh -c" is not a tty:
     if (currentSession->context == sh_session) return 0;
     // 2 possibilities: 0, 1, 2 (classical) or fileno(thread_stdout)
@@ -2308,6 +2317,10 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     currentSession->stdin = _stdin;
     currentSession->stdout = _stdout;
     currentSession->stderr = _stderr;
+}
+
+void ios_useNativeTTY(bool enabled) {
+    if (currentSession != NULL) currentSession->nativeTTY = enabled;
 }
 
 void ios_settty(FILE* _tty) {
