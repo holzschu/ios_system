@@ -57,3 +57,18 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/cwd-check/cwd-order" "$PWD/.bu
 ```
 
 Expected: exit 0 and `relative write: shell=1 command=0 PASS`. Without the restoration-order fix: exit 1 and `relative write: shell=0 command=1 FAIL`. The ten-second alarm bounds a stalled command wait. This Simulator test does not qualify physical-device behavior.
+# Native terminal detection
+
+`native-tty.m` uses a real socket pair and the public session/stream APIs. The same executable resolves `ios_useNativeTTY` with `dlsym`, so it also runs against an unmodified framework. It verifies the default virtual terminal, actual socket descriptor state after opting in, and restoration of the default after opting out.
+
+Build and run on an explicitly selected booted Simulator:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -scheme ios_system -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/native-tty -jobs 2 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 build
+mkdir -p .build/native-tty-check/Frameworks
+cp -R .build/native-tty/Build/Products/Release-iphonesimulator/ios_system.framework .build/native-tty-check/Frameworks/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/native-tty-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks tests/native-tty.m -o .build/native-tty-check/native-tty
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/native-tty-check/native-tty"
+```
+
+The baseline exits 1 with `native=1/1/1 descriptor=1`. The patched framework exits 0 with `default=1 native=0/0/0 descriptor=0 restored=1 PASS`. This socket test does not qualify physical-device behavior or PTY support.
