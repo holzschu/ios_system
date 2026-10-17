@@ -85,6 +85,10 @@ int ashell_register_owned_streams(FILE *input, FILE *output, FILE *error, void *
 // Call after ios_waitpid or a joined ios_system call, with no further dispatch
 // using the registration. Waits through final command cleanup; cancellation-safe.
 void ashell_wait_owned_streams(void *registration);
+// Cancel only this registration's command tree, including redirected descendants.
+// Cooperative at pthread cancellation points; sticky until unregistering.
+// Returns 0 or a POSIX error. Wait for cleanup before closing caller-owned FILEs.
+int ashell_cancel_owned_streams(void *registration);
 // Waits, removes the registration and sets it to NULL; does not close the FILEs.
 // Serialize wait/unregister with other operations on the same registration.
 void ashell_unregister_owned_streams(void **registration);
