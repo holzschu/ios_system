@@ -80,6 +80,8 @@ extern void ios_switchSession(const void* sessionid);
 extern void ios_closeSession(const void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
 extern void ios_settty(FILE* _tty);
+// Preserve the UI terminal default; native jobs opt into actual descriptor checks.
+extern void ios_useNativeTTY(bool enabled);
 extern int ios_getstdin(void);
 extern int ios_gettty(void);
 extern int ios_activePager(void);
