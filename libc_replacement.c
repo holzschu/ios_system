@@ -536,9 +536,10 @@ void ios_releaseThread(pthread_t thread) {
             // Don't reset the environment; sometimes, commands try to change the environment while it is being erased.
             // resetEnvironment(p);
             // fprintf(stderr, "Reset current directory to %s because process %d terminates\n", previousDirectory[p], p);
+            // Restore cwd before publishing completion to ios_waitpid callers.
+            chdir_nolock(previousDirectory[p]);
             current_pid = previousPid[p];
             thread_ids[p] = NULL;
-            chdir_nolock(previousDirectory[p]);
             return;
         }
     }
