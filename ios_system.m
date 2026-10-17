@@ -393,6 +393,7 @@ typedef struct _functionParameters {
     char *savedSignalImagePaths[NSIG];
     struct _functionParameters *nextSignalCommand;
     void *ownedStreams;
+    void *inputOwner;
     struct _functionParameters *ownedNext;
     pthread_t ownedThread;
     bool ownedRunning, commandStarted;
@@ -450,14 +451,32 @@ static bool callerOwnsStream(FILE *stream) {
     return found;
 }
 
+// Keep a command input pipe alive without replacing its tree cancellation owner.
+int ashell_register_command_input(FILE *input, void **registration) {
+    return ashell_register_owned_streams(input, input, input, registration);
+}
+
 // Retain pending descendants before pthread_create, even with all streams redirected.
 static void prepareOwnedCommand(functionParameters *parameters) {
     pthread_mutex_lock(&ownedStreamsMutex);
     ownedStreams *found = currentOwnedStreams;
+    // Prefer the tree's output registration over a newer stdin-only lease.
     for (ownedStreams *entry = registeredStreams; entry && !found; entry = entry->next)
-        for (int i = 0; i < 3; i++)
-            if (entry->streams[i] == parameters->stdin || entry->streams[i] == parameters->stdout || entry->streams[i] == parameters->stderr)
+        for (int i = 1; i < 3; i++)
+            if (entry->streams[i] == parameters->stdout || entry->streams[i] == parameters->stderr)
                 found = entry;
+    for (ownedStreams *entry = registeredStreams; entry && !found; entry = entry->next)
+        if (entry->streams[0] == parameters->stdin) found = entry;
+    parameters->inputOwner = NULL;
+    // A redirected command can still read the session tty through ios_opentty.
+    for (ownedStreams *entry = registeredStreams; entry; entry = entry->next) {
+        if (entry != found && (entry->streams[0] == parameters->stdin ||
+            (parameters->session && entry->streams[0] == parameters->session->tty))) {
+            parameters->inputOwner = entry;
+            entry->active++;
+            break;
+        }
+    }
     parameters->ownedStreams = found;
     parameters->ownedRunning = false;
     parameters->commandStarted = false;
@@ -473,8 +492,16 @@ static void prepareOwnedCommand(functionParameters *parameters) {
 
 static void leaveOwnedCommand(functionParameters *parameters) {
     ownedStreams *entry = parameters->ownedStreams;
-    if (!entry) return;
+    ownedStreams *inputOwner = parameters->inputOwner;
+    if (!entry && !inputOwner) return;
     pthread_mutex_lock(&ownedStreamsMutex);
+    if (inputOwner && --inputOwner->active == 0)
+        pthread_cond_broadcast(&inputOwner->idle);
+    parameters->inputOwner = NULL;
+    if (!entry) {
+        pthread_mutex_unlock(&ownedStreamsMutex);
+        return;
+    }
     functionParameters **command = &entry->commands;
     while (*command && *command != parameters) command = &(*command)->ownedNext;
     if (*command) {

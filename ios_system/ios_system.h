@@ -82,6 +82,9 @@ extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
 // Register exact caller-owned FILEs before dispatch. Returns 0 or a POSIX error;
 // registration must point to NULL. The caller retains ownership of the FILEs.
 int ashell_register_owned_streams(FILE *input, FILE *output, FILE *error, void **registration);
+// Register borrowed command input separately from the tree cancellation owner.
+// Wait/unregister with the existing owned-stream functions before closing input.
+int ashell_register_command_input(FILE *input, void **registration);
 // Call after ios_waitpid or a joined ios_system call, with no further dispatch
 // using the registration. Waits through final command cleanup; cancellation-safe.
 void ashell_wait_owned_streams(void *registration);
