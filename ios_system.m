@@ -391,7 +391,11 @@ typedef struct _functionParameters {
     bool savedSignalActionsValid[NSIG];
     void *savedSignalImageBases[NSIG];
     char *savedSignalImagePaths[NSIG];
+    struct _functionParameters *nextSignalCommand;
 } functionParameters;
+
+static pthread_mutex_t commandSignalMutex = PTHREAD_MUTEX_INITIALIZER;
+static functionParameters *runningSignalCommands = NULL;
 
 extern pthread_mutex_t pid_mtx;
 extern _Atomic(int) cleanup_counter;
@@ -569,10 +573,20 @@ static void cleanup_function(void* parameters) {
     free(p->argv_ref);
     free(p->argv);
     bool restoredWindowSignal = false;
+    bool sharedImageIsRunning = false;
+    pthread_mutex_lock(&commandSignalMutex);
+    functionParameters **command = &runningSignalCommands;
+    while (*command != NULL) {
+        if (*command == p) *command = p->nextSignalCommand;
+        else {
+            if ((*command)->dlHandle == p->dlHandle) sharedImageIsRunning = true;
+            command = &(*command)->nextSignalCommand;
+        }
+    }
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT)) {
         Dl_info commandImage;
-        if (dladdr(p->function, &commandImage)) {
+        if (!sharedImageIsRunning && dladdr(p->function, &commandImage)) {
             for (int number = 1; number < NSIG; number++) {
                 struct sigaction action;
                 Dl_info handlerImage;
@@ -598,8 +612,19 @@ static void cleanup_function(void* parameters) {
                 }
             }
         }
-        dlclose(p->dlHandle);
     }
+    // Reset SIGWINCH when the root/main thread ends, unless a shared command or restored host handler still owns it.
+    // Do this before another command can join this image and install its handler.
+    if (!restoredWindowSignal && !sharedImageIsRunning &&
+        (currentSession->current_command_root_thread == current_thread || currentSession->mainThreadId == current_thread)) {
+        struct sigaction sa;
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = SIG_DFL;
+        sigaction(SIGWINCH, &sa, NULL);
+    }
+    pthread_mutex_unlock(&commandSignalMutex);
+    if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
+        && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT)) dlclose(p->dlHandle);
     for (int number = 1; number < NSIG; number++) free(p->savedSignalImagePaths[number]);
     free(parameters); // This was malloc'ed in ios_system
     if (isLastThread) {
@@ -618,19 +643,11 @@ static void cleanup_function(void* parameters) {
         }
         ios_releaseThread(current_thread);
     }
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = SIG_DFL;
-
     if (currentSession->current_command_root_thread == current_thread) {
         currentSession->current_command_root_thread = 0;
-        // Since we ended the root thread for this session, reset SIGWINCH if it was set:
-        if (!restoredWindowSignal) sigaction (SIGWINCH, &sa, NULL);
     }
     if (currentSession->mainThreadId == current_thread) {
         currentSession->mainThreadId = 0;
-        // Since we ended the main thread for this session, reset SIGWINCH if it was set:
-        if (!restoredWindowSignal) sigaction (SIGWINCH, &sa, NULL);
     }
     cleanup_counter--;
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
@@ -688,14 +705,27 @@ static void* run_function(void* parameters) {
     // Because some commands change argv, keep a local copy for release.
     p->argv_ref = (char **)malloc(sizeof(char*) * (p->argc + 1));
     for (int i = 0; i < p->argc; i++) p->argv_ref[i] = p->argv[i];
+    pthread_mutex_lock(&commandSignalMutex);
+    functionParameters *signalOwner = runningSignalCommands;
+    while (signalOwner != NULL && signalOwner->dlHandle != p->dlHandle)
+        signalOwner = signalOwner->nextSignalCommand;
     for (int number = 1; number < NSIG; number++) {
-        p->savedSignalActionsValid[number] = sigaction(number, NULL, &p->savedSignalActions[number]) == 0;
+        // Commands sharing an image also share the disposition from before its first command.
+        if (signalOwner != NULL) {
+            p->savedSignalActionsValid[number] = signalOwner->savedSignalActionsValid[number];
+            if (p->savedSignalActionsValid[number])
+                p->savedSignalActions[number] = signalOwner->savedSignalActions[number];
+        } else {
+            p->savedSignalActionsValid[number] = sigaction(number, NULL, &p->savedSignalActions[number]) == 0;
+        }
         p->savedSignalImagePaths[number] = NULL;
         if (p->savedSignalActionsValid[number]) {
             Dl_info image;
-            if (dladdr(p->savedSignalActions[number].sa_handler, &image)) {
-                p->savedSignalImageBases[number] = image.dli_fbase;
-                p->savedSignalImagePaths[number] = strdup(image.dli_fname);
+            bool hasImage = signalOwner != NULL ? signalOwner->savedSignalImagePaths[number] != NULL :
+                dladdr(p->savedSignalActions[number].sa_handler, &image) != 0;
+            if (hasImage) {
+                p->savedSignalImageBases[number] = signalOwner != NULL ? signalOwner->savedSignalImageBases[number] : image.dli_fbase;
+                p->savedSignalImagePaths[number] = strdup(signalOwner != NULL ? signalOwner->savedSignalImagePaths[number] : image.dli_fname);
                 if (p->savedSignalImagePaths[number] == NULL) {
                     memset(&p->savedSignalActions[number], 0, sizeof(struct sigaction));
                     sigemptyset(&p->savedSignalActions[number].sa_mask);
@@ -704,6 +734,9 @@ static void* run_function(void* parameters) {
             }
         }
     }
+    p->nextSignalCommand = runningSignalCommands;
+    runningSignalCommands = p;
+    pthread_mutex_unlock(&commandSignalMutex);
     pthread_cleanup_push(cleanup_function, parameters);
     @try
     {
