@@ -57,7 +57,35 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/cwd-check/cwd-order" "$PWD/.bu
 ```
 
 Expected: exit 0 and `relative write: shell=1 command=0 PASS`. Without the restoration-order fix: exit 1 and `relative write: shell=0 command=1 FAIL`. The ten-second alarm bounds a stalled command wait. This Simulator test does not qualify physical-device behavior.
+# Caller-owned streams
 
+`owned-streams.m` exercises `ios_system`, a registered shell command and the additive stream registration API. The same executable runs against an unmodified framework by resolving the new functions with `dlsym`: without registration, command cleanup closes all three caller streams and the test exits 1. With registration, it checks that all descriptors remain open, appends output, reads the exact combined bytes and closes the streams itself. It substitutes no ios_system implementation.
+
+From the repository root, build and run on an explicitly selected booted Simulator:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -scheme ios_system -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/owned-streams -jobs 2 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 build
+mkdir -p .build/owned-streams-check/Frameworks
+cp -R .build/owned-streams/Build/Products/Release-iphonesimulator/ios_system.framework .build/owned-streams-check/Frameworks/
+cp Resources/commandDictionary.plist .build/owned-streams-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/owned-streams-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/owned-streams.m -o .build/owned-streams-check/owned-streams
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/owned-streams-check/owned-streams"
+```
+
+The command dictionary must be next to the executable because command registration uses the main bundle's stock resource. The regression prints `caller streams still open: 3/3 PASS` and `caller stream read/write/close: PASS` on success. This test covers caller-owned FILE lifetime; interactive input leases and command-tree cancellation require separate tests.
+
+# Owned command cancellation
+
+`owned-cancellation.m` starts a registered native parent, whose child redirects all three streams, then cancels the registration through `ashell_cancel_owned_streams`. It waits through cleanup, unregisters, registers the same caller streams again and checks the next command's exact output. The registration follows descendants even when none of their streams match the original FILEs. Cancellation is sticky until unregistering; commands must reach pthread cancellation points. Stop dispatch before waiting or unregistering, and serialize those operations with cancellation.
+
+Use the framework build and test compiler command above, replacing `owned-streams.m` and the executable name with `owned-cancellation.m` and `owned-cancellation`. Keep the command dictionary beside the executable. Pass an existing disposable directory for the child's redirected files:
+
+```sh
+mkdir -p .build/owned-cancellation-check/run
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/owned-cancellation-check/owned-cancellation" "$PWD/.build/owned-cancellation-check/run"
+```
+
+Against the caller-owned-stream baseline without cancellation, the same executable exits 124 after five seconds. With cancellation it exits 0 and prints `redirected child cancelled; next command exact output: PASS`. This test does not qualify physical-device behavior or cancellation of native code without cancellation points.
 # Wasm stdin descriptor
 
 `wasm-stdin-close.m` registers a stand-in producer `emit` and a consumer named `wasm` (the name `cleanup_function` special-cases), runs `emit | wasm` fifty times through `ios_system`, and compares the process's open descriptors before and after. Without the fix each pipeline leaves the read end of its pipe open.
