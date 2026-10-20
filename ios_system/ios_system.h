@@ -96,6 +96,8 @@ int ashell_cancel_owned_streams(void *registration);
 // Serialize wait/unregister with other operations on the same registration.
 void ashell_unregister_owned_streams(void **registration);
 extern void ios_settty(FILE* _tty);
+// Preserve the UI terminal default; native jobs opt into actual descriptor checks.
+extern void ios_useNativeTTY(bool enabled);
 extern int ios_getstdin(void);
 extern int ios_gettty(void);
 extern int ios_activePager(void);
