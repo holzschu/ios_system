@@ -80,6 +80,7 @@ typedef struct _sessionParameters {
     FILE* stdout;
     FILE* stderr;
     FILE* tty;
+    bool nativeTTY; // Native jobs use the actual descriptor terminal state.
     const void* context;
     int global_errno;
     int numCommandsAllocated;
@@ -105,6 +106,7 @@ static void initSessionParameters(sessionParameters* sp) {
     sp->stdout = stdout;
     sp->stderr = stderr;
     sp->tty = stdin;
+    sp->nativeTTY = false;
     sp->context = nil;
     sp->numCommandsAllocated = 10; // 10 slots available to store commands, will realloc if more needed.
     sp->commandName = malloc(sizeof(char*) * sp->numCommandsAllocated);
@@ -393,6 +395,7 @@ typedef struct _functionParameters {
     char *savedSignalImagePaths[NSIG];
     struct _functionParameters *nextSignalCommand;
     void *ownedStreams;
+    void *inputOwner;
     struct _functionParameters *ownedNext;
     pthread_t ownedThread;
     bool ownedRunning, commandStarted;
@@ -450,14 +453,32 @@ static bool callerOwnsStream(FILE *stream) {
     return found;
 }
 
+// Keep a command input pipe alive without replacing its tree cancellation owner.
+int ashell_register_command_input(FILE *input, void **registration) {
+    return ashell_register_owned_streams(input, input, input, registration);
+}
+
 // Retain pending descendants before pthread_create, even with all streams redirected.
 static void prepareOwnedCommand(functionParameters *parameters) {
     pthread_mutex_lock(&ownedStreamsMutex);
     ownedStreams *found = currentOwnedStreams;
+    // Prefer the tree's output registration over a newer stdin-only lease.
     for (ownedStreams *entry = registeredStreams; entry && !found; entry = entry->next)
-        for (int i = 0; i < 3; i++)
-            if (entry->streams[i] == parameters->stdin || entry->streams[i] == parameters->stdout || entry->streams[i] == parameters->stderr)
+        for (int i = 1; i < 3; i++)
+            if (entry->streams[i] == parameters->stdout || entry->streams[i] == parameters->stderr)
                 found = entry;
+    for (ownedStreams *entry = registeredStreams; entry && !found; entry = entry->next)
+        if (entry->streams[0] == parameters->stdin) found = entry;
+    parameters->inputOwner = NULL;
+    // A redirected command can still read the session tty through ios_opentty.
+    for (ownedStreams *entry = registeredStreams; entry; entry = entry->next) {
+        if (entry != found && (entry->streams[0] == parameters->stdin ||
+            (parameters->session && entry->streams[0] == parameters->session->tty))) {
+            parameters->inputOwner = entry;
+            entry->active++;
+            break;
+        }
+    }
     parameters->ownedStreams = found;
     parameters->ownedRunning = false;
     parameters->commandStarted = false;
@@ -473,8 +494,16 @@ static void prepareOwnedCommand(functionParameters *parameters) {
 
 static void leaveOwnedCommand(functionParameters *parameters) {
     ownedStreams *entry = parameters->ownedStreams;
-    if (!entry) return;
+    ownedStreams *inputOwner = parameters->inputOwner;
+    if (!entry && !inputOwner) return;
     pthread_mutex_lock(&ownedStreamsMutex);
+    if (inputOwner && --inputOwner->active == 0)
+        pthread_cond_broadcast(&inputOwner->idle);
+    parameters->inputOwner = NULL;
+    if (!entry) {
+        pthread_mutex_unlock(&ownedStreamsMutex);
+        return;
+    }
     functionParameters **command = &entry->commands;
     while (*command && *command != parameters) command = &(*command)->ownedNext;
     if (*command) {
@@ -2224,6 +2253,7 @@ int sh_main(int argc, char** argv) {
     // NSLog(@"after switchSession, currentDir = %s\n", [fileManager currentDirectoryPath].UTF8String);
     currentSession->isMainThread = false;
     currentSession->context = sh_session;
+    currentSession->nativeTTY = parentSession->nativeTTY;
     currentSession->stdin = thread_stdin;
     currentSession->stdout = thread_stdout;
     currentSession->stderr = thread_stderr;
@@ -2533,6 +2563,12 @@ void ios_closeSession(const void* sessionId) {
 int ios_isatty(int fd) {
     // NSLog(@"Entering ios_isatty, fd= %d", fd);
     if (currentSession == NULL) return 0;
+    if (currentSession->nativeTTY) {
+        if (fd == STDIN_FILENO && thread_stdin) fd = fileno(thread_stdin);
+        else if (fd == STDOUT_FILENO && thread_stdout) fd = fileno(thread_stdout);
+        else if (fd == STDERR_FILENO && thread_stderr) fd = fileno(thread_stderr);
+        return isatty(fd);
+    }
     // Anything running inside "sh -c" is not a tty:
     if (currentSession->context == sh_session) return 0;
     // 2 possibilities: 0, 1, 2 (classical) or fileno(thread_stdout)
@@ -2557,6 +2593,10 @@ void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr) {
     currentSession->stdin = _stdin;
     currentSession->stdout = _stdout;
     currentSession->stderr = _stderr;
+}
+
+void ios_useNativeTTY(bool enabled) {
+    if (currentSession != NULL) currentSession->nativeTTY = enabled;
 }
 
 void ios_settty(FILE* _tty) {
