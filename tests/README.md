@@ -57,6 +57,11 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/cwd-check/cwd-order" "$PWD/.bu
 ```
 
 Expected: exit 0 and `relative write: shell=1 command=0 PASS`. Without the restoration-order fix: exit 1 and `relative write: shell=0 command=1 FAIL`. The ten-second alarm bounds a stalled command wait. This Simulator test does not qualify physical-device behavior.
+# Reselecting session streams
+
+`session-streams.m` creates two sessions, installs caller streams in the first, selects the second and reselects the first. It checks the public input descriptor and runs a registered command whose exact `SESSION\n` output must reach the original caller stream. It clears the caller thread's TLS streams before dispatch so the selected session supplies them.
+
+Use the framework build and test compiler command above, replacing the source and executable name with `session-streams.m` and `session-streams`, adding `-fobjc-arc -Wl,-export_dynamic`, and copying `Resources/commandDictionary.plist` next to the executable. Success prints `bytes=8 PASS`; the broken session reselection resets stdin to fd 0 and leaves the capture empty. Session-list initialization must finish before concurrent use, and callers must keep sessions alive while commands or window-size readers use them.
 # Native terminal detection
 
 `native-tty.m` uses a real socket pair and the public session/stream APIs. The same executable resolves `ios_useNativeTTY` with `dlsym`, so it also runs against an unmodified framework. It verifies the default virtual terminal, actual socket descriptor state after opting in, and restoration of the default after opting out.
@@ -124,3 +129,19 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/wasm-stdin-check/wasm-stdin-cl
 ```
 
 Expected: exit 0 and `descriptors after 50 pipelines: before=N after=N PASS`. Without the fix the count grows by about one per pipeline and the test exits 1. This Simulator test does not qualify physical-device behavior.
+
+# Waiting for a command
+
+`waitpid-idle.m` starts a 1.5 s command behind `ios_fork`, calls `ios_waitpid` and compares the process CPU time with the wall time of the wait. The wait must sleep: CPU time stays under a quarter of wall time. A polling wait burns about one core for the whole second and a half.
+
+Build the framework as above, then compile and run it on an owned Simulator:
+
+```sh
+mkdir -p .build/waitpid-check/Frameworks
+cp -R .build/window-size/Release-iphonesimulator/ios_system.framework .build/waitpid-check/Frameworks/
+cp Resources/commandDictionary.plist .build/waitpid-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/waitpid-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/waitpid-idle.m -o .build/waitpid-check/waitpid-idle
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
+```
+
+Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
