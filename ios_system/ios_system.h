@@ -79,7 +79,25 @@ extern void ios_setBookmarkDictionaryName(NSString*);  // name of the dictionary
 extern void ios_switchSession(const void* sessionid);
 extern void ios_closeSession(const void* sessionid);
 extern void ios_setStreams(FILE* _stdin, FILE* _stdout, FILE* _stderr);
+// Register exact caller-owned FILEs before dispatch. Returns 0 or a POSIX error;
+// registration must point to NULL. The caller retains ownership of the FILEs.
+int ashell_register_owned_streams(FILE *input, FILE *output, FILE *error, void **registration);
+// Register borrowed command input separately from the tree cancellation owner.
+// Wait/unregister with the existing owned-stream functions before closing input.
+int ashell_register_command_input(FILE *input, void **registration);
+// Call after ios_waitpid or a joined ios_system call, with no further dispatch
+// using the registration. Waits through final command cleanup; cancellation-safe.
+void ashell_wait_owned_streams(void *registration);
+// Cancel only this registration's command tree, including redirected descendants.
+// Cooperative at pthread cancellation points; sticky until unregistering.
+// Returns 0 or a POSIX error. Wait for cleanup before closing caller-owned FILEs.
+int ashell_cancel_owned_streams(void *registration);
+// Waits, removes the registration and sets it to NULL; does not close the FILEs.
+// Serialize wait/unregister with other operations on the same registration.
+void ashell_unregister_owned_streams(void **registration);
 extern void ios_settty(FILE* _tty);
+// Preserve the UI terminal default; native jobs opt into actual descriptor checks.
+extern void ios_useNativeTTY(bool enabled);
 extern int ios_getstdin(void);
 extern int ios_gettty(void);
 extern int ios_activePager(void);

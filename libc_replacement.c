@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/param.h>
+#include <stdatomic.h>
 #include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
 
 #include "ios_error.h"
@@ -183,7 +184,15 @@ int ios_putw(int w, FILE *stream) {
 // Fake process IDs to go with fake forking:
 // You will still need to edit your code to make sure you go through both branches.
 #define IOS_MAX_THREADS 128
-static pthread_t thread_ids[IOS_MAX_THREADS];
+static _Atomic(pthread_t) thread_ids[IOS_MAX_THREADS];
+static pthread_mutex_t thread_completion_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t thread_completed = PTHREAD_COND_INITIALIZER;
+
+static void notify_thread_completion(void) {
+    pthread_mutex_lock(&thread_completion_mutex);
+    pthread_cond_broadcast(&thread_completed);
+    pthread_mutex_unlock(&thread_completion_mutex);
+}
 static int numVariablesSet[IOS_MAX_THREADS];
 static char** environment[IOS_MAX_THREADS];
 static char** copyEnvironment[IOS_MAX_THREADS];
@@ -276,6 +285,7 @@ inline void ios_storeThreadId(pthread_t thread) {
     // fprintf(stderr, "Unlocking pid %d, storing thread %x current value: %x\n", current_pid, thread,  thread_ids[current_pid]);
     if (thread_ids[current_pid] == -1) {
         thread_ids[current_pid] = thread;
+        if (!thread) notify_thread_completion();
     }
     pthread_mutex_unlock(&pid_mtx);
 }
@@ -542,6 +552,7 @@ void ios_releaseThread(pthread_t thread) {
             chdir_nolock(previousDirectory[p]);
             current_pid = previousPid[p];
             thread_ids[p] = NULL;
+            notify_thread_completion();
             return;
         }
     }
@@ -555,6 +566,7 @@ void ios_releaseBackgroundThread(pthread_t thread) {
             // fprintf(stderr, "Found Id %d\n", p);
             current_pid = previousPid[p];
             thread_ids[p] = NULL;
+            notify_thread_completion();
             return;
         }
     }
@@ -570,6 +582,7 @@ void ios_releaseThreadId(pid_t pid) {
         chdir_nolock(previousDirectory[pid]);
         current_pid = previousPid[pid];
         thread_ids[pid] = 0;
+        notify_thread_completion();
         // fprintf(stderr, "Unlocking for pid %d in ios_releaseThreadId\n", pid);
     } else {
         // fprintf(stderr, "ios_releaseThreadId: pid %d was already terminated.\n", pid);
@@ -602,11 +615,14 @@ __attribute__ ((optnone)) void ios_waitpid(pid_t pid) {
         return;
     }
     // New system: thread Id is store with pid:
-    threadToWaitFor = ios_getThreadId(pid);
-    while (threadToWaitFor != 0) {
-        // -1: not started, >0 started, not finished, 0: finished
-        threadToWaitFor = ios_getThreadId(pid);
-    }
+    if (pid < 0 || pid >= IOS_MAX_THREADS) return;
+    // ios_system detaches command threads, so pthread_join cannot wait for them.
+    // Include the allocated-but-not-started (-1) state and recheck under the
+    // notification mutex to avoid losing an exit between the check and wait.
+    pthread_mutex_lock(&thread_completion_mutex);
+    while (atomic_load(&thread_ids[pid]) != 0)
+        pthread_cond_wait(&thread_completed, &thread_completion_mutex);
+    pthread_mutex_unlock(&thread_completion_mutex);
     // fprintf(stderr, "Returning from ios_waitpid for %d \n", pid);
     return;
 }
