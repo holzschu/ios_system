@@ -387,6 +387,7 @@ typedef struct _functionParameters {
     bool isPipeErr;
     bool backgroundCommand;
     int  numInterpreter;
+    int webAssemblyOrder;
     bool storeRootThread;
     sessionParameters* session;
     struct sigaction savedSignalActions[NSIG];
@@ -407,7 +408,8 @@ static functionParameters *runningSignalCommands = NULL;
 extern pthread_mutex_t pid_mtx;
 extern _Atomic(int) cleanup_counter;
 extern void ios_releaseBackgroundThread(pthread_t thread);
-extern void startedPreparingWebAssemblyCommand(void);
+extern int startedPreparingWebAssemblyCommand(void);
+extern __thread int currentWebAssemblyCommandOrder;
 
 // Embedders may lend FILEs whose lifetime exceeds an individual command.
 typedef struct ownedStreams {
@@ -861,6 +863,7 @@ void crash_handler(int sig) {
 
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
+    currentWebAssemblyCommandOrder = p->webAssemblyOrder;
     p->commandStarted = true;
     currentOwnedStreams = p->ownedStreams;
     NSLog(@"Storing thread_id: %x pid: %d isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), ios_currentPid(), p->isPipeOut, p->isPipeErr,
@@ -3239,6 +3242,7 @@ int ios_system(const char* inputCmd) {
     NSLog(@"After params creation, stdout %x stderr %x \n", params->stdout,  params->stderr);
     params->backgroundCommand = isBackgroundCommand(command);
     params->numInterpreter = 0;
+    params->webAssemblyOrder = 0;
 
     params->context = thread_context;
   
@@ -4196,7 +4200,7 @@ int ios_system(const char* inputCmd) {
             }
             NSLog(@"Starting command: %s, currentSession->isMainThread: %d", commandName.UTF8String, currentSession->isMainThread);
             if ([commandName isEqualToString:@"wasm"])
-                startedPreparingWebAssemblyCommand();
+                params->webAssemblyOrder = startedPreparingWebAssemblyCommand();
             if (currentSession->isMainThread) {
                 params->storeRootThread = true;
                 // I'm still not sure why this is needed specially for dash and no other commands:
