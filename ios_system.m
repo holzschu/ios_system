@@ -453,7 +453,6 @@ static void cleanup_function(void* parameters) {
     bool mustCloseStdin = fileno(p->stdin) != fileno(stdin);
     if (strncmp(commandName, "python", 6) == 0) mustCloseStdin = false;
     bool isSh = strcmp(p->argv[0], "sh") == 0;
-    bool isWasm = strcmp(p->argv[0], "wasm") == 0;
     bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout))  && (fileno(p->stdout) != fileno(p->stdin));
     if (!isSh) {
         mustCloseStderr &= p->isPipeErr;
@@ -490,12 +489,6 @@ static void cleanup_function(void* parameters) {
         mustCloseStdin &= p->isPipeIn;
         if (currentSession != nil) {
             mustCloseStdin &= fileno(p->stdin) != fileno(currentSession->stdin);
-        }
-        if (isWasm) {
-            // Don't close stdin for Wasm commands piped into others, but do it for files
-            char filePath[MAXPATHLEN];
-            if (fcntl(fileno(p->stdin), F_GETPATH, filePath) < 0)
-                mustCloseStdin &= false;
         }
         // commands started by Python: Python will close stdin (Lua and Perl? not broken, AFAIK)
         // The current command is still counted until after the root-thread wait.
