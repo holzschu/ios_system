@@ -94,3 +94,18 @@ Against the caller-owned-stream baseline without cancellation, the same executab
 Use the caller-owned-stream framework build and test compiler commands above, replacing the test source and executable name with `input-lease.m` and `input-lease`. Keep the command dictionary next to the executable. The baseline exits 1 with `ABI=0 kept=0 bytes=11`: output completes but cleanup has closed the caller's input. The lease registration must keep that input open until the caller unregisters and closes it. Stop dispatch and wait for completion before unregistering; the input lease does not replace the command tree's cancellation registration. Hosts that call from an existing thread must install the intended session streams and command-thread TLS before each command.
 
 Run the input fixture a second time with argument `cancel`. It keeps the pipe writer open, cancels through the original tree registration and expects only `NEXT\n` after cleanup. The fixture uses a cancellable `read` syscall; blocked stdio reads are not guaranteed to unwind on pthread cancellation. This variant catches a stdin-only registration incorrectly replacing the tree cancellation owner.
+# Wasm stdin descriptor
+
+`wasm-stdin-close.m` registers a stand-in producer `emit` and a consumer named `wasm` (the name `cleanup_function` special-cases), runs `emit | wasm` fifty times through `ios_system`, and compares the process's open descriptors before and after. Without the fix each pipeline leaves the read end of its pipe open.
+
+Build the framework as above, then:
+
+```sh
+mkdir -p .build/wasm-stdin-check/Frameworks
+cp -R .build/window-size/Release-iphonesimulator/ios_system.framework .build/wasm-stdin-check/Frameworks/
+cp Resources/commandDictionary.plist .build/wasm-stdin-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/wasm-stdin-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/wasm-stdin-close.m -o .build/wasm-stdin-check/wasm-stdin-close
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/wasm-stdin-check/wasm-stdin-close"
+```
+
+Expected: exit 0 and `descriptors after 50 pipelines: before=N after=N PASS`. Without the fix the count grows by about one per pipeline and the test exits 1. This Simulator test does not qualify physical-device behavior.
