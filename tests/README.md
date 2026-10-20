@@ -73,3 +73,19 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/wasm-stdin-check/wasm-stdin-cl
 ```
 
 Expected: exit 0 and `descriptors after 50 pipelines: before=N after=N PASS`. Without the fix the count grows by about one per pipeline and the test exits 1. This Simulator test does not qualify physical-device behavior.
+
+# Waiting for a command
+
+`waitpid-idle.m` starts a 1.5 s command behind `ios_fork`, calls `ios_waitpid` and compares the process CPU time with the wall time of the wait. The wait must sleep: CPU time stays under a quarter of wall time. A polling wait burns about one core for the whole second and a half.
+
+Build the framework as above, then compile and run it on an owned Simulator:
+
+```sh
+mkdir -p .build/waitpid-check/Frameworks
+cp -R .build/window-size/Release-iphonesimulator/ios_system.framework .build/waitpid-check/Frameworks/
+cp Resources/commandDictionary.plist .build/waitpid-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/waitpid-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/waitpid-idle.m -o .build/waitpid-check/waitpid-idle
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
+```
+
+Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
