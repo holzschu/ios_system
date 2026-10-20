@@ -6,6 +6,7 @@
 //  Copyright © 2018 Nicolas Holzschuch. All rights reserved.
 //
 #include <stdlib.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <wchar.h>
 #include <unistd.h>
@@ -31,15 +32,16 @@
 // in order to run webAssembly commands sequentially, we first stack them, then run them in command line order:
 // At this point, this could just be a mutex.
 
-int preparingWebAssemblyCommands = 0;
-int orderOfWebAssemblyCommands = 0;
-void startedPreparingWebAssemblyCommand(void) {
+_Atomic int preparingWebAssemblyCommands = 0;
+_Atomic int orderOfWebAssemblyCommands = 0;
+__thread int currentWebAssemblyCommandOrder = 0;
+int startedPreparingWebAssemblyCommand(void) {
     preparingWebAssemblyCommands += 1;
-    orderOfWebAssemblyCommands += 1;
+    return atomic_fetch_add(&orderOfWebAssemblyCommands, 1) + 1;
 }
 
 int webAssemblyCommandOrder(void) {
-    return orderOfWebAssemblyCommands;
+    return currentWebAssemblyCommandOrder;
 }
 
 void finishedPreparingWebAssemblyCommand(void) {
