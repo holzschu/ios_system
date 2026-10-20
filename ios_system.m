@@ -3592,7 +3592,8 @@ int ios_system(const char* inputCmd) {
             cmdIsAPath = ([commandName rangeOfString:@"/"].location != NSNotFound);
             if (!cmdIsAPath || cmdIsAFile) {
                 // We go through the path, because that command may be a file in the path
-                NSString* checkingPath = [NSString stringWithCString:getenv("PATH") encoding:NSUTF8StringEncoding];
+                // Honor the command environment, including npm's local bin directories.
+                NSString* checkingPath = [NSString stringWithCString:libc_getenv("PATH") ?: "" encoding:NSUTF8StringEncoding];
                 if (! [fullCommandPath isEqualToString:checkingPath]) {
                     fullCommandPath = checkingPath;
                     directoriesInPath = [fullCommandPath componentsSeparatedByString:@":"];
