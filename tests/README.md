@@ -130,6 +130,21 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/wasm-stdin-check/wasm-stdin-cl
 
 Expected: exit 0 and `descriptors after 50 pipelines: before=N after=N PASS`. Without the fix the count grows by about one per pipeline and the test exits 1. This Simulator test does not qualify physical-device behavior.
 
+# Wasm command position
+
+`wasm-command-order.m` starts a detached command through `ios_system`, pauses its external WASM-engine fixture after preparation, and lets `ios_full_waitpid(..., WNOHANG)` drain the host queue. The command must still read its reserved position through `webAssemblyCommandOrder` after the drain resets the next queue's counter.
+
+After building the framework as above:
+
+```sh
+mkdir -p .build/wasm-order-check/Frameworks
+cp -R .build/window-size/Release-iphonesimulator/ios_system.framework .build/wasm-order-check/Frameworks/
+cp Resources/commandDictionary.plist .build/wasm-order-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/wasm-order-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks tests/wasm-command-order.m -o .build/wasm-order-check/wasm-command-order
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/wasm-order-check/wasm-command-order"
+```
+
+Expected: exit 0 and `WASM command order after host drain: expected=1 actual=1`. Without the fix the command reads 0 and the test exits 1. A five-second alarm bounds a stalled wait. The fixture replaces the external WASM engine; command dispatch and waits use the real framework.
 # Waiting for a command
 
 `waitpid-idle.m` starts a 1.5 s command behind `ios_fork`, calls `ios_waitpid` and compares the process CPU time with the wall time of the wait. The wait must sleep: CPU time stays under a quarter of wall time. A polling wait burns about one core for the whole second and a half.
