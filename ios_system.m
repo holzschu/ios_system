@@ -394,6 +394,11 @@ typedef struct _functionParameters {
     void *savedSignalImageBases[NSIG];
     char *savedSignalImagePaths[NSIG];
     struct _functionParameters *nextSignalCommand;
+    void *ownedStreams;
+    void *inputOwner;
+    struct _functionParameters *ownedNext;
+    pthread_t ownedThread;
+    bool ownedRunning, commandStarted;
 } functionParameters;
 
 static pthread_mutex_t commandSignalMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -404,10 +409,193 @@ extern _Atomic(int) cleanup_counter;
 extern void ios_releaseBackgroundThread(pthread_t thread);
 extern void startedPreparingWebAssemblyCommand(void);
 
+// Embedders may lend FILEs whose lifetime exceeds an individual command.
+typedef struct ownedStreams {
+    FILE *streams[3];
+    unsigned active;
+    bool cancelled;
+    functionParameters *commands;
+    pthread_cond_t idle;
+    struct ownedStreams *next;
+} ownedStreams;
+static pthread_mutex_t ownedStreamsMutex = PTHREAD_MUTEX_INITIALIZER;
+static ownedStreams *registeredStreams;
+static __thread ownedStreams *currentOwnedStreams;
+
+int ashell_register_owned_streams(FILE *input, FILE *output, FILE *error, void **registration) {
+    if (!input || !output || !error || !registration || *registration) return EINVAL;
+    ownedStreams *entry = malloc(sizeof(*entry));
+    if (!entry) return ENOMEM;
+    int result = pthread_cond_init(&entry->idle, NULL);
+    if (result) { free(entry); return result; }
+    entry->streams[0] = input;
+    entry->streams[1] = output;
+    entry->streams[2] = error;
+    entry->active = 0;
+    entry->cancelled = false;
+    entry->commands = NULL;
+    pthread_mutex_lock(&ownedStreamsMutex);
+    entry->next = registeredStreams;
+    registeredStreams = entry;
+    pthread_mutex_unlock(&ownedStreamsMutex);
+    *registration = entry;
+    return 0;
+}
+
+static bool callerOwnsStream(FILE *stream) {
+    if (!stream) return false;
+    bool found = false;
+    pthread_mutex_lock(&ownedStreamsMutex);
+    for (ownedStreams *entry = registeredStreams; entry && !found; entry = entry->next)
+        for (int i = 0; i < 3; i++)
+            if (stream == entry->streams[i]) found = true;
+    pthread_mutex_unlock(&ownedStreamsMutex);
+    return found;
+}
+
+// Keep a command input pipe alive without replacing its tree cancellation owner.
+int ashell_register_command_input(FILE *input, void **registration) {
+    return ashell_register_owned_streams(input, input, input, registration);
+}
+
+// Retain pending descendants before pthread_create, even with all streams redirected.
+static void prepareOwnedCommand(functionParameters *parameters) {
+    pthread_mutex_lock(&ownedStreamsMutex);
+    ownedStreams *found = currentOwnedStreams;
+    // Prefer the tree's output registration over a newer stdin-only lease.
+    for (ownedStreams *entry = registeredStreams; entry && !found; entry = entry->next)
+        for (int i = 1; i < 3; i++)
+            if (entry->streams[i] == parameters->stdout || entry->streams[i] == parameters->stderr)
+                found = entry;
+    for (ownedStreams *entry = registeredStreams; entry && !found; entry = entry->next)
+        if (entry->streams[0] == parameters->stdin) found = entry;
+    parameters->inputOwner = NULL;
+    // A redirected command can still read the session tty through ios_opentty.
+    for (ownedStreams *entry = registeredStreams; entry; entry = entry->next) {
+        if (entry != found && (entry->streams[0] == parameters->stdin ||
+            (parameters->session && entry->streams[0] == parameters->session->tty))) {
+            parameters->inputOwner = entry;
+            entry->active++;
+            break;
+        }
+    }
+    parameters->ownedStreams = found;
+    parameters->ownedRunning = false;
+    parameters->commandStarted = false;
+    parameters->ownedThread = NULL;
+    parameters->ownedNext = NULL;
+    if (found) {
+        parameters->ownedNext = found->commands;
+        found->commands = parameters;
+        found->active++;
+    }
+    pthread_mutex_unlock(&ownedStreamsMutex);
+}
+
+static void leaveOwnedCommand(functionParameters *parameters) {
+    ownedStreams *entry = parameters->ownedStreams;
+    ownedStreams *inputOwner = parameters->inputOwner;
+    if (!entry && !inputOwner) return;
+    pthread_mutex_lock(&ownedStreamsMutex);
+    if (inputOwner && --inputOwner->active == 0)
+        pthread_cond_broadcast(&inputOwner->idle);
+    parameters->inputOwner = NULL;
+    if (!entry) {
+        pthread_mutex_unlock(&ownedStreamsMutex);
+        return;
+    }
+    functionParameters **command = &entry->commands;
+    while (*command && *command != parameters) command = &(*command)->ownedNext;
+    if (*command) {
+        *command = parameters->ownedNext;
+        if (--entry->active == 0) pthread_cond_broadcast(&entry->idle);
+    }
+    pthread_mutex_unlock(&ownedStreamsMutex);
+}
+
+int ashell_cancel_owned_streams(void *registration) {
+    ownedStreams *entry = registration;
+    if (!entry) return EINVAL;
+    int error = 0;
+    pthread_mutex_lock(&ownedStreamsMutex);
+    entry->cancelled = true;
+    for (functionParameters *command = entry->commands; command; command = command->ownedNext) {
+        if (!command->ownedRunning) continue;
+        int result = pthread_cancel(command->ownedThread);
+        if (result && result != ESRCH && !error) error = result;
+    }
+    pthread_mutex_unlock(&ownedStreamsMutex);
+    return error;
+}
+
+static bool ownedCommandCancelled(functionParameters *parameters) {
+    pthread_mutex_lock(&ownedStreamsMutex);
+    ownedStreams *entry = parameters->ownedStreams;
+    bool cancelled = entry && entry->cancelled;
+    pthread_mutex_unlock(&ownedStreamsMutex);
+    return cancelled;
+}
+
+static void *run_function(void *parameters);
+static void cleanup_function(void *parameters);
+
+static int createOwnedCommand(volatile pthread_t *thread, functionParameters *parameters) {
+    prepareOwnedCommand(parameters);
+    int error = pthread_create((pthread_t *)thread, NULL, run_function, parameters);
+    if (error) {
+        // Release the allocated synthetic PID before cleanup waits on pid_mtx.
+        ios_storeThreadId(0);
+        sessionParameters *session = parameters->session;
+        int cancellation;
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancellation);
+        fprintf(parameters->stderr, "Cannot start native command: %s\n", strerror(error));
+        parameters->argv_ref = parameters->argv;
+        cleanup_function(parameters);
+        session->global_errno = 126;
+        pthread_setcancelstate(cancellation, NULL);
+    }
+    return error;
+}
+
+static void unlockOwnedStreams(void *mutex) {
+    pthread_mutex_unlock(mutex);
+}
+
+void ashell_wait_owned_streams(void *registration) {
+    ownedStreams *entry = registration;
+    if (!entry) return;
+    pthread_mutex_lock(&ownedStreamsMutex);
+    // pthread_cond_wait reacquires this mutex before cancellation cleanup.
+    pthread_cleanup_push(unlockOwnedStreams, &ownedStreamsMutex);
+    while (entry->active) pthread_cond_wait(&entry->idle, &ownedStreamsMutex);
+    pthread_cleanup_pop(1);
+}
+
+void ashell_unregister_owned_streams(void **registration) {
+    if (!registration || !*registration) return;
+    ashell_wait_owned_streams(*registration);
+    pthread_mutex_lock(&ownedStreamsMutex);
+    ownedStreams **entry = &registeredStreams;
+    while (*entry && *entry != *registration) entry = &(*entry)->next;
+    if (*entry) {
+        ownedStreams *removed = *entry;
+        *entry = removed->next;
+        pthread_cond_destroy(&removed->idle);
+        free(removed);
+    }
+    pthread_mutex_unlock(&ownedStreamsMutex);
+    *registration = NULL;
+}
+
 static void cleanup_function(void* parameters) {
     // This function is called when pthread_exit() or ios_kill() is called
     pthread_t current_thread = pthread_self();
     functionParameters *p = (functionParameters *) parameters;
+    // Cleanup must finish even when another owned descendant is cancelled.
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    pthread_mutex_lock(&ownedStreamsMutex);
+    p->ownedRunning = false;
+    pthread_mutex_unlock(&ownedStreamsMutex);
     bool backgroundCommand = p->backgroundCommand;
     char* commandName = p->argv[0];
     char* currentSessionCommandName = NULL;
@@ -420,7 +608,7 @@ static void cleanup_function(void* parameters) {
     NSLog(@"cleanup_function: %s thread_id %x pid: %d stdin %d stdout %d stderr %d isPipeOut %d", commandName, current_thread, ios_currentPid(), fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
     NSLog(@"currentSession->commandName: %s root_thread: %x", currentSessionCommandName, currentSession->current_command_root_thread);
     NSLog(@"Num commands stored: %d", currentSession->numCommand);
-    if ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0)) {
+    if (p->commandStarted && ((strcmp(commandName, "less") == 0) || (strcmp(commandName, "more") == 0))) {
         if ((strlen(currentSessionCommandName) > 0)
             && (strcmp(currentSessionCommandName, "less") != 0)
             && (strcmp(currentSessionCommandName, "more") != 0)) {
@@ -443,19 +631,20 @@ static void cleanup_function(void* parameters) {
         }
         currentSession->activePager = FALSE;
     }
-    fcntl(fileno(thread_stdin), F_SETNOSIGPIPE);
-    fcntl(fileno(thread_stdout), F_SETNOSIGPIPE);
-    fcntl(fileno(thread_stderr), F_SETNOSIGPIPE);
-    fflush(thread_stdin);
-    fflush(thread_stdout);
-    fflush(thread_stderr);
+    if (p->commandStarted) {
+        fcntl(fileno(thread_stdin), F_SETNOSIGPIPE);
+        fcntl(fileno(thread_stdout), F_SETNOSIGPIPE);
+        fcntl(fileno(thread_stderr), F_SETNOSIGPIPE);
+        fflush(thread_stdin);
+        fflush(thread_stdout);
+        fflush(thread_stderr);
+    }
     // release parameters:
     NSLog(@"Terminating command: %s thread_id %x stdin %d stdout %d stderr %d isPipeOut %d", commandName, current_thread, fileno(p->stdin), fileno(p->stdout), fileno(p->stderr), p->isPipeOut);
     // Can we close stdin too?
     bool mustCloseStdin = fileno(p->stdin) != fileno(stdin);
     if (strncmp(commandName, "python", 6) == 0) mustCloseStdin = false;
     bool isSh = strcmp(p->argv[0], "sh") == 0;
-    bool isWasm = strcmp(p->argv[0], "wasm") == 0;
     bool mustCloseStderr = (fileno(p->stderr) != fileno(stderr)) && (fileno(p->stderr) != fileno(p->stdout))  && (fileno(p->stdout) != fileno(p->stdin));
     if (!isSh) {
         mustCloseStderr &= p->isPipeErr;
@@ -469,7 +658,7 @@ static void cleanup_function(void* parameters) {
     cleanup_counter++;
     while (pthread_mutex_trylock(&pid_mtx) != 0) { } // Someone else has the lock, so we wait.
     pthread_mutex_unlock(&pid_mtx);
-    if (mustCloseStderr) {
+    if (mustCloseStderr && !callerOwnsStream(p->stderr)) {
         NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
         int res = fclose(p->stderr);
     }
@@ -481,7 +670,7 @@ static void cleanup_function(void* parameters) {
             mustCloseStdout &= fileno(p->stdout) != fileno(currentSession->stdout);
         }
     }
-    if (mustCloseStdout) {
+    if (mustCloseStdout && !callerOwnsStream(p->stdout)) {
         int fd = fileno(p->stdout);
         NSLog(@"Closing stdout (mustCloseStdout): %d \n", fileno(p->stdout));
         int res = fclose(p->stdout);
@@ -493,12 +682,6 @@ static void cleanup_function(void* parameters) {
         if (currentSession != nil) {
             mustCloseStdin &= fileno(p->stdin) != fileno(currentSession->stdin);
         }
-        if (isWasm) {
-            // Don't close stdin for Wasm commands piped into others, but do it for files
-            char filePath[MAXPATHLEN];
-            if (fcntl(fileno(p->stdin), F_GETPATH, filePath) < 0)
-                mustCloseStdin &= false;
-        }
         // commands started by Python: Python will close stdin (Lua and Perl? not broken, AFAIK)
         // The current command is still counted until after the root-thread wait.
         if ((currentSession->numCommand > 1) && (strncmp(currentSession->commandName[currentSession->numCommand - 2], "python", 6) == 0)) {
@@ -506,7 +689,7 @@ static void cleanup_function(void* parameters) {
             mustCloseStdin &= false;
         }
     }
-    if (mustCloseStdin) {
+    if (mustCloseStdin && !callerOwnsStream(p->stdin)) {
         NSLog(@"Closing stdin (mustCloseStdin): %d \n", fileno(p->stdin));
         int res = fclose(p->stdin);
     }
@@ -516,13 +699,14 @@ static void cleanup_function(void* parameters) {
     // If the command was started as a pipe, we wait for the first command to finish sending data
     // There is an exception for ssh, which can be started by scp or sftp. They will wait for it.
     // Another exception for "dash -c": one command is reading its output
-    if ((!joinMainThread) && p->isPipeOut
+    if (p->commandStarted && (!joinMainThread) && p->isPipeOut
         && (strcmp(commandName, "ssh") != 0) // not ssh
         && (! ((strcmp(commandName, "dash") == 0) && (p->argc >= 2) && (strcmp(p->argv_ref[1], "-c") == 0)))) { // not "dash -c something"
         if (currentSession->current_command_root_thread != 0) {
             if (currentSession->current_command_root_thread != current_thread) {
                 NSLog(@"Thread %x is waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
                 while ((currentSession->current_command_root_thread != 0) && (currentSession->current_command_root_thread != current_thread)) {
+                    if (ownedCommandCancelled(p)) break;
                     fflush(currentSession->stdout);
                     fflush(currentSession->stderr);
                 }
@@ -570,9 +754,9 @@ static void cleanup_function(void* parameters) {
     // if (strcmp(currentSession->commandName, commandName) == 0) {
     //     currentSession->commandName[0] = 0;
     // }
-    bool isLastThread = (currentSession->lastThreadId == current_thread);
+    bool isLastThread = p->commandStarted && (currentSession->lastThreadId == current_thread);
     for (int i = 0; i < p->argc; i++) free(p->argv_ref[i]);
-    free(p->argv_ref);
+    if (p->argv_ref != p->argv) free(p->argv_ref);
     free(p->argv);
     bool restoredWindowSignal = false;
     bool sharedImageIsRunning = false;
@@ -628,31 +812,33 @@ static void cleanup_function(void* parameters) {
     if ((p->dlHandle != RTLD_SELF) && (p->dlHandle != RTLD_MAIN_ONLY)
         && (p->dlHandle != RTLD_DEFAULT) && (p->dlHandle != RTLD_NEXT)) dlclose(p->dlHandle);
     for (int number = 1; number < NSIG; number++) free(p->savedSignalImagePaths[number]);
-    free(parameters); // This was malloc'ed in ios_system
+    // Keep parameters alive while the cancellation list still references them.
     if (isLastThread) {
         NSLog(@"Terminating lastthread of currentSession %x lastThreadId %x pid: %d\n", current_thread, currentSession->lastThreadId, ios_currentPid());
         currentSession->lastThreadId = 0;
     } else {
         NSLog(@"Current thread %x lastthread %x pid: %d\n", pthread_self(), currentSession->lastThreadId, ios_currentPid());
     }
-    if (backgroundCommand) {
+    if (p->commandStarted && backgroundCommand) {
         // If it's a background command, call ios_releaseBackgroundThread:
         // NSLog(@"Releasing a backgroundCommand\n");
         ios_releaseBackgroundThread(current_thread);
-    } else {
+    } else if (p->commandStarted) {
         if (toNonInteractive) {
             ios_stopInteractive();
         }
         ios_releaseThread(current_thread);
     }
-    if (currentSession->current_command_root_thread == current_thread) {
+    if (p->commandStarted && currentSession->current_command_root_thread == current_thread) {
         currentSession->current_command_root_thread = 0;
     }
-    if (currentSession->mainThreadId == current_thread) {
+    if (p->commandStarted && currentSession->mainThreadId == current_thread) {
         currentSession->mainThreadId = 0;
     }
     cleanup_counter--;
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
+    leaveOwnedCommand(p);
+    free(parameters); // This was malloc'ed in ios_system
 }
 
 // Avoir calling crash_handler several times:
@@ -675,6 +861,8 @@ void crash_handler(int sig) {
 
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
+    p->commandStarted = true;
+    currentOwnedStreams = p->ownedStreams;
     NSLog(@"Storing thread_id: %x pid: %d isPipeOut: %x isPipeErr: %x stdin %d stdout %d stderr %d command= %s\n", pthread_self(), ios_currentPid(), p->isPipeOut, p->isPipeErr,
           (p->stdin == nil) ? -1 : fileno(p->stdin),
           (p->stdout == nil) ? -1 : fileno(p->stdout),
@@ -742,7 +930,12 @@ static void* run_function(void* parameters) {
     pthread_cleanup_push(cleanup_function, parameters);
     @try
     {
-        int retval = p->function(p->argc, p->argv);
+        pthread_mutex_lock(&ownedStreamsMutex);
+        bool cancelled = currentOwnedStreams && currentOwnedStreams->cancelled;
+        p->ownedThread = pthread_self();
+        p->ownedRunning = !cancelled;
+        pthread_mutex_unlock(&ownedStreamsMutex);
+        int retval = cancelled ? 130 : p->function(p->argc, p->argv);
         if (currentSession != nil) currentSession->global_errno = retval;
     }
     @catch (NSException *exception)
@@ -4019,8 +4212,7 @@ int ios_system(const char* inputCmd) {
                     __block volatile pthread_t _tid = NULL;
                     [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
                         currentSession->isMainThread = false;
-                        pthread_create(&_tid, NULL, run_function, params);
-                        while (_tid == NULL) { }
+                        if (createOwnedCommand(&_tid, params) != 0) return;
                         // ios_storeThreadId(_tid);
                         if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
                         if (!joinMainThread) pthread_detach(_tid); // a thread must be either joined or detached
@@ -4037,32 +4229,32 @@ int ios_system(const char* inputCmd) {
                 } else {
                     currentSession->isMainThread = false;
                     volatile pthread_t _tid = NULL;
-                    pthread_create(&_tid, NULL, run_function, params);
-                    while (_tid == NULL) { }
-                    // ios_storeThreadId(_tid);
-                    if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
-                    // Wait for this process to finish:
-					if (joinMainThread) {
-						pthread_join(_tid, NULL);
-						// If there are auxiliary process, also wait for them:
-						if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
-						currentSession->lastThreadId = 0;
-						currentSession->current_command_root_thread = 0;
-					} else {
-						pthread_detach(_tid); // a thread must be either joined or detached
-					}
+                    if (createOwnedCommand(&_tid, params) == 0) {
+                        // ios_storeThreadId(_tid);
+                        if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
+                        // Wait for this process to finish:
+                        if (joinMainThread) {
+                            pthread_join(_tid, NULL);
+                            // If there are auxiliary process, also wait for them:
+                            if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
+                            currentSession->lastThreadId = 0;
+                            currentSession->current_command_root_thread = 0;
+                        } else {
+                            pthread_detach(_tid); // a thread must be either joined or detached
+                        }
+                    }
                     currentSession->isMainThread = true;
                 }
             } else {
                 NSLog(@"Starting command %s, global_errno= %d\n", command, currentSession->global_errno);
                 // Don't send signal if not in main thread. Also, don't join threads.
                 volatile pthread_t _tid_local = NULL;
-                pthread_create(&_tid_local, NULL, run_function, params);
-                // The last command on the command line (with multiple pipes) will be created first
-                while (_tid_local == NULL) { }; // Wait until thread has actually started
-                // fprintf(stderr, "Started thread = %x\n", _tid_local);
-                if (currentSession->lastThreadId == 0) currentSession->lastThreadId = _tid_local; // will be joined later
-                else pthread_detach(_tid_local); // a thread must be either joined or detached.
+                if (createOwnedCommand(&_tid_local, params) == 0) {
+                    // The last command on the command line (with multiple pipes) will be created first
+                    // fprintf(stderr, "Started thread = %x\n", _tid_local);
+                    if (currentSession->lastThreadId == 0) currentSession->lastThreadId = _tid_local; // will be joined later
+                    else pthread_detach(_tid_local); // a thread must be either joined or detached.
+                }
             }
         } else {
             fprintf(params->stderr, "%s: command not found\n", argv[0]);
@@ -4071,10 +4263,10 @@ int ios_system(const char* inputCmd) {
             // If command output was redirected to a pipe, we still need to close it.
             // (to warn the other command that it can stop waiting)
             // We still need this step because there can be multiple pipes.
-            if (params->stdout != currentSession->stdout) {
+            if ((params->stdout != currentSession->stdout) && !callerOwnsStream(params->stdout)) {
                 fclose(params->stdout);
             }
-            if ((params->stderr != currentSession->stderr) && (params->stderr != params->stdout)) {
+            if ((params->stderr != currentSession->stderr) && (params->stderr != params->stdout) && !callerOwnsStream(params->stderr)) {
                 fclose(params->stderr);
             }
             if ((handle != NULL) && (handle != RTLD_SELF)
@@ -4094,7 +4286,7 @@ int ios_system(const char* inputCmd) {
     }
     NSLog(@"returning from ios_system, global_errno= %d\n", currentSession->global_errno);
     free(originalCommand); // releases cmd, which was a strdup of inputCommand
-    fflush(thread_stdin);
+    if (!callerOwnsStream(thread_stdin)) fflush(thread_stdin);
     fflush(thread_stdout);
     fflush(thread_stderr);
     return currentSession->global_errno;

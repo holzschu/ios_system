@@ -213,7 +213,7 @@ md5_main(int argc, char *argv[])
 			} else {
 				//if (qflag)
         if (md5_qflag)
-					printf("%s\n", p);
+					fprintf(thread_stdout, "%s\n", p);
         //else if (rflag)
         else if (md5_rflag)
 					printf("%s %s\n", p, *argv);
@@ -242,7 +242,7 @@ MDString(Algorithm_t *alg, const char *string)
 	//if (qflag)
   if (md5_qflag)
 #ifdef __APPLE__
-		printf("%s\n", Digest_Data(alg->algorithm, string, len, buf));
+		fprintf(thread_stdout, "%s\n", Digest_Data(alg->algorithm, string, len, buf));
 	//else if (rflag)
   else if (md5_rflag)
 		printf("%s \"%s\"\n", Digest_Data(alg->algorithm, string, len, buf), string);
