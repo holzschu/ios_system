@@ -13,9 +13,22 @@ int emit_main(int argc, char **argv) {
     return 0;
 }
 
-// Stand-in consumer registered under the name "wasm": reads its pipe to EOF.
+// Stand-in producer of 1 MiB: stops at the first failed write.
+int emitbig_main(int argc, char **argv) {
+    char block[1024];
+    memset(block, 'x', sizeof(block));
+    for (int i = 0; i < 1024; i++) {
+        if (fwrite(block, 1, sizeof(block), thread_stdout) != sizeof(block)) return 1;
+        fflush(thread_stdout);
+    }
+    return 0;
+}
+
+// Stand-in consumer registered under the name "wasm": reads its pipe to EOF,
+// or exits at once without reading when given an argument.
 int wasm_main(int argc, char **argv) {
     char block[1024];
+    if (argc > 1) return 0;
     while (fread(block, 1, sizeof(block), thread_stdin) > 0) {}
     return 0;
 }
@@ -38,6 +51,7 @@ int main(int argc, char **argv) {
         ios_switchSession("wasm-stdin-close-probe");
         ios_setStreams(stdin, stdout, stderr);
         replaceCommand(@"emit", @"emit_main", false);
+        replaceCommand(@"emitbig", @"emitbig_main", false);
         replaceCommand(@"wasm", @"wasm_main", false);
         joinMainThread = true;
         ios_system("emit | wasm");
@@ -49,6 +63,10 @@ int main(int argc, char **argv) {
         int after = openDescriptors();
         BOOL passed = after <= before;
         fprintf(stderr, "descriptors after 50 pipelines: before=%d after=%d %s\n", before, after, passed ? "PASS" : "FAIL");
+        // A consumer that exits without reading must not leave the producer blocked on a full pipe.
+        alarm(20);
+        ios_system("emitbig | wasm skip");
+        fprintf(stderr, "producer released after non-reading consumer: PASS\n");
         alarm(0);
         return passed ? 0 : 1;
     }
