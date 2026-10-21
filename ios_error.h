@@ -18,6 +18,27 @@ extern "C" {
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/signal.h>
+#include <getopt.h>
+
+// getopt state is per command thread: libc's optind is shared by every command running at the same time.
+// <unistd.h> and <getopt.h> are already included, so the renaming below cannot touch their declarations.
+// Code that includes this header gets ios_getopt and ios_getopt_long on that state. The exported getopt and
+// getopt_long still work on the shared variables, for frameworks built without this header.
+extern int *ios_optind_ref(void), *ios_opterr_ref(void), *ios_optopt_ref(void), *ios_optreset_ref(void);
+extern char **ios_optarg_ref(void);
+// Like errno: a function call that returns the address of the calling thread's variable, so a source that
+// redeclares "extern int optind;" inside a function still compiles.
+#define optind (*ios_optind_ref())
+#define opterr (*ios_opterr_ref())
+#define optopt (*ios_optopt_ref())
+#define optreset (*ios_optreset_ref())
+#define optarg (*ios_optarg_ref())
+extern int ios_getopt(int, char * const *, const char *);
+extern int ios_getopt_long(int, char * const *, const char *, const struct option *, int *);
+extern int ios_getopt_long_only(int, char * const *, const char *, const struct option *, int *);
+#define getopt ios_getopt
+#define getopt_long ios_getopt_long
+#define getopt_long_only ios_getopt_long_only
 
 /* #define errx compileError
 #define err compileError

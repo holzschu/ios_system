@@ -191,7 +191,7 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 	int opt = '?';
 	int required = 0;
 
-	bsdtar->optarg = NULL;
+	bsdtar->opt_arg = NULL;
 
 	/* First time through, initialize everything. */
 	if (state == state_start) {
@@ -225,8 +225,8 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 			if (p == NULL)
 				return ('?');
 			if (p[1] == ':') {
-				bsdtar->optarg = *bsdtar->argv;
-				if (bsdtar->optarg == NULL) {
+				bsdtar->opt_arg = *bsdtar->argv;
+				if (bsdtar->opt_arg == NULL) {
 					lafe_warnc(0,
 					    "Option %c requires an argument",
 					    opt);
@@ -307,7 +307,7 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 				long_prefix = "-W "; /* For clearer errors. */
 			} else {
 				state = state_next_word;
-				bsdtar->optarg = opt_word;
+				bsdtar->opt_arg = opt_word;
 			}
 		}
 	}
@@ -321,7 +321,7 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 		p = strchr(opt_word, '=');
 		if (p != NULL) {
 			optlength = (size_t)(p - opt_word);
-			bsdtar->optarg = (char *)(uintptr_t)(p + 1);
+			bsdtar->opt_arg = (char *)(uintptr_t)(p + 1);
 		} else {
 			optlength = strlen(opt_word);
 		}
@@ -360,9 +360,9 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 		/* We've found a unique match; does it need an argument? */
 		if (match->required) {
 			/* Argument required: get next word if necessary. */
-			if (bsdtar->optarg == NULL) {
-				bsdtar->optarg = *bsdtar->argv;
-				if (bsdtar->optarg == NULL) {
+			if (bsdtar->opt_arg == NULL) {
+				bsdtar->opt_arg = *bsdtar->argv;
+				if (bsdtar->opt_arg == NULL) {
 					lafe_warnc(0,
 					    "Option %s%s requires an argument",
 					    long_prefix, match->name);
@@ -373,7 +373,7 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 			}
 		} else {
 			/* Argument forbidden: fail if there is one. */
-			if (bsdtar->optarg != NULL) {
+			if (bsdtar->opt_arg != NULL) {
 				lafe_warnc(0,
 				    "Option %s%s does not allow an argument",
 				    long_prefix, match->name);
