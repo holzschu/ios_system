@@ -166,3 +166,9 @@ Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wa
 `concurrent-fork.m` starts eight threads that each run 400 short commands behind `ios_fork`, `ios_system` and `ios_waitpid`. A command that ends must not move `current_pid` under a thread that has just forked; if it does, the new command's slot stays at "not started" and its `ios_waitpid` never returns.
 
 Build and run it like `waitpid-idle.m` (`-F` the framework directory, `tests/concurrent-fork.m`, `xcrun simctl spawn`). Expected: exit 0 and `concurrent-fork: 8 threads x 400 commands PASS`. Without the compare-and-swap in `ios_restoreParentPid`: exit 124 and `FAIL, N of 8 threads finished`, bounded by a two-minute alarm that prints the stacks of all threads before it exits (`hang-dump.h`, via `sample`).
+
+# Pid admission
+
+`pid-admission.m` starts 200 threads that each run `ios_fork`, `ios_system("hold")` and `ios_waitpid`, with only 127 pids available. `hold` blocks until the test releases it, so while the table is full nothing ends. The callers beyond the limit must wait for a pid and then run. The test measures the CPU the 73 waiting callers use in one second, and fails above 0.5 s. A watchdog thread prints the stacks of all threads (`hang-dump.h`) and exits 124 when nothing has moved for 10 seconds.
+
+Build it like `concurrent-fork.m`, with `-I .` for `ios_error.h` and a `commandDictionary.plist` next to the binary. Expected: exit 0 and `pid-admission: 200 commands over 127 pids, wall=3.1s PASS`, after a line with the CPU of the waiting callers 0.00s. When all pids are taken the caller used to loop on the pid table with `pid_mtx` held while the ending commands waited for `pid_mtx` to free a pid: exit 124, `0 of 200 commands finished`, the waiting callers use about 1 s of CPU in the window, and 72 of them wait in `pthread_mutex_lock`.
