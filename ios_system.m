@@ -406,7 +406,20 @@ static pthread_mutex_t commandSignalMutex = PTHREAD_MUTEX_INITIALIZER;
 static functionParameters *runningSignalCommands = NULL;
 
 extern pthread_mutex_t pid_mtx;
-extern _Atomic(int) cleanup_counter;
+extern void ios_cleanupBegin(void);
+extern void ios_cleanupEnd(void);
+extern void ios_cleanupWait(void);
+
+// Commands that end in the middle of a pipeline wait here until the first command of the pipeline has ended.
+static pthread_mutex_t rootThreadMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t rootThreadCleared = PTHREAD_COND_INITIALIZER;
+
+static void clearRootThread(sessionParameters *session) {
+    pthread_mutex_lock(&rootThreadMutex);
+    session->current_command_root_thread = 0;
+    pthread_cond_broadcast(&rootThreadCleared);
+    pthread_mutex_unlock(&rootThreadMutex);
+}
 extern void ios_releaseBackgroundThread(pthread_t thread);
 extern int startedPreparingWebAssemblyCommand(void);
 extern __thread int currentWebAssemblyCommandOrder;
@@ -657,8 +670,8 @@ static void cleanup_function(void* parameters) {
     }
     // Some programs stop waiting as soon as stdout/stderr close (which makes sense)
     // This fclose does close the fileno, but I find it re-opened later.
-    cleanup_counter++;
-    while (pthread_mutex_trylock(&pid_mtx) != 0) { } // Someone else has the lock, so we wait.
+    ios_cleanupBegin();
+    pthread_mutex_lock(&pid_mtx); // Someone else may have the lock, so we wait.
     pthread_mutex_unlock(&pid_mtx);
     if (mustCloseStderr && !callerOwnsStream(p->stderr)) {
         NSLog(@"Closing stderr (mustCloseStderr): %d \n", fileno(p->stderr));
@@ -696,7 +709,7 @@ static void cleanup_function(void* parameters) {
         int res = fclose(p->stdin);
     }
     // Upstream commands may still need ios_fork/chdir while we wait.
-    cleanup_counter--;
+    ios_cleanupEnd();
     // Close our streams before waiting: an early reader must unblock upstream writers.
     // If the command was started as a pipe, we wait for the first command to finish sending data
     // There is an exception for ssh, which can be started by scp or sftp. They will wait for it.
@@ -711,15 +724,23 @@ static void cleanup_function(void* parameters) {
                     if (ownedCommandCancelled(p)) break;
                     fflush(currentSession->stdout);
                     fflush(currentSession->stderr);
+                    // Sleep until the root thread ends; the timeout is for cancellation, which has no condition to signal.
+                    struct timespec deadline;
+                    clock_gettime(CLOCK_REALTIME, &deadline);
+                    deadline.tv_nsec += 50 * 1000 * 1000;
+                    if (deadline.tv_nsec >= 1000000000) { deadline.tv_sec++; deadline.tv_nsec -= 1000000000; }
+                    pthread_mutex_lock(&rootThreadMutex);
+                    if (currentSession->current_command_root_thread != 0) pthread_cond_timedwait(&rootThreadCleared, &rootThreadMutex, &deadline);
+                    pthread_mutex_unlock(&rootThreadMutex);
                 }
                 NSLog(@"Thread %x is done waiting for root_thread of currentSession: %x \n", current_thread, currentSession->current_command_root_thread);
             } else {
                 NSLog(@"Terminating root_thread of currentSession %x \n", current_thread);
-                currentSession->current_command_root_thread = 0;
+                clearRootThread(currentSession);
             }
         }
     }
-    cleanup_counter++;
+    ios_cleanupBegin();
     // Specific to run multiple python3 interpreters:
     NSString* commandNameString = [NSString stringWithCString: commandName encoding:NSUTF8StringEncoding];
     if (strncmp(commandName, "python", 6) == 0) {
@@ -832,12 +853,12 @@ static void cleanup_function(void* parameters) {
         ios_releaseThread(current_thread);
     }
     if (p->commandStarted && currentSession->current_command_root_thread == current_thread) {
-        currentSession->current_command_root_thread = 0;
+        clearRootThread(currentSession);
     }
     if (p->commandStarted && currentSession->mainThreadId == current_thread) {
         currentSession->mainThreadId = 0;
     }
-    cleanup_counter--;
+    ios_cleanupEnd();
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
     leaveOwnedCommand(p);
     free(parameters); // This was malloc'ed in ios_system
@@ -1406,7 +1427,7 @@ void __cd_to_dir(NSString *newDir, NSFileManager *fileManager) {
 #undef fchdir
 int ios_fchdir(const int fd) {
     // NSLog(@"Locking for thread %x in ios_fchdir\n", pthread_self());
-    while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
+    ios_cleanupWait(); // Don't chdir while a command is ending.
     // We cannot have someone change the current directory while a command is starting or terminating.
     // hence the mutex_lock here.
     pthread_mutex_lock(&pid_mtx);
@@ -1450,7 +1471,7 @@ int ios_fchdir(const int fd) {
 int ios_fchdir_nolock(const int fd) {
     // NSLog(@"fchdir_nolock: %x thread %x\n", fd, pthread_self());
     // Same function as fchdir, except it does not lock. To be called when resetting directory after fork().
-    while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
+    ios_cleanupWait(); // Don't chdir while a command is ending.
     int result = fchdir(fd);
     if (result < 0) {
         return result;
@@ -1537,7 +1558,7 @@ int chdir_nolock(const char* path) {
 // For some Unix commands that call chdir:
 // Is also called at the end of the execution of each command
 int chdir(const char* path) {
-    while (cleanup_counter > 0) { } // Don't chdir while a command is ending.
+    ios_cleanupWait(); // Don't chdir while a command is ending.
     // NSLog(@"Locking for thread %x in chdir, cd %s\n", pthread_self(), path);
     // We cannot have someone change the current directory while a command is starting or terminating.
     // hence the mutex_lock here.
@@ -4231,7 +4252,7 @@ int ios_system(const char* inputCmd) {
 						// If there are auxiliary process, also wait for them:
 						if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
 						currentSession->lastThreadId = 0;
-						currentSession->current_command_root_thread = 0;
+						clearRootThread(currentSession);
 					}
                     currentSession->isMainThread = true;
                 } else {
@@ -4246,7 +4267,7 @@ int ios_system(const char* inputCmd) {
                             // If there are auxiliary process, also wait for them:
                             if (currentSession->lastThreadId > 0) pthread_join(currentSession->lastThreadId, NULL);
                             currentSession->lastThreadId = 0;
-                            currentSession->current_command_root_thread = 0;
+                            clearRootThread(currentSession);
                         } else {
                             pthread_detach(_tid); // a thread must be either joined or detached
                         }

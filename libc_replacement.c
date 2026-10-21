@@ -203,8 +203,35 @@ static int pid_overflow = 0;
 static pid_t current_pid = 0;
 // We need to lock current_pid during operations
 pthread_mutex_t pid_mtx = PTHREAD_MUTEX_INITIALIZER;
-_Atomic(int) cleanup_counter = 0;
+// Number of commands that are ending. Callers that change the directory or take a pid wait until it is zero.
+static _Atomic(int) cleanup_counter = 0;
+static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cleanup_idle = PTHREAD_COND_INITIALIZER;
 static pid_t last_allocated_pid = 0;
+
+void ios_cleanupBegin(void) {
+    pthread_mutex_lock(&cleanup_mutex);
+    cleanup_counter++;
+    pthread_mutex_unlock(&cleanup_mutex);
+}
+
+void ios_cleanupEnd(void) {
+    pthread_mutex_lock(&cleanup_mutex);
+    if (--cleanup_counter == 0) pthread_cond_broadcast(&cleanup_idle);
+    pthread_mutex_unlock(&cleanup_mutex);
+}
+
+void ios_cleanupWait(void) {
+    // pthread_cond_wait is a cancellation point and returns with cleanup_mutex held: a cancelled command would run
+    // cleanup_function, whose ios_cleanupBegin locks cleanup_mutex again and never returns. The spin it replaces
+    // was not a cancellation point; the cancel now arrives at the next one after the wait.
+    int cancellation;
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancellation);
+    pthread_mutex_lock(&cleanup_mutex);
+    while (cleanup_counter > 0) pthread_cond_wait(&cleanup_idle, &cleanup_mutex);
+    pthread_mutex_unlock(&cleanup_mutex);
+    pthread_setcancelstate(cancellation, NULL);
+}
 
 
 void makeGlobal(void) {
@@ -230,7 +257,7 @@ void newPreviousDirectory(void) {
 // We do not recycle process ids too quickly to avoid collisions.
 void storeEnvironment(char* envp[]);
 static inline const pid_t ios_nextAvailablePid(void) {
-    while (cleanup_counter > 0) { } // Don't start a command while another is ending.
+    ios_cleanupWait(); // Don't start a command while another is ending.
     // fprintf(stderr, "Locking in ios_nextAvailablePid\n");
     pthread_mutex_lock(&pid_mtx);
     char** currentEnvironment = environmentVariables(current_pid);
