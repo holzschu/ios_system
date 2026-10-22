@@ -1,0 +1,72 @@
+name: FFmpeg CI
+
+on:
+  pull_request:
+    paths:
+    - build-ffmpeg.sh
+    - verify-ffmpeg.sh
+    - .github/workflows/ffmpeg.yml
+  workflow_dispatch:
+  push:
+    tags:
+    - 'ffmpeg-v*'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 360
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: Install Autotools on the CI runner
+      run: brew install autoconf automake libtool
+    - name: Toolchain
+      run: |
+        xcodebuild -version
+        for tool in cmake ninja autoreconf automake pkg-config; do command -v "$tool"; done
+        metal=$(xcrun --sdk macosx -f metal)
+        test -x "$(dirname "$metal")/metallib"
+    - name: Build FFmpeg and auxiliary libraries
+      run: bash build-ffmpeg.sh
+    - name: Compare published command ABI and configuration
+      run: bash verify-ffmpeg.sh
+    - uses: actions/upload-artifact@v7
+      with:
+        name: ffmpeg-xcframeworks
+        if-no-files-found: error
+        include-hidden-files: true
+        path: |
+          .build/ffmpeg/output/*.xcframework.zip
+          .build/ffmpeg/output/checksums.txt
+          .build/ffmpeg/output/release.md
+          .build/ffmpeg/output/comparison
+          .build/ffmpeg/output/*/ffmpeg-config.*
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/ffmpeg-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: ffmpeg-xcframeworks
+    - name: Publish versioned FFmpeg assets
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" *.xcframework.zip checksums.txt
+        else
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" --notes-file release.md *.xcframework.zip checksums.txt
+        fi
