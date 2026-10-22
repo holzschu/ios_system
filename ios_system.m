@@ -840,7 +840,7 @@ static void cleanup_function(void* parameters) {
     cleanup_counter--;
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
     leaveOwnedCommand(p);
-    free(parameters); // This was malloc'ed in ios_system
+    free(parameters); // Allocated in ios_system
 }
 
 // Avoir calling crash_handler several times:
@@ -3229,7 +3229,7 @@ int ios_system(const char* inputCmd) {
     // Search for input file "< " and output file " >"
     if (!inputFileMarker) inputFileMarker = command;
     outputFileMarker = inputFileMarker;
-    functionParameters *params = (functionParameters*) malloc(sizeof(functionParameters));
+    functionParameters *params = (functionParameters*) calloc(1, sizeof(functionParameters));
     if (params == NULL) {
         NSLog(@"Unable to allocate params in ios_system");
         return -1;
@@ -4281,7 +4281,7 @@ int ios_system(const char* inputCmd) {
                 && (handle != RTLD_MAIN_ONLY)
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
-            free(params); // This was malloc'ed in ios_system
+            free(params); // Allocated in ios_system
             ios_storeThreadId(0);
             currentSession->global_errno = 127;
             // TODO: this should also raise an exception, for python scripts
