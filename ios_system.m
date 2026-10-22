@@ -217,7 +217,10 @@ static bool scpIsRunning = false;
 char* sh_session = "sh_session";
 
 // replace system-provided exit() by our own:
+extern void ios_storeCommandStatus(int status);
+extern void ios_storePidStatus(pid_t pid, int status);
 void ios_exit(int n) {
+    ios_storeCommandStatus(n);
     if (currentSession != NULL) {
         currentSession->global_errno = n;
     }
@@ -545,6 +548,7 @@ static int createOwnedCommand(volatile pthread_t *thread, functionParameters *pa
     prepareOwnedCommand(parameters);
     int error = pthread_create((pthread_t *)thread, NULL, run_function, parameters);
     if (error) {
+        ios_storePidStatus(ios_currentPid(), 126);
         // Release the allocated synthetic PID before cleanup waits on pid_mtx.
         ios_storeThreadId(0);
         sessionParameters *session = parameters->session;
@@ -939,6 +943,7 @@ static void* run_function(void* parameters) {
         p->ownedRunning = !cancelled;
         pthread_mutex_unlock(&ownedStreamsMutex);
         int retval = cancelled ? 130 : p->function(p->argc, p->argv);
+        ios_storeCommandStatus(retval);
         if (currentSession != nil) currentSession->global_errno = retval;
     }
     @catch (NSException *exception)
