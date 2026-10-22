@@ -3095,6 +3095,7 @@ int ios_system(const char* inputCmd) {
     NSLog(@"Starting command: %s currentSession->isMainThread: %d", inputCmd, currentSession->isMainThread);
     // Don't start if the command is NULL:
     if (inputCmd == NULL) {
+        ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
         ios_storeThreadId(0);
         return 0;
     }
@@ -3297,6 +3298,7 @@ int ios_system(const char* inputCmd) {
             sharedErrorOutput = true;
             if (params->stdout == NULL) { // pipe open failed, return before we start a command
                 NSLog(@"Failed launching pipe for %s\n", pipeMarker+2);
+                ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
                 ios_storeThreadId(0);
                 free(params);
                 free(originalCommand); // releases cmd, which was a strdup of inputCommand
@@ -3315,6 +3317,7 @@ int ios_system(const char* inputCmd) {
                 pipeMarker[0] = 0x0;
                 if (params->stdout == NULL) { // pipe open failed, return before we start a command
                     NSLog(@"Failed launching pipe for %s\n", pipeMarker+1);
+                    ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
                     ios_storeThreadId(0);
                     free(params);
                     free(originalCommand); // releases cmd, which was a strdup of inputCommand
@@ -4287,11 +4290,13 @@ int ios_system(const char* inputCmd) {
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
             free(params); // This was malloc'ed in ios_system
-            ios_storeThreadId(0);
             currentSession->global_errno = 127;
+            ios_storePidStatus(ios_currentPid(), 127);
+            ios_storeThreadId(0);
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
     } else { // argc != 0
+        ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
         ios_storeThreadId(0);
         free(argv); // argv is otherwise freed in cleanup_function
         free(dontExpand);
