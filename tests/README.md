@@ -161,6 +161,23 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
 
 Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
 
+# Command thread creation failure
+
+`thread-create-failure.m` dispatches a registered native command through `ios_system`. The external `thread-create-failure-hook.c` interposer makes exactly one OS `pthread_create` call return `EAGAIN`; the framework itself is not instrumented. With allocator scribbling enabled, cleanup must return status 126, preserve all three caller-owned streams and the caller's `SIGUSR1` handler, then run the next command with exact `NEXT\n` output. A ten-second alarm bounds a stalled wait.
+
+After building the framework as above:
+
+```sh
+mkdir -p .build/thread-create-check/Frameworks
+cp -R .build/owned-streams/Build/Products/Release-iphonesimulator/ios_system.framework .build/thread-create-check/Frameworks/
+cp Resources/commandDictionary.plist .build/thread-create-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/thread-create-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/thread-create-failure.m -o .build/thread-create-check/thread-create-failure
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -Wall -Wextra -dynamiclib tests/thread-create-failure-hook.c -o .build/thread-create-check/thread-create-failure-hook.dylib
+SIMCTL_CHILD_DYLD_INSERT_LIBRARIES="$PWD/.build/thread-create-check/thread-create-failure-hook.dylib" SIMCTL_CHILD_MallocScribble=1 SIMCTL_CHILD_MallocPreScribble=1 xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/thread-create-check/thread-create-failure"
+```
+
+Expected: exit 0 and `thread creation failure: status=126; streams, signal and next output: PASS`. Set both `MallocScribble` and `MallocPreScribble`.
+
 # Per-child exit status
 
 `child-wait-status.m` starts two registered commands through `ios_fork` and `ios_system`. The first returns 7. The second waits for the first through `ios_waitpid`, then calls `ios_exit(23)`. The parent waits for the second and then the first through `ios_full_waitpid`; each wait must report that child's exit status. It also checks a missing command returns 127 and empty and NULL commands return 0.
