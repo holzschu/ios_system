@@ -3,6 +3,9 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <sys/resource.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* Isolated worker processes inherit only stdin, stdout and stderr. */
 typedef struct { int source, target; } ios_spawn_action;
 typedef struct {
@@ -17,9 +20,12 @@ int ios_posix_spawn_file_actions_addclose(ios_posix_spawn_file_actions_t *, int)
 int ios_posix_spawn_file_actions_addchdir_np(ios_posix_spawn_file_actions_t *, const char *);
 int ios_posix_spawn(pid_t *, const char *, const ios_posix_spawn_file_actions_t *, const void *, char *const [], char *const []);
 /* Wait for an ios_posix_spawn PID; options is 0 or WNOHANG. Returns PID, 0 while
- * running, or -1 with errno. Status uses waitpid encoding (lost workers: exit 137).
+ * running, or -1 with errno. Status uses waitpid encoding (explicit cancellation: exit 137; worker transport failure: exit 125).
  * Optional usage is the isolated worker's RUSAGE_SELF snapshot at command exit,
  * including process startup. availability is required when usage is requested;
  * zero means unavailable (including cancellation), never a measured zero. */
 pid_t ios_wait4(pid_t, int *, int, struct rusage *, int *availability);
+#ifdef __cplusplus
+}
+#endif
 #endif

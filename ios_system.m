@@ -1097,8 +1097,8 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         if (state != 0) break;
         usleep(10000);
     }
-    run.finished = (state == 1);
-    if (run.finished && p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) {
+    run.finished = (state != 0);
+    if (state == 1 && p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) {
         int (*poll_usage)(void *, int *, struct rusage *, int *) = workerAPI("poll_usage");
         struct rusage usage;
         int available = 0;
@@ -1110,7 +1110,13 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         }
     }
     pthread_cleanup_pop(1);
-    *status = (state == 1) ? exitStatus : 137;
+    if (state == 1) *status = exitStatus;
+    else {
+        int error = state < 0 ? -state : ETIMEDOUT;
+        fprintf(p->stderr, "worker connection failed: %s\n", strerror(error));
+        fflush(p->stderr);
+        *status = 125;
+    }
     NSLog(@"Worker pump completed: pid=%d input=%zu output=%zu status=%d", p->pid, inputBytes, outputBytes, *status);
     return true;
 }
