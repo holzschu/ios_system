@@ -155,19 +155,21 @@ framework() {
 PLIST
 }
 
-for sdk in iphoneos iphonesimulator; do
+for target in iphoneos-arm64 iphonesimulator-arm64 iphonesimulator-x86_64; do
+  sdk=${target%-*}
   [ "$SDK" = all ] || [ "$SDK" = "$sdk" ] || continue
   case "$sdk" in
     iphoneos) arch=arm64; triple=arm64-apple-ios14.0; host=aarch64-apple-darwin; ssl_target=ios64-xcrun; platform=iPhoneOS; ios_slice=ios-arm64;;
-    iphonesimulator) arch=x86_64; triple=x86_64-apple-ios14.0-simulator; host=x86_64-apple-darwin; ssl_target=iossimulator-xcrun; platform=iPhoneSimulator; ios_slice=ios-arm64_x86_64-simulator;;
+    iphonesimulator) arch=${target##*-}; triple=$arch-apple-ios14.0-simulator; host=$arch-apple-darwin; ssl_target=iossimulator-xcrun; platform=iPhoneSimulator; ios_slice=ios-arm64_x86_64-simulator;;
   esac
+  [ "$arch" != arm64 ] || host=aarch64-apple-darwin
   sysroot=$(xcrun --sdk "$sdk" --show-sdk-path)
   cc=$(xcrun --sdk "$sdk" -f clang)
   cxx=$(xcrun --sdk "$sdk" -f clang++)
   flags="-target $triple -isysroot $sysroot -fPIC -O2"
-  build="$WORK/$sdk"
+  build="$WORK/$target"
   prefix="$build/prefix"
-  frameworks="$WORK/output/$sdk"
+  frameworks="$WORK/output/$target"
   mkdir -p "$build" "$prefix/lib/pkgconfig" "$frameworks"
 
   # Keep dependency discovery confined to this target's staging directory.
@@ -250,12 +252,22 @@ done
 
 [ "$SDK" = all ] || exit 0
 for name in ffmpeg ffprobe freetype openssl; do
+  rm -rf "$WORK/output/iphonesimulator/$name.framework"
+  mkdir -p "$WORK/output/iphonesimulator"
+  cp -R "$WORK/output/iphonesimulator-arm64/$name.framework" "$WORK/output/iphonesimulator/"
+  lipo -create "$WORK/output/iphonesimulator-arm64/$name.framework/$name" \
+    "$WORK/output/iphonesimulator-x86_64/$name.framework/$name" \
+    -output "$WORK/output/iphonesimulator/$name.framework/$name"
+done
+lipo -create "$WORK/output/iphonesimulator-arm64/libzimg.a" "$WORK/output/iphonesimulator-x86_64/libzimg.a" -output "$WORK/output/iphonesimulator/libzimg.a"
+cp -R "$WORK/output/iphonesimulator-arm64/zimg-headers" "$WORK/output/iphonesimulator/"
+for name in ffmpeg ffprobe freetype openssl; do
   rm -rf "$WORK/output/$name.xcframework"
-  xcodebuild -create-xcframework -framework "$WORK/output/iphoneos/$name.framework" \
+  xcodebuild -create-xcframework -framework "$WORK/output/iphoneos-arm64/$name.framework" \
     -framework "$WORK/output/iphonesimulator/$name.framework" -output "$WORK/output/$name.xcframework"
 done
 rm -rf "$WORK/output/zimg.xcframework"
-xcodebuild -create-xcframework -library "$WORK/output/iphoneos/libzimg.a" -headers "$WORK/output/iphoneos/zimg-headers" \
+xcodebuild -create-xcframework -library "$WORK/output/iphoneos-arm64/libzimg.a" -headers "$WORK/output/iphoneos-arm64/zimg-headers" \
   -library "$WORK/output/iphonesimulator/libzimg.a" -headers "$WORK/output/iphonesimulator/zimg-headers" -output "$WORK/output/zimg.xcframework"
 (cd "$WORK/output"
   for name in ffmpeg ffprobe freetype openssl zimg; do

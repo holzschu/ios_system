@@ -67,7 +67,7 @@ The CI workflow builds all the XcFrameworks on every pull request (except change
 
 ## FFmpeg frameworks
 
-Run `bash build-ffmpeg.sh` on macOS with Xcode, its Metal compiler, CMake, Ninja, Autoconf, Automake, libtool and pkg-config available. The recipe downloads checksum-pinned sources and builds FFmpeg `n5.0.1-4-ga5ebb3d25e`, FreeType 2.10.2, zimg 3.0.3 and OpenSSL 1.1.1w for arm64 iOS and x86_64 iOS Simulator, targeting iOS 14.0. It links against the `ios_system` v3.0.5 binary and header, pinned by SHA-256. `JOBS=4` is the default; an optional `iphoneos` or `iphonesimulator` argument builds only that SDK without packaging.
+Run `bash build-ffmpeg.sh` on macOS with Xcode, its Metal compiler, CMake, Ninja, Autoconf, Automake, libtool and pkg-config available. The recipe downloads checksum-pinned sources and builds FFmpeg `n5.0.1-4-ga5ebb3d25e`, FreeType 2.10.2, zimg 3.0.3 and OpenSSL 1.1.1w for arm64 iOS and universal arm64/x86_64 iOS Simulator, targeting iOS 14.0. It links against the `ios_system` v3.0.5 binary and header, pinned by SHA-256. `JOBS=4` is the default; an optional `iphoneos` or `iphonesimulator` argument builds only that SDK without packaging.
 
 Outputs are in `.build/ffmpeg/output`: `ffmpeg.xcframework.zip`, `ffprobe.xcframework.zip`, `freetype.xcframework.zip`, `openssl.xcframework.zip`, `zimg.xcframework.zip` and `checksums.txt`. The command frameworks retain the `main` entry point and use ios_system's thread streams and exit functions. The FFmpeg feature switches match the published Auxiliary commands, with documentation and the unused ffplay executable excluded. FreeType uses zlib without optional PNG, HarfBuzz, BZip2 or Brotli support; these auxiliary assets do not replace the existing Python-aux distribution automatically.
 
