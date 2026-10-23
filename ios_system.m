@@ -960,6 +960,11 @@ static bool workerWanted(const char *name) {
     return false;
 }
 
+static bool workerRequired(const char *name) {
+    return workerWanted(name) && name && (!strcmp(name, "ssh") || !strcmp(name, "scp") ||
+        !strcmp(name, "sftp") || !strcmp(name, "ssh-keygen"));
+}
+
 // Mirrors ashell_pane_options of a-Shell's NativePane.h (read through dlsym, no link-time dependency).
 typedef struct {
     size_t size;
@@ -1390,7 +1395,12 @@ static void* run_function(void* parameters) {
         p->ownedRunning = !cancelled;
         pthread_mutex_unlock(&ownedStreamsMutex);
         int retval = 130;
-        if (!cancelled && !(p->workerEligible && runInWorker(p, &retval, NULL))) retval = p->function(p->argc, p->argv);
+        if (!cancelled && !(p->workerEligible && runInWorker(p, &retval, NULL))) {
+            if (p->workerEligible && workerRequired(p->argv[0])) {
+                fprintf(p->stderr, "worker spawn required for %s: %s\n", p->argv[0], strerror(errno));
+                retval = 127;
+            } else retval = p->function(p->argc, p->argv);
+        }
         p->returnedNormally = true;
         ios_storeCommandStatus(retval);
         recordPidStatus(retval);
@@ -4673,8 +4683,15 @@ int ios_system(const char* inputCmd) {
             pid_t candidate = ios_currentPid();
             params->pid = ios_getThreadId(candidate) == (pthread_t)-1 ? candidate : -1;
             params->asyncSpawn = spawnAsync;
-            params->workerEligible = workerWanted(commandName.UTF8String) &&
-                (spawnedChild || ios_getenv("ASHELL_WORKER_PID") == NULL);
+            const char *rootMarker = ios_getenv("ASHELL_WORKER_ROOT_PID");
+            char *rootEnd = NULL;
+            long rootPid = rootMarker ? strtol(rootMarker, &rootEnd, 10) : -1;
+            bool workerRoot = rootMarker && rootEnd != rootMarker && *rootEnd == '\0' &&
+                rootPid >= 0 && params->pid >= 0 && rootPid == params->pid;
+            params->workerEligible = workerRequired(commandName.UTF8String)
+                ? (spawnedChild || !workerRoot)
+                : workerWanted(commandName.UTF8String) &&
+                    (spawnedChild || ios_getenv("ASHELL_WORKER_PID") == NULL);
             if (params->asyncSpawn) params->backgroundCommand = true;
             // params->session = currentSession;
             // Before starting, do we have enough file descriptors available?
