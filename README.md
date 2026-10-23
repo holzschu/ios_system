@@ -73,7 +73,7 @@ Outputs are in `.build/ffmpeg/output`: `ffmpeg.xcframework.zip`, `ffprobe.xcfram
 
 Run `bash verify-ffmpeg.sh` after packaging. It compares every exported symbol and published feature switch against the checksum-pinned Auxiliary FFmpeg and ffprobe assets, rejects removed exports and host library paths, and saves the comparisons alongside the archives. These are build and binary compatibility checks, not command runtime tests.
 
-The separate "FFmpeg CI" workflow runs on pull requests that change the recipe, its check or its workflow, or manually. It installs Autotools on its macOS runner with Homebrew. A `ffmpeg-v*` tag publishes these five archives and checksums in its own release, using `release.md` for new release notes. Existing releases keep their notes and existing assets are not overwritten. Update a consuming `Package.swift` URL and checksum explicitly when adopting a release; the workflow does not modify the Auxiliary release or the regular ios_system release workflow.
+The separate "FFmpeg CI" workflow runs on pull requests that change the recipe, its check or its workflow, or manually. It installs Autotools on its macOS runner with Homebrew. A `ffmpeg-v*` tag publishes these five archives and checksums in its own release, using `release.md` for new release notes. It leaves the repository's latest release unchanged. Existing releases keep their notes and existing assets are not overwritten. Update a consuming `Package.swift` URL and checksum explicitly when adopting a release; the workflow does not modify the Auxiliary release or the regular ios_system release workflow.
 
 ## Integration with your app:
 
