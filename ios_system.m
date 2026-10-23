@@ -2989,7 +2989,7 @@ int ios_interruptpid(pid_t pid) {
     for (functionParameters *p = runningSignalCommands; p; p = p->nextSignalCommand) {
         if (p->pid != pid || !pthread_equal(p->signalThread, thread)) continue;
         if (pid >= 0 && pid < IOS_PID_STATUS_SLOTS && atomic_load(&pidWorkerThread[pid]) == thread) {
-            // Proxy cleanup records the worker or host command's actual status.
+            // Proxy cleanup records the worker command's actual status.
             atomic_store(&pidWorkerSignal[pid], SIGINT);
         } else {
             p->cancellationSignal = SIGINT;
