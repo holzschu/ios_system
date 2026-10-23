@@ -420,8 +420,8 @@ static __thread bool spawnAsync = false;
 
 // Exit status of each virtual pid, so concurrent commands do not share the session's global_errno.
 #define IOS_PID_STATUS_SLOTS 128
-// True while the command of a virtual pid runs in a worker: a terminating signal cancels its proxy thread.
-static _Atomic bool pidInWorker[IOS_PID_STATUS_SLOTS];
+// The worker proxy thread for each virtual pid; other threads sharing that pid receive signals normally.
+static _Atomic(pthread_t) pidWorkerThread[IOS_PID_STATUS_SLOTS];
 static _Atomic int pidWorkerSignal[IOS_PID_STATUS_SLOTS];
 static pthread_mutex_t pidUsageMutex = PTHREAD_MUTEX_INITIALIZER;
 static struct rusage pidUsage[IOS_PID_STATUS_SLOTS];
@@ -430,6 +430,17 @@ static bool pidWasSpawned[IOS_PID_STATUS_SLOTS];
 
 // pid of the command running on this thread, so exit() can record its status too.
 static __thread pid_t commandPid = -1;
+
+// Allocation owns adapter state, including slots claimed without ios_system.
+void ios_resetPidWorkerState(pid_t pid) {
+    if (pid < 0 || pid >= IOS_PID_STATUS_SLOTS) return;
+    atomic_store(&pidWorkerThread[pid], NULL);
+    atomic_store(&pidWorkerSignal[pid], 0);
+    pthread_mutex_lock(&pidUsageMutex);
+    pidWasSpawned[pid] = false;
+    pidUsageAvailable[pid] = false;
+    pthread_mutex_unlock(&pidUsageMutex);
+}
 
 static void recordPidStatus(int status) {
     ios_storePidStatus(commandPid, status);
@@ -462,6 +473,8 @@ static functionParameters *runningSignalCommands = NULL;
 extern pthread_mutex_t pid_mtx;
 extern _Atomic(int) cleanup_counter;
 extern void ios_releaseBackgroundThread(pthread_t thread);
+extern void ios_releaseBackgroundThreadId(pid_t pid);
+extern void ios_storeThreadIdForPid(pid_t pid, pthread_t thread);
 extern int startedPreparingWebAssemblyCommand(void);
 extern __thread int currentWebAssemblyCommandOrder;
 
@@ -948,19 +961,22 @@ typedef struct {
 } workerRun;
 
 static void *workerAPI(const char *suffix) {
+    static dispatch_once_t once;
+    static const char *prefix;
+    dispatch_once(&once, ^{
+        prefix = dlsym(RTLD_DEFAULT, "ashell_worker_spawn_ex") || dlsym(RTLD_DEFAULT, "ashell_worker_spawn")
+            ? "ashell_worker_" : "ashell_pane_";
+    });
     char symbol[96];
-    snprintf(symbol, sizeof(symbol), "ashell_worker_%s", suffix);
-    void *address = dlsym(RTLD_DEFAULT, symbol);
-    if (address) return address;
-    snprintf(symbol, sizeof(symbol), "ashell_pane_%s", suffix);
+    snprintf(symbol, sizeof(symbol), "%s%s", prefix, suffix);
     return dlsym(RTLD_DEFAULT, symbol);
 }
 
 static void workerRunCleanup(void *argument) {
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     workerRun *run = argument;
     int (*cancel)(void *) = workerAPI("cancel");
     void (*release)(void *) = workerAPI("release");
-    if (run->pid >= 0 && run->pid < IOS_PID_STATUS_SLOTS) atomic_store(&pidInWorker[run->pid], false);
     if (!run->finished && cancel) {
         cancel(run->job);
         int signal = run->pid >= 0 && run->pid < IOS_PID_STATUS_SLOTS
@@ -969,6 +985,7 @@ static void workerRunCleanup(void *argument) {
         recordPidStatus(status);
         if (currentSession != NULL) currentSession->global_errno = status;
     }
+    // Keep worker ownership until the thread slot is released; late signals must not reach pthread_kill.
     close(run->fd);
     if (run->errFd >= 0) close(run->errFd);
     if (release) release(run->job);
@@ -985,7 +1002,7 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
     int (*spawn_ex)(const char *, const char *, unsigned, unsigned, const char *const *, workerPaneOptions *, int *, void **) = workerAPI("spawn_ex");
     int (*poll_job)(void *, int *) = workerAPI("poll");
     int (*close_stdin)(void *) = workerAPI("close_stdin");
-    if ((!spawn && !spawn_ex) || !poll_job || !close_stdin) { errno = ENOTSUP; return false; }
+    if ((!spawn && !spawn_ex) || !poll_job || !close_stdin || !workerAPI("cancel") || !workerAPI("release")) { errno = ENOTSUP; return false; }
     int fd = admitted ? admitted->fd : -1;
     int errFd = admitted ? admitted->errFd : -1;
     void *job = admitted ? admitted->job : NULL;
@@ -1008,8 +1025,9 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         // The worker reports a terminal and merges stderr unless told otherwise: pass what this command really has.
         workerPaneOptions options = { sizeof(options), ios_isatty(STDOUT_FILENO) != 0,
             p->stdout != NULL && p->stderr != NULL && fileno(p->stderr) != fileno(p->stdout), -1 };
-        int spawned = spawn_ex ? spawn_ex(line.UTF8String, cwd, 80, 24, (const char *const *)environmentVariables(p->pid), &options, &fd, &job)
-                               : spawn(line.UTF8String, cwd, 80, 24, (const char *const *)environmentVariables(p->pid), &fd, &job);
+        char **environment = environmentVariables(p->pid >= 0 ? p->pid : ios_currentPid());
+        int spawned = spawn_ex ? spawn_ex(line.UTF8String, cwd, 80, 24, (const char *const *)environment, &options, &fd, &job)
+                               : spawn(line.UTF8String, cwd, 80, 24, (const char *const *)environment, &fd, &job);
         if (spawned != 0) {
             errno = spawned;
             pthread_setcancelstate(cancellationState, NULL);
@@ -1018,7 +1036,7 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         errFd = spawn_ex ? options.stderr_fd : -1;
     }
     workerRun run = { fd, errFd, job, false, p->pid };
-    if (p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) atomic_store(&pidInWorker[p->pid], true);
+    if (p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) atomic_store(&pidWorkerThread[p->pid], pthread_self());
     // Honor explicit background input redirects without consuming inherited terminal input.
     int stdinFd = (p->stdin == NULL || (p->asyncSpawn && !p->isPipeIn)) ? -1 : fileno(p->stdin);
     if (stdinFd < 0) close_stdin(job);
@@ -1164,24 +1182,25 @@ typedef struct {
 } spawnedWorker;
 
 static void spawnedWorkerCleanup(void *argument) {
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     spawnedWorker *spawned = argument;
     fflush(spawned->command.stdout);
     fflush(spawned->command.stderr);
     fclose(spawned->command.stdin);
     fclose(spawned->command.stdout);
     fclose(spawned->command.stderr);
-    ios_releaseThreadId(spawned->command.pid);
+    ios_releaseBackgroundThreadId(spawned->command.pid);
     free(spawned);
 }
 static void *spawnedWorkerMain(void *argument) {
     spawnedWorker *spawned = argument;
     functionParameters *p = &spawned->command;
     commandPid = p->pid;
-    currentSession = p->session;
+    currentSession = NULL;
     thread_stdin = p->stdin;
     thread_stdout = p->stdout;
     thread_stderr = p->stderr;
-    ios_storeThreadId(pthread_self());
+    ios_storeThreadIdForPid(p->pid, pthread_self());
     pthread_cleanup_push(spawnedWorkerCleanup, spawned);
     int status = 127;
     runInWorker(p, &status, &spawned->worker);
@@ -1246,8 +1265,6 @@ int ios_posix_spawn(pid_t *pid, const char *path,
     pidWasSpawned[child->command.pid] = true;
     pidUsageAvailable[child->command.pid] = false;
     pthread_mutex_unlock(&pidUsageMutex);
-    atomic_store(&pidWorkerSignal[child->command.pid], 0);
-    child->command.session = currentSession;
     child->command.isPipeIn = true;
     pid_t childPid = child->command.pid;
     dispatch_semaphore_t ready = dispatch_semaphore_create(0);
@@ -1256,7 +1273,7 @@ int ios_posix_spawn(pid_t *pid, const char *path,
     error = pthread_create(&thread, NULL, spawnedWorkerMain, child);
     if (error) {
         CFBridgingRelease(child->worker.ready);
-        ios_storeThreadId(NULL);
+        ios_storeThreadIdForPid(childPid, NULL);
         cancel(child->worker.job);
         release(child->worker.job);
         close(child->worker.fd);
@@ -2929,14 +2946,15 @@ int ios_kill(void)
 
 extern pthread_t ios_getThreadId(pid_t pid);
 int ios_killpid(pid_t pid, int sig) {
-    if (ios_getThreadId(pid) > 0) {
-        if (pid >= 0 && pid < IOS_PID_STATUS_SLOTS && atomic_load(&pidInWorker[pid])
+    pthread_t thread = ios_getThreadId(pid);
+    if (thread != NULL && thread != (pthread_t)-1) {
+        if (pid >= 0 && pid < IOS_PID_STATUS_SLOTS && atomic_load(&pidWorkerThread[pid]) == thread
             && (sig == SIGINT || sig == SIGTERM || sig == SIGKILL || sig == SIGHUP || sig == SIGQUIT))
         {
             atomic_store(&pidWorkerSignal[pid], sig);
-            return pthread_cancel(ios_getThreadId(pid)); // ends the proxy, which cancels the worker
+            return pthread_cancel(thread); // ends the proxy, which cancels the worker
         }
-        return pthread_kill(ios_getThreadId(pid), sig);
+        return pthread_kill(thread, sig);
     }
     return 0;
 }
@@ -3515,7 +3533,6 @@ int ios_system(const char* inputCmd) {
     char* errorFileMarker = 0;
     char* scriptName = 0; // interpreted commands
     bool  sharedErrorOutput = false;
-    bool outputToError = false;
     // NSFileManager *fileManager = [[NSFileManager alloc] init];
     // if (fileManager == NULL) return 0; // for stability, early commands don't have it.
     // NSLog(@"ios_system, stdout %d \n", thread_stdout == NULL ? 0 : fileno(thread_stdout));
@@ -3794,13 +3811,7 @@ int ios_system(const char* inputCmd) {
             // output and append.
             outputFileMarker = strstrquoted(outputFileMarker, ">");
             if (outputFileMarker) {
-                if (strncmp(outputFileMarker, ">&2", 3) == 0 &&
-                    (outputFileMarker[3] == '\0' || isspace((unsigned char)outputFileMarker[3]))) {
-                    outputToError = true;
-                    if (outputFileMarker > command && outputFileMarker[-1] == '1' &&
-                        (outputFileMarker - command == 1 || isspace((unsigned char)outputFileMarker[-2])))
-                        outputFileMarker--;
-                } else if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '>')) { // >>
+                if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '>')) { // >>
                     outputFileName = outputFileMarker + 2; // skip past ">>"
                     appendToFileName = true;
                 } else if ((strlen(outputFileMarker) > 1) && (outputFileMarker[1] == '=')) {
@@ -3900,7 +3911,6 @@ int ios_system(const char* inputCmd) {
             }
         }
         if (params->stderr == NULL) params->stderr = thread_stderr;
-        if (outputToError) params->stdout = params->stderr;
     } // recordSeparator != NULL
     if (params->stdin == NULL) params->stdin = thread_stdin;
     if (params->stdout == NULL) params->stdout = thread_stdout;
@@ -4609,28 +4619,19 @@ int ios_system(const char* inputCmd) {
             params->function = function;
             params->dlHandle = handle;
             params->isPipeIn = (params->stdin != thread_stdin);
-            params->isPipeOut = (params->stdout != thread_stdout) &&
-                !(outputToError && params->stdout == thread_stderr);
+            params->isPipeOut = (params->stdout != thread_stdout);
             if (params->stdout != NULL)
                 NSLog(@"params->stdout: %d thread_stdout: %d \n", fileno(params->stdout), fileno(thread_stdout));
             if (params->stdin != NULL)
                 NSLog(@"params->stdin: %d thread_stdin: %d \n", fileno(params->stdin), fileno(thread_stdin));
             params->isPipeErr = (params->stderr != thread_stderr) && (params->stderr != params->stdout);
             params->storeRootThread = false;
-            params->pid = ios_currentPid();
-            if (params->pid >= 0 && params->pid < IOS_PID_STATUS_SLOTS) {
-                pthread_mutex_lock(&pidUsageMutex);
-                pidWasSpawned[params->pid] = false;
-                pidUsageAvailable[params->pid] = false;
-                pthread_mutex_unlock(&pidUsageMutex);
-            }
+            pid_t candidate = ios_currentPid();
+            params->pid = ios_getThreadId(candidate) == (pthread_t)-1 ? candidate : -1;
             params->asyncSpawn = spawnAsync;
             params->workerEligible = workerWanted(commandName.UTF8String) &&
                 (spawnedChild || ios_getenv("ASHELL_WORKER_PID") == NULL);
             if (params->asyncSpawn) params->backgroundCommand = true;
-            if (params->pid >= 0 && params->pid < IOS_PID_STATUS_SLOTS) {
-                atomic_store(&pidWorkerSignal[params->pid], 0);
-            }
             // params->session = currentSession;
             // Before starting, do we have enough file descriptors available?
             int numFileDescriptorsOpen = 0;

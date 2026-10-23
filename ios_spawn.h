@@ -20,7 +20,7 @@ int ios_posix_spawn_file_actions_addclose(ios_posix_spawn_file_actions_t *, int)
 int ios_posix_spawn_file_actions_addchdir_np(ios_posix_spawn_file_actions_t *, const char *);
 int ios_posix_spawn(pid_t *, const char *, const ios_posix_spawn_file_actions_t *, const void *, char *const [], char *const []);
 /* Wait for an ios_posix_spawn PID; options is 0 or WNOHANG. Returns PID, 0 while
- * running, or -1 with errno. Status uses waitpid encoding (explicit cancellation: exit 137; worker transport failure: exit 125).
+ * running, or -1 with errno. Status uses waitpid encoding (ios_killpid with SIGINT, SIGTERM, SIGKILL, SIGHUP or SIGQUIT: exit 128 + signal; worker transport failure: exit 125).
  * Optional usage is the isolated worker's RUSAGE_SELF snapshot at command exit,
  * including process startup. availability is required when usage is requested;
  * zero means unavailable (including cancellation), never a measured zero. */

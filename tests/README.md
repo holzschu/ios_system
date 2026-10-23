@@ -209,8 +209,31 @@ Build this fixture as a command framework with `-Dmain=spawn_rusage_main`, linki
 
 The arm64 Simulator host with five workers on Xcode 27.1 exited 0 with `CPU child user time: 0.517716` and `spawn-rusage: CPU measured, killed child unavailable PASS`. The baseline fails compilation because it has no public `ios_wait4`. This does not qualify physical-device behavior.
 
-# Legacy sh stderr redirection
+# Detached spawned worker context
 
-`sh-stderr.m` invokes the registered legacy `sh_main` through the public command API with caller-owned, separate stdout and stderr streams. It removes a disposable host's `sh` alias, then checks `sh -c 'echo x >&2'` and `sh -c 'echo y 1>&2'`. Expected: status 0, empty stdout and exactly `x\ny\n` on stderr; reusing the same streams also verifies that redirection does not close borrowed stderr.
+`spawn-context.m` uses `ios_posix_spawn`, `ios_wait4` and `ios_killpid` in a disposable worker-enabled host. It changes the parent cwd while a child sleeps, then verifies completion preserves the parent cwd. A second child receives SIGTERM; wait must return exit 143 while the parent command status stays unchanged.
 
-Build/register it in a disposable host as a command framework using `-Dmain=sh_stderr_main`, linking Foundation and the matching ios_system framework, with an empty app/bin marker as for `spawn-rusage`. The baseline creates a file named `&2` and captures no stderr (exit 1). The patched arm64 Simulator run prints `sh stderr: status=0 stdout=0 stderr=4 PASS` and exits 0. It qualifies the legacy registry shell, not dash or a physical device.
+Build/register it as a command framework with `-Dmain=spawn_context_main`, Foundation and the matching ios_system framework. Register `spawn-context` as `["SpawnContextChecks.framework/SpawnContextChecks", "spawn_context_main", "", "file"]`, provide its empty app/bin marker, and pass the disposable host HOME as its only argument. The baseline fails the cwd check; the fixed implementation must pass both checks.
+
+# Spawned PID ownership
+
+`spawn-pid-reuse.m` waits for a real worker, recycles its PID through the public allocator, registers an ordinary thread and sends SIGINT through `ios_killpid`. Expected: the signal handler runs; the ordinary thread is not cancelled. This fails when worker ownership is not reset on PID allocation. The ordinary thread explicitly unblocks SIGINT because the host may pass a blocked mask.
+
+`spawn-registration.m` uses an external `pthread_create` scheduling interposer (`spawn-thread-start-hook.c`) to complete an older public PID immediately before a strict child thread starts. Expected: the returned child is registered, bounded WNOHANG polling returns that child and status 0. It also checks that the older PID completed, so an inactive interposer cannot produce a pass. A second run with argument `fail` makes that OS call return EAGAIN and verifies the reserved child slot is released. These guard registration and error cleanup against changes to the global current PID. The hook changes the OS scheduling boundary; ios_system is not instrumented.
+
+Build/register these as PidReuseChecks.framework/pid_reuse_main and SpawnRegistrationChecks.framework/spawn_registration_main, with command markers pid-reuse and spawn-registration. Each takes the disposable host HOME. Build the hook as a Simulator dylib linked to the matching ios_system framework and insert it only for the registration test using SIMCTL_CHILD_DYLD_INSERT_LIBRARIES when launching the disposable host. Keep the interposer out of production builds. The cwd check in spawn-context also covers the cwd-free PID release.
+
+`worker-nested-environment.m` registers a parent command (nested_environment_main) and payload (nested_environment_payload_main) in a disposable host; register the payload in workers too. The parent invokes ios_system without ios_fork, with the payload admitted by ASHELL_WORKER_COMMANDS and a custom environment value. Expected: the payload runs in another process, sees the value and exits 0. This guards environment lookup for an unforked command whose parameter PID is -1. No production entry point or internal mock is required.
+
+`worker-pipeline-signal.m` checks a real worker producer piped into an ordinary command thread under one reserved PID. The external `pipeline-thread-start-hook.c` delays the first OS thread until both stages have captured that reservation, then lets the consumer register first. After the producer exits, SIGINT must reach the consumer's handler and let it return normally. The fixture asserts the producer used another process. A stale worker flag cancels the consumer instead. Register `pipeline-signal`, `pipeline-signal-producer` and `pipeline-signal-consumer` from PipelineSignalChecks.framework, exporting `pipeline_signal_main` (compile with `-Dmain=pipeline_signal_main`), `pipeline_signal_producer` and `pipeline_signal_consumer`. Register the producer in the worker bundles too. The hook controls OS scheduling only and is excluded from production builds.
+
+For both scheduling hooks, compile against the matching Simulator framework and launch only the disposable host with the hook inserted:
+
+```sh
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios26.0-simulator -dynamiclib -fblocks -F "$FRAMEWORK_DIR" -framework ios_system tests/spawn-thread-start-hook.c -o "$FIXTURE_APP/Frameworks/SpawnThreadHook.dylib"
+codesign --force --sign - "$FIXTURE_APP/Frameworks/SpawnThreadHook.dylib"
+codesign --force --sign - --preserve-metadata=entitlements "$FIXTURE_APP"
+SIMCTL_CHILD_DYLD_INSERT_LIBRARIES="$INSTALLED_APP/Frameworks/SpawnThreadHook.dylib" xcrun simctl launch "$SIMULATOR_UDID" "$FIXTURE_BUNDLE_ID"
+```
+
+Use the host's command entry point to run `spawn-registration <disposable-home>` and `spawn-registration <disposable-home> fail`. For the pipeline check compile `pipeline-thread-start-hook.c` the same way into its own `PipelineThreadHook.dylib`, insert that dylib instead of `SpawnThreadHook.dylib`, and run `pipeline-signal`. Resolve `INSTALLED_APP` with `simctl get_app_container` after installation; the source build directory is not the installed path. A passing registration run reports `completed=1 registered=1` and status 0. The injected failure reports EAGAIN with `child=-1 released=1`. A passing pipeline reports `signal=1 returned=1 isolated=1 ordered=1`. The ordering assertion prevents a pass when the OS hook does not match.
