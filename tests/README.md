@@ -237,3 +237,19 @@ SIMCTL_CHILD_DYLD_INSERT_LIBRARIES="$INSTALLED_APP/Frameworks/SpawnThreadHook.dy
 ```
 
 Use the host's command entry point to run `spawn-registration <disposable-home>` and `spawn-registration <disposable-home> fail`. For the pipeline check compile `pipeline-thread-start-hook.c` the same way into its own `PipelineThreadHook.dylib`, insert that dylib instead of `SpawnThreadHook.dylib`, and run `pipeline-signal`. Resolve `INSTALLED_APP` with `simctl get_app_container` after installation; the source build directory is not the installed path. A passing registration run reports `completed=1 registered=1` and status 0. The injected failure reports EAGAIN with `child=-1 released=1`. A passing pipeline reports `signal=1 returned=1 isolated=1 ordered=1`. The ordering assertion prevents a pass when the OS hook does not match.
+
+# Command stream ownership
+
+`command-streams.m` runs real command implementations through `ios_system` with caller-owned stdin, stdout and stderr registered through the public ownership API. Its stdin is a pipe containing `one two\nthree\n`. It asserts the command status, exact stdout and all three streams remaining usable for caller cleanup. It uses no command stubs. Build `text` and `files` with the same pinned source revision as the runtime, copy those frameworks plus `ios_system.framework` into the test executable's `Frameworks` directory, and copy `Resources/commandDictionary.plist` next to the executable. Compile using the command above with `tests/command-streams.m`; include both `-I .` and `-I ios_system`.
+
+Run each command in a fresh process on the owned Simulator. The expected argument must contain the final newline:
+
+```sh
+expected='      14
+'
+xcrun simctl spawn "$SIMULATOR_UDID" "$CHECK/command-streams" 'wc -c' "$expected"
+```
+
+Also run `wc -l` expecting `       2\n`, `wc -w` expecting `       3\n`, `wc -m` expecting `      14\n`, and `wc` expecting `       2       3      14\n`. Run `grep three`, `egrep three` and `fgrep three` expecting `three\n`; `cksum` expects `112545809 14\n`, and `sum` expects `63079 1\n`. Those checksum literals were independently obtained from the macOS stock commands, not calculated by the implementation under test.
+
+For the `gzip` output-open error, create a disposable input whose basename has 253 ASCII characters. Its `.gz` output exceeds the filesystem's 255-byte basename limit. Pass `"gzip /absolute/path/to/input"`, an empty expected output argument, and expected status `1` as the optional third argument. The command must fail while retaining all three caller streams and leaving the input intact. Remove the disposable input afterwards. Before the fixes, `wc`, `grep`, `cksum`/`sum` and the `gzip` error case leave only two caller descriptors open; after the fixes all cases exit 0 and print `PASS`. The worker-level pipeline regression in `worker-pipeline.sh` independently checks completion and data transfer for gzip/wc workers.
