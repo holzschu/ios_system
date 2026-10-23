@@ -1043,7 +1043,7 @@ static void workerRunCleanup(void *argument) {
             int state;
             while ((state = poll_job(run->job, &status)) == 0) {
                 // Spawn can finish before Dash has published its foreground child.
-                if (interrupt && interrupted == ESRCH) interrupted = interrupt(run->job);
+                if (interrupt && interrupted != 0) interrupted = interrupt(run->job);
                 poll(streams, 2, 50);
                 for (int i = 0; i < 2; i++) if (streams[i].fd >= 0 && streams[i].revents) {
                     ssize_t n = read(streams[i].fd, discarded, sizeof(discarded));
@@ -3078,7 +3078,7 @@ int ios_interruptpid(pid_t pid) {
     for (functionParameters *p = runningSignalCommands; p; p = p->nextSignalCommand) {
         if (p->pid != pid || !pthread_equal(p->signalThread, thread)) continue;
         if (pid >= 0 && pid < IOS_PID_STATUS_SLOTS && atomic_load(&pidWorkerThread[pid]) == thread) {
-            // Proxy cleanup records the worker or host command's actual status.
+            // Proxy cleanup records the worker command's actual status.
             atomic_store(&pidWorkerSignal[pid], SIGINT);
         } else {
             p->cancellationSignal = SIGINT;
@@ -3240,7 +3240,9 @@ int ios_activePager(void) {
 }
 
 static int paneInteractive(int mode) {
-    int (*function)(const void *, int) = dlsym(RTLD_DEFAULT, "ashell_pane_interactive");
+    static int (*function)(const void *, int);
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ function = dlsym(RTLD_DEFAULT, "ashell_pane_interactive"); });
     return function ? function(ios_getContext(), mode) : -1;
 }
 
