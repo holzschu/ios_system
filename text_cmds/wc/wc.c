@@ -162,7 +162,11 @@ cnt(const char *file)
 	linect = wordct = charct = 0;
 	if (file == NULL) {
 		file = "stdin";
-		fd = fileno(thread_stdin);
+		/* The embedding caller owns thread_stdin. */
+		if ((fd = dup(fileno(thread_stdin))) < 0) {
+			warn("%s: dup", file);
+			return (1);
+		}
 	} else {
 		if ((fd = open(file, O_RDONLY, 0)) < 0) {
             warn("%s: open", file);
