@@ -1,0 +1,11 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -707,6 +707,7 @@
+ out:
+   badwrite = ferror(stdout);
+-  if (fclose(stdout)!=0 || badwrite) {
++  // ios_system owns the command stream and closes it after the entry returns.
++  if (fflush(stdout)!=0 || badwrite) {
+     fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
+     ret = JQ_ERROR_SYSTEM;
+   }
