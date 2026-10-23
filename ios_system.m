@@ -945,7 +945,8 @@ void crash_handler(int sig) {
 
 extern char** environmentVariables(pid_t pid);
 // Run a spawned command in a free extension worker (a-Shell's ashell_pane_* ABI, found with dlsym).
-// Returns false when it did not run there (no API, pool full, old iOS): the caller runs it on a thread.
+// Optional commands fall back to a thread when worker admission fails.
+// Opted-in SSH commands fail with status 127; selected host commands fail with status 125.
 static bool workerWanted(const char *name) {
     const char *list = ios_getenv("ASHELL_WORKER_COMMANDS");
     if (list == NULL || name == NULL) return false;
@@ -965,6 +966,23 @@ static bool workerRequired(const char *name) {
         !strcmp(name, "sftp") || !strcmp(name, "ssh-keygen"));
 }
 
+// Heavy commands selected by the app must leave the extension before execution.
+// This policy never changes strict POSIX spawn admission or runs recursively in the host.
+static bool hostWanted(const char *name) {
+    if (ios_getenv("ASHELL_WORKER_PID") == NULL || name == NULL || workerRequired(name)) return false;
+    const char *list = ios_getenv("ASHELL_HOST_COMMANDS");
+    if (list == NULL) return false;
+    size_t length = strlen(name);
+    for (const char *entry = list; *entry; ) {
+        while (*entry == ' ') entry++;
+        const char *end = entry;
+        while (*end && *end != ' ') end++;
+        if ((size_t)(end - entry) == length && strncmp(entry, name, length) == 0) return true;
+        entry = end;
+    }
+    return false;
+}
+
 // Mirrors ashell_pane_options of a-Shell's NativePane.h (read through dlsym, no link-time dependency).
 typedef struct {
     size_t size;
@@ -977,6 +995,7 @@ typedef struct {
     void *job;
     bool finished;
     pid_t pid;
+    bool host;
 } workerRun;
 
 static void *workerAPI(const char *suffix) {
@@ -991,16 +1010,49 @@ static void *workerAPI(const char *suffix) {
     return dlsym(RTLD_DEFAULT, symbol);
 }
 
+static void *executionAPI(const char *suffix, bool host) {
+    if (!host) return workerAPI(suffix);
+    char symbol[96];
+    snprintf(symbol, sizeof(symbol), "ashell_worker_host_%s", suffix);
+    return dlsym(RTLD_DEFAULT, symbol);
+}
+
 static void workerRunCleanup(void *argument) {
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     workerRun *run = argument;
-    int (*cancel)(void *) = workerAPI("cancel");
-    void (*release)(void *) = workerAPI("release");
+    int (*cancel)(void *) = executionAPI("cancel", run->host);
+    void (*release)(void *) = executionAPI("release", run->host);
     if (!run->finished && cancel) {
-        cancel(run->job);
+        int error = cancel(run->job);
         int signal = run->pid >= 0 && run->pid < IOS_PID_STATUS_SLOTS
             ? atomic_load(&pidWorkerSignal[run->pid]) : 0;
         int status = 128 + (signal ? signal : SIGKILL);
+        if (run->host && error) {
+            // Host cancellation can be unsupported. Keep its admission and drain
+            // abandoned output until the actual command completes; a rejected
+            // cancellation must not publish a synthetic signal status.
+            int (*poll_job)(void *, int *) = executionAPI("poll", true);
+            int (*close_stdin)(void *) = executionAPI("close_stdin", true);
+            int (*interrupt)(void *) = executionAPI("interrupt", true);
+            int interrupted = interrupt ? interrupt(run->job) : ENOTSUP;
+            if (close_stdin) close_stdin(run->job);
+            struct pollfd streams[2] = {{run->fd, POLLIN, 0}, {run->errFd, POLLIN, 0}};
+            char discarded[8192];
+            for (int i = 0; i < 2; i++) if (streams[i].fd >= 0)
+                fcntl(streams[i].fd, F_SETFL, fcntl(streams[i].fd, F_GETFL) | O_NONBLOCK);
+            int state;
+            while ((state = poll_job(run->job, &status)) == 0) {
+                // Spawn can finish before Dash has published its foreground child.
+                if (interrupt && interrupted == ESRCH) interrupted = interrupt(run->job);
+                poll(streams, 2, 50);
+                for (int i = 0; i < 2; i++) if (streams[i].fd >= 0 && streams[i].revents) {
+                    ssize_t n = read(streams[i].fd, discarded, sizeof(discarded));
+                    if (n == 0 || (n < 0 && errno != EAGAIN && errno != EINTR))
+                        streams[i].fd = -1;
+                }
+            }
+            if (state < 0) status = 125;
+        }
         recordPidStatus(status);
         if (currentSession != NULL) currentSession->global_errno = status;
     }
@@ -1017,11 +1069,12 @@ typedef struct {
 } admittedWorker;
 
 static bool runInWorker(functionParameters *p, int *status, admittedWorker *admitted) {
-    int (*spawn)(const char *, const char *, unsigned, unsigned, const char *const *, int *, void **) = workerAPI("spawn");
-    int (*spawn_ex)(const char *, const char *, unsigned, unsigned, const char *const *, workerPaneOptions *, int *, void **) = workerAPI("spawn_ex");
-    int (*poll_job)(void *, int *) = workerAPI("poll");
-    int (*close_stdin)(void *) = workerAPI("close_stdin");
-    if ((!spawn && !spawn_ex) || !poll_job || !close_stdin || !workerAPI("cancel") || !workerAPI("release")) { errno = ENOTSUP; return false; }
+    bool host = admitted == NULL && hostWanted(p->argv[0]);
+    int (*spawn)(const char *, const char *, unsigned, unsigned, const char *const *, int *, void **) = executionAPI("spawn", host);
+    int (*spawn_ex)(const char *, const char *, unsigned, unsigned, const char *const *, workerPaneOptions *, int *, void **) = executionAPI("spawn_ex", host);
+    int (*poll_job)(void *, int *) = executionAPI("poll", host);
+    int (*close_stdin)(void *) = executionAPI("close_stdin", host);
+    if ((!spawn && !spawn_ex) || !poll_job || !close_stdin || !executionAPI("cancel", host) || !executionAPI("release", host)) { errno = ENOTSUP; return false; }
     int fd = admitted ? admitted->fd : -1;
     int errFd = admitted ? admitted->errFd : -1;
     void *job = admitted ? admitted->job : NULL;
@@ -1033,8 +1086,13 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
             // Resolution already selected a registry command. Keep that selection in the worker
             // with the stock registry bypass, rather than searching the child's PATH again.
             NSString *argument = [NSString stringWithUTF8String:p->argv[i]];
-            if (i == 0) argument = [@"\\" stringByAppendingString:argument];
+            if (i == 0 && !host) argument = [@"\\" stringByAppendingString:argument];
             [line appendFormat:@"%s'%@'", i ? " " : "", [argument stringByReplacingOccurrencesOfString:@"'" withString:@"'\\''"]];
+        }
+        if (host) {
+            // Dash owns the host foreground PID and its socket-input lease.
+            line = [NSMutableString stringWithFormat:@"dash -c '%@'",
+                [line stringByReplacingOccurrencesOfString:@"'" withString:@"'\\''"]];
         }
         char cwd[MAXPATHLEN];
         if (getcwd(cwd, sizeof(cwd)) == NULL) {
@@ -1045,8 +1103,25 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         workerPaneOptions options = { sizeof(options), ios_isatty(STDOUT_FILENO) != 0,
             p->stdout != NULL && p->stderr != NULL && fileno(p->stderr) != fileno(p->stdout), -1 };
         char **environment = environmentVariables(p->pid >= 0 ? p->pid : ios_currentPid());
+        char **hostEnvironment = NULL;
+        if (host) {
+            size_t count = 0, copied = 0;
+            while (environment && environment[count]) count++;
+            hostEnvironment = calloc(count + 2, sizeof(char *));
+            if (!hostEnvironment) {
+                pthread_setcancelstate(cancellationState, NULL);
+                errno = ENOMEM;
+                return false;
+            }
+            for (size_t i = 0; i < count; i++)
+                if (strncmp(environment[i], "ASHELL_IOS_SOCKET_INPUT=", sizeof("ASHELL_IOS_SOCKET_INPUT=") - 1))
+                    hostEnvironment[copied++] = environment[i];
+            hostEnvironment[copied] = "ASHELL_IOS_SOCKET_INPUT=1";
+            environment = hostEnvironment;
+        }
         int spawned = spawn_ex ? spawn_ex(line.UTF8String, cwd, 80, 24, (const char *const *)environment, &options, &fd, &job)
                                : spawn(line.UTF8String, cwd, 80, 24, (const char *const *)environment, &fd, &job);
+        free(hostEnvironment);
         if (spawned != 0) {
             errno = spawned;
             pthread_setcancelstate(cancellationState, NULL);
@@ -1054,7 +1129,7 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         }
         errFd = spawn_ex ? options.stderr_fd : -1;
     }
-    workerRun run = { fd, errFd, job, false, p->pid };
+    workerRun run = { fd, errFd, job, false, p->pid, host };
     pthread_mutex_lock(&commandSignalMutex);
     if (p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) {
         // An interrupt can arrive while spawn has cancellation disabled.
@@ -1142,7 +1217,7 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
     }
     run.finished = (state != 0);
     if (state == 1 && p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) {
-        int (*poll_usage)(void *, int *, struct rusage *, int *) = workerAPI("poll_usage");
+        int (*poll_usage)(void *, int *, struct rusage *, int *) = executionAPI("poll_usage", host);
         struct rusage usage;
         int available = 0;
         if (poll_usage && poll_usage(job, &exitStatus, &usage, &available) == 1 && available) {
@@ -1395,8 +1470,12 @@ static void* run_function(void* parameters) {
         p->ownedRunning = !cancelled;
         pthread_mutex_unlock(&ownedStreamsMutex);
         int retval = 130;
-        if (!cancelled && !(p->workerEligible && runInWorker(p, &retval, NULL))) {
-            if (p->workerEligible && workerRequired(p->argv[0])) {
+        bool host = hostWanted(p->argv[0]);
+        if (!cancelled && !((host || p->workerEligible) && runInWorker(p, &retval, NULL))) {
+            if (host) {
+                fprintf(p->stderr, "host execution required for %s: %s\n", p->argv[0], strerror(errno));
+                retval = 125;
+            } else if (p->workerEligible && workerRequired(p->argv[0])) {
                 fprintf(p->stderr, "worker spawn required for %s: %s\n", p->argv[0], strerror(errno));
                 retval = 127;
             } else retval = p->function(p->argc, p->argv);
@@ -3160,7 +3239,13 @@ int ios_activePager(void) {
     return 0;
 }
 
+static int paneInteractive(int mode) {
+    int (*function)(const void *, int) = dlsym(RTLD_DEFAULT, "ashell_pane_interactive");
+    return function ? function(ios_getContext(), mode) : -1;
+}
+
 void ios_stopInteractive(void) {
+    if (paneInteractive(0) >= 0) return;
     // Some commands, like sftp, start as "interactive" (they handle all input), then become non-interactive (they let the shell handle input)
     // This could be merged with opentty / closetty above, but stopInteractive involves one more trip to WKWebView->evaluateJS, so it's better not to call it too often.
     void (*function)(void) = NULL;
@@ -3177,6 +3262,8 @@ void ios_stopInteractive(void) {
 }
 
 int ios_storeInteractive(void) {
+    int pane = paneInteractive(-1);
+    if (pane >= 0) return pane;
     // Some commands, like dash, can be started from inside interactive or non-interactive commands. They need to restore the status afterwards.
     int (*function)(void) = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "storeInteractive");
@@ -3193,6 +3280,7 @@ int ios_storeInteractive(void) {
 }
 
 void ios_startInteractive(void) {
+    if (paneInteractive(1) >= 0) return;
     // With aliasing, we can have commands that are interactive and not detected by the command-line interpreter.
     void (*function)() = NULL;
     function = dlsym(RTLD_MAIN_ONLY, "startInteractive");
@@ -3210,6 +3298,7 @@ void ios_startInteractive(void) {
 static int isInteractive(const char* command) {
     // let interactiveRegexp = /^vim|^ipython|^less|^more|^ssh|^scp|^sftp|^jump|\|&? *less|\|&? *more|^man|^pico/;
     if (strncmp(command, "vim", 3) == 0) return true;
+    if (strncmp(command, "codex", 5) == 0 && (command[5] == 0 || command[5] == ' ')) return true;
     if (strncmp(command, "pico", 4) == 0) return true;
     if (strncmp(command, "ipython", 7) == 0) return true;
     if (strncmp(command, "isympy", 6) == 0) return true;
