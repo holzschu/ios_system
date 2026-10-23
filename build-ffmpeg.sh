@@ -7,10 +7,12 @@ WORK="$ROOT/.build/ffmpeg"
 JOBS=${JOBS:-4}
 SDK=${1:-all}
 case "$SDK" in all|iphoneos|iphonesimulator) ;; *) echo "usage: $0 [all|iphoneos|iphonesimulator]" >&2; exit 2;; esac
-METAL=$(xcrun --sdk macosx -f metal)
-# The companion linker is shipped beside metal, including in Apple's cryptex.
-METALLIB="$(dirname "$METAL")/metallib"
-[ -x "$METALLIB" ] || { echo 'The installed Metal toolchain has no metallib.' >&2; exit 1; }
+# Refresh this user's component mapping; let xcrun resolve each invocation.
+xcodebuild -showComponent MetalToolchain || echo 'Metal component metadata unavailable; checking executable tools.' >&2
+if ! xcrun --no-cache --sdk macosx metal --version || ! xcrun --no-cache --sdk macosx metallib --version; then
+  echo 'Metal tools cannot execute. Initialize the selected Xcode with xcodebuild -downloadComponent MetalToolchain.' >&2
+  exit 1
+fi
 mkdir -p "$WORK/downloads" "$WORK/source" "$WORK/output"
 
 fetch() {
@@ -228,8 +230,8 @@ PC
       --disable-audiotoolbox --enable-openssl --enable-libfreetype --enable-libzimg \
       --enable-network --disable-debug --disable-gpl --disable-nonfree --disable-doc --disable-ffplay \
       --sysroot="$sysroot" --pkg-config="$(command -v pkg-config)" --pkg-config-flags=--static \
-      --metalcc="$METAL -target air64-${triple#*-} -isysroot $sysroot -fmodules-cache-path=$build/metal-cache" \
-      --metallib="$METALLIB" \
+      --metalcc="xcrun --no-cache --sdk macosx metal -target air64-${triple#*-} -isysroot $sysroot -fmodules-cache-path=$build/metal-cache" \
+      --metallib='xcrun --no-cache --sdk macosx metallib' \
       --extra-cflags="$flags -D_DARWIN_C_SOURCE=1 -include $WORK/ios-stdio.h" \
       --extra-ldflags="$flags -F$frameworks -F$WORK/ios_system.xcframework/$ios_slice" \
       --extra-libs='-framework ios_system -lc++'

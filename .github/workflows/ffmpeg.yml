@@ -32,8 +32,7 @@ jobs:
       run: |
         xcodebuild -version
         for tool in cmake ninja autoreconf automake pkg-config; do command -v "$tool"; done
-        metal=$(xcrun --sdk macosx -f metal)
-        test -x "$(dirname "$metal")/metallib"
+        xcodebuild -downloadComponent MetalToolchain
     - name: Build FFmpeg and auxiliary libraries
       run: bash build-ffmpeg.sh
     - name: Compare published command ABI and configuration
