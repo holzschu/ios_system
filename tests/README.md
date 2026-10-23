@@ -196,3 +196,21 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/child-status/child-status"
 ```
 
 Expected: exit 0 and `child A expected=7 observed=7; child B expected=23 observed=23: PASS`, `missing command expected=127 observed=127` and `empty command expected=0 observed=0; NULL command expected=0 observed=0`. With shared session status, both children report 23 and the test exits 1. A ten-second alarm bounds a stalled wait. This fixture covers a normal return, `ios_exit` and commands that do not start; it does not qualify cancellation, thread-creation failure or PID reuse.
+
+# Worker registry selection
+
+`worker-registry-selection.sh` checks the public shell route in a disposable worker-enabled host. Put a `git` script that prints `DISPATCH_WRAPPER_SELECTED` first in the host's PATH, then run the test with the absolute zero-byte native Git marker as its argument. The bare command must select the wrapper; the absolute marker must print `git version ...`. The wrapper belongs only in a disposable test container. Set its HOME and working directory to that container before launching the test. Expected: exit 0 and `WORKER_REGISTRY_SELECTION_PASS`. Without preserving the resolved registry selection across worker dispatch, the absolute marker selects the wrapper again and the test exits 1.
+
+# Spawned worker resource usage
+
+`spawn-rusage.m` exercises the public `ios_posix_spawn`, `ios_wait4` and `ios_killpid` APIs against real isolated workers. Its CPU-bound awk child must return a successful wait status, available usage and positive user time; its killed sleep child must return exit 137 with unavailable usage. The snapshot is worker `RUSAGE_SELF`, including process startup, rather than command-only CPU time.
+
+Build this fixture as a command framework with `-Dmain=spawn_rusage_main`, linking Foundation and the matching ios_system framework. In a disposable worker-enabled host, register `spawn-rusage` as `["SpawnRusageChecks.framework/SpawnRusageChecks", "spawn_rusage_main", "", "file"]` and provide its empty app/bin marker. Invoke the absolute marker with the test container HOME as its only argument, after setting HOME and cwd to that container. The host and every worker need the matching resource-usage broker protocol; a plain standalone Simulator process has no worker broker. No production test entry point is required.
+
+The arm64 Simulator host with five workers on Xcode 27.1 exited 0 with `CPU child user time: 0.517716` and `spawn-rusage: CPU measured, killed child unavailable PASS`. The baseline fails compilation because it has no public `ios_wait4`. This does not qualify physical-device behavior.
+
+# Legacy sh stderr redirection
+
+`sh-stderr.m` invokes the registered legacy `sh_main` through the public command API with caller-owned, separate stdout and stderr streams. It removes a disposable host's `sh` alias, then checks `sh -c 'echo x >&2'` and `sh -c 'echo y 1>&2'`. Expected: status 0, empty stdout and exactly `x\ny\n` on stderr; reusing the same streams also verifies that redirection does not close borrowed stderr.
+
+Build/register it in a disposable host as a command framework using `-Dmain=sh_stderr_main`, linking Foundation and the matching ios_system framework, with an empty app/bin marker as for `spawn-rusage`. The baseline creates a file named `&2` and captures no stderr (exit 1). The patched arm64 Simulator run prints `sh stderr: status=0 stdout=0 stderr=4 PASS` and exits 0. It qualifies the legacy registry shell, not dash or a physical device.

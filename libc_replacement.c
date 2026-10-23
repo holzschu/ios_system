@@ -210,6 +210,10 @@ void ios_storeCommandStatus(int status) {
     }
 }
 
+int ios_pidStatus(pid_t pid) {
+    return pid > 0 && pid < IOS_MAX_THREADS ? atomic_load(&command_status[pid]) : -1;
+}
+
 static int wait_status(pid_t pid) {
     return pid > 0 && pid < IOS_MAX_THREADS ?
         atomic_load(&command_status[pid]) : ios_getCommandStatus();
@@ -622,6 +626,8 @@ pid_t ios_currentPid(void) {
 pid_t fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
 pid_t ios_fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
 pid_t vfork(void) { return ios_nextAvailablePid(); }
+
+
 
 // simple replacement of waitpid for swift programs
 // We use "optnone" to prevent optimization, otherwise the while loops never end.
