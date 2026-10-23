@@ -65,6 +65,16 @@ The CI workflow builds all the XcFrameworks on every pull request (except change
 - Wait for the "Publishing release" job. It creates the release `v3.0.8` with the `.xcframework.zip` files, `ios_error.h` and `commandDictionary.plist`, and the SHA-256 of each zip in the release notes. If you already created the release, it adds the files and keeps your notes. It never overwrites a file already in the release.
 - Update the `url` and `checksum` of each `binaryTarget` in `Package.swift` (and in the apps that use them) with the new version and the checksums from the release notes.
 
+## FFmpeg frameworks
+
+Run `bash build-ffmpeg.sh` on macOS with Xcode, its Metal compiler, CMake, Ninja, Autoconf, Automake, libtool and pkg-config available. The recipe downloads checksum-pinned sources and builds FFmpeg `n5.0.1-4-ga5ebb3d25e`, FreeType 2.10.2, zimg 3.0.3 and OpenSSL 1.1.1w for arm64 iOS and universal arm64/x86_64 iOS Simulator, targeting iOS 14.0. It links against the `ios_system` v3.0.5 binary and header, pinned by SHA-256. `JOBS=4` is the default; an optional `iphoneos` or `iphonesimulator` argument builds only that SDK without packaging.
+
+Outputs are in `.build/ffmpeg/output`: `ffmpeg.xcframework.zip`, `ffprobe.xcframework.zip`, `freetype.xcframework.zip`, `openssl.xcframework.zip`, `zimg.xcframework.zip` and `checksums.txt`. The command frameworks retain the `main` entry point and use ios_system's thread streams and exit functions. The FFmpeg feature switches match the published Auxiliary commands, with documentation and the unused ffplay executable excluded. FreeType uses zlib without optional PNG, HarfBuzz, BZip2 or Brotli support; these auxiliary assets do not replace the existing Python-aux distribution automatically.
+
+Run `bash verify-ffmpeg.sh` after packaging. It compares every exported symbol and published feature switch against the checksum-pinned Auxiliary FFmpeg and ffprobe assets, rejects removed exports and host library paths, and saves the comparisons alongside the archives. These are build and binary compatibility checks, not command runtime tests.
+
+The separate "FFmpeg CI" workflow runs on pull requests that change the recipe, its check or its workflow, or manually. It installs Autotools on its macOS runner with Homebrew. A `ffmpeg-v*` tag publishes these five archives and checksums in its own release, using `release.md` for new release notes. It leaves the repository's latest release unchanged. Existing releases keep their notes and existing assets are not overwritten. Update a consuming `Package.swift` URL and checksum explicitly when adopting a release; the workflow does not modify the Auxiliary release or the regular ios_system release workflow.
+
 ## Integration with your app:
 
 - Link your application with the `ios_system.framework` framework.
