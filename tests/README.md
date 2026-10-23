@@ -253,3 +253,22 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$CHECK/command-streams" 'wc -c' "$expected
 Also run `wc -l` expecting `       2\n`, `wc -w` expecting `       3\n`, `wc -m` expecting `      14\n`, and `wc` expecting `       2       3      14\n`. Run `grep three`, `egrep three` and `fgrep three` expecting `three\n`; `cksum` expects `112545809 14\n`, and `sum` expects `63079 1\n`. Those checksum literals were independently obtained from the macOS stock commands, not calculated by the implementation under test.
 
 For the `gzip` output-open error, create a disposable input whose basename has 253 ASCII characters. Its `.gz` output exceeds the filesystem's 255-byte basename limit. Pass `"gzip /absolute/path/to/input"`, an empty expected output argument, and expected status `1` as the optional third argument. The command must fail while retaining all three caller streams and leaving the input intact. Remove the disposable input afterwards. Before the fixes, `wc`, `grep`, `cksum`/`sum` and the `gzip` error case leave only two caller descriptors open; after the fixes all cases exit 0 and print `PASS`. The worker-level pipeline regression in `worker-pipeline.sh` independently checks completion and data transfer for gzip/wc workers.
+
+# Direct command interruption
+
+`direct-cancellation.m` registers a native command through the public command catalog, starts it with `ios_system`, interrupts its virtual PID with `ios_interruptpid` and waits for completion. The embedding host ignores process SIGINT; that disposition must not prevent targeted command cancellation. The interrupted command returns 130 and a following completed command returns its own status 7. Interrupting the completed PID returns `ESRCH`. A separate command installs a SIGINT handler and receives the signal through unchanged `ios_killpid(pid, SIGINT)`; its handler runs and it returns its chosen status 23. This covers direct threads; worker-proxy cancellation and rejected host cancellation need their separate consumers.
+
+```sh
+mkdir -p .build/direct-cancellation/Frameworks .build/direct-cancellation/bin
+cp -R FRAMEWORK_BUILD/ios_system.framework .build/direct-cancellation/Frameworks/
+plutil -create xml1 .build/direct-cancellation/commandDictionary.plist
+plutil -insert direct-cancel -json '["SELF","direct_cancel_main","","none"]' .build/direct-cancellation/commandDictionary.plist
+touch .build/direct-cancellation/bin/direct-cancel
+chmod 755 .build/direct-cancellation/bin/direct-cancel
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -fobjc-arc -Wall -Wextra -Werror -I ios_system -F .build/direct-cancellation/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -I . -Wl,-export_dynamic tests/direct-cancellation.m -o .build/direct-cancellation/check
+codesign --force --sign - .build/direct-cancellation/Frameworks/ios_system.framework
+codesign --force --sign - .build/direct-cancellation/check
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/direct-cancellation/check" "$PWD/.build/direct-cancellation/bin"
+```
+
+The process has an eight-second bound. Success exits 0 and prints `direct interrupt result=0 status=130 following=7 PASS`. Delivering an ignored process signal alone would let the first command complete normally with status 7. The separate handler case requires `handler delivery result=0 handled=1 status=23 PASS`.
