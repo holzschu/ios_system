@@ -177,3 +177,22 @@ SIMCTL_CHILD_DYLD_INSERT_LIBRARIES="$PWD/.build/thread-create-check/thread-creat
 ```
 
 Expected: exit 0 and `thread creation failure: status=126; streams, signal and next output: PASS`. Set both `MallocScribble` and `MallocPreScribble`.
+
+# Per-child exit status
+
+`child-wait-status.m` starts two registered commands through `ios_fork` and `ios_system`. The first returns 7. The second waits for the first through `ios_waitpid`, then calls `ios_exit(23)`. The parent waits for the second and then the first through `ios_full_waitpid`; each wait must report that child's exit status. It also checks a missing command returns 127 and empty and NULL commands return 0.
+
+From the repository root, build and run on an explicitly selected booted Simulator:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 2 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/child-status-sdk" OBJROOT="$PWD/.build/child-status-obj" build
+mkdir -p .build/child-status/Frameworks
+cp -R .build/child-status-sdk/ios_system.framework .build/child-status/Frameworks/
+cp Resources/commandDictionary.plist .build/child-status/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/child-status/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/child-wait-status.m -o .build/child-status/child-status
+codesign --force --sign - .build/child-status/Frameworks/ios_system.framework
+codesign --force --sign - .build/child-status/child-status
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/child-status/child-status"
+```
+
+Expected: exit 0 and `child A expected=7 observed=7; child B expected=23 observed=23: PASS`, `missing command expected=127 observed=127` and `empty command expected=0 observed=0; NULL command expected=0 observed=0`. With shared session status, both children report 23 and the test exits 1. A ten-second alarm bounds a stalled wait. This fixture covers a normal return, `ios_exit` and commands that do not start; it does not qualify cancellation, thread-creation failure or PID reuse.
