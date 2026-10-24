@@ -161,6 +161,12 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
 
 Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
 
+# Waiting without spinning
+
+`cleanup-wait.m` runs `hold | mid | skip` with `joinMainThread = false`: `hold` runs 2 s, `mid` ends after 300 ms while `hold` is the pipeline root, so `mid` waits for the root before it releases its pid. The test measures the process CPU over 3 s. Build it like `waitpid-idle.m`. Expected: exit 0 and `cleanup-wait: cpu=0.01s in 3 s PASS`. The wait used to loop on the session with `fflush` and used 1.7 s of CPU (exit 1, `FAIL`). The same change replaced the other busy loops: callers that start a command or change the directory sleep on a condition until no command is ending (`ios_cleanupWait`), and a command that ends waits for `pid_mtx` with `pthread_mutex_lock` instead of a `trylock` loop.
+
+`cleanup-cancel.m` plays an ending command with `ios_cleanupBegin`/`ios_cleanupEnd`, starts a command that blocks in `chdir`, cancels its thread, ends the pretend command and runs one more command. Build it like `waitpid-idle.m`, with `-I .` for `ios_error.h`. Expected: exit 0 and `cleanup-cancel: PASS`. Without the cancellation guard in `ios_cleanupWait`: exit 124 and `FAIL, no end after 20 s`, because the cancelled command keeps `cleanup_mutex` locked.
+
 # Command thread creation failure
 
 `thread-create-failure.m` dispatches a registered native command through `ios_system`. The external `thread-create-failure-hook.c` interposer makes exactly one OS `pthread_create` call return `EAGAIN`; the framework itself is not instrumented. With allocator scribbling enabled, cleanup must return status 126, preserve all three caller-owned streams and the caller's `SIGUSR1` handler, then run the next command with exact `NEXT\n` output. A ten-second alarm bounds a stalled wait.
