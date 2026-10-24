@@ -1,0 +1,208 @@
+--- a/includes.h
++++ b/includes.h
+@@ -181,4 +181,8 @@
+ 
+ #include "entropy.h"
+ 
++#ifdef ASHELL_OPENSSH
++#include "ashell-ssh.h"
++#endif
++
+ #endif /* INCLUDES_H */
+--- a/log.c
++++ b/log.c
+@@ -56,7 +56,7 @@
+ 
+ static LogLevel log_level = SYSLOG_LEVEL_INFO;
+ static int log_on_stderr = 1;
+-static int log_stderr_fd = STDERR_FILENO;
++static int log_stderr_fd = 2;
+ static int log_facility = LOG_AUTH;
+ static const char *argv0;
+ static log_handler_fn *log_handler;
+@@ -198,6 +198,10 @@
+ 	struct syslog_data sdata = SYSLOG_DATA_INIT;
+ #endif
+ 
++
++#ifdef ASHELL_OPENSSH
++	log_stderr_fd = STDERR_FILENO;
++#endif
+ 	argv0 = av0;
+ 
+ 	if (log_change_level(level) != 0) {
+--- a/ssh.c
++++ b/ssh.c
+@@ -42,6 +42,10 @@
+ 
+ #include "includes.h"
+ 
++#ifdef ASHELL_OPENSSH
++#define main ashell_ssh_main
++#endif
++
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/stat.h>
+@@ -104,7 +108,7 @@
+ extern char *__progname;
+ 
+ /* Saves a copy of argv for setproctitle emulation */
+-#ifndef HAVE_SETPROCTITLE
++#if !defined(HAVE_SETPROCTITLE) && !defined(ASHELL_OPENSSH)
+ static char **saved_av;
+ #endif
+ 
+@@ -643,11 +647,13 @@
+ 	 * Discard other fds that are hanging around. These can cause problem
+ 	 * with backgrounded ssh processes started by ControlPersist.
+ 	 */
++#ifndef ASHELL_OPENSSH
+ 	closefrom(STDERR_FILENO + 1);
++#endif
+ 
+ 	__progname = ssh_get_progname(av[0]);
+ 
+-#ifndef HAVE_SETPROCTITLE
++#if !defined(HAVE_SETPROCTITLE) && !defined(ASHELL_OPENSSH)
+ 	/* Prepare for later setproctitle emulation */
+ 	/* Save argv so it isn't clobbered by setproctitle() emulation */
+ 	saved_av = xcalloc(ac + 1, sizeof(*saved_av));
+--- a/ssh-keygen.c
++++ b/ssh-keygen.c
+@@ -13,6 +13,10 @@
+  */
+ 
+ #include "includes.h"
++
++#ifdef ASHELL_OPENSSH
++#define main ashell_ssh_keygen_main
++#endif
+ 
+ #include <sys/types.h>
+ #include <sys/socket.h>
+--- a/sftp.c
++++ b/sftp.c
+@@ -16,6 +16,10 @@
+  */
+ 
+ #include "includes.h"
++
++#ifdef ASHELL_OPENSSH
++#define main ashell_sftp_main
++#endif
+ 
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
+@@ -2431,6 +2435,25 @@
+ static void
+ connect_to_server(char *path, char **args, int *in, int *out)
+ {
++#ifdef ASHELL_OPENSSH
++
++    int pair[2], error, output;
++    pid_t child;
++    if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1) fatal("socketpair: %s", strerror(errno));
++    output = dup(pair[0]);
++    if (output == -1) {
++        error = errno;
++        close(pair[0]); close(pair[1]);
++        fatal("dup: %s", strerror(error));
++    }
++    error = ashell_ssh_spawn(path, args, pair[1], pair[1], &child);
++    close(pair[1]);
++    if (error) { close(pair[0]); close(output); fatal("spawn: %s", strerror(error)); }
++    sshpid = child;
++    *in = pair[0]; *out = output;
++
++#else
++
+ 	int c_in, c_out;
+ #ifdef USE_PIPES
+ 	int pin[2], pout[2];
+@@ -2488,6 +2511,8 @@
+ 	ssh_signal(SIGCHLD, sigchld_handler);
+ 	close(c_in);
+ 	close(c_out);
++
++#endif
+ }
+ 
+ static void
+--- a/scp.c
++++ b/scp.c
+@@ -73,6 +73,10 @@
+ 
+ #include "includes.h"
+ 
++#ifdef ASHELL_OPENSSH
++#define main ashell_scp_main
++#endif
++
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/time.h>
+@@ -260,6 +264,38 @@
+ do_cmd(char *program, char *host, char *remuser, int port, int subsystem,
+     char *cmd, int *fdin, int *fdout, pid_t *pid)
+ {
++#ifdef ASHELL_OPENSSH
++
++    int pair[2], output, error;
++    arglist child = {0};
++    for (u_int i = 0; i < args.num; i++)
++        addargs(&child, "%s", args.list[i]);
++    if (port == -1) port = sshport;
++    replacearg(&child, 0, "%s", program);
++    if (port != -1) addargs(&child, "-p%d", port);
++    if (remuser != NULL) { addargs(&child, "-l"); addargs(&child, "%s", remuser); }
++    if (subsystem) addargs(&child, "-s");
++    addargs(&child, "--"); addargs(&child, "%s", host); addargs(&child, "%s", cmd);
++    if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1) {
++        freeargs(&child);
++        return -1;
++    }
++    output = dup(pair[1]);
++    if (output == -1) {
++        error = errno;
++        close(pair[0]); close(pair[1]); freeargs(&child);
++        errno = error;
++        return -1;
++    }
++    error = ashell_ssh_spawn(program, child.list, pair[0], pair[0], pid);
++    close(pair[0]);
++    freeargs(&child);
++    if (error) { close(pair[1]); close(output); errno = error; return -1; }
++    *fdin = pair[1]; *fdout = output;
++    return 0;
++
++#else
++
+ #ifdef USE_PIPES
+ 	int pin[2], pout[2];
+ #else
+@@ -349,6 +385,8 @@
+ 		ssh_signal(SIGHUP, killchild);
+ 		return 0;
+ 	}
++
++#endif
+ }
+ 
+ /*
+@@ -1275,6 +1313,15 @@
+ 			(void) close(remin);
+ 			(void) close(remout);
+ 			remin = remout = -1;
++#ifdef ASHELL_OPENSSH
++			/* Reap this transport before admitting the next isolated worker. */
++			int status;
++			if (waitpid(do_cmd_pid, &status, 0) == -1)
++				++errs;
++			else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
++				++errs;
++			do_cmd_pid = -1;
++#endif
+ 			continue;
+ 		}
+ 		/* SCP */
