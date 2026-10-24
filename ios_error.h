@@ -78,6 +78,8 @@ extern int ios_killpid(pid_t pid, int sig); // kill the current running command
 
 extern void ios_exit(int errorCode) __dead2; // set error code and exits from the thread.
 extern int ios_execv(const char *path, char* const argv[]);
+extern int ios_execv_async(const char *path, char* const argv[]); // returns once the child has started
+extern int ios_pidStatus(pid_t pid); // exit status of a finished virtual pid, -1 if unknown
 extern int ios_execve(const char *path, char* const argv[], char** envlist);
 extern int ios_dup2(int fd1, int fd2);
 extern char * ios_getenv(const char *name);

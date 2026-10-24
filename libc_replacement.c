@@ -210,6 +210,10 @@ void ios_storeCommandStatus(int status) {
     }
 }
 
+int ios_pidStatus(pid_t pid) {
+    return pid > 0 && pid < IOS_MAX_THREADS ? atomic_load(&command_status[pid]) : -1;
+}
+
 static int wait_status(pid_t pid) {
     return pid > 0 && pid < IOS_MAX_THREADS ?
         atomic_load(&command_status[pid]) : ios_getCommandStatus();
@@ -251,6 +255,7 @@ void newPreviousDirectory(void) {
 
 // We do not recycle process ids too quickly to avoid collisions.
 void storeEnvironment(char* envp[]);
+extern void ios_resetPidWorkerState(pid_t pid);
 static inline const pid_t ios_nextAvailablePid(void) {
     while (cleanup_counter > 0) { } // Don't start a command while another is ending.
     // fprintf(stderr, "Locking in ios_nextAvailablePid\n");
@@ -262,6 +267,7 @@ static inline const pid_t ios_nextAvailablePid(void) {
         current_pid = last_allocated_pid + 1;
         last_allocated_pid = current_pid;
         command_status[current_pid] = 130; // Cancellation before a recorded exit.
+        ios_resetPidWorkerState(current_pid);
         thread_ids[current_pid] = -1; // Not yet started
         numVariablesSet[current_pid] = 0;
         environment[current_pid] = NULL;
@@ -284,6 +290,7 @@ static inline const pid_t ios_nextAvailablePid(void) {
         pthread_t thread_pid = ios_getThreadId(current_pid);
         if (thread_pid == 0) { // We found a not-active pid
             command_status[current_pid] = 130; // Cancellation before a recorded exit.
+            ios_resetPidWorkerState(current_pid);
             thread_ids[current_pid] = -1; // Not yet started
             numVariablesSet[current_pid] = 0;
             environment[current_pid] = NULL;
@@ -303,16 +310,21 @@ static inline const pid_t ios_nextAvailablePid(void) {
     }
 }
 
-inline void ios_storeThreadId(pthread_t thread) {
+void ios_storeThreadIdForPid(pid_t pid, pthread_t thread) {
     // To avoid issues when a command starts a command without forking,
     // we only store thread IDs for the first thread of the "process".
-    // fprintf(stderr, "Unlocking pid %d, storing thread %x current value: %x\n", current_pid, thread,  thread_ids[current_pid]);
-    if (thread_ids[current_pid] == -1) {
-        thread_ids[current_pid] = thread;
+    // fprintf(stderr, "Unlocking pid %d, storing thread %x current value: %x\n", pid, thread,  thread_ids[pid]);
+    if (thread_ids[pid] == -1) {
+        thread_ids[pid] = thread;
         if (!thread) notify_thread_completion();
     }
     pthread_mutex_unlock(&pid_mtx);
 }
+
+inline void ios_storeThreadId(pthread_t thread) {
+    ios_storeThreadIdForPid(current_pid, thread);
+}
+
 
 char* libc_getenv(const char* variableName) {
     if (environment[current_pid] != NULL) {
@@ -597,6 +609,14 @@ void ios_releaseBackgroundThread(pthread_t thread) {
     // fprintf(stderr, "Not found\n");
 }
 
+void ios_releaseBackgroundThreadId(pid_t pid) {
+    if (thread_ids[pid] != 0) {
+        current_pid = previousPid[pid];
+        thread_ids[pid] = 0;
+        notify_thread_completion();
+    }
+}
+
 void ios_releaseThreadId(pid_t pid) {
     // Don't reset the environment; sometimes, commands try to change the environment while it is being erased.
     // resetEnvironment(pid);
@@ -622,6 +642,8 @@ pid_t ios_currentPid(void) {
 pid_t fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
 pid_t ios_fork(void) { return ios_nextAvailablePid(); } // increases current_pid by 1.
 pid_t vfork(void) { return ios_nextAvailablePid(); }
+
+
 
 // simple replacement of waitpid for swift programs
 // We use "optnone" to prevent optimization, otherwise the while loops never end.
