@@ -174,3 +174,39 @@ Build and run it like `waitpid-idle.m` (`-F` the framework directory, `tests/con
 Build it like `concurrent-fork.m`, with `-I .` for `ios_error.h`, and put an empty `commandDictionary.plist` (`<dict/>`) or `Resources/commandDictionary.plist` next to the binary, or `replaceCommand` reports `command not found`. Expected: exit 0 and `concurrent-getopt: 8 threads x 300 commands PASS`. With the shared `optind`: exit 1 and `FAIL, N of 2400 commands gave a wrong answer`.
 
 `getopt-legacy.m` stands in for a framework built before this change: it does not include `ios_error.h` and reads `optind` and `optarg` after calling the exported `getopt` and `getopt_long`, and runs a `getopt_long` command three times through `ios_system` with no reset in between. Build it like `concurrent-getopt.m` and run it with `xcrun simctl spawn`. Expected: exit 0 and `getopt-legacy: PASS`. Without the shared reset in `run_function`: runs 2 and 3 of `legacyopt` print `FAIL`.
+
+# Command thread creation failure
+
+`thread-create-failure.m` dispatches a registered native command through `ios_system`. The external `thread-create-failure-hook.c` interposer makes exactly one OS `pthread_create` call return `EAGAIN`; the framework itself is not instrumented. With allocator scribbling enabled, cleanup must return status 126, preserve all three caller-owned streams and the caller's `SIGUSR1` handler, then run the next command with exact `NEXT\n` output. A ten-second alarm bounds a stalled wait.
+
+After building the framework as above:
+
+```sh
+mkdir -p .build/thread-create-check/Frameworks
+cp -R .build/owned-streams/Build/Products/Release-iphonesimulator/ios_system.framework .build/thread-create-check/Frameworks/
+cp Resources/commandDictionary.plist .build/thread-create-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/thread-create-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/thread-create-failure.m -o .build/thread-create-check/thread-create-failure
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -Wall -Wextra -dynamiclib tests/thread-create-failure-hook.c -o .build/thread-create-check/thread-create-failure-hook.dylib
+SIMCTL_CHILD_DYLD_INSERT_LIBRARIES="$PWD/.build/thread-create-check/thread-create-failure-hook.dylib" SIMCTL_CHILD_MallocScribble=1 SIMCTL_CHILD_MallocPreScribble=1 xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/thread-create-check/thread-create-failure"
+```
+
+Expected: exit 0 and `thread creation failure: status=126; streams, signal and next output: PASS`. Set both `MallocScribble` and `MallocPreScribble`.
+
+# Per-child exit status
+
+`child-wait-status.m` starts two registered commands through `ios_fork` and `ios_system`. The first returns 7. The second waits for the first through `ios_waitpid`, then calls `ios_exit(23)`. The parent waits for the second and then the first through `ios_full_waitpid`; each wait must report that child's exit status. It also checks a missing command returns 127 and empty and NULL commands return 0.
+
+From the repository root, build and run on an explicitly selected booted Simulator:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 2 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/child-status-sdk" OBJROOT="$PWD/.build/child-status-obj" build
+mkdir -p .build/child-status/Frameworks
+cp -R .build/child-status-sdk/ios_system.framework .build/child-status/Frameworks/
+cp Resources/commandDictionary.plist .build/child-status/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/child-status/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/child-wait-status.m -o .build/child-status/child-status
+codesign --force --sign - .build/child-status/Frameworks/ios_system.framework
+codesign --force --sign - .build/child-status/child-status
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/child-status/child-status"
+```
+
+Expected: exit 0 and `child A expected=7 observed=7; child B expected=23 observed=23: PASS`, `missing command expected=127 observed=127` and `empty command expected=0 observed=0; NULL command expected=0 observed=0`. With shared session status, both children report 23 and the test exits 1. A ten-second alarm bounds a stalled wait. This fixture covers a normal return, `ios_exit` and commands that do not start; it does not qualify cancellation, thread-creation failure or PID reuse.

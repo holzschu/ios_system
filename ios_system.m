@@ -217,7 +217,10 @@ static bool scpIsRunning = false;
 char* sh_session = "sh_session";
 
 // replace system-provided exit() by our own:
+extern void ios_storeCommandStatus(int status);
+extern void ios_storePidStatus(pid_t pid, int status);
 void ios_exit(int n) {
+    ios_storeCommandStatus(n);
     if (currentSession != NULL) {
         currentSession->global_errno = n;
     }
@@ -545,6 +548,7 @@ static int createOwnedCommand(volatile pthread_t *thread, functionParameters *pa
     prepareOwnedCommand(parameters);
     int error = pthread_create((pthread_t *)thread, NULL, run_function, parameters);
     if (error) {
+        ios_storePidStatus(ios_currentPid(), 126);
         // Release the allocated synthetic PID before cleanup waits on pid_mtx.
         ios_storeThreadId(0);
         sessionParameters *session = parameters->session;
@@ -840,7 +844,7 @@ static void cleanup_function(void* parameters) {
     cleanup_counter--;
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
     leaveOwnedCommand(p);
-    free(parameters); // This was malloc'ed in ios_system
+    free(parameters); // Allocated in ios_system
 }
 
 // Avoir calling crash_handler several times:
@@ -937,6 +941,7 @@ static void* run_function(void* parameters) {
         p->ownedRunning = !cancelled;
         pthread_mutex_unlock(&ownedStreamsMutex);
         int retval = cancelled ? 130 : p->function(p->argc, p->argv);
+        ios_storeCommandStatus(retval);
         if (currentSession != nil) currentSession->global_errno = retval;
     }
     @catch (NSException *exception)
@@ -3088,6 +3093,7 @@ int ios_system(const char* inputCmd) {
     NSLog(@"Starting command: %s currentSession->isMainThread: %d", inputCmd, currentSession->isMainThread);
     // Don't start if the command is NULL:
     if (inputCmd == NULL) {
+        ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
         ios_storeThreadId(0);
         return 0;
     }
@@ -3227,7 +3233,7 @@ int ios_system(const char* inputCmd) {
     // Search for input file "< " and output file " >"
     if (!inputFileMarker) inputFileMarker = command;
     outputFileMarker = inputFileMarker;
-    functionParameters *params = (functionParameters*) malloc(sizeof(functionParameters));
+    functionParameters *params = (functionParameters*) calloc(1, sizeof(functionParameters));
     if (params == NULL) {
         NSLog(@"Unable to allocate params in ios_system");
         return -1;
@@ -3290,6 +3296,7 @@ int ios_system(const char* inputCmd) {
             sharedErrorOutput = true;
             if (params->stdout == NULL) { // pipe open failed, return before we start a command
                 NSLog(@"Failed launching pipe for %s\n", pipeMarker+2);
+                ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
                 ios_storeThreadId(0);
                 free(params);
                 free(originalCommand); // releases cmd, which was a strdup of inputCommand
@@ -3308,6 +3315,7 @@ int ios_system(const char* inputCmd) {
                 pipeMarker[0] = 0x0;
                 if (params->stdout == NULL) { // pipe open failed, return before we start a command
                     NSLog(@"Failed launching pipe for %s\n", pipeMarker+1);
+                    ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
                     ios_storeThreadId(0);
                     free(params);
                     free(originalCommand); // releases cmd, which was a strdup of inputCommand
@@ -4279,12 +4287,14 @@ int ios_system(const char* inputCmd) {
                 && (handle != RTLD_MAIN_ONLY)
                 && (handle != RTLD_DEFAULT) && (handle != RTLD_NEXT))
                 dlclose(handle);
-            free(params); // This was malloc'ed in ios_system
-            ios_storeThreadId(0);
+            free(params); // Allocated in ios_system
             currentSession->global_errno = 127;
+            ios_storePidStatus(ios_currentPid(), 127);
+            ios_storeThreadId(0);
             // TODO: this should also raise an exception, for python scripts
         } // if (function)
     } else { // argc != 0
+        ios_storePidStatus(ios_currentPid(), currentSession->global_errno);
         ios_storeThreadId(0);
         free(argv); // argv is otherwise freed in cleanup_function
         free(dontExpand);

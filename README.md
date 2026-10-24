@@ -57,6 +57,14 @@ Type `swift run --package-path xcfs build`. This will download all the requireme
 - Alternatively, type `xcodebuild -project ios_system.xcodeproj -alltargets -sdk iphoneos -configuration Release -quiet` to build all the frameworks.
 - If you need [python](https://github.com/holzschu/python_ios), [lua](https://github.com/holzschu/lua_ios), [TeX](https://github.com/holzschu/lib-tex) or [network_ios](https://github.com/holzschu/network_ios), download the corresponding projects and compile them. All these projects need the `ios_system` framework to compile.
 
+## Releasing:
+
+The CI workflow builds all the XcFrameworks on every pull request (except changes to Markdown files only), and publishes a release when a `v*` tag is pushed:
+
+- `git tag v3.0.8 && git push origin v3.0.8`
+- Wait for the "Publishing release" job. It creates the release `v3.0.8` with the `.xcframework.zip` files, `ios_error.h` and `commandDictionary.plist`, and the SHA-256 of each zip in the release notes. If you already created the release, it adds the files and keeps your notes. It never overwrites a file already in the release.
+- Update the `url` and `checksum` of each `binaryTarget` in `Package.swift` (and in the apps that use them) with the new version and the checksums from the release notes.
+
 ## Integration with your app:
 
 - Link your application with the `ios_system.framework` framework.
