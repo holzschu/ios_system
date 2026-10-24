@@ -185,6 +185,7 @@ int ios_putw(int w, FILE *stream) {
 // You will still need to edit your code to make sure you go through both branches.
 #define IOS_MAX_THREADS 128
 static _Atomic(pthread_t) thread_ids[IOS_MAX_THREADS];
+static _Atomic int command_status[IOS_MAX_THREADS];
 static pthread_mutex_t thread_completion_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t thread_completed = PTHREAD_COND_INITIALIZER;
 
@@ -193,6 +194,27 @@ static void notify_thread_completion(void) {
     pthread_cond_broadcast(&thread_completed);
     pthread_mutex_unlock(&thread_completion_mutex);
 }
+// A session can have several children; its last status does not identify a PID.
+void ios_storePidStatus(pid_t pid, int status) {
+    if (pid > 0 && pid < IOS_MAX_THREADS)
+        atomic_store(&command_status[pid], status & 0xff);
+}
+
+void ios_storeCommandStatus(int status) {
+    pthread_t thread = pthread_self();
+    for (int pid = 1; pid < IOS_MAX_THREADS; pid++) {
+        if (atomic_load(&thread_ids[pid]) == thread) {
+            ios_storePidStatus(pid, status);
+            return;
+        }
+    }
+}
+
+static int wait_status(pid_t pid) {
+    return pid > 0 && pid < IOS_MAX_THREADS ?
+        atomic_load(&command_status[pid]) : ios_getCommandStatus();
+}
+
 static int numVariablesSet[IOS_MAX_THREADS];
 static char** environment[IOS_MAX_THREADS];
 static char** copyEnvironment[IOS_MAX_THREADS];
@@ -239,6 +261,7 @@ static inline const pid_t ios_nextAvailablePid(void) {
         && (thread_ids[last_allocated_pid+1] == 0)) {
         current_pid = last_allocated_pid + 1;
         last_allocated_pid = current_pid;
+        command_status[current_pid] = 130; // Cancellation before a recorded exit.
         thread_ids[current_pid] = -1; // Not yet started
         numVariablesSet[current_pid] = 0;
         environment[current_pid] = NULL;
@@ -260,6 +283,7 @@ static inline const pid_t ios_nextAvailablePid(void) {
         }
         pthread_t thread_pid = ios_getThreadId(current_pid);
         if (thread_pid == 0) { // We found a not-active pid
+            command_status[current_pid] = 130; // Cancellation before a recorded exit.
             thread_ids[current_pid] = -1; // Not yet started
             numVariablesSet[current_pid] = 0;
             environment[current_pid] = NULL;
@@ -650,7 +674,7 @@ __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
         if (threadToWaitFor != 0) // the process is still running
             return 0;
         else {
-            if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+            if (stat_loc) *stat_loc = W_EXITCODE(wait_status(pid), 0);
             fflush(thread_stdout);
             fflush(thread_stderr);
             return pid; // was "-1". See man page and https://github.com/holzschu/ios_system/issues/89
@@ -658,7 +682,7 @@ __attribute__ ((optnone)) pid_t waitpid(pid_t pid, int *stat_loc, int options) {
     } else {
         // Wait until the process is terminated:
         ios_waitpid(pid);
-        if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+        if (stat_loc) *stat_loc = W_EXITCODE(wait_status(pid), 0);
         return pid;
     }
 }
@@ -682,7 +706,7 @@ __attribute__ ((optnone)) pid_t ios_full_waitpid(pid_t pid, int *stat_loc, int o
         if (threadToWaitFor != 0) // the process is still running
             return 0;
         else {
-            if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+            if (stat_loc) *stat_loc = W_EXITCODE(wait_status(pid), 0);
             fflush(thread_stdout);
             fflush(thread_stderr);
             return pid; // was "-1". See man page and https://github.com/holzschu/ios_system/issues/89
@@ -690,7 +714,7 @@ __attribute__ ((optnone)) pid_t ios_full_waitpid(pid_t pid, int *stat_loc, int o
     } else {
         // Wait until the process is terminated:
         ios_waitpid(pid);
-        if (stat_loc) *stat_loc = W_EXITCODE(ios_getCommandStatus(), 0);
+        if (stat_loc) *stat_loc = W_EXITCODE(wait_status(pid), 0);
         return pid;
     }
 }
