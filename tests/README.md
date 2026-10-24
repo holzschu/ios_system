@@ -161,6 +161,12 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
 
 Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
 
+# Concurrent forks
+
+`concurrent-fork.m` starts eight threads that each run 400 short commands behind `ios_fork`, `ios_system` and `ios_waitpid`. A command that ends must not move `current_pid` under a thread that has just forked; if it does, the new command's slot stays at "not started" and its `ios_waitpid` never returns.
+
+Build and run it like `waitpid-idle.m` (`-F` the framework directory, `tests/concurrent-fork.m`, `xcrun simctl spawn`). Expected: exit 0 and `concurrent-fork: 8 threads x 400 commands PASS`. Without the compare-and-swap in `ios_restoreParentPid`: exit 124 and `FAIL, N of 8 threads finished`, bounded by a two-minute alarm that prints the stacks of all threads before it exits (`hang-dump.h`, via `sample`).
+
 # Command thread creation failure
 
 `thread-create-failure.m` dispatches a registered native command through `ios_system`. The external `thread-create-failure-hook.c` interposer makes exactly one OS `pthread_create` call return `EAGAIN`; the framework itself is not instrumented. With allocator scribbling enabled, cleanup must return status 126, preserve all three caller-owned streams and the caller's `SIGUSR1` handler, then run the next command with exact `NEXT\n` output. A ten-second alarm bounds a stalled wait.
