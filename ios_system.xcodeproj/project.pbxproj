@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		601B00000000000000000001 /* ios_spawn.h in Headers */ = {isa = PBXBuildFile; fileRef = 601B00000000000000000002 /* ios_spawn.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2209215C24B3B05A00D3327B /* open.m in Sources */ = {isa = PBXBuildFile; fileRef = 221CD98D21E8B03D00F3B47C /* open.m */; };
 		22122E2C21BC130700D8FE74 /* say.m in Sources */ = {isa = PBXBuildFile; fileRef = 22122E2A21BC129000D8FE74 /* say.m */; };
 		2216426D2B7B9B5F00043766 /* ssh-add.c in Sources */ = {isa = PBXBuildFile; fileRef = 2216426C2B7B9B5F00043766 /* ssh-add.c */; };
@@ -897,6 +898,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		601B00000000000000000002 /* ios_spawn.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_spawn.h; sourceTree = SOURCE_ROOT; };
 		22122E2A21BC129000D8FE74 /* say.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = say.m; sourceTree = "<group>"; };
 		2216426C2B7B9B5F00043766 /* ssh-add.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ssh-add.c"; path = "ssh_keygen/ssh-add.c"; sourceTree = SOURCE_ROOT; };
 		2217ECD321CBA5F40049B382 /* entropy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = entropy.c; path = ssh_keygen/entropy.c; sourceTree = "<group>"; };
@@ -2970,6 +2972,7 @@
 				2263787D1FDB3EE400AE8827 /* extern.h in Headers */,
 				226378781FDB3EE400AE8827 /* pathnames.h in Headers */,
 				223496B01FD5FC71007ED1A9 /* ios_system.h in Headers */,
+				601B00000000000000000001 /* ios_spawn.h in Headers */,
 				226378751FDB3EE400AE8827 /* termcap.h in Headers */,
 				226378951FDB3EE400AE8827 /* ls.h in Headers */,
 				225782911FDB4D390050F312 /* curl_config.h in Headers */,

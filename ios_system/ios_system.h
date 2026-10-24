@@ -1,3 +1,4 @@
+#include "ios_spawn.h"
 //
 //  ios_system.h
 //  ios_system
@@ -39,6 +40,9 @@ extern int ios_system(const char* inputCmd); // execute this command (executable
 extern FILE *ios_popen(const char *command, const char *type); // Execute this command and pipe the result
 extern int ios_kill(void); // kill the current running command
 extern int ios_killpid(pid_t pid, int sig); // kill the current running command
+// Cancel a direct command with status 130; worker proxies retain their own status handling.
+// Return ESRCH if absent. Does not deliver SIGINT handlers.
+extern int ios_interruptpid(pid_t pid);
 extern int chdir(const char* path);
 
 extern int ios_isatty(int fd); // test whether a file descriptor refers to a terminal
