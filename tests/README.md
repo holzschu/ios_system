@@ -161,6 +161,20 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
 
 Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
 
+# Concurrent forks
+
+`concurrent-fork.m` starts eight threads that each run 400 short commands behind `ios_fork`, `ios_system` and `ios_waitpid`. A command that ends must not move `current_pid` under a thread that has just forked; if it does, the new command's slot stays at "not started" and its `ios_waitpid` never returns.
+
+Build and run it like `waitpid-idle.m` (`-F` the framework directory, `tests/concurrent-fork.m`, `xcrun simctl spawn`). Expected: exit 0 and `concurrent-fork: 8 threads x 400 commands PASS`. Without the compare-and-swap in `ios_restoreParentPid`: exit 124 and `FAIL, N of 8 threads finished`, bounded by a two-minute alarm that prints the stacks of all threads before it exits (`hang-dump.h`, via `sample`).
+
+# ThreadSanitizer
+
+Build ios_system with `xcodebuild ... ENABLE_THREAD_SANITIZER=YES`, link a test with `-fsanitize=thread`, copy `libclang_rt.tsan_iossim_dynamic.dylib` next to the frameworks and run it with `SIMCTL_CHILD_TSAN_OPTIONS=suppressions=tests/tsan.supp xcrun simctl spawn`. Expected with the suppressions: `concurrent-fork` exits 0 and prints no `WARNING: ThreadSanitizer`. Without the fixes for the cached `executeWebAssemblyCommands` lookup and the session's `global_errno`, it prints 3 to 4 reports per run.
+
+`tsan.supp` hides the accesses inside the pid-allocation window: `ios_nextAvailablePid` returns with `pid_mtx` locked and `ios_storeThreadId` unlocks it on another thread, which TSan cannot follow, so it reports two threads that both hold the mutex. The `race:ios_currentPid` entry also hides the unlocked reads of `current_pid` against the plain writes in `ios_nextAvailablePid`; those races are not changed here.
+
+`main-thread-winch.m` checks that `ios_setWindowSize` signals the command that is the main thread of its session. It starts a quick command with `pthread_create` slowed down by 100 ms (`main-thread-winch-slowcreate.c`, a dylib that interposes `pthread_create`), so the command has ended before its starter goes on, then starts a long command named `dash` with a `SIGWINCH` handler, resizes the window and expects the handler to run on that command's thread. Build the dylib with `-dynamiclib -o libslowcreate.dylib`, then the test like `concurrent-fork.m`, adding `-L <dir> -lslowcreate`. Expected: exit 0 and `main-thread-winch: PASS`. When a command that has ended stays recorded as the main thread, the stale id names a thread started after the command ended, that thread gets the signal, and the test prints `FAIL, SIGWINCH was handled on another thread`.
+
 # Command thread creation failure
 
 `thread-create-failure.m` dispatches a registered native command through `ios_system`. The external `thread-create-failure-hook.c` interposer makes exactly one OS `pthread_create` call return `EAGAIN`; the framework itself is not instrumented. With allocator scribbling enabled, cleanup must return status 126, preserve all three caller-owned streams and the caller's `SIGUSR1` handler, then run the next command with exact `NEXT\n` output. A ten-second alarm bounds a stalled wait.

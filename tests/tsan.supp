@@ -1,0 +1,12 @@
+# ThreadSanitizer suppressions for the ios_system tests (TSAN_OPTIONS=suppressions=tests/tsan.supp).
+# ios_nextAvailablePid locks pid_mtx and returns with it locked; ios_storeThreadId unlocks it on the
+# command thread. A mutex released by another thread is invisible to TSan, so every access inside the
+# fork window is reported as a race between two threads that both "hold" pid_mtx.
+race:ios_nextAvailablePid
+race:storeEnvironment
+race:environmentVariables
+race:resetEnvironment
+race:ios_restoreParentPid
+# ios_currentPid reads current_pid without pid_mtx, against plain writes in ios_nextAvailablePid.
+# This hides those reads too; they are not changed here.
+race:ios_currentPid
