@@ -51,12 +51,31 @@
 
 __thread int    __db_getopt_reset;    /* global reset for VxWorks. */
 
-// Not __thread unless I rename them. 
-int    opterr = 1,        /* if error message should be printed */
+// The per-thread variables. ios_error.h maps optind & co to functions that return their addresses; in this file
+// the names stand for the variables themselves.
+#undef optind
+#undef opterr
+#undef optopt
+#undef optreset
+#undef optarg
+#define optind ios_optind
+#define opterr ios_opterr
+#define optopt ios_optopt
+#define optreset ios_optreset
+#define optarg ios_optarg
+__thread int    opterr = 1,        /* if error message should be printed */
 optind = 1,        /* index into parent argv vector */
 optopt,            /* character checked for validity */
 optreset;        /* reset getopt */
-char    *optarg;        /* argument associated with option */
+__thread char    *optarg;        /* argument associated with option */
+
+// Frameworks built before this change import getopt, getopt_long, optind and optarg from ios_system and read
+// the results from the shared variables. getopt and getopt_long below keep serving them from these.
+__attribute__((used)) int ios_shared_opterr __asm__("_opterr") = 1;
+__attribute__((used)) int ios_shared_optind __asm__("_optind") = 1;
+__attribute__((used)) int ios_shared_optopt __asm__("_optopt");
+__attribute__((used)) int ios_shared_optreset __asm__("_optreset");
+__attribute__((used)) char *ios_shared_optarg __asm__("_optarg");
 
 #undef    BADCH
 #define    BADCH    (int)'?'
@@ -74,13 +93,13 @@ char    *optarg;        /* argument associated with option */
  * PUBLIC: #endif
  */
 int
-getopt(nargc, nargv, ostr)
+ios_getopt(nargc, nargv, ostr)
 int nargc;
 char * const *nargv;
 const char *ostr;
 {
-    static char *progname;
-    static char *place = EMSG;        /* option letter processing */
+    static __thread char *progname;
+    static __thread char *place = EMSG;        /* option letter processing */
     char *oli;                /* option letter list index */
     
     /*
@@ -155,3 +174,61 @@ const char *ostr;
     }
     return (optopt);            /* dump back option letter */
 }
+
+// Exported names for callers built without ios_error.h: they parse with the per-thread state, while the shared
+// variables stay the ones they read and write.
+static void legacy_enter(void) {
+    ios_optind = ios_shared_optind;
+    ios_opterr = ios_shared_opterr;
+    ios_optopt = ios_shared_optopt;
+    ios_optreset = ios_shared_optreset;
+    ios_optarg = ios_shared_optarg;
+}
+
+static void legacy_leave(void) {
+    ios_shared_optind = ios_optind;
+    ios_shared_opterr = ios_opterr;
+    ios_shared_optopt = ios_optopt;
+    ios_shared_optreset = ios_optreset;
+    ios_shared_optarg = ios_optarg;
+}
+
+#undef getopt
+int getopt(int nargc, char * const *nargv, const char *ostr) {
+    legacy_enter();
+    int result = ios_getopt(nargc, nargv, ostr);
+    legacy_leave();
+    return result;
+}
+
+#undef getopt_long
+int getopt_long(int nargc, char * const *nargv, const char *options, const struct option *long_options, int *idx) {
+    legacy_enter();
+    int result = ios_getopt_long(nargc, nargv, options, long_options, idx);
+    legacy_leave();
+    return result;
+}
+
+#undef getopt_long_only
+int getopt_long_only(int nargc, char * const *nargv, const char *options, const struct option *long_options, int *idx) {
+    legacy_enter();
+    int result = ios_getopt_long_only(nargc, nargv, options, long_options, idx);
+    legacy_leave();
+    return result;
+}
+
+// Called when a command starts: its option parsing begins at argv[1], for the per-thread state and for the shared
+// variables that callers built without ios_error.h read. The shared stores are atomic because every command
+// thread makes them.
+void ios_getoptReset(void) {
+    ios_optind = ios_opterr = ios_optreset = 1;
+    __atomic_store_n(&ios_shared_optind, 1, __ATOMIC_RELAXED);
+    __atomic_store_n(&ios_shared_opterr, 1, __ATOMIC_RELAXED);
+    __atomic_store_n(&ios_shared_optreset, 1, __ATOMIC_RELAXED);
+}
+
+int *ios_optind_ref(void) { return &ios_optind; }
+int *ios_opterr_ref(void) { return &ios_opterr; }
+int *ios_optopt_ref(void) { return &ios_optopt; }
+int *ios_optreset_ref(void) { return &ios_optreset; }
+char **ios_optarg_ref(void) { return &ios_optarg; }

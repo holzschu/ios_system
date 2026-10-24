@@ -865,6 +865,7 @@ void crash_handler(int sig) {
     }
 }
 
+extern void ios_getoptReset(void); // restarts getopt for a new command (getopt.c)
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     currentWebAssemblyCommandOrder = p->webAssemblyOrder;
@@ -881,10 +882,7 @@ static void* run_function(void* parameters) {
     }
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
-    // TODO: move to __thread variable for optind too
-    optind = 1;
-    opterr = 1;
-    optreset = 1;
+    ios_getoptReset();
     __db_getopt_reset = 1;
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
