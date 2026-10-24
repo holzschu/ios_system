@@ -422,7 +422,7 @@ static __thread bool spawnedChild = false;
 static __thread bool spawnAsync = false;
 
 // Exit status of each virtual pid, so concurrent commands do not share the session's global_errno.
-#define IOS_PID_STATUS_SLOTS 128
+#define IOS_PID_STATUS_SLOTS 128 // Matches IOS_MAX_THREADS in libc_replacement.c (virtual PIDs 1..127).
 // The worker proxy thread for each virtual pid; other threads sharing that pid receive signals normally.
 static _Atomic(pthread_t) pidWorkerThread[IOS_PID_STATUS_SLOTS];
 static _Atomic int pidWorkerSignal[IOS_PID_STATUS_SLOTS];
@@ -1042,7 +1042,7 @@ static void workerRunCleanup(void *argument) {
                 fcntl(streams[i].fd, F_SETFL, fcntl(streams[i].fd, F_GETFL) | O_NONBLOCK);
             int state;
             while ((state = poll_job(run->job, &status)) == 0) {
-                // Spawn can finish before Dash has published its foreground child.
+                // Retry until an interrupt is accepted or the host command completes.
                 if (interrupt && interrupted != 0) interrupted = interrupt(run->job);
                 poll(streams, 2, 50);
                 for (int i = 0; i < 2; i++) if (streams[i].fd >= 0 && streams[i].revents) {
@@ -3078,7 +3078,7 @@ int ios_interruptpid(pid_t pid) {
     for (functionParameters *p = runningSignalCommands; p; p = p->nextSignalCommand) {
         if (p->pid != pid || !pthread_equal(p->signalThread, thread)) continue;
         if (pid >= 0 && pid < IOS_PID_STATUS_SLOTS && atomic_load(&pidWorkerThread[pid]) == thread) {
-            // Proxy cleanup records the worker command's actual status.
+            // Proxy cleanup records the worker or host command's actual status.
             atomic_store(&pidWorkerSignal[pid], SIGINT);
         } else {
             p->cancellationSignal = SIGINT;
@@ -3242,6 +3242,7 @@ int ios_activePager(void) {
 static int paneInteractive(int mode) {
     static int (*function)(const void *, int);
     static dispatch_once_t once;
+    // The provider must be loaded before first use; a missing hook is cached too.
     dispatch_once(&once, ^{ function = dlsym(RTLD_DEFAULT, "ashell_pane_interactive"); });
     return function ? function(ios_getContext(), mode) : -1;
 }
