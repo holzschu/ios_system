@@ -422,7 +422,7 @@ static __thread bool spawnedChild = false;
 static __thread bool spawnAsync = false;
 
 // Exit status of each virtual pid, so concurrent commands do not share the session's global_errno.
-#define IOS_PID_STATUS_SLOTS 128
+#define IOS_PID_STATUS_SLOTS 128 // Matches IOS_MAX_THREADS in libc_replacement.c (virtual PIDs 1..127).
 // The worker proxy thread for each virtual pid; other threads sharing that pid receive signals normally.
 static _Atomic(pthread_t) pidWorkerThread[IOS_PID_STATUS_SLOTS];
 static _Atomic int pidWorkerSignal[IOS_PID_STATUS_SLOTS];

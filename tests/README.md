@@ -256,7 +256,7 @@ For the `gzip` output-open error, create a disposable input whose basename has 2
 
 # Direct command interruption
 
-`direct-cancellation.m` registers a native command through the public command catalog, starts it with `ios_system`, interrupts its virtual PID with `ios_interruptpid` and waits for completion. The embedding host ignores process SIGINT; that disposition must not prevent targeted command cancellation. The interrupted command returns 130 and a following completed command returns its own status 7. Interrupting the completed PID returns `ESRCH`. A separate command installs a SIGINT handler and receives the signal through unchanged `ios_killpid(pid, SIGINT)`; its handler runs and it returns its chosen status 23. This covers direct threads; worker-proxy cancellation needs its separate consumer. The host-policy companion adds its own host cancellation consumer.
+`direct-cancellation.m` registers a native command through the public command catalog, starts it with `ios_system`, interrupts its virtual PID with `ios_interruptpid` and waits for completion. The embedding host ignores process SIGINT; that disposition must not prevent targeted command cancellation. The interrupted command returns 130 and a following completed command returns its own status 7. Interrupting the completed PID returns `ESRCH`. A separate command installs a SIGINT handler and receives the signal through unchanged `ios_killpid(pid, SIGINT)`; its handler runs and it returns its chosen status 23. This covers direct threads; worker-proxy cancellation needs its separate consumer. The a-Shell application companion's `tests/host-cancellation.m` covers host cancellation.
 
 ```sh
 mkdir -p .build/direct-cancellation/Frameworks .build/direct-cancellation/bin
