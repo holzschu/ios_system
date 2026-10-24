@@ -1,19 +1,31 @@
 name: CI
 
 on:
+  pull_request:
+    paths-ignore:
+    - '**.md'
+  workflow_dispatch:
   push:
     tags:
     - 'v*'
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
-    name: Building release assets
-    runs-on: macOS-26
+    name: Building xcframeworks
+    runs-on: macos-26
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
+        persist-credentials: false
 
     - name: xcode-version
       run: xcodebuild -version
@@ -21,151 +33,63 @@ jobs:
     - name: build-ios_system
       run: swift run --verbose --package-path xcfs build
 
+    - name: Slices and checksums
+      run: |
+        ls .build/*.xcframework.zip >/dev/null
+        for zip in .build/*.xcframework.zip; do
+          sum=$(swift package compute-checksum "$zip")
+          echo "$sum  $(basename "$zip")"
+        done | tee .build/checksums.txt
+        for xcf in .build/*/*.xcframework; do
+          for slice in ios-arm64 ios-arm64_x86_64-simulator; do
+            [ -d "$xcf/$slice" ] || { echo "::error::$xcf has no $slice slice"; exit 1; }
+          done
+        done
+        {
+          echo '| xcframework | slice | archs |'
+          echo '| --- | --- | --- |'
+          for lib in .build/*/*.xcframework/*/*; do
+            case "$lib" in *.framework|*.a|*.dylib) ;; *) continue ;; esac
+            bin="$lib"
+            [ -d "$lib" ] && bin="$lib/$(basename "${lib%.framework}")"
+            [ -f "$bin" ] || continue
+            archs=$(lipo -archs "$bin")
+            echo "| $(basename "$(dirname "$(dirname "$lib")")") | $(basename "$(dirname "$lib")") | $archs |"
+          done
+        } | tee -a "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload xcframeworks
+      uses: actions/upload-artifact@v7
+      with:
+        name: xcframeworks
+        include-hidden-files: true
+        if-no-files-found: error
+        path: |
+          .build/*.xcframework.zip
+          .build/checksums.txt
+          .build/release.md
+          ios_error.h
+          Resources/commandDictionary.plist
+
+  release:
+    name: Publishing release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: xcframeworks
+
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body_path: .build/release.md
-        draft: false
-        prerelease: false
-
-    - name: Upload ios_error.h
-      id: upload_ios_error
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: ios_error.h
-        asset_name: ios_error.h
-        asset_content_type: text/plain
-
-    - name: Upload commandDictionary.plist 
-      id: upload_commandDictionary
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: ./Resources/commandDictionary.plist
-        asset_name: commandDictionary.plist
-        asset_content_type: text/plain
-
-    - name: Upload ios_system
-      id: upload-ios_system
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/ios_system.xcframework.zip
-        asset_name: ios_system.xcframework.zip
-        asset_content_type: application/zip
-    - name: Upload awk.xcframework
-      id: upload-awk
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/awk.xcframework.zip
-        asset_name: awk.xcframework.zip
-        asset_content_type: application/zip
-    - name: Upload tar.xcframework
-      id: upload-tar
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/tar.xcframework.zip
-        asset_name: tar.xcframework.zip
-        asset_content_type: application/zip
-    - name: Upload curl_ios.xcframework
-      id: upload-curl_ios
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/curl_ios.xcframework.zip
-        asset_name: curl_ios.xcframework.zip
-        asset_content_type: application/zip
-    - name: Upload files.xcframework
-      id: upload-files
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/files.xcframework.zip
-        asset_name: files.xcframework.zip
-        asset_content_type: application/zip
-    - name: Upload shell.xcframework
-      id: upload-shell
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/shell.xcframework.zip
-        asset_name: shell.xcframework.zip
-        asset_content_type: application/zip
-    - name: Upload ssh_cmd.xcframework
-      id: upload-ssh
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/ssh_cmd.xcframework.zip
-        asset_name: ssh_cmd.xcframework.zip
-        asset_content_type: application/zip
-        
-    - name: Upload ssh_cmdA.xcframework
-      id: upload-sshA
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/ssh_cmdA.xcframework.zip
-        asset_name: ssh_cmdA.xcframework.zip
-        asset_content_type: application/zip
-        
-    - name: Upload ssh_agent.xcframework
-      id: upload-ssh-agent
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/ssh_agent.xcframework.zip
-        asset_name: ssh_agent.xcframework.zip
-        asset_content_type: application/zip
-
-    - name: Upload sshd.xcframework
-      id: upload-sshd
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/sshd.xcframework.zip
-        asset_name: sshd.xcframework.zip
-        asset_content_type: application/zip
-
-    - name: Upload text.xcframework
-      id: upload-text
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: .build/text.xcframework.zip
-        asset_name: text.xcframework.zip
-        asset_content_type: application/zip
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+          || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            --title "Release $GITHUB_REF_NAME" --notes-file .build/release.md
+        gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+          .build/*.xcframework.zip ios_error.h Resources/commandDictionary.plist
