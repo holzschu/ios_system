@@ -196,3 +196,22 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/child-status/child-status"
 ```
 
 Expected: exit 0 and `child A expected=7 observed=7; child B expected=23 observed=23: PASS`, `missing command expected=127 observed=127` and `empty command expected=0 observed=0; NULL command expected=0 observed=0`. With shared session status, both children report 23 and the test exits 1. A ten-second alarm bounds a stalled wait. This fixture covers a normal return, `ios_exit` and commands that do not start; it does not qualify cancellation, thread-creation failure or PID reuse.
+
+# Captured less output
+
+`less-capture.m` runs the bundled `less` through the public session API with native terminal detection and non-terminal output. It requires status zero and exactly the input bytes, for a file and a pipe, twice in the same process. The unpatched command appends an escape sequence that moves the cursor to the last screen row. The ten-second watchdog exits 124 on a hang.
+
+Build the runtime, command framework and fixture for arm64 Simulator with Xcode 27:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 4 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/less-capture/products" OBJROOT="$PWD/.build/less-capture/obj" build
+xcodebuild -project ios_system.xcodeproj -target files -configuration Release -sdk iphonesimulator -jobs 4 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 "FRAMEWORK_SEARCH_PATHS=$PWD/.build/less-capture/products \$(inherited)" CONFIGURATION_BUILD_DIR="$PWD/.build/less-capture/products" OBJROOT="$PWD/.build/less-capture/obj" build
+mkdir -p .build/less-capture/probe/Frameworks
+cp -R .build/less-capture/products/ios_system.framework .build/less-capture/products/files.framework .build/less-capture/probe/Frameworks/
+plutil -create xml1 .build/less-capture/probe/commandDictionary.plist
+plutil -insert less -json '["files.framework/files","less_main","","no"]' .build/less-capture/probe/commandDictionary.plist
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -fobjc-arc -Wall -Wextra -Werror -Wno-unused-parameter -I ios_system -F .build/less-capture/probe/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks tests/less-capture.m -o .build/less-capture/probe/less-capture
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/less-capture/probe/less-capture"
+```
+
+A passing run prints four `LESS_CAPTURE` lines with status 0, 17 bytes and `PASS`, then exits 0.
