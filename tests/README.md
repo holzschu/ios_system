@@ -208,6 +208,24 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/child-status/child-status"
 
 Expected: exit 0 and `child A expected=7 observed=7; child B expected=23 observed=23: PASS`, `missing command expected=127 observed=127` and `empty command expected=0 observed=0; NULL command expected=0 observed=0`. With shared session status, both children report 23 and the test exits 1. A ten-second alarm bounds a stalled wait. This fixture covers a normal return, `ios_exit` and commands that do not start; it does not qualify cancellation, thread-creation failure or PID reuse.
 
+# Redirected alias
+
+`alias-redirection.m` defines an alias for a registered command with two arguments, then runs the alias with stdout and stderr redirected to files. The command must receive both arguments and return 7, and each file must hold exactly the line written to it. The expanded command is always a new allocation, and whether the stale bound is exceeded depends on where malloc places it. The alias pads its arguments with 2048 spaces: without the padding the test passed before the fix, with it the abort reproduced in three runs out of three.
+
+From the repository root, build and run on an explicitly selected booted Simulator:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 2 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/alias-redirection-sdk" OBJROOT="$PWD/.build/alias-redirection-obj" build
+mkdir -p .build/alias-redirection/Frameworks .build/alias-redirection/results
+cp -R .build/alias-redirection-sdk/ios_system.framework .build/alias-redirection/Frameworks/
+cp Resources/commandDictionary.plist .build/alias-redirection/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/alias-redirection/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/alias-redirection.m -o .build/alias-redirection/alias-redirection
+codesign --force --sign - .build/alias-redirection/Frameworks/ios_system.framework
+codesign --force --sign - .build/alias-redirection/alias-redirection
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/alias-redirection/alias-redirection" "$PWD/.build/alias-redirection/results"
+```
+
+Expected: exit 0 and `redirected alias: status=7 stdout=exact stderr=exact PASS`. Before the fix, the bound checked by `assert(endFile <= maxPointer)` still pointed at the end of the freed original command, and the run aborted with signal 6.
 # Captured less output
 
 `less-capture.m` runs the bundled `less` through the public session API with native terminal detection and non-terminal output. It requires status zero and exactly the input bytes, for a file and a pipe, twice in the same process. The unpatched command appends an escape sequence that moves the cursor to the last screen row. The ten-second watchdog exits 124 on a hang.

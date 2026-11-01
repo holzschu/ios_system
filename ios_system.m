@@ -3249,6 +3249,7 @@ int ios_system(const char* inputCmd) {
         ios_startInteractive();
     }
     // NSLog(@"command after alias expansion= %s\n", command);
+    maxPointer = command + strlen(command);
     // Search for input, output and error redirection
     // They can be in any order, although the usual are:
     // command < input > output 2> error, command < input > output 2>&1 or command < input >& output
