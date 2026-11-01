@@ -161,6 +161,11 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
 
 Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
 
+# Waiting without spinning
+
+`cleanup-wait.m` runs `hold | mid | skip` with `joinMainThread = false`: `hold` runs 2 s, `mid` ends after 300 ms while `hold` is the pipeline root, so `mid` waits for the root before it releases its pid. The test measures the process CPU over 3 s. Build it like `waitpid-idle.m`. Expected: exit 0 and `cleanup-wait: cpu=0.01s in 3 s PASS`. The wait used to loop on the session with `fflush` and used 1.7 s of CPU (exit 1, `FAIL`). The same change replaced the other busy loops: callers that start a command or change the directory sleep on a condition until no command is ending (`ios_cleanupWait`), and a command that ends waits for `pid_mtx` with `pthread_mutex_lock` instead of a `trylock` loop.
+
+`cleanup-cancel.m` plays an ending command with `ios_cleanupBegin`/`ios_cleanupEnd`, starts a command that blocks in `chdir`, cancels its thread, ends the pretend command and runs one more command. Build it like `waitpid-idle.m`, with `-I .` for `ios_error.h`. Expected: exit 0 and `cleanup-cancel: PASS`. Without the cancellation guard in `ios_cleanupWait`: exit 124 and `FAIL, no end after 20 s`, because the cancelled command keeps `cleanup_mutex` locked.
 # Concurrent forks
 
 `concurrent-fork.m` starts eight threads that each run 400 short commands behind `ios_fork`, `ios_system` and `ios_waitpid`. A command that ends must not move `current_pid` under a thread that has just forked; if it does, the new command's slot stays at "not started" and its `ios_waitpid` never returns.
@@ -208,3 +213,40 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/child-status/child-status"
 ```
 
 Expected: exit 0 and `child A expected=7 observed=7; child B expected=23 observed=23: PASS`, `missing command expected=127 observed=127` and `empty command expected=0 observed=0; NULL command expected=0 observed=0`. With shared session status, both children report 23 and the test exits 1. A ten-second alarm bounds a stalled wait. This fixture covers a normal return, `ios_exit` and commands that do not start; it does not qualify cancellation, thread-creation failure or PID reuse.
+
+# Redirected alias
+
+`alias-redirection.m` defines an alias for a registered command with two arguments, then runs the alias with stdout and stderr redirected to files. The command must receive both arguments and return 7, and each file must hold exactly the line written to it. The expanded command is always a new allocation, and whether the stale bound is exceeded depends on where malloc places it. The alias pads its arguments with 2048 spaces: without the padding the test passed before the fix, with it the abort reproduced in three runs out of three.
+
+From the repository root, build and run on an explicitly selected booted Simulator:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 2 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/alias-redirection-sdk" OBJROOT="$PWD/.build/alias-redirection-obj" build
+mkdir -p .build/alias-redirection/Frameworks .build/alias-redirection/results
+cp -R .build/alias-redirection-sdk/ios_system.framework .build/alias-redirection/Frameworks/
+cp Resources/commandDictionary.plist .build/alias-redirection/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/alias-redirection/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/alias-redirection.m -o .build/alias-redirection/alias-redirection
+codesign --force --sign - .build/alias-redirection/Frameworks/ios_system.framework
+codesign --force --sign - .build/alias-redirection/alias-redirection
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/alias-redirection/alias-redirection" "$PWD/.build/alias-redirection/results"
+```
+
+Expected: exit 0 and `redirected alias: status=7 stdout=exact stderr=exact PASS`. Before the fix, the bound checked by `assert(endFile <= maxPointer)` still pointed at the end of the freed original command, and the run aborted with signal 6.
+# Captured less output
+
+`less-capture.m` runs the bundled `less` through the public session API with native terminal detection and non-terminal output. It requires status zero and exactly the input bytes, for a file and a pipe, twice in the same process. The unpatched command appends an escape sequence that moves the cursor to the last screen row. The ten-second watchdog exits 124 on a hang.
+
+Build the runtime, command framework and fixture for arm64 Simulator with Xcode 27:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 4 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/less-capture/products" OBJROOT="$PWD/.build/less-capture/obj" build
+xcodebuild -project ios_system.xcodeproj -target files -configuration Release -sdk iphonesimulator -jobs 4 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 "FRAMEWORK_SEARCH_PATHS=$PWD/.build/less-capture/products \$(inherited)" CONFIGURATION_BUILD_DIR="$PWD/.build/less-capture/products" OBJROOT="$PWD/.build/less-capture/obj" build
+mkdir -p .build/less-capture/probe/Frameworks
+cp -R .build/less-capture/products/ios_system.framework .build/less-capture/products/files.framework .build/less-capture/probe/Frameworks/
+plutil -create xml1 .build/less-capture/probe/commandDictionary.plist
+plutil -insert less -json '["files.framework/files","less_main","","no"]' .build/less-capture/probe/commandDictionary.plist
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -fobjc-arc -Wall -Wextra -Werror -Wno-unused-parameter -I ios_system -F .build/less-capture/probe/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks tests/less-capture.m -o .build/less-capture/probe/less-capture
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/less-capture/probe/less-capture"
+```
+
+A passing run prints four `LESS_CAPTURE` lines with status 0, 17 bytes and `PASS`, then exits 0.
