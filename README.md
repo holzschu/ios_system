@@ -65,6 +65,7 @@ The CI workflow builds all the XcFrameworks on every pull request (except change
 - Wait for the "Publishing release" job. It creates the release `v3.0.8` with the `.xcframework.zip` files, `ios_error.h` and `commandDictionary.plist`, and the SHA-256 of each zip in the release notes. If you already created the release, it adds the files and keeps your notes. It never overwrites a file already in the release.
 - Update the `url` and `checksum` of each `binaryTarget` in `Package.swift` (and in the apps that use them) with the new version and the checksums from the release notes.
 
+The separate [jq recipe](jq/README.md) builds official jq 1.8.2 for device and Simulator with `bash build-jq.sh`; its workflow publishes on the `jq-v1.8.2` tag.
 ## FFmpeg frameworks
 
 Run `bash build-ffmpeg.sh` on macOS with Xcode, its Metal compiler, CMake, Ninja, Autoconf, Automake, libtool and pkg-config available. The recipe downloads checksum-pinned sources and builds FFmpeg `n5.0.1-4-ga5ebb3d25e`, FreeType 2.10.2, zimg 3.0.3 and OpenSSL 1.1.1w for arm64 iOS and universal arm64/x86_64 iOS Simulator, targeting iOS 14.0. It links against the `ios_system` v3.0.5 binary and header, pinned by SHA-256. `JOBS=4` is the default; an optional `iphoneos` or `iphonesimulator` argument builds only that SDK without packaging.
