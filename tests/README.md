@@ -180,6 +180,12 @@ Build ios_system with `xcodebuild ... ENABLE_THREAD_SANITIZER=YES`, link a test 
 
 `main-thread-winch.m` checks that `ios_setWindowSize` signals the command that is the main thread of its session. It starts a quick command with `pthread_create` slowed down by 100 ms (`main-thread-winch-slowcreate.c`, a dylib that interposes `pthread_create`), so the command has ended before its starter goes on, then starts a long command named `dash` with a `SIGWINCH` handler, resizes the window and expects the handler to run on that command's thread. Build the dylib with `-dynamiclib -o libslowcreate.dylib`, then the test like `concurrent-fork.m`, adding `-L <dir> -lslowcreate`. Expected: exit 0 and `main-thread-winch: PASS`. When a command that has ended stays recorded as the main thread, the stale id names a thread started after the command ended, that thread gets the signal, and the test prints `FAIL, SIGWINCH was handled on another thread`.
 
+# Pid admission
+
+`pid-admission.m` starts 200 threads that each run `ios_fork`, `ios_system("hold")` and `ios_waitpid`, with only 127 pids available. `hold` blocks until the test releases it, so while the table is full nothing ends. The callers beyond the limit must wait for a pid and then run. The test measures the CPU the 73 waiting callers use in one second, and fails above 0.5 s. A watchdog thread prints the stacks of all threads (`hang-dump.h`) and exits 124 when nothing has moved for 10 seconds.
+
+Build it like `concurrent-fork.m`, with `-I .` for `ios_error.h` and a `commandDictionary.plist` next to the binary. Expected: exit 0 and `pid-admission: 200 commands over 127 pids, wall=3.1s PASS`, after a line with the CPU of the waiting callers 0.00s. When all pids are taken the caller used to loop on the pid table with `pid_mtx` held while the ending commands waited for `pid_mtx` to free a pid: exit 124, `0 of 200 commands finished`, the waiting callers use about 1 s of CPU in the window, and 72 of them wait in `pthread_mutex_lock`.
+
 # Command thread creation failure
 
 `thread-create-failure.m` dispatches a registered native command through `ios_system`. The external `thread-create-failure-hook.c` interposer makes exactly one OS `pthread_create` call return `EAGAIN`; the framework itself is not instrumented. With allocator scribbling enabled, cleanup must return status 126, preserve all three caller-owned streams and the caller's `SIGUSR1` handler, then run the next command with exact `NEXT\n` output. A ten-second alarm bounds a stalled wait.
