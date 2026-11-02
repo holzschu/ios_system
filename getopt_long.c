@@ -67,6 +67,7 @@ __FBSDID("$FreeBSD: src/lib/libc/stdlib/getopt_long.c,v 1.15 2006/09/23 14:48:31
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
+#include "ios_error.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -111,17 +112,17 @@ static int parse_long_options(char * const *, const char *,
 static int gcd(int, int);
 static void permute_args(int, int, int, char * const *);
 
-static char *place = EMSG; /* option letter processing */
+static __thread char *place = EMSG; /* option letter processing */
 
 /* XXX: set optreset to 1 rather than these two */
-static int nonopt_start = -1; /* first non option argument (for permute) */
-static int nonopt_end = -1;   /* first option after non options (for permute) */
+static __thread int nonopt_start = -1; /* first non option argument (for permute) */
+static __thread int nonopt_end = -1;   /* first option after non options (for permute) */
 
 /* Error messages */
 static const char recargchar[] = "option requires an argument -- %c";
 static const char illoptchar[] = "illegal option -- %c"; /* From P1003.2 */
 #ifdef GNU_COMPATIBLE
-static int dash_prefix = NO_PREFIX;
+static __thread int dash_prefix = NO_PREFIX;
 static const char gnuoptchar[] = "invalid option -- %c";
 
 static const char recargstring[] = "option `%s%s' requires an argument";
@@ -603,7 +604,7 @@ getopt(int nargc, char * const *nargv, const char *options)
  *	Parse argc/argv argument vector.
  */
 int
-getopt_long(int nargc, char * const *nargv, const char *options,
+ios_getopt_long(int nargc, char * const *nargv, const char *options,
 	const struct option *long_options, int *idx)
 {
 
@@ -616,7 +617,7 @@ getopt_long(int nargc, char * const *nargv, const char *options,
  *	Parse argc/argv argument vector.
  */
 int
-getopt_long_only(int nargc, char * const *nargv, const char *options,
+ios_getopt_long_only(int nargc, char * const *nargv, const char *options,
 	const struct option *long_options, int *idx)
 {
 
