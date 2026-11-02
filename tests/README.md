@@ -161,6 +161,55 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/waitpid-check/waitpid-idle"
 
 Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wait: exit 1 and `FAIL`. The twenty-second alarm bounds a stalled wait.
 
+# Waiting without spinning
+
+`cleanup-wait.m` runs `hold | mid | skip` with `joinMainThread = false`: `hold` runs 2 s, `mid` ends after 300 ms while `hold` is the pipeline root, so `mid` waits for the root before it releases its pid. The test measures the process CPU over 3 s. Build it like `waitpid-idle.m`. Expected: exit 0 and `cleanup-wait: cpu=0.01s in 3 s PASS`. The wait used to loop on the session with `fflush` and used 1.7 s of CPU (exit 1, `FAIL`). The same change replaced the other busy loops: callers that start a command or change the directory sleep on a condition until no command is ending (`ios_cleanupWait`), and a command that ends waits for `pid_mtx` with `pthread_mutex_lock` instead of a `trylock` loop.
+
+`cleanup-cancel.m` plays an ending command with `ios_cleanupBegin`/`ios_cleanupEnd`, starts a command that blocks in `chdir`, cancels its thread, ends the pretend command and runs one more command. Build it like `waitpid-idle.m`, with `-I .` for `ios_error.h`. Expected: exit 0 and `cleanup-cancel: PASS`. Without the cancellation guard in `ios_cleanupWait`: exit 124 and `FAIL, no end after 20 s`, because the cancelled command keeps `cleanup_mutex` locked.
+# Concurrent forks
+
+`concurrent-fork.m` starts eight threads that each run 400 short commands behind `ios_fork`, `ios_system` and `ios_waitpid`. A command that ends must not move `current_pid` under a thread that has just forked; if it does, the new command's slot stays at "not started" and its `ios_waitpid` never returns.
+
+Build and run it like `waitpid-idle.m` (`-F` the framework directory, `tests/concurrent-fork.m`, `xcrun simctl spawn`). Expected: exit 0 and `concurrent-fork: 8 threads x 400 commands PASS`. Without the compare-and-swap in `ios_restoreParentPid`: exit 124 and `FAIL, N of 8 threads finished`, bounded by a two-minute alarm that prints the stacks of all threads before it exits (`hang-dump.h`, via `sample`).
+
+# Concurrent getopt
+
+`concurrent-getopt.m` runs two commands that parse options with `getopt` and print their first operand, from eight threads at once (300 rounds each, answers compared with the expected text). libc's `optind` and `optreset` are process-wide, so one command's parsing used to move another's and the second command skipped its operand (`(none)`).
+
+Build it like `concurrent-fork.m`, with `-I .` for `ios_error.h`, and put an empty `commandDictionary.plist` (`<dict/>`) or `Resources/commandDictionary.plist` next to the binary, or `replaceCommand` reports `command not found`. Expected: exit 0 and `concurrent-getopt: 8 threads x 300 commands PASS`. With the shared `optind`: exit 1 and `FAIL, N of 2400 commands gave a wrong answer`.
+
+`getopt-legacy.m` stands in for a framework built before this change: it does not include `ios_error.h` and reads `optind` and `optarg` after calling the exported `getopt` and `getopt_long`, and runs a `getopt_long` command three times through `ios_system` with no reset in between. Build it like `concurrent-getopt.m` and run it with `xcrun simctl spawn`. Expected: exit 0 and `getopt-legacy: PASS`. Without the shared reset in `run_function`: runs 2 and 3 of `legacyopt` print `FAIL`.
+# ThreadSanitizer
+
+Build ios_system with `xcodebuild ... ENABLE_THREAD_SANITIZER=YES`, link a test with `-fsanitize=thread`, copy `libclang_rt.tsan_iossim_dynamic.dylib` next to the frameworks and run it with `SIMCTL_CHILD_TSAN_OPTIONS=suppressions=tests/tsan.supp xcrun simctl spawn`. Expected with the suppressions: `concurrent-fork` exits 0 and prints no `WARNING: ThreadSanitizer`. Without the fixes for the cached `executeWebAssemblyCommands` lookup and the session's `global_errno`, it prints 3 to 4 reports per run.
+
+`tsan.supp` hides the accesses inside the pid-allocation window: `ios_nextAvailablePid` returns with `pid_mtx` locked and `ios_storeThreadId` unlocks it on another thread, which TSan cannot follow, so it reports two threads that both hold the mutex. The `race:ios_currentPid` entry also hides the unlocked reads of `current_pid` against the plain writes in `ios_nextAvailablePid`; those races are not changed here.
+
+`main-thread-winch.m` checks that `ios_setWindowSize` signals the command that is the main thread of its session. It starts a quick command with `pthread_create` slowed down by 100 ms (`main-thread-winch-slowcreate.c`, a dylib that interposes `pthread_create`), so the command has ended before its starter goes on, then starts a long command named `dash` with a `SIGWINCH` handler, resizes the window and expects the handler to run on that command's thread. Build the dylib with `-dynamiclib -o libslowcreate.dylib`, then the test like `concurrent-fork.m`, adding `-L <dir> -lslowcreate`. Expected: exit 0 and `main-thread-winch: PASS`. When a command that has ended stays recorded as the main thread, the stale id names a thread started after the command ended, that thread gets the signal, and the test prints `FAIL, SIGWINCH was handled on another thread`.
+
+# Pid admission
+
+`pid-admission.m` starts 200 threads that each run `ios_fork`, `ios_system("hold")` and `ios_waitpid`, with only 127 pids available. `hold` blocks until the test releases it, so while the table is full nothing ends. The callers beyond the limit must wait for a pid and then run. The test measures the CPU the 73 waiting callers use in one second, and fails above 0.5 s. A watchdog thread prints the stacks of all threads (`hang-dump.h`) and exits 124 when nothing has moved for 10 seconds.
+
+Build it like `concurrent-fork.m`, with `-I .` for `ios_error.h` and a `commandDictionary.plist` next to the binary. Expected: exit 0 and `pid-admission: 200 commands over 127 pids, wall=3.1s PASS`, after a line with the CPU of the waiting callers 0.00s. When all pids are taken the caller used to loop on the pid table with `pid_mtx` held while the ending commands waited for `pid_mtx` to free a pid: exit 124, `0 of 200 commands finished`, the waiting callers use about 1 s of CPU in the window, and 72 of them wait in `pthread_mutex_lock`.
+
+# Command thread creation failure
+
+`thread-create-failure.m` dispatches a registered native command through `ios_system`. The external `thread-create-failure-hook.c` interposer makes exactly one OS `pthread_create` call return `EAGAIN`; the framework itself is not instrumented. With allocator scribbling enabled, cleanup must return status 126, preserve all three caller-owned streams and the caller's `SIGUSR1` handler, then run the next command with exact `NEXT\n` output. A ten-second alarm bounds a stalled wait.
+
+After building the framework as above:
+
+```sh
+mkdir -p .build/thread-create-check/Frameworks
+cp -R .build/owned-streams/Build/Products/Release-iphonesimulator/ios_system.framework .build/thread-create-check/Frameworks/
+cp Resources/commandDictionary.plist .build/thread-create-check/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/thread-create-check/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/thread-create-failure.m -o .build/thread-create-check/thread-create-failure
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios16.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -Wall -Wextra -dynamiclib tests/thread-create-failure-hook.c -o .build/thread-create-check/thread-create-failure-hook.dylib
+SIMCTL_CHILD_DYLD_INSERT_LIBRARIES="$PWD/.build/thread-create-check/thread-create-failure-hook.dylib" SIMCTL_CHILD_MallocScribble=1 SIMCTL_CHILD_MallocPreScribble=1 xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/thread-create-check/thread-create-failure"
+```
+
+Expected: exit 0 and `thread creation failure: status=126; streams, signal and next output: PASS`. Set both `MallocScribble` and `MallocPreScribble`.
+
 # Per-child exit status
 
 `child-wait-status.m` starts two registered commands through `ios_fork` and `ios_system`. The first returns 7. The second waits for the first through `ios_waitpid`, then calls `ios_exit(23)`. The parent waits for the second and then the first through `ios_full_waitpid`; each wait must report that child's exit status. It also checks a missing command returns 127 and empty and NULL commands return 0.
@@ -179,3 +228,40 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/child-status/child-status"
 ```
 
 Expected: exit 0 and `child A expected=7 observed=7; child B expected=23 observed=23: PASS`, `missing command expected=127 observed=127` and `empty command expected=0 observed=0; NULL command expected=0 observed=0`. With shared session status, both children report 23 and the test exits 1. A ten-second alarm bounds a stalled wait. This fixture covers a normal return, `ios_exit` and commands that do not start; it does not qualify cancellation, thread-creation failure or PID reuse.
+
+# Redirected alias
+
+`alias-redirection.m` defines an alias for a registered command with two arguments, then runs the alias with stdout and stderr redirected to files. The command must receive both arguments and return 7, and each file must hold exactly the line written to it. The expanded command is always a new allocation, and whether the stale bound is exceeded depends on where malloc places it. The alias pads its arguments with 2048 spaces: without the padding the test passed before the fix, with it the abort reproduced in three runs out of three.
+
+From the repository root, build and run on an explicitly selected booted Simulator:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 2 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/alias-redirection-sdk" OBJROOT="$PWD/.build/alias-redirection-obj" build
+mkdir -p .build/alias-redirection/Frameworks .build/alias-redirection/results
+cp -R .build/alias-redirection-sdk/ios_system.framework .build/alias-redirection/Frameworks/
+cp Resources/commandDictionary.plist .build/alias-redirection/
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -isysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)" -fobjc-arc -Wall -Wextra -Wno-unused-parameter -I ios_system -F .build/alias-redirection/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks -Wl,-export_dynamic tests/alias-redirection.m -o .build/alias-redirection/alias-redirection
+codesign --force --sign - .build/alias-redirection/Frameworks/ios_system.framework
+codesign --force --sign - .build/alias-redirection/alias-redirection
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/alias-redirection/alias-redirection" "$PWD/.build/alias-redirection/results"
+```
+
+Expected: exit 0 and `redirected alias: status=7 stdout=exact stderr=exact PASS`. Before the fix, the bound checked by `assert(endFile <= maxPointer)` still pointed at the end of the freed original command, and the run aborted with signal 6.
+# Captured less output
+
+`less-capture.m` runs the bundled `less` through the public session API with native terminal detection and non-terminal output. It requires status zero and exactly the input bytes, for a file and a pipe, twice in the same process. The unpatched command appends an escape sequence that moves the cursor to the last screen row. The ten-second watchdog exits 124 on a hang.
+
+Build the runtime, command framework and fixture for arm64 Simulator with Xcode 27:
+
+```sh
+xcodebuild -project ios_system.xcodeproj -target ios_system -configuration Release -sdk iphonesimulator -jobs 4 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 CONFIGURATION_BUILD_DIR="$PWD/.build/less-capture/products" OBJROOT="$PWD/.build/less-capture/obj" build
+xcodebuild -project ios_system.xcodeproj -target files -configuration Release -sdk iphonesimulator -jobs 4 ARCHS=arm64 CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0 "FRAMEWORK_SEARCH_PATHS=$PWD/.build/less-capture/products \$(inherited)" CONFIGURATION_BUILD_DIR="$PWD/.build/less-capture/products" OBJROOT="$PWD/.build/less-capture/obj" build
+mkdir -p .build/less-capture/probe/Frameworks
+cp -R .build/less-capture/products/ios_system.framework .build/less-capture/products/files.framework .build/less-capture/probe/Frameworks/
+plutil -create xml1 .build/less-capture/probe/commandDictionary.plist
+plutil -insert less -json '["files.framework/files","less_main","","no"]' .build/less-capture/probe/commandDictionary.plist
+xcrun --sdk iphonesimulator clang -target arm64-apple-ios15.0-simulator -fobjc-arc -Wall -Wextra -Werror -Wno-unused-parameter -I ios_system -F .build/less-capture/probe/Frameworks -framework ios_system -framework Foundation -Wl,-rpath,@executable_path/Frameworks tests/less-capture.m -o .build/less-capture/probe/less-capture
+xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/less-capture/probe/less-capture"
+```
+
+A passing run prints four `LESS_CAPTURE` lines with status 0, 17 bytes and `PASS`, then exits 0.

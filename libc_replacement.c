@@ -51,7 +51,8 @@ void finishedPreparingWebAssemblyCommand(void) {
 }
 
 static void executeWebAssemblyCommandsInOrder(void) {
-    static void (*function)(void) = NULL;
+    static _Atomic(void (*)(void)) cachedFunction = NULL;
+    void (*function)(void) = atomic_load(&cachedFunction);
     if (function == NULL) {
         function = dlsym(RTLD_MAIN_ONLY, "executeWebAssemblyCommands");
     }
@@ -59,6 +60,7 @@ static void executeWebAssemblyCommandsInOrder(void) {
         // more extensive search, but more expensive too.
         function = dlsym(RTLD_DEFAULT, "executeWebAssemblyCommands");
     }
+    atomic_store(&cachedFunction, function);
     if (function != NULL) {
         while (preparingWebAssemblyCommands > 0) {
             // Empty loops create problems in Release mode.
@@ -225,8 +227,35 @@ static int pid_overflow = 0;
 static pid_t current_pid = 0;
 // We need to lock current_pid during operations
 pthread_mutex_t pid_mtx = PTHREAD_MUTEX_INITIALIZER;
-_Atomic(int) cleanup_counter = 0;
+// Number of commands that are ending. Callers that change the directory or take a pid wait until it is zero.
+static _Atomic(int) cleanup_counter = 0;
+static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cleanup_idle = PTHREAD_COND_INITIALIZER;
 static pid_t last_allocated_pid = 0;
+
+void ios_cleanupBegin(void) {
+    pthread_mutex_lock(&cleanup_mutex);
+    cleanup_counter++;
+    pthread_mutex_unlock(&cleanup_mutex);
+}
+
+void ios_cleanupEnd(void) {
+    pthread_mutex_lock(&cleanup_mutex);
+    if (--cleanup_counter == 0) pthread_cond_broadcast(&cleanup_idle);
+    pthread_mutex_unlock(&cleanup_mutex);
+}
+
+void ios_cleanupWait(void) {
+    // pthread_cond_wait is a cancellation point and returns with cleanup_mutex held: a cancelled command would run
+    // cleanup_function, whose ios_cleanupBegin locks cleanup_mutex again and never returns. The spin it replaces
+    // was not a cancellation point; the cancel now arrives at the next one after the wait.
+    int cancellation;
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancellation);
+    pthread_mutex_lock(&cleanup_mutex);
+    while (cleanup_counter > 0) pthread_cond_wait(&cleanup_idle, &cleanup_mutex);
+    pthread_mutex_unlock(&cleanup_mutex);
+    pthread_setcancelstate(cancellation, NULL);
+}
 
 
 void makeGlobal(void) {
@@ -249,10 +278,17 @@ void newPreviousDirectory(void) {
     getwd(previousDirectory[current_pid]);
 }
 
+// Called with thread_completion_mutex held: is there a pid that no command uses?
+static int pidSlotIsFree(void) {
+    for (int p = 1; p < IOS_MAX_THREADS; p++)
+        if (atomic_load(&thread_ids[p]) == 0) return 1;
+    return 0;
+}
+
 // We do not recycle process ids too quickly to avoid collisions.
 void storeEnvironment(char* envp[]);
 static inline const pid_t ios_nextAvailablePid(void) {
-    while (cleanup_counter > 0) { } // Don't start a command while another is ending.
+    ios_cleanupWait(); // Don't start a command while another is ending.
     // fprintf(stderr, "Locking in ios_nextAvailablePid\n");
     pthread_mutex_lock(&pid_mtx);
     char** currentEnvironment = environmentVariables(current_pid);
@@ -274,7 +310,25 @@ static inline const pid_t ios_nextAvailablePid(void) {
     // We've already started more than IOS_MAX_THREADS threads.
     if (!pid_overflow) current_pid = 0; // first time over the limit
     pid_overflow = 1;
+    int scanned = 0;
     while (1) {
+        if (++scanned > IOS_MAX_THREADS) {
+            // Every slot is taken: wait for a command to end instead of spinning. pid_mtx is released while
+            // waiting, because an ending command waits for it before it frees its slot.
+            current_pid = previousPidId;
+            pthread_mutex_unlock(&pid_mtx);
+            // pthread_cond_wait is a cancellation point and a cancelled thread would leave it holding
+            // thread_completion_mutex, which every ending command takes. Cancel arrives after the wait.
+            int cancellation;
+            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancellation);
+            pthread_mutex_lock(&thread_completion_mutex);
+            while (!pidSlotIsFree()) pthread_cond_wait(&thread_completed, &thread_completion_mutex);
+            pthread_mutex_unlock(&thread_completion_mutex);
+            pthread_setcancelstate(cancellation, NULL);
+            pthread_mutex_lock(&pid_mtx);
+            currentEnvironment = environmentVariables(previousPidId); // ios_setenv may have reallocated it meanwhile
+            scanned = 0;
+        }
         current_pid = last_allocated_pid + 1;
         last_allocated_pid = current_pid;
         if (current_pid >= IOS_MAX_THREADS) {
@@ -561,6 +615,14 @@ char** environmentVariables(pid_t pid) {
 }
 
 extern int chdir_nolock(const char* path); // defined in ios_system.m
+// A command that ends hands the current pid back to its parent only if it still is the current
+// one. Another thread may have forked a new pid in the meantime (several threads starting commands
+// at once); an unconditional write would point current_pid at the wrong slot, and ios_storeThreadId
+// would then leave the new command's slot at -1 forever, so that ios_waitpid never returns.
+static inline void ios_restoreParentPid(pid_t pid) {
+    __sync_bool_compare_and_swap(&current_pid, pid, previousPid[pid]);
+}
+
 void ios_releaseThread(pthread_t thread) {
     if (thread == NULL) {
         return;
@@ -574,7 +636,7 @@ void ios_releaseThread(pthread_t thread) {
             // fprintf(stderr, "Reset current directory to %s because process %d terminates\n", previousDirectory[p], p);
             // Restore cwd before publishing completion to ios_waitpid callers.
             chdir_nolock(previousDirectory[p]);
-            current_pid = previousPid[p];
+            ios_restoreParentPid(p);
             thread_ids[p] = NULL;
             notify_thread_completion();
             return;
@@ -588,7 +650,7 @@ void ios_releaseBackgroundThread(pthread_t thread) {
     for (int p = 0; p < IOS_MAX_THREADS; p++) {
         if (thread_ids[p] == thread) {
             // fprintf(stderr, "Found Id %d\n", p);
-            current_pid = previousPid[p];
+            ios_restoreParentPid(p);
             thread_ids[p] = NULL;
             notify_thread_completion();
             return;
@@ -604,7 +666,7 @@ void ios_releaseThreadId(pid_t pid) {
         // fprintf(stderr, "Locking for pid %d in ios_releaseThreadId\n", pid);
         // fprintf(stderr, "Reset current directory to %s because process %d terminates\n", previousDirectory[pid], pid);
         chdir_nolock(previousDirectory[pid]);
-        current_pid = previousPid[pid];
+        ios_restoreParentPid(pid);
         thread_ids[pid] = 0;
         notify_thread_completion();
         // fprintf(stderr, "Unlocking for pid %d in ios_releaseThreadId\n", pid);
