@@ -25,6 +25,7 @@
 // the reverse (if type == "r").
 
 #include <pthread.h>
+#include <stdatomic.h>
 #include <sys/stat.h>
 #include <libgen.h> // for basename()
 #include <dlfcn.h>  // for dlopen()/dlsym()/dlclose()
@@ -78,14 +79,14 @@ typedef struct _sessionParameters {
     char localMiniRoot[MAXPATHLEN];
     pthread_t current_command_root_thread; // thread ID of first command
     pthread_t lastThreadId; // thread ID of last command.
-    pthread_t mainThreadId; // thread ID of parent command, if any (e.g. vim, which starts "sh -c cd dir && flake8 file")
+    _Atomic(pthread_t) mainThreadId; // thread ID of parent command, if any (e.g. vim, which starts "sh -c cd dir && flake8 file")
     FILE* stdin;
     FILE* stdout;
     FILE* stderr;
     FILE* tty;
     bool nativeTTY; // Native jobs use the actual descriptor terminal state.
     const void* context;
-    int global_errno;
+    _Atomic int global_errno; // written by command threads, read by the caller of ios_system
     int numCommandsAllocated;
     int numCommand;
     char** commandName;
@@ -311,8 +312,9 @@ void ios_setWindowSize(int width, int height, const void* sessionId) {
     if (resizedSession->lastThreadId != NULL) {
         pthread_kill(resizedSession->lastThreadId, SIGWINCH);
     }
-    if (resizedSession->mainThreadId != NULL) {
-        pthread_kill(resizedSession->mainThreadId, SIGWINCH);
+    pthread_t mainThread = resizedSession->mainThreadId; // one load: cleanup_function can clear it in between
+    if (mainThread != NULL) {
+        pthread_kill(mainThread, SIGWINCH);
     }
 }
 
@@ -409,7 +411,7 @@ typedef struct _functionParameters {
     void *inputOwner;
     struct _functionParameters *ownedNext;
     pthread_t ownedThread;
-    bool ownedRunning, commandStarted;
+    bool ownedRunning, commandStarted, storeMainThread;
     pid_t pid;
     bool workerEligible, asyncSpawn;
     bool returnedNormally;
@@ -937,8 +939,9 @@ static void cleanup_function(void* parameters) {
     if (p->commandStarted && currentSession->current_command_root_thread == current_thread) {
         clearRootThread(currentSession);
     }
-    if (p->commandStarted && currentSession->mainThreadId == current_thread) {
-        currentSession->mainThreadId = 0;
+    if (p->commandStarted) {
+        pthread_t expectedMain = current_thread;
+        atomic_compare_exchange_strong(&currentSession->mainThreadId, &expectedMain, (pthread_t)0);
     }
     ios_cleanupEnd();
     NSLog(@"returning from cleanup_function, session: %s\n", (char*)currentSession->context);
@@ -1336,6 +1339,7 @@ int ios_posix_spawn(pid_t *pid, const char *path,
     return 0;
 }
 
+extern void ios_getoptReset(void); // restarts getopt for a new command (getopt.c)
 static void* run_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     currentWebAssemblyCommandOrder = p->webAssemblyOrder;
@@ -1351,12 +1355,14 @@ static void* run_function(void* parameters) {
         NSLog(@"Storing thread_id: %x as root_thread\n", pthread_self());
         p->session->current_command_root_thread = pthread_self();
     }
+    if (p->storeMainThread && (p->session != NULL)) {
+        // On the command thread, so that a command that ends first is never recorded after it ended.
+        pthread_t noMainThread = NULL;
+        atomic_compare_exchange_strong(&p->session->mainThreadId, &noMainThread, pthread_self());
+    }
     // NSLog(@"Starting command: %s thread_id %x", p->argv[0], pthread_self());
     // re-initialize for getopt:
-    // TODO: move to __thread variable for optind too
-    optind = 1;
-    opterr = 1;
-    optreset = 1;
+    ios_getoptReset();
     __db_getopt_reset = 1;
     thread_stdin  = p->stdin;
     thread_stdout = p->stdout;
@@ -3775,6 +3781,7 @@ int ios_system(const char* inputCmd) {
     params->backgroundCommand = isBackgroundCommand(command);
     params->numInterpreter = 0;
     params->webAssemblyOrder = 0;
+    params->storeMainThread = false;
 
     params->context = thread_context;
   
@@ -4767,9 +4774,9 @@ int ios_system(const char* inputCmd) {
                     __block volatile pthread_t _tid = NULL;
                     [fileCoordinator coordinateWritingItemAtURL:currentURL options:0 error:NULL byAccessor:^(NSURL *currentURL) {
                         currentSession->isMainThread = false;
+                        params->storeMainThread = true;
                         if (createOwnedCommand(&_tid, params) != 0) return;
                         // ios_storeThreadId(_tid);
-                        if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
                         if (!joinMainThread || params->asyncSpawn) pthread_detach(_tid); // a thread must be either joined or detached
                     }];
                     // Wait for this process to finish:
@@ -4783,10 +4790,10 @@ int ios_system(const char* inputCmd) {
                     currentSession->isMainThread = true;
                 } else {
                     currentSession->isMainThread = false;
+                    params->storeMainThread = true;
                     volatile pthread_t _tid = NULL;
                     if (createOwnedCommand(&_tid, params) == 0) {
                         // ios_storeThreadId(_tid);
-                        if (currentSession->mainThreadId == NULL) currentSession->mainThreadId = _tid;
                         // Wait for this process to finish:
                         if (joinMainThread && !params->asyncSpawn) {
                             pthread_join(_tid, NULL);
