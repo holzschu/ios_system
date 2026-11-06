@@ -1,0 +1,62 @@
+name: jq CI
+
+on:
+  pull_request:
+    paths:
+    - build-jq.sh
+    - jq/**
+    - .github/workflows/jq.yml
+  workflow_dispatch:
+  push:
+    tags:
+    - 'jq-v*'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: Toolchain
+      run: xcodebuild -version
+    - name: Build jq and bundled Oniguruma
+      run: bash build-jq.sh
+    - uses: actions/upload-artifact@v7
+      with:
+        name: jq-xcframework
+        if-no-files-found: error
+        path: |
+          .build/jq/output/jq.xcframework.zip
+          .build/jq/output/checksums.txt
+          .build/jq/output/release.md
+
+  release:
+    needs: build
+    if: github.repository == 'holzschu/ios_system' && startsWith(github.ref, 'refs/tags/jq-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: jq-xcframework
+    - name: Publish versioned jq asset
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        test "$GITHUB_REF_NAME" = jq-v1.8.2
+        if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" jq.xcframework.zip checksums.txt
+        else
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --latest=false \
+            --title "$GITHUB_REF_NAME" --notes-file release.md jq.xcframework.zip checksums.txt
+        fi

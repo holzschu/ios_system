@@ -172,6 +172,21 @@ Expected: exit 0 and `ios_waitpid: wall=1.5s cpu=0.0s PASS`. With the polling wa
 
 Build and run it like `waitpid-idle.m` (`-F` the framework directory, `tests/concurrent-fork.m`, `xcrun simctl spawn`). Expected: exit 0 and `concurrent-fork: 8 threads x 400 commands PASS`. Without the compare-and-swap in `ios_restoreParentPid`: exit 124 and `FAIL, N of 8 threads finished`, bounded by a two-minute alarm that prints the stacks of all threads before it exits (`hang-dump.h`, via `sample`).
 
+# Concurrent getopt
+
+`concurrent-getopt.m` runs two commands that parse options with `getopt` and print their first operand, from eight threads at once (300 rounds each, answers compared with the expected text). libc's `optind` and `optreset` are process-wide, so one command's parsing used to move another's and the second command skipped its operand (`(none)`).
+
+Build it like `concurrent-fork.m`, with `-I .` for `ios_error.h`, and put an empty `commandDictionary.plist` (`<dict/>`) or `Resources/commandDictionary.plist` next to the binary, or `replaceCommand` reports `command not found`. Expected: exit 0 and `concurrent-getopt: 8 threads x 300 commands PASS`. With the shared `optind`: exit 1 and `FAIL, N of 2400 commands gave a wrong answer`.
+
+`getopt-legacy.m` stands in for a framework built before this change: it does not include `ios_error.h` and reads `optind` and `optarg` after calling the exported `getopt` and `getopt_long`, and runs a `getopt_long` command three times through `ios_system` with no reset in between. Build it like `concurrent-getopt.m` and run it with `xcrun simctl spawn`. Expected: exit 0 and `getopt-legacy: PASS`. Without the shared reset in `run_function`: runs 2 and 3 of `legacyopt` print `FAIL`.
+# ThreadSanitizer
+
+Build ios_system with `xcodebuild ... ENABLE_THREAD_SANITIZER=YES`, link a test with `-fsanitize=thread`, copy `libclang_rt.tsan_iossim_dynamic.dylib` next to the frameworks and run it with `SIMCTL_CHILD_TSAN_OPTIONS=suppressions=tests/tsan.supp xcrun simctl spawn`. Expected with the suppressions: `concurrent-fork` exits 0 and prints no `WARNING: ThreadSanitizer`. Without the fixes for the cached `executeWebAssemblyCommands` lookup and the session's `global_errno`, it prints 3 to 4 reports per run.
+
+`tsan.supp` hides the accesses inside the pid-allocation window: `ios_nextAvailablePid` returns with `pid_mtx` locked and `ios_storeThreadId` unlocks it on another thread, which TSan cannot follow, so it reports two threads that both hold the mutex. The `race:ios_currentPid` entry also hides the unlocked reads of `current_pid` against the plain writes in `ios_nextAvailablePid`; those races are not changed here.
+
+`main-thread-winch.m` checks that `ios_setWindowSize` signals the command that is the main thread of its session. It starts a quick command with `pthread_create` slowed down by 100 ms (`main-thread-winch-slowcreate.c`, a dylib that interposes `pthread_create`), so the command has ended before its starter goes on, then starts a long command named `dash` with a `SIGWINCH` handler, resizes the window and expects the handler to run on that command's thread. Build the dylib with `-dynamiclib -o libslowcreate.dylib`, then the test like `concurrent-fork.m`, adding `-L <dir> -lslowcreate`. Expected: exit 0 and `main-thread-winch: PASS`. When a command that has ended stays recorded as the main thread, the stale id names a thread started after the command ended, that thread gets the signal, and the test prints `FAIL, SIGWINCH was handled on another thread`.
+
 # Pid admission
 
 `pid-admission.m` starts 200 threads that each run `ios_fork`, `ios_system("hold")` and `ios_waitpid`, with only 127 pids available. `hold` blocks until the test releases it, so while the table is full nothing ends. The callers beyond the limit must wait for a pid and then run. The test measures the CPU the 73 waiting callers use in one second, and fails above 0.5 s. A watchdog thread prints the stacks of all threads (`hang-dump.h`) and exits 124 when nothing has moved for 10 seconds.
