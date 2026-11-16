@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <ctype.h>
 #include <errno.h>
+#include <getopt.h>
 #include <limits.h>
 #include <resolv.h>
 #include <stdint.h>
@@ -133,7 +134,7 @@ usage(FILE *stream)
         "  -i, --input file   input file, or - for stdin\n"
         "  -o, --output file  output file, or - for stdout\n"
         "  -e                encode (legacy alias)\n"
-        "  -l num            legacy wrap size, rounded down to a multiple of 4 (minimum 4)\n"
+        "  -l[num]           legacy wrap size, rounded down to a multiple of 4 (minimum 4)\n"
         "  -h, -?, --help    display help\n");
 }
 
@@ -156,13 +157,17 @@ base64_main(int argc, char **argv)
     // Commands can be invoked repeatedly in the same process.
     optind = optreset = 1;
     opterr = 0;
-    while ((ch = getopt_long(argc, argv, ":Ddehb:w:l:i:o:?", options, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, ":Ddehb:w:l::i:o:", options, NULL)) != -1) {
         switch (ch) {
         case 'D': case 'd': decoding = 1; break;
         case 'e': decoding = 0; break;
         case 'i': infile = optarg; break;
         case 'o': outfile = optarg; break;
         case 'b': case 'w': case 'l': {
+            if (ch == 'l' && optarg == NULL) {
+                columns = 4;
+                break;
+            }
             char *end;
             errno = 0;
             unsigned long value = strtoul(optarg, &end, 10);
@@ -177,7 +182,7 @@ base64_main(int argc, char **argv)
         }
         case 'h': usage(thread_stdout); return 0;
         case '?':
-            if (optind > 0 && strcmp(argv[optind - 1], "-?") == 0) {
+            if (optopt == '?') {
                 usage(thread_stdout);
                 return 0;
             }
@@ -186,12 +191,14 @@ base64_main(int argc, char **argv)
         }
     }
     // Preserve the old b64 input/output operands alongside BSD file options.
-    if (optind < argc && infile == NULL) infile = argv[optind++];
-    if (optind < argc && outfile == NULL) outfile = argv[optind++];
-    if (optind != argc) {
+    // Never reinterpret an extra operand as output just because -i filled the input slot.
+    int operands = argc - optind;
+    if (operands > 2 || (operands > 0 && infile) || (operands > 1 && outfile)) {
         usage(thread_stderr);
         return 1;
     }
+    if (operands > 0) infile = argv[optind];
+    if (operands > 1) outfile = argv[optind + 1];
     FILE *input = thread_stdin, *output = thread_stdout;
     if (infile && strcmp(infile, "-") != 0) {
         input = fopen(infile, "rb");

@@ -77,4 +77,23 @@ test -s "$work/err"
 if "$command" -o "$work/missing/out" < "$work/x" > "$work/actual" 2> "$work/err"; then exit 1; fi
 test ! -s "$work/actual"
 test -s "$work/err"
+printf 'keep this file\n' > "$work/protected"
+cp "$work/protected" "$work/protected-expected"
+if "$command" -i "$work/x" "$work/protected" > "$work/actual" 2> "$work/err"; then exit 1; fi
+cmp "$work/protected" "$work/protected-expected"
+test ! -s "$work/actual"
+test -s "$work/err"
+if "$command" -o "$work/actual-file" "$work/x" "$work/protected" > "$work/actual" 2> "$work/err"; then exit 1; fi
+cmp "$work/protected" "$work/protected-expected"
+if "$command" < "$work/x" >&- 2> "$work/err"; then exit 1; fi
+test -s "$work/err"
+"$command" -d? > "$work/help" 2> "$work/err"
+test -s "$work/help"
+test ! -s "$work/err"
+if "$command" -i '-?' -z > "$work/actual" 2> "$work/err"; then exit 1; fi
+test ! -s "$work/actual"
+test -s "$work/err"
+"$command" -e -l "$work/x" > "$work/actual"
+/usr/bin/base64 -b4 < "$work/x" > "$work/expected"
+cmp "$work/actual" "$work/expected"
 echo "PASS: $checks macOS byte comparisons, files, legacy aliases and errors"

@@ -7,6 +7,8 @@ printf 'eA==\n' > expected
 printf x | base64 > actual
 cmp expected actual
 printf 'x' > x
+base64 x | base64 -d > decoded
+cmp x decoded
 base64 -d -i actual -o decoded
 cmp x decoded
 printf 'e\nA\n=\n=\n' > expected
@@ -25,6 +27,12 @@ base64 -D legacy decoded
 cmp binary decoded
 printf '!!!!\n' > bad
 if base64 -d bad > actual 2> error; then exit 1; fi
+test ! -s actual
+test -s error
+printf 'keep this file\n' > protected
+cp protected protected-expected
+if base64 -i x protected > actual 2> error; then exit 1; fi
+cmp protected protected-expected
 test ! -s actual
 test -s error
 if base64 -i missing > actual 2> error; then exit 1; fi
