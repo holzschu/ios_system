@@ -414,6 +414,9 @@ typedef struct _functionParameters {
     bool ownedRunning, commandStarted, storeMainThread;
     pid_t pid;
     bool workerEligible, asyncSpawn;
+    bool returnedNormally;
+    int cancellationSignal;
+    pthread_t signalThread;
 } functionParameters;
 
 // Set by ios_execv/ios_execv_async for the duration of the ios_system call that creates the child.
@@ -421,7 +424,7 @@ static __thread bool spawnedChild = false;
 static __thread bool spawnAsync = false;
 
 // Exit status of each virtual pid, so concurrent commands do not share the session's global_errno.
-#define IOS_PID_STATUS_SLOTS 128
+#define IOS_PID_STATUS_SLOTS 128 // Matches IOS_MAX_THREADS in libc_replacement.c (virtual PIDs 1..127).
 // The worker proxy thread for each virtual pid; other threads sharing that pid receive signals normally.
 static _Atomic(pthread_t) pidWorkerThread[IOS_PID_STATUS_SLOTS];
 static _Atomic int pidWorkerSignal[IOS_PID_STATUS_SLOTS];
@@ -678,6 +681,17 @@ static void cleanup_function(void* parameters) {
     functionParameters *p = (functionParameters *) parameters;
     // Cleanup must finish even when another owned descendant is cancelled.
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    pthread_mutex_lock(&commandSignalMutex);
+    bool proxy = p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS &&
+        atomic_load(&pidWorkerThread[p->pid]) == current_thread;
+    int cancelledBySignal = p->returnedNormally || proxy ? 0 : p->cancellationSignal;
+    pthread_mutex_unlock(&commandSignalMutex);
+    if (cancelledBySignal) {
+        int status = 128 + cancelledBySignal;
+        ios_storeCommandStatus(status);
+        ios_storePidStatus(p->pid, status);
+        if (currentSession != nil) currentSession->global_errno = status;
+    }
     pthread_mutex_lock(&ownedStreamsMutex);
     p->ownedRunning = false;
     pthread_mutex_unlock(&ownedStreamsMutex);
@@ -1060,7 +1074,13 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         errFd = spawn_ex ? options.stderr_fd : -1;
     }
     workerRun run = { fd, errFd, job, false, p->pid };
-    if (p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) atomic_store(&pidWorkerThread[p->pid], pthread_self());
+    pthread_mutex_lock(&commandSignalMutex);
+    if (p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) {
+        // An interrupt can arrive while spawn has cancellation disabled.
+        if (p->cancellationSignal) atomic_store(&pidWorkerSignal[p->pid], p->cancellationSignal);
+        atomic_store(&pidWorkerThread[p->pid], pthread_self());
+    }
+    pthread_mutex_unlock(&commandSignalMutex);
     // Honor explicit background input redirects without consuming inherited terminal input.
     int stdinFd = (p->stdin == NULL || (p->asyncSpawn && !p->isPipeIn)) ? -1 : fileno(p->stdin);
     if (stdinFd < 0) close_stdin(job);
@@ -1384,6 +1404,7 @@ static void* run_function(void* parameters) {
             }
         }
     }
+    p->signalThread = pthread_self();
     p->nextSignalCommand = runningSignalCommands;
     runningSignalCommands = p;
     pthread_mutex_unlock(&commandSignalMutex);
@@ -1397,6 +1418,7 @@ static void* run_function(void* parameters) {
         pthread_mutex_unlock(&ownedStreamsMutex);
         int retval = 130;
         if (!cancelled && !(p->workerEligible && runInWorker(p, &retval, NULL))) retval = p->function(p->argc, p->argv);
+        p->returnedNormally = true;
         ios_storeCommandStatus(retval);
         recordPidStatus(retval);
         if (currentSession != nil) currentSession->global_errno = retval;
@@ -2984,6 +3006,28 @@ int ios_killpid(pid_t pid, int sig) {
         return pthread_kill(thread, sig);
     }
     return 0;
+}
+
+// Cancel only the named registered command, never a process-wide signal handler.
+int ios_interruptpid(pid_t pid) {
+    pthread_t thread = ios_getThreadId(pid);
+    if (thread == NULL || thread == (pthread_t)-1) return ESRCH;
+    pthread_mutex_lock(&commandSignalMutex);
+    for (functionParameters *p = runningSignalCommands; p; p = p->nextSignalCommand) {
+        if (p->pid != pid || !pthread_equal(p->signalThread, thread)) continue;
+        if (pid >= 0 && pid < IOS_PID_STATUS_SLOTS && atomic_load(&pidWorkerThread[pid]) == thread) {
+            // Proxy cleanup records the worker command's actual status.
+            atomic_store(&pidWorkerSignal[pid], SIGINT);
+        } else {
+            p->cancellationSignal = SIGINT;
+        }
+        int error = pthread_cancel(thread);
+        if (error) p->cancellationSignal = 0;
+        pthread_mutex_unlock(&commandSignalMutex);
+        return error;
+    }
+    pthread_mutex_unlock(&commandSignalMutex);
+    return ESRCH;
 }
 
 void ios_switchSession(const void* sessionId) {
