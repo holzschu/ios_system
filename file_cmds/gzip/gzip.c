@@ -1355,7 +1355,7 @@ file_compress(char *file, char *outfile, size_t outsize)
 		out = open(outfile, O_WRONLY | O_CREAT | O_EXCL, 0600);
 		if (out == -1) {
 			maybe_warn("could not create output: %s", outfile);
-			fclose(thread_stdin);
+			close(in);
 			return (-1);
 		}
 #ifndef SMALL

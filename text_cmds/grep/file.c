@@ -263,7 +263,9 @@ grep_open(const char *path)
 	if (path == NULL) {
 		/* Processing stdin implies --line-buffered. */
 		lbflag = true;
-		f->fd = fileno(thread_stdin);
+		/* All close paths own this descriptor, not the caller stream. */
+		if ((f->fd = dup(fileno(thread_stdin))) == -1)
+			goto error1;
 	} else if ((f->fd = open(path, O_RDONLY)) == -1)
 		goto error1;
 
