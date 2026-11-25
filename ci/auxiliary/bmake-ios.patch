@@ -1,0 +1,142 @@
+--- a/compat.c
++++ b/compat.c
+@@ -381,11 +381,11 @@
+     /*
+      * Fork and execute the single command. If the fork fails, we abort.
+      */
+-    compatChild = cpid = vFork();
++    compatChild = cpid = ios_fork();
+     if (cpid < 0) {
+ 	Fatal("Could not fork");
+     }
+-    if (cpid == 0) {
++    {
+ 	Var_ExportVars();
+ #ifdef USE_META
+ 	if (useMeta) {
+@@ -396,8 +396,7 @@
+ 	    (void)execvp(av[0], (char *const *)UNCONST(av));
+ 	else
+ 	    (void)execv(av[0], (char *const *)UNCONST(av));
+-	execError("exec", av[0]);
+-	_exit(1);
++	/* ios_execv returns after dispatch; wait below owns its status. */
+     }
+ 
+     free(mav);
+@@ -416,13 +415,9 @@
+      */
+     while (1) {
+ 
+-	while ((retstat = wait(&reason)) != cpid) {
+-	    if (retstat > 0)
+-		JobReapChild(retstat, reason, FALSE); /* not ours? */
+-	    if (retstat == -1 && errno != EINTR) {
+-		break;
+-	    }
+-	}
++	do {
++	    retstat = waitpid(cpid, &reason, 0);
++	} while (retstat == -1 && errno == EINTR);
+ 
+ 	if (retstat > -1) {
+ 	    if (WIFSTOPPED(reason)) {
+--- a/main.c
++++ b/main.c
+@@ -1656,39 +1656,25 @@
+ 	goto bad;
+     }
+ 
+-    /*
+-     * Fork
+-     */
+-    switch (cpid = vFork()) {
+-    case 0:
+-	/*
+-	 * Close input side of pipe
+-	 */
++    /* ios_fork reserves a command-thread ID, without a child branch. */
++    cpid = ios_fork();
++    if (cpid == -1) {
+ 	(void)close(fds[0]);
+-
+-	/*
+-	 * Duplicate the output stream to the shell's output, then
+-	 * shut the extra thing down. Note we don't fetch the error
+-	 * stream...why not? Why?
+-	 */
+-	(void)dup2(fds[1], 1);
+ 	(void)close(fds[1]);
+-
+-	Var_ExportVars();
+-
+-	(void)execv(shellPath, UNCONST(args));
+-	_exit(1);
+-	/*NOTREACHED*/
+-
+-    case -1:
+ 	*errnum = "Couldn't exec \"%s\"";
+ 	goto bad;
+-
+-    default:
+-	/*
+-	 * No need for the writing half
+-	 */
++    }
++    if (dup2(fds[1], 1) == -1) {
++	ios_releaseThreadId(cpid);
++	(void)close(fds[0]);
+ 	(void)close(fds[1]);
++	*errnum = "Couldn't redirect shell output for \"%s\"";
++	goto bad;
++    }
++    /* ios_dup2 wraps the write descriptor in the child's owned FILE. */
++    Var_ExportVars();
++    (void)execv(shellPath, UNCONST(args));
++    {
+ 
+ 	savederr = 0;
+ 	Buf_Init(&buf, 0);
+@@ -1745,7 +1731,6 @@
+ 	    }
+ 	    cp--;
+ 	}
+-	break;
+     }
+     return res;
+ bad:
+--- a/var.c
++++ b/var.c
+@@ -816,9 +816,11 @@
+     str += 8;
+     unexport_env = (strncmp(str, "-env", 4) == 0);
+     if (unexport_env) {
++	char **environ = environmentVariables(ios_currentPid());
+ 	char **newenv;
+ 
+ 	cp = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
++	cp = cp != NULL ? bmake_strdup(cp) : NULL;
+ 	if (environ == savedEnv) {
+ 	    /* we have been here before! */
+ 	    newenv = bmake_realloc(environ, 2 * sizeof(char *));
+@@ -829,14 +831,19 @@
+ 	    }
+ 	    newenv = bmake_malloc(2 * sizeof(char *));
+ 	}
+-	if (!newenv)
++	if (!newenv) {
++	    free(cp);
+ 	    return;
++	}
+ 	/* Note: we cannot safely free() the original environ. */
+ 	environ = savedEnv = newenv;
+ 	newenv[0] = NULL;
+ 	newenv[1] = NULL;
++	/* Replacing a local environ pointer does not update ios_system. */
++	storeEnvironment(newenv);
+ 	if (cp && *cp)
+ 	    setenv(MAKE_LEVEL_ENV, cp, 1);
++	free(cp);
+     } else {
+ 	for (; *str != '\n' && isspace((unsigned char) *str); str++)
+ 	    continue;

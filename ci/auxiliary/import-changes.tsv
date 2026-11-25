@@ -1,0 +1,88 @@
+# Product	Change	Symbol	Reason
+make	add	___tolower	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	___toupper	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_fdopen$DARWIN_EXTSN	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_fopen$DARWIN_EXTSN	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_fputc	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_fputs	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_fwrite	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_ios_releaseThreadId	Update host environment or release reserved command session on redirect failure
+make	add	_memchr	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_memmove	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_select$DARWIN_EXTSN	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_snprintf	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_storeEnvironment	Update host environment or release reserved command session on redirect failure
+make	add	_strcpy	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_strlcpy	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_strncpy	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	_vsnprintf	Current compiler/SDK, Darwin extensions or upstream configuration
+make	add	dyld_stub_binder	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___chkstk_darwin	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___memcpy_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___memmove_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___memset_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___snprintf_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___stdoutp	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___strcpy_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___strncpy_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	___vsnprintf_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_bzero	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_fdopen	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_ffs	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_fopen	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_isdigit	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_memset	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_printf	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_select	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_tolower	Current compiler/SDK, Darwin extensions or upstream configuration
+make	remove	_toupper	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	___tolower	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	___toupper	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_fdopen$DARWIN_EXTSN	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_fopen$DARWIN_EXTSN	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_fputs	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_fwrite	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_ios_fork	Reconstruct ios_system pager dispatch; replace unsafe temporary-name creation with mkstemp
+mandoc	add	_memmove	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_mkdir	Create the pager temporary directory on first use
+mandoc	add	_snprintf	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_strlcat	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_uname	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_vsnprintf	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	_wcslen	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	add	dyld_stub_binder	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	___memmove_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	___memset_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	___snprintf_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	___sprintf_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	___vsnprintf_chk	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_abort	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_abs	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_bzero	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_fdopen	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_fileno	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_fopen	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_fork	Reconstruct ios_system pager dispatch; replace unsafe temporary-name creation with mkstemp
+mandoc	remove	_getpgid	Reconstruct ios_system pager dispatch; replace unsafe temporary-name creation with mkstemp
+mandoc	remove	_getpid	Reconstruct ios_system pager dispatch; replace unsafe temporary-name creation with mkstemp
+mandoc	remove	_getppid	Reconstruct ios_system pager dispatch; replace unsafe temporary-name creation with mkstemp
+mandoc	remove	_isdigit	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_memset	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_mktemp	Reconstruct ios_system pager dispatch; replace unsafe temporary-name creation with mkstemp
+mandoc	remove	_printf	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_tolower	Current compiler/SDK, Darwin extensions or upstream configuration
+mandoc	remove	_toupper	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	add	_calloc	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	add	_fopen$DARWIN_EXTSN	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	add	_ios_exit	Route UnRAR lifecycle/environment/signal operations through ios_system
+unrar	add	_ios_getenv	Route UnRAR lifecycle/environment/signal operations through ios_system
+unrar	add	_ios_signal	Route UnRAR lifecycle/environment/signal operations through ios_system
+unrar	add	_memcmp	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	remove	___chkstk_darwin	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	remove	_exit	Route UnRAR lifecycle/environment/signal operations through ios_system
+unrar	remove	_fopen	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	remove	_getenv	Route UnRAR lifecycle/environment/signal operations through ios_system
+unrar	remove	_memset_pattern16	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	remove	_signal	Route UnRAR lifecycle/environment/signal operations through ios_system
+unrar	remove	_strcmp	Current compiler/SDK, Darwin extensions or upstream configuration
+unrar	remove	dyld_stub_binder	Current compiler/SDK, Darwin extensions or upstream configuration
