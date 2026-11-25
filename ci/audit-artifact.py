@@ -118,8 +118,8 @@ def audit_framework(root: Path, maximum: str) -> list[dict]:
             raise ValueError(f"{product}: duplicate platform/architecture")
         destinations.update((variant, arch) for arch in actual)
         rows.append(row)
-    if ("device", "arm64") not in destinations or not any(item[0] == "simulator" for item in destinations):
-        raise ValueError("Require arm64 device and at least one Simulator architecture")
+    if destinations != {("device", "arm64"), ("simulator", "arm64"), ("simulator", "x86_64")}:
+        raise ValueError("Require arm64 iOS and arm64/x86_64 Simulator")
     return rows
 
 

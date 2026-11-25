@@ -5,6 +5,7 @@ on:
       - 'build-auxiliary.sh'
       - 'ci/auxiliary/**'
       - 'ci/audit-artifact.py'
+      - 'ci/test-universal-audit.sh'
       - '.github/workflows/auxiliary.yml'
   workflow_dispatch:
   push:
@@ -30,6 +31,7 @@ jobs:
         run: |
           xcodebuild -version
           bash build-auxiliary.sh
+          bash ci/test-universal-audit.sh .build/auxiliary/make.xcframework.zip
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: xcframeworks
