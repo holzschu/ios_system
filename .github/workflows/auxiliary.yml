@@ -22,8 +22,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Exercise build paths that contain spaces.
+          path: source checkout
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
       - name: Build and audit XCFrameworks
+        working-directory: source checkout
         run: |
           xcodebuild -version
           bash build-auxiliary.sh
@@ -33,7 +36,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           path: |
-            .build/auxiliary/*.xcframework.zip
-            .build/auxiliary/*.audit.json
-            .build/auxiliary/checksums.txt
-            .build/auxiliary/*.exports.txt
+            source checkout/.build/auxiliary/*.xcframework.zip
+            source checkout/.build/auxiliary/*.audit.json
+            source checkout/.build/auxiliary/checksums.txt
+            source checkout/.build/auxiliary/*.exports.txt

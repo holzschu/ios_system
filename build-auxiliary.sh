@@ -2,15 +2,28 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")" && pwd)
-build="$root/.build/auxiliary"
-inputs="$build/inputs"
+output="$root/.build/auxiliary"
+build=$output
+port="$root/ci/auxiliary"
+inputs="$output/inputs"
 mkdir -p "$inputs"
+# The upstream bmake configure and bootstrap split paths in shell variables.
+if [[ $build == *[[:space:]]* ]]; then
+    build=$(mktemp -d /tmp/auxiliary.XXXXXX)
+    trap 'rm -rf "$build"' EXIT
+    mkdir "$build/inputs"
+    cp -R "$port" "$build/port"
+    port="$build/port"
+fi
 fetch() {
     local url=$1 expected=$2 file=$3
     if [[ ! -f $file ]] || [[ $(shasum -a 256 "$file" | awk '{print $1}') != "$expected" ]]; then
         curl --fail --location --retry 3 "$url" -o "$file"
     fi
     printf '%s  %s\n' "$expected" "$file" | shasum -a 256 -c -
+    if [[ $build != "$output" ]]; then
+        cp "$file" "$build/inputs/"
+    fi
 }
 fetch https://github.com/holzschu/ios_system/releases/download/v3.0.5/ios_system.xcframework.zip d429e68102926f58bedd8e8b7105dcd169478cd6da1cef494a5f468482d1c8f5 "$inputs/ios_system.zip"
 fetch https://github.com/holzschu/ios_system/releases/download/v3.0.5/ios_error.h 51d46b912eb30399cbb5c36c8c8f15eb1a44adcfc9ee581304ac9d3739a84716 "$inputs/ios_error.h"
@@ -20,6 +33,7 @@ fetch https://github.com/holzschu/ios_system/releases/download/Auxiliary/make.xc
 fetch https://github.com/holzschu/ios_system/releases/download/Auxiliary/unrar.xcframework.zip b1c2318db3b89a668abd66f69036ec9c3c5d474b2d75a0b1ffbaf2ac47b02782 "$inputs/published-unrar.zip"
 fetch https://mandoc.bsd.lv/snapshots/mandoc-1.14.5.tar.gz 8219b42cb56fc07b2aa660574e6211ac38eefdbf21f41b698d3348793ba5d8f7 "$inputs/mandoc.tar.gz"
 fetch https://github.com/holzschu/ios_system/releases/download/Auxiliary/mandoc.xcframework.zip 86428238cb357ece2da6b813fe493dfcee1f4efc91ec535d73b3e581d9b8e21b "$inputs/published-mandoc.zip"
+inputs="$build/inputs"
 rm -rf "$inputs/ios_system.xcframework" "$inputs/published"
 unzip -q "$inputs/ios_system.zip" -d "$inputs"
 for product in make mandoc unrar; do
@@ -45,22 +59,22 @@ for product in make mandoc unrar; do
             tar -xzf "$inputs/bmake.tar.gz" -C "$work/source" --strip-components=1
             # Reconstructed from the published framework's disassembly, not recovered port source.
             # Unlike the historical local environ assignment, storeEnvironment updates the host.
-            patch -d "$work/source" -p1 < "$root/ci/auxiliary/bmake-ios.patch"
+            patch -d "$work/source" -p1 < "$port/bmake-ios.patch"
             (
                 cd "$work/objects"
                 CC="$(xcrun --sdk "$sdk" --find clang) -target $target -isysroot $sysroot" CFLAGS='-Oz -fPIC -D_DARWIN_C_SOURCE=1' \
                     sh "$work/source/configure" --host="$arch-apple-ios" --with-machine="$arch" --with-machine_arch="$arch" --without-filemon
                 # Keep configure's target link probes executable-shaped; only bootstrap links a framework.
-                sed -i '' "s|^CFLAGS=\"|CFLAGS=\"-I $inputs -include $root/ci/auxiliary/bmake-ios.h |" make-bootstrap.sh
+                sed -i '' "s|^CFLAGS=\"|CFLAGS=\"-I $inputs -include $port/bmake-ios.h |" make-bootstrap.sh
                 sed -i '' "s|^LDFLAGS=\"|LDFLAGS=\"$link |" make-bootstrap.sh
                 sh make-bootstrap.sh
             )
             cp "$work/objects/bmake" "$framework/make"
         elif [[ $product == mandoc ]]; then
             tar -xzf "$inputs/mandoc.tar.gz" -C "$work/source" --strip-components=1
-            patch -d "$work/source" -p1 < "$root/ci/auxiliary/mandoc-configure.patch"
-            patch -d "$work/source" -p1 < "$root/ci/auxiliary/mandoc-ios.patch"
-            cp "$root/ci/auxiliary/mandoc.configure.local" "$work/source/configure.local"
+            patch -d "$work/source" -p1 < "$port/mandoc-configure.patch"
+            patch -d "$work/source" -p1 < "$port/mandoc-ios.patch"
+            cp "$port/mandoc.configure.local" "$work/source/configure.local"
             compiler=("$(xcrun --sdk "$sdk" --find clang)" -target "$target" -isysroot "$sysroot")
             printf "CC='%s'\nCFLAGS='-Oz -D_DARWIN_C_SOURCE=1'\n" "${compiler[*]}" >> "$work/source/configure.local"
             (
@@ -71,12 +85,12 @@ for product in make mandoc unrar; do
                     "${compiler[@]}" -Oz -D_DARWIN_C_SOURCE=1 -DSYS_ENDIAN '-DUTF8_LOCALE="en_US.UTF-8"' \
                         -Werror=unguarded-availability-new "test-$feature.c" -o "test-$feature"
                 done
-                make -j4 mandoc CC="${compiler[*]}" CFLAGS="-Oz -fPIC -D_DARWIN_C_SOURCE=1 -I $inputs -include $root/ci/auxiliary/mandoc-ios.h" LDFLAGS="$link"
+                make -j4 mandoc CC="${compiler[*]}" CFLAGS="-Oz -fPIC -D_DARWIN_C_SOURCE=1 -I $inputs -include $port/mandoc-ios.h" LDFLAGS="$link"
             )
             cp "$work/source/mandoc" "$framework/mandoc"
         else
             tar -xzf "$inputs/unrar.tar.gz" -C "$work/source" --strip-components=1
-            printf '\n#include "%s/ci/auxiliary/unrar-ios.h"\n' "$root" >> "$work/source/rar.hpp"
+            printf '\n#include "%s/unrar-ios.h"\n' "$port" >> "$work/source/rar.hpp"
             (
                 cd "$work/source"
                 # The unrar target depends on clean; omit that prerequisite from the parallel build.
@@ -126,6 +140,9 @@ for product in make mandoc unrar; do
     zip="$build/$product.xcframework.zip"
     sum=$(swift package compute-checksum "$zip")
     printf '%s  %s\n' "$sum" "${zip##*/}" >> "$build/checksums.txt"
-    bash "$root/ci/auxiliary/audit-exports.sh" "$product" "$zip" "$inputs/published-$product.zip" "$inputs/ios_system.zip" > "$zip.exports.txt"
+    bash "$port/audit-exports.sh" "$product" "$zip" "$inputs/published-$product.zip" "$inputs/ios_system.zip" > "$zip.exports.txt"
     uv run --script "$root/ci/audit-artifact.py" "$zip" --sha256 "$sum" --max-minos 14.0 > "$zip.audit.json"
 done
+if [[ $build != "$output" ]]; then
+    cp "$build/"*.xcframework.zip "$build/"*.xcframework.zip.{exports.txt,audit.json} "$build/checksums.txt" "$output/"
+fi
