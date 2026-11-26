@@ -16,6 +16,8 @@ Use iphoneos for device frameworks. VERIFIED_FRAMEWORKS contains matching ios_sy
 
 The build checks each binary's imports against the selected SDK stubs and the supplied `ios_system` and `openssl` framework exports. It also rejects the `___progname` import or export that App Store Connect flagged in #203, even if the SDK exports it. To audit an existing binary, run `bash ssh-stock/audit-symbols.sh SDK ARCH STOCK_BINARY VERIFIED_FRAMEWORKS` for each slice. The SDK check does not replace App Store validation.
 
+When opening `/dev/tty` fails with `ENXIO` or the worker sandbox denies it with `EPERM`, Stock `ssh` can show the host-key confirmation on the a-Shell terminal and read the reply there. Use these client frameworks with the matching ios_system runtime, which preserves the distinction between terminal input and a pipe when starting the SSH worker. Existing host keys are still checked by OpenSSH, and the legacy `$SSH_HOME/known_hosts` file is not imported.
+
 Strict POSIX spawn remains extension-only.
 
 The recipe retains the supplied OpenSSL version. The tested input was OpenSSL 1.1.1w; updating that dependency is separate work.
@@ -29,3 +31,13 @@ dash ssh-stock/phone-client.sh ABSOLUTE_NEW_CASE_DIRECTORY HOST PORT USER IDENTI
 The check covers Ed25519 generation/readback, strict key login and byte-identical scp/sftp transfers, including multiple remote SCP sources in one invocation, a missing source returning a nonzero status while a later source still transfers, and a successful login afterward. Phone qualification on 2026-10-23 passed the original transfer fixture with the production worker correction. The later multi-source SCP regression first exhausted a three-worker Simulator pool, then passed through the same SSH caller with the same three-worker capacity after the transport-wait correction. A preserved identity, SSH config and known_hosts created by the old 8.5 build also passed strict login. These results qualify the integrated worker build; these phone results do not qualify later public-source revisions.
 
 Run `dash ssh-stock/home-migration.sh CASE_DIR HOST PORT USER THROWAWAY_IDENTITY KNOWN_HOSTS` through the app to verify default config, Ed25519 identity and strict known_hosts lookup using `SSH_HOME/.ssh`, without `-F`, `-i` or `UserKnownHostsFile`. The adapter uses the existing app `SSH_HOME` root (Documents by default), falling back to HOME when that override is absent. Keep CASE_DIR fresh; the fixture retains its throwaway files for inspection.
+
+To check first-use confirmation, set `SSH_HOME` to a disposable directory with the fixture host key only in `known_hosts` at the root. The server must allow public-key authentication with the disposable identity. Run this command from the foreground terminal, substituting the fixture values:
+
+```sh
+ssh -p PORT -i /path/to/fixture-identity USER@HOST 'echo STOCK_SSH_CONFIRM_FIXTURE_OK'
+```
+
+Compare the displayed fingerprint with the fixture server's public key before replying `yes` or entering the exact fingerprint. The test command must succeed, `.ssh/known_hosts` must contain the verified key, and a second login must not prompt. The root file must remain unchanged. A wrong key in `.ssh/known_hosts` must still be refused. In fresh cases, test `no`, `BatchMode=yes`, `StrictHostKeyChecking=yes`, and an answer provided on redirected stdin; none should add a key. Redirecting stdout does not disable confirmation. If stderr is redirected, the prompt goes to that destination, while the answer still comes from the terminal. See [the Simulator test](../tests/README.md#stock-ssh-host-key-confirmation) for an automated loopback fixture.
+
+`tests/stock-ssh-worker-tty.m` checks the worker broker's terminal flag without an extension pool. Link it against the Simulator ios_system framework with `-Wl,-export_dynamic` and place the matching Stock SSH and OpenSSL frameworks on its runtime search path. Run it under `simctl spawn` with the app's `sshStockCommands.plist` and one mode per process. `foreground` and `stdout-file` must advertise a terminal; `pipe` and `stdin-file` must not.

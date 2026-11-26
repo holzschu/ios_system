@@ -341,3 +341,17 @@ xcrun simctl spawn "$SIMULATOR_UDID" "$PWD/.build/less-capture/probe/less-captur
 ```
 
 A passing run prints four `LESS_CAPTURE` lines with status 0, 17 bytes and `PASS`, then exits 0.
+
+# Stock SSH host-key confirmation
+
+`stock-ssh-confirm.py` builds `stock-ssh-confirm.m`, registers the real Stock SSH framework and invokes `ssh` through the public ios_system command API on an arm64 iOS Simulator. The test generates two throwaway keys and starts macOS's `/usr/sbin/sshd` as the current user on a temporary loopback port. It does not enable Remote Login or use `sudo`. The probe uses virtual terminal streams and requires opening `/dev/tty` to fail with `ENXIO`.
+
+Use a booted Simulator's UUID and the matching arm64 Simulator frameworks. `RUNTIME_FRAMEWORKS` is the input directory containing `ios_system.framework` and `openssl.framework` passed to the [Stock SSH recipe](../ssh-stock/README.md). `BUILD_OUTPUT` is that recipe's output directory. Run the same command with each revision's framework inputs and output:
+
+```sh
+uv run tests/stock-ssh-confirm.py "$SIMULATOR_UDID" "$RUNTIME_FRAMEWORKS" "$BUILD_OUTPUT/sdk"
+```
+
+On the unpatched code, the first login returns 255 without prompting and the test exits 1. A passing test prints `STOCK_SSH_CONFIRMATION_PASS`. It checks first-use confirmation, the persisted key and a prompt-free reconnect. With stdout redirected, the prompt still appears on stderr and the remote output goes to the file. The exact fingerprint is accepted; a wrong fingerprint prompts again and fails at EOF. `no`, an incomplete reply, NUL input, redirected stdin, forced askpass with an unavailable helper, batch mode, strict checking and a changed key all leave Stock trust unchanged. The legacy `known_hosts` must stay byte-identical in every case.
+
+`stock-ssh-worker-tty.m` checks the flag sent to the worker broker for foreground SSH with or without stdout redirection, piped stdin and file stdin. Real extension admission is covered by the a-Shell mini app test: with the matching runtime and Stock client installed, check that `ssh ... > out.txt` displays the prompt and a foreground reply saves the key and sends remote output to `out.txt`. `echo yes | ssh ...` and `ssh ... < yes.txt` must fail without a prompt or a trust write. Use a fresh disposable `SSH_HOME` for each case.
