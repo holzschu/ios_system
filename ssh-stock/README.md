@@ -14,6 +14,8 @@ bash ssh-stock/build.sh iphonesimulator INPUTS FRESH_OUTPUT VERIFIED_FRAMEWORKS
 
 Use iphoneos for device frameworks. VERIFIED_FRAMEWORKS contains matching ios_system.framework and openssl.framework inputs. The output contains four unsigned frameworks and source/toolchain/input receipts. Signing, embedding the frameworks and command registration belong to the application.
 
+The build checks each binary's imports against the selected SDK stubs and the supplied `ios_system` and `openssl` framework exports. It also rejects the `___progname` import or export that App Store Connect flagged in #203, even if the SDK exports it. To audit an existing binary, run `bash ssh-stock/audit-symbols.sh SDK ARCH STOCK_BINARY VERIFIED_FRAMEWORKS` for each slice. The SDK check does not replace App Store validation.
+
 Strict POSIX spawn remains extension-only.
 
 The recipe retains the supplied OpenSSL version. The tested input was OpenSSL 1.1.1w; updating that dependency is separate work.
