@@ -41,6 +41,28 @@
  
  	if (retstat > -1) {
  	    if (WIFSTOPPED(reason)) {
+--- a/job.c
++++ b/job.c
+@@ -1368,8 +1368,8 @@
+     if (cpid == -1)
+ 	Punt("Cannot vfork: %s", strerror(errno));
+ 
+-    if (cpid == 0) {
+-	/* Child */
++    {
++	/* ios_system reserves a logical PID without a separate child branch. */
+ 	sigset_t tmask;
+ 
+ #ifdef USE_META
+@@ -1461,7 +1461,6 @@
+ 	Var_ExportVars();
+ 
+ 	(void)execv(shellPath, argv);
+-	execError("exec", shellPath);
+-	_exit(1);
++	/* ios_execv returns after dispatch; continue with job bookkeeping. */
+     }
+ 
 --- a/main.c
 +++ b/main.c
 @@ -1656,39 +1656,25 @@
