@@ -58,7 +58,7 @@ for pair in 'ssh SSHStock' 'ssh-keygen SSHKeygenStock' 'scp SCPStock' 'sftp SFTP
     cat > "$framework/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict><key>CFBundleExecutable</key><string>$name</string><key>CFBundleIdentifier</key><string>org.a-shell.$name</string><key>CFBundleName</key><string>$name</string><key>CFBundlePackageType</key><string>FMWK</string><key>CFBundleVersion</key><string>1</string><key>CFBundleShortVersionString</key><string>10.6p1</string><key>MinimumOSVersion</key><string>16.0</string></dict></plist>
+<plist version="1.0"><dict><key>CFBundleExecutable</key><string>$name</string><key>CFBundleIdentifier</key><string>org.a-shell.$name</string><key>CFBundleName</key><string>$name</string><key>CFBundlePackageType</key><string>FMWK</string><key>CFBundleVersion</key><string>1</string><key>CFBundleShortVersionString</key><string>10.6.1</string><key>MinimumOSVersion</key><string>16.0</string></dict></plist>
 PLIST
     shasum -a 256 "$framework/$name"
 done
