@@ -3334,6 +3334,7 @@ static int isInteractive(const char* command) {
     if (strncmp(command, "isympy", 6) == 0) return true;
     if (strncmp(command, "less", 4) == 0) return true;
     if (strncmp(command, "more", 4) == 0) return true;
+    if (strncmp(command, "ssh-keygen", 10) == 0) return false;
     if (strncmp(command, "ssh", 3) == 0) return true;
     if (strncmp(command, "scp", 3) == 0) return true;
     if (strncmp(command, "man", 3) == 0) return true;
