@@ -1,4 +1,4 @@
-# Inspect the local ARM64 control flow printed by otool for JobExec only.
+# Inspect ARM64 JobExec. Read numeric JobExec operands first, then symbolic disassembly.
 function fail(reason) {
     print "FAIL: " reason > "/dev/stderr"
     exit 1
@@ -48,10 +48,27 @@ function error_path(i, handler,    message, steps) {
     return 0
 }
 
+function redirection_call(i,    entry) {
+    if (op[i] != "bl")
+        return 0
+    if (symbol[i] ~ /^(_ios_dup2|_fcntl|_lseek)$/)
+        return 1
+    if (symbol[i] !~ /^_OUTLINED_FUNCTION_[0-9]+$/)
+        return 0
+    # Outlined labels repeat across object files. Resolve this particular call
+    # and verify the F_SETFD thunk, not just its generated label.
+    entry = call_target[pc[i]]
+    return label_at[entry] == symbol[i] &&
+        instruction[hex(entry)] ~ /[[:space:]]mov[[:space:]]+w1, #0x2$/ &&
+        instruction[hex(entry) + 4] ~ /[[:space:]]b[[:space:]].*; symbol stub for: _fcntl$/
+}
+
 function io_error_branch(i, dest) {
-    # Only a branch on a redirection call's -1 return may skip dispatch.
-    return op[i] == "b.eq" && line[i - 1] ~ /[[:space:]]cmn[[:space:]]+[wx]0, #0x1$/ &&
-        op[i - 2] == "bl" && error_path(dest, "_execError")
+    # Only a branch on an adjacent redirection call's -1 return may skip dispatch.
+    return op[i] == "b.eq" && hex(pc[i]) == hex(pc[i - 2]) + 8 &&
+        hex(pc[i - 1]) == hex(pc[i - 2]) + 4 &&
+        line[i - 1] ~ /[[:space:]]cmn[[:space:]]+[wx]0, #0x1$/ &&
+        redirection_call(i - 2) && error_path(dest, "_execError")
 }
 
 function success_path(i,    dest) {
@@ -77,8 +94,27 @@ function success_path(i,    dest) {
     seen[i] = 2
 }
 
-/^_JobExec:$/ { in_job = 1; next }
-/^_[^[:space:]]+:$/ { in_job = 0 }
+FNR == NR {
+    if ($1 ~ /^[[:xdigit:]]+:$/ && $(NF - 1) == "bl" && $NF ~ /^0x[[:xdigit:]]+$/) {
+        sub(/:$/, "", $1)
+        call_target[address($1)] = address($NF)
+    }
+    next
+}
+/^_[^[:space:]]+:$/ {
+    in_job = /^_JobExec:$/
+    label = $1
+    sub(/:$/, "", label)
+    next
+}
+/^[[:xdigit:]]+[[:space:]]/ {
+    addr = address($1)
+    instruction[hex(addr)] = $0
+    if (label != "") {
+        label_at[addr] = label
+        label = ""
+    }
+}
 in_job && /^[[:xdigit:]]+[[:space:]]/ {
     pc[++n] = address($1)
     at[pc[n]] = n
