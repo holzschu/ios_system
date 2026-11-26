@@ -46,9 +46,15 @@ ln -sfn "$frameworks/openssl.framework/Headers" "$output/crypto/include/openssl"
 ln -sfn "$frameworks/openssl.framework/openssl" "$output/crypto/lib/libcrypto.dylib"
 cd "$output/build"
 if [ ! -f Makefile ]; then
-    CC="xcrun --sdk $sdk clang -target $target" "$output/source/configure" --host=aarch64-apple-darwin --with-ssl-dir="$output/crypto" --without-pam --without-libedit --disable-strip --without-sandbox
+    # The SDK links __progname, but App Store Connect rejects references to it.
+    # Rename OpenSSH's fallback in CPPFLAGS so openbsd-compat sees it too.
+    ac_cv_libc_defines___progname=no CPPFLAGS="${CPPFLAGS:-} -D__progname=ashell_ssh_progname" \
+        CC="xcrun --sdk $sdk clang -target $target" "$output/source/configure" \
+        --host=aarch64-apple-darwin --with-ssl-dir="$output/crypto" --without-pam --without-libedit --disable-strip --without-sandbox
 fi
-nice -n 15 make -j2 CFLAGS="-Oz -fPIC -Wno-deprecated-declarations -DASHELL_OPENSSH -I$recipe -I$runtime" LDFLAGS="-dynamiclib -L. -Lopenbsd-compat -F$frameworks -framework ios_system -L$output/crypto/lib" ssh ssh-keygen scp sftp
+nice -n 15 make -j2 CFLAGS="-Oz -fPIC -Wno-deprecated-declarations -DASHELL_OPENSSH -I$recipe -I$runtime" \
+    LDFLAGS="-dynamiclib -Wl,-unexported_symbol,_ashell_ssh_progname -L. -Lopenbsd-compat -F$frameworks -framework ios_system -L$output/crypto/lib" \
+    ssh ssh-keygen scp sftp
 for pair in 'ssh SSHStock' 'ssh-keygen SSHKeygenStock' 'scp SCPStock' 'sftp SFTPStock'; do
     read -r command name <<< "$pair"
     framework="$output/sdk/$name.framework"
@@ -60,5 +66,6 @@ for pair in 'ssh SSHStock' 'ssh-keygen SSHKeygenStock' 'scp SCPStock' 'sftp SFTP
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict><key>CFBundleExecutable</key><string>$name</string><key>CFBundleIdentifier</key><string>org.a-shell.$name</string><key>CFBundleName</key><string>$name</string><key>CFBundlePackageType</key><string>FMWK</string><key>CFBundleVersion</key><string>1</string><key>CFBundleShortVersionString</key><string>10.6.1</string><key>MinimumOSVersion</key><string>16.0</string></dict></plist>
 PLIST
+    bash "$recipe/audit-symbols.sh" "$sdk" "${target%%-*}" "$framework/$name" "$frameworks"
     shasum -a 256 "$framework/$name"
 done
