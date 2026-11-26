@@ -206,3 +206,113 @@
  			continue;
  		}
  		/* SCP */
+--- a/misc.h
++++ b/misc.h
+@@ -255,6 +255,9 @@
+ #define RP_ALLOW_STDIN		0x0002
+ #define RP_ALLOW_EOF		0x0004
+ #define RP_USE_ASKPASS		0x0008
++#ifdef ASHELL_OPENSSH
++#define RP_HOSTKEY_CONFIRM	0x0010
++#endif
+ 
+ struct notifier_ctx;
+ 
+--- a/readpass.c
++++ b/readpass.c
+@@ -110,6 +110,41 @@
+ /* private/internal read_passphrase flags */
+ #define RP_ASK_PERMISSION	0x8000 /* pass hint to askpass for confirm UI */
+ 
++#ifdef ASHELL_OPENSSH
++/* The a-Shell virtual terminal sends Return as CR and does not echo input. */
++static char *
++ashell_read_confirmation(const char *prompt, char *buf, size_t size)
++{
++	size_t len = 0;
++	int c;
++
++	if (fputs(prompt, stderr) == EOF || fflush(stderr) == EOF)
++		return NULL;
++	while ((c = fgetc(stdin)) != '\r' && c != '\n') {
++		if (c == '\b' || c == 0x7f) {
++			if (len == 0)
++				continue;
++			len--;
++			if (fputs("\b \b", stderr) == EOF)
++				return NULL;
++		} else {
++			/* EOF, control keys, and incomplete or oversized replies decline. */
++			if (c < ' ' || c > '~' || len == size - 1)
++				return NULL;
++			buf[len++] = c;
++			if (fputc(c, stderr) == EOF)
++				return NULL;
++		}
++		if (fflush(stderr) == EOF)
++			return NULL;
++	}
++	if (fputs("\r\n", stderr) == EOF || fflush(stderr) == EOF)
++		return NULL;
++	buf[len] = '\0';
++	return xstrdup(buf);
++}
++#endif
++
+ /*
+  * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
+  * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
+@@ -121,6 +156,9 @@
+ {
+ 	char cr = '\r', *askpass = NULL, *ret, buf[1024];
+ 	int rppflags, ttyfd, use_askpass = 0, allow_askpass = 0;
++#ifdef ASHELL_OPENSSH
++	int tty_errno = 0;
++#endif
+ 	const char *askpass_hint = NULL;
+ 	const char *s;
+ 
+@@ -160,6 +198,9 @@
+ 			(void)write(ttyfd, &cr, 1);
+ 			close(ttyfd);
+ 		} else {
++#ifdef ASHELL_OPENSSH
++			tty_errno = errno;
++#endif
+ 			debug_f("can't open %s: %s", _PATH_TTY,
+ 			    strerror(errno));
+ 			use_askpass = 1;
+@@ -182,6 +223,13 @@
+ 		return ret;
+ 	}
+ 
++#ifdef ASHELL_OPENSSH
++	/* A sandboxed worker can get EPERM instead of ENXIO for /dev/tty. */
++	if ((flags & RP_HOSTKEY_CONFIRM) &&
++	    (tty_errno == ENXIO || tty_errno == EPERM) &&
++	    isatty(STDIN_FILENO))
++		return ashell_read_confirmation(prompt, buf, sizeof buf);
++#endif
+ 	if (readpassphrase(prompt, buf, sizeof buf, rppflags) == NULL) {
+ 		if (flags & RP_ALLOW_EOF)
+ 			return NULL;
+--- a/sshconnect.c
++++ b/sshconnect.c
+@@ -605,12 +605,15 @@
+ 	const char *msg, *again = "Please type 'yes' or 'no': ";
+ 	const char *again_fp = "Please type 'yes', 'no' or the fingerprint: ";
+ 	char *p, *cp;
+-	int ret = -1;
++	int ret = -1, flags = RP_ECHO;
+ 
++#ifdef ASHELL_OPENSSH
++	flags |= RP_HOSTKEY_CONFIRM;
++#endif
+ 	if (options.batch_mode)
+ 		return 0;
+ 	for (msg = prompt;;msg = fingerprint ? again_fp : again) {
+-		cp = p = read_passphrase(msg, RP_ECHO);
++		cp = p = read_passphrase(msg, flags);
+ 		if (p == NULL)
+ 			return 0;
+ 		p += strspn(p, " \t"); /* skip leading whitespace */

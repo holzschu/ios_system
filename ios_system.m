@@ -1126,6 +1126,9 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         // The worker reports a terminal and merges stderr unless told otherwise: pass what this command really has.
         workerPaneOptions options = { sizeof(options), ios_isatty(STDOUT_FILENO) != 0,
             p->stdout != NULL && p->stderr != NULL && fileno(p->stderr) != fileno(p->stdout), -1 };
+        // Stock ssh prompts from terminal input even when command output is redirected.
+        if (workerRequired(p->argv[0]) && !strcmp(p->argv[0], "ssh"))
+            options.tty = p->stdin && !p->asyncSpawn && ios_isatty(STDIN_FILENO);
         char **environment = environmentVariables(p->pid >= 0 ? p->pid : ios_currentPid());
         char **hostEnvironment = NULL;
         if (host) {
