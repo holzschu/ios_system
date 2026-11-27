@@ -738,6 +738,23 @@ def check_keygen(simulator, runtime_frameworks, stock_frameworks, console):
             (b"\r", b"\r"),
             check=lambda status, *_: status == 0 and unlocked_with(empty, b""),
         )
+        scripted = root / "scripted"
+        explicit_new = run(
+            "explicit-N",
+            ("-qt", "ed25519", "-N", new.decode(), "-f", str(scripted)),
+            check=lambda status, _, err: (
+                status == 0 and first not in err and unlocked_with(scripted, new)
+            ),
+        )
+        explicit_old = run(
+            "explicit-P",
+            ("-y", "-P", new.decode(), "-f", str(scripted)),
+            check=lambda status, out, err: (
+                status == 0
+                and b"Enter passphrase for" not in err
+                and out.split()[:2] == key_fields(scripted.with_suffix(".pub"))
+            ),
+        )
         refused = root / "refused"
         no_key = run(
             "missing-input",
@@ -759,6 +776,8 @@ def check_keygen(simulator, runtime_frameworks, stock_frameworks, console):
                 signed,
                 certified,
                 no_secret,
+                explicit_new,
+                explicit_old,
                 no_key,
             )
         ), "Stock ssh-keygen passphrase regression"
