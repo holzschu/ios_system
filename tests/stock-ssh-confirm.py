@@ -8,6 +8,7 @@
 import getpass
 import os
 import plistlib
+import secrets
 import selectors
 import shlex
 import shutil
@@ -27,6 +28,7 @@ MARKER = b"STOCK_SSH_CONFIRM_FIXTURE_OK"
 REMOTE_COMMAND = f"echo {MARKER.decode()}"
 PROMPT = b"Are you sure you want to continue connecting (yes/no/[fingerprint])?"
 RETRY_PROMPT = b"Please type 'yes', 'no' or the fingerprint:"
+PASSPHRASE_PROMPT = b"Enter passphrase for key"
 
 
 def prepare_probe(root, runtime_frameworks, stock_frameworks):
@@ -94,11 +96,18 @@ def fingerprint(path):
 def loopback_server(root):
     host_key = root / "host-key"
     identity = root / "identity"
-    for key in (host_key, identity):
+    encrypted = root / "encrypted"
+    passphrase = secrets.token_hex(16)
+    for key, phrase in ((host_key, ""), (identity, ""), (encrypted, passphrase)):
         subprocess.run(
-            ["/usr/bin/ssh-keygen", "-qt", "ed25519", "-N", "", "-f", key], check=True
+            ["/usr/bin/ssh-keygen", "-qt", "ed25519", "-N", phrase, "-f", key],
+            check=True,
         )
     identity_pub = identity.with_suffix(".pub")
+    authorized = root / "authorized_keys"
+    authorized.write_bytes(
+        identity_pub.read_bytes() + encrypted.with_suffix(".pub").read_bytes()
+    )
     host_pub = host_key.with_suffix(".pub")
     user = getpass.getuser()
     # Reserve an ephemeral port until just before sshd binds it.
@@ -110,12 +119,13 @@ def loopback_server(root):
 ListenAddress {HOST}
 Port {port}
 HostKey "{host_key}"
-AuthorizedKeysFile "{identity_pub}"
+AuthorizedKeysFile "{authorized}"
 AllowUsers {user}
 AuthenticationMethods publickey
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 UsePAM no
+PerSourcePenalties no
 StrictModes no
 DisableForwarding yes
 PermitTTY no
@@ -154,6 +164,8 @@ ForceCommand {REMOTE_COMMAND}
                     host_entry(identity_pub),
                     fingerprint(host_pub),
                     fingerprint(identity_pub),
+                    encrypted,
+                    passphrase.encode(),
                 )
             finally:
                 if server.poll() is None:
@@ -170,7 +182,7 @@ ForceCommand {REMOTE_COMMAND}
         raise
 
 
-def exchange(args, answer, expected_fingerprint, env):
+def exchange(args, answer, expected_fingerprint, env, prompt=PROMPT):
     with subprocess.Popen(
         args,
         stdin=subprocess.PIPE,
@@ -197,11 +209,12 @@ def exchange(args, answer, expected_fingerprint, env):
                             key.data.extend(data)
                         else:
                             ready.unregister(key.fileobj)
-                    if answer is not None and not sent and PROMPT in err:
-                        assert expected_fingerprint in err, (
-                            "wrong fingerprint in the prompt"
-                        )
-                        assert PROMPT not in out, "confirmation appeared on stdout"
+                    if answer is not None and not sent and prompt in err:
+                        if expected_fingerprint is not None:
+                            assert expected_fingerprint in err, (
+                                "wrong fingerprint in the prompt"
+                            )
+                        assert prompt not in out, "prompt appeared on stdout"
                         client.stdin.write(answer)
                         client.stdin.close()
                         sent = True
@@ -216,7 +229,17 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
         root = Path(work)
         probe, registry = prepare_probe(root, runtime_frameworks, stock_frameworks)
         with loopback_server(root) as fixture:
-            user, port, identity, host_entry, wrong_entry, host_fp, wrong_fp = fixture
+            (
+                user,
+                port,
+                identity,
+                host_entry,
+                wrong_entry,
+                host_fp,
+                wrong_fp,
+                encrypted,
+                phrase,
+            ) = fixture
             base_args = [
                 "ssh",
                 "-vv",
@@ -250,6 +273,8 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
                 redirect_stdout=False,
                 force_askpass=False,
                 warning=None,
+                prompt=PROMPT,
+                hidden=None,
             ):
                 home = reuse or root / name
                 key = home / ".ssh" / "known_hosts"
@@ -288,8 +313,15 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
                     home,
                     cmd,
                 ]
-                status, out, err, sent = exchange(args, answer, host_fp, case_env)
-                actual_prompt = PROMPT in err
+                fingerprint_check = host_fp if prompt == PROMPT else None
+                status, out, err, sent = exchange(
+                    args, answer, fingerprint_check, case_env, prompt
+                )
+                if hidden is not None:
+                    assert hidden not in out and hidden not in err, (
+                        f"{name}: secret was echoed"
+                    )
+                actual_prompt = prompt in err
                 if redirect_stdout:
                     assert not out, f"{name}: command wrote to unredirected stdout"
                     out = output.read_bytes()
@@ -318,6 +350,40 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
 
             home = run("yes", answer=b"yes\r", prompted=True, accept=True)
             run("reconnect", reuse=home, accept=True)
+            run(
+                "encrypted-identity",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                answer=phrase + b"\r",
+                prompted=True,
+                accept=True,
+                hidden=phrase,
+            )
+            run(
+                "encrypted-identity-incomplete",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                answer=phrase,
+                prompted=True,
+                hidden=phrase,
+            )
+            run(
+                "encrypted-identity-redirected",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                redirect_stdin=True,
+            )
+            run(
+                "encrypted-identity-forced-askpass",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                force_askpass=True,
+                warning=b"read_passphrase: requested to askpass",
+            )
             run(
                 "stdout-file",
                 answer=b"yes\r",
