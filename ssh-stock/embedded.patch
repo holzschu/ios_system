@@ -221,7 +221,7 @@
  
 --- a/readpass.c
 +++ b/readpass.c
-@@ -110,6 +110,95 @@
+@@ -110,6 +110,102 @@
  /* private/internal read_passphrase flags */
  #define RP_ASK_PERMISSION	0x8000 /* pass hint to askpass for confirm UI */
  
@@ -230,9 +230,9 @@
 +static __thread int ashell_skip_secret_lf;
 +
 +/* Read secrets only from the echo-free foreground virtual terminal, not
-+ * a kernel tty or redirected stdin. */
++ * a kernel tty or redirected stdin. Echo only for prompts that ask for it. */
 +static char *
-+ashell_read_secret(const char *prompt, char *buf, size_t size)
++ashell_read_secret(const char *prompt, char *buf, size_t size, int echo)
 +{
 +	struct stat st;
 +	size_t len = 0;
@@ -258,14 +258,21 @@
 +			/* Delete a UTF-8 code point, not just its last byte. */
 +			while (--len > 0 && ((unsigned char)buf[len] & 0xc0) == 0x80)
 +				continue;
++			if (echo)
++				fputs("\b \b", stderr);
 +		} else {
 +			if (c < ' ' || len == size - 1) {
 +				/* A later prompt must not consume this line's suffix. */
 +				explicit_bzero(buf, size);
 +				rejected = 1;
-+			} else
++			} else {
 +				buf[len++] = c;
++				if (echo)
++					fputc(c, stderr);
++			}
 +		}
++		if (echo)
++			fflush(stderr);
 +	}
 +	ashell_skip_secret_lf = c == '\r';
 +	if (!rejected && c != EOF) {
@@ -317,7 +324,7 @@
  /*
   * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
   * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
-@@ -121,6 +210,9 @@
+@@ -121,6 +217,9 @@
  {
  	char cr = '\r', *askpass = NULL, *ret, buf[1024];
  	int rppflags, ttyfd, use_askpass = 0, allow_askpass = 0;
@@ -327,7 +334,7 @@
  	const char *askpass_hint = NULL;
  	const char *s;
  
-@@ -144,6 +236,11 @@
+@@ -142,6 +241,11 @@
  		debug_f("requested to askpass");
  	else if (flags & RP_USE_ASKPASS)
  		use_askpass = 1;
@@ -339,7 +346,7 @@
  	else if (flags & RP_ALLOW_STDIN) {
  		if (!isatty(STDIN_FILENO)) {
  			debug_f("stdin is not a tty");
-@@ -160,6 +257,9 @@
+@@ -160,6 +264,9 @@
  			(void)write(ttyfd, &cr, 1);
  			close(ttyfd);
  		} else {
@@ -349,13 +356,18 @@
  			debug_f("can't open %s: %s", _PATH_TTY,
  			    strerror(errno));
  			use_askpass = 1;
-@@ -182,6 +282,15 @@
+@@ -182,6 +289,20 @@
  		return ret;
  	}
  
 +#ifdef ASHELL_OPENSSH
-+	if (flags & RP_ASHELL_SECRET)
-+		return ashell_read_secret(prompt, buf, sizeof buf);
++	if (flags & RP_ASHELL_SECRET) {
++		ret = ashell_read_secret(prompt, buf, sizeof buf,
++		    (flags & RP_ECHO) != 0);
++		if (ret == NULL && !(flags & RP_ALLOW_EOF))
++			return xstrdup("");
++		return ret;
++	}
 +	/* A sandboxed worker can get EPERM instead of ENXIO for /dev/tty. */
 +	if ((flags & RP_HOSTKEY_CONFIRM) &&
 +	    (tty_errno == ENXIO || tty_errno == EPERM) &&
@@ -403,7 +415,44 @@
  	if ((r = sshpkt_start(ssh, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
  	    (r = sshpkt_put_cstring(ssh, authctxt->server_user)) != 0 ||
  	    (r = sshpkt_put_cstring(ssh, authctxt->service)) != 0 ||
-@@ -1550,8 +1558,13 @@
+@@ -1112,7 +1120,11 @@
+ 	snprintf(prompt, sizeof(prompt),
+ 	    "Enter %.30s@%.128s's old password: ",
+ 	    authctxt->server_user, host);
++#ifdef ASHELL_OPENSSH
++	password = read_passphrase(prompt, RP_ASHELL_SECRET);
++#else
+ 	password = read_passphrase(prompt, 0);
++#endif
+ 	if ((r = sshpkt_put_cstring(ssh, password)) != 0)
+ 		goto out;
+ 
+@@ -1122,7 +1134,12 @@
+ 		snprintf(prompt, sizeof(prompt),
+ 		    "Enter %.30s@%.128s's new password: ",
+ 		    authctxt->server_user, host);
++#ifdef ASHELL_OPENSSH
++		password = read_passphrase(prompt,
++		    RP_ASHELL_SECRET | RP_ALLOW_EOF);
++#else
+ 		password = read_passphrase(prompt, RP_ALLOW_EOF);
++#endif
+ 		if (password == NULL) {
+ 			/* bail out */
+ 			r = 0;
+@@ -1131,7 +1148,11 @@
+ 		snprintf(prompt, sizeof(prompt),
+ 		    "Retype %.30s@%.128s's new password: ",
+ 		    authctxt->server_user, host);
++#ifdef ASHELL_OPENSSH
++		retype = read_passphrase(prompt, RP_ASHELL_SECRET);
++#else
+ 		retype = read_passphrase(prompt, 0);
++#endif
+ 		if (strcmp(password, retype) != 0) {
+ 			freezero(password, strlen(password));
+ 			logit("Mismatch; try again, EOF to quit.");
+@@ -1550,8 +1571,13 @@
  		if (i == 0)
  			passphrase = "";
  		else {
@@ -418,3 +467,16 @@
  				debug2("no passphrase given, try next key");
  				free(passphrase);
  				break;
+@@ -2127,7 +2153,12 @@
+ 		    authctxt->server_user, options.host_key_alias ?
+ 		    options.host_key_alias : authctxt->host, prompt) == -1)
+ 			fatal_f("asmprintf failed");
++#ifdef ASHELL_OPENSSH
++		response = read_passphrase(display_prompt,
++		    (echo ? RP_ECHO : 0) | RP_ASHELL_SECRET);
++#else
+ 		response = read_passphrase(display_prompt, echo ? RP_ECHO : 0);
++#endif
+ 		if ((r = sshpkt_put_cstring(ssh, response)) != 0)
+ 			goto out;
+ 		freezero(response, strlen(response));

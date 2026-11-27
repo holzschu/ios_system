@@ -31,6 +31,8 @@ PROMPT = b"Are you sure you want to continue connecting (yes/no/[fingerprint])?"
 RETRY_PROMPT = b"Please type 'yes', 'no' or the fingerprint:"
 PASSPHRASE_PROMPT = b"Enter passphrase for key"
 PASSWORD_PROMPT = b"'s password: "
+# PAM keyboard-interactive prompts: "Password: ", "Current password: ", ...
+KBDINT_PROMPT = b"assword: "
 
 
 def prepare_probe(root, runtime_frameworks, stock_frameworks):
@@ -244,34 +246,46 @@ def child_env():
     return env
 
 
+def fixture_secret(path):
+    secret = path.read_bytes().rstrip(b"\n")
+    assert secret and not any(c in secret for c in (b"\r", b"\n", b"\x00"))
+    return secret
+
+
 def check_password_retry(
     simulator, runtime_frameworks, stock_frameworks, fixture, console
 ):
-    # A separately qualified, disposable password-only sshd; never ask for a Mac account password.
+    # A separately qualified, disposable PAM sshd; never ask for a Mac account password.
     config = fixture / "config"
-    secret = (fixture / "password").read_bytes().rstrip(b"\n")
-    assert secret and not any(c in secret for c in (b"\r", b"\n", b"\x00"))
+    secret = fixture_secret(fixture / "password")
     with tempfile.TemporaryDirectory(prefix="stock-ssh-password-") as work:
         root = Path(work)
         probe, registry = prepare_probe(root, runtime_frameworks, stock_frameworks)
-        cmd = shlex.join(
-            [
-                "ssh",
-                "-F",
-                str(config.resolve()),
-                "-o",
-                "HostName=127.0.0.1",
-                "-o",
-                "StrictHostKeyChecking=yes",
-                "-o",
-                "PreferredAuthentications=password",
-                "-o",
-                "NumberOfPasswordPrompts=2",
-                "password-fixture",
-                REMOTE_COMMAND,
+
+        def ssh_args(method, host):
+            cmd = shlex.join(
+                [
+                    "ssh",
+                    "-F",
+                    str(config.resolve()),
+                    "-o",
+                    "HostName=127.0.0.1",
+                    "-o",
+                    "StrictHostKeyChecking=yes",
+                    "-o",
+                    f"PreferredAuthentications={method}",
+                    "-o",
+                    "NumberOfPasswordPrompts=2",
+                    host,
+                    REMOTE_COMMAND,
+                ]
+            )
+            return [
+                *("xcrun", "simctl", "spawn", str(simulator)),
+                *(probe, registry, root, cmd),
             ]
-        )
-        args = ["xcrun", "simctl", "spawn", str(simulator), probe, registry, root, cmd]
+
+        args = ssh_args("password", "password-fixture")
         for name, first_ending, second_prefix in (
             ("crlf", b"\r\n", b""),
             ("split-crlf", b"\r", b"\n"),
@@ -299,6 +313,51 @@ def check_password_retry(
                 result == (0, 2, 2, True)
                 and b"Permission denied, please try again." in err
             ), f"{name}: wrong-password retry failed"
+
+        # PAM asks through keyboard-interactive, which ssh tries before password by default.
+        status, out, err, sent = exchange(
+            ssh_args("keyboard-interactive", "password-fixture"),
+            (b"wrong-" + secret + b"\r\n", secret + b"\r"),
+            None,
+            child_env(),
+            KBDINT_PROMPT,
+        )
+        assert secret not in out and secret not in err, "kbdint: password echoed"
+        result = (status, sent, err.count(KBDINT_PROMPT), MARKER in out.splitlines())
+        console.print(
+            f"keyboard-interactive: status={status} answers={sent} prompts={result[2]} login={result[3]}",
+            markup=False,
+        )
+        assert result == (0, 2, 2, True), "keyboard-interactive retry failed"
+
+        # An expired account changes its password inside the same exchange.
+        # The change is permanent: reset the fixture before the next run.
+        if (fixture / "expired-password").exists():
+            old = fixture_secret(fixture / "expired-password")
+            new = fixture_secret(fixture / "expired-new-password")
+            status, out, err, sent = exchange(
+                ssh_args("keyboard-interactive", "expired-fixture"),
+                (old + b"\r", old + b"\r\n", new + b"\r", new + b"\r"),
+                None,
+                child_env(),
+                KBDINT_PROMPT,
+            )
+            assert not any(s in out or s in err for s in (old, new)), (
+                "expired: password echoed"
+            )
+            result = (
+                status,
+                sent,
+                err.count(KBDINT_PROMPT),
+                MARKER in out.splitlines(),
+            )
+            console.print(
+                f"expired-password: status={status} answers={sent} prompts={result[2]} login={result[3]}",
+                markup=False,
+            )
+            assert result == (0, 4, 4, True) and b"New password: " in err, (
+                "expired password change failed"
+            )
 
 
 def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console):
