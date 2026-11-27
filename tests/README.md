@@ -369,3 +369,13 @@ uv run tests/stock-ssh-proxy-jump.py "$SIMULATOR_UDID" "$APP_BUNDLE_ID"
 ```
 
 The test generates throwaway keys and starts four macOS `/usr/sbin/sshd` processes (OpenSSH 9.8 or later) as the current user on temporary loopback ports: three hops that only forward to the fixture ports and a target that prints `STOCK_SSH_JUMP_FIXTURE_OK`. It writes a fresh case directory under the app's Documents, replaces `.profile` with the test commands, launches the app, and restores `.profile` and removes the case directory afterwards. The config has no `ConnectTimeout`. One, two and three hops, a `ProxyCommand` with `-W`, and a hop after a failure must log in. A hop that refuses the forward must fail with `stdio forwarding failed` within 10 seconds. Three hops need four workers. A passing run prints `STOCK_SSH_PROXY_JUMP_PASS`. Before the spawn adapter, every case fails with `fork failed: Operation not supported`. With the adapter but without closing channel descriptors on exit, the failed hop never ends and the test times out.
+
+# Stock sftp local commands
+
+`stock-sftp-shell-escape.py` runs Stock `sftp` local commands (`!command` and a bare `!`) in a worker-enabled a-Shell host on an arm64 iOS Simulator, with the same setup as the ProxyJump test:
+
+```sh
+uv run tests/stock-sftp-shell-escape.py "$SIMULATOR_UDID" "$APP_BUNDLE_ID"
+```
+
+The test starts one macOS `/usr/sbin/sshd` with `internal-sftp` on a temporary loopback port and runs `sftp -b` from the app's `.profile`. `!echo` and `!ls` must print their output, a missing command must produce `Shell exited with status N`, a bare `!` must report `Interactive local shell is not available`, and a following `pwd` must reach the server. It then sets the app's `worker_limit` to 2, which `sftp` and its `ssh` use up, and checks that `!echo` reports `all shell workers are in use` and that `sftp` continues. The previous `worker_limit` is restored. A passing run prints `STOCK_SFTP_SHELL_ESCAPE_PASS`. Before the change, `sftp` prints `Couldn't fork: Operation not supported` and never exits, so both cases time out.

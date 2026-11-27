@@ -119,7 +119,44 @@
  
  #include <sys/types.h>
  #include <sys/ioctl.h>
-@@ -2431,6 +2435,25 @@
+@@ -323,6 +327,28 @@
+ 	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
+ 		shell = _PATH_BSHELL;
+ 
++#ifdef ASHELL_OPENSSH
++	{
++		/* sftp runs as a thread and cannot fork. Run the command in a
++		 * worker through the a-Shell sh, as for ProxyCommand. */
++		char *argv[] = { "sh", "-c", (char *)args, NULL };
++		int r;
++
++		if (args == NULL) {
++			/* Without -c, a-Shell runs dash, which cannot leave a
++			 * worker with exit, and Ctrl-D would end sftp too. */
++			error("Interactive local shell is not available; use !command");
++			return;
++		}
++		debug3("Executing sh -c \"%s\"", args);
++		if ((r = ashell_ssh_spawn(argv[0], argv, STDIN_FILENO,
++		    STDOUT_FILENO, &pid)) != 0) {
++			error("Couldn't run local command: %s", r == ENOSPC ?
++			    "all shell workers are in use" : strerror(r));
++			return;
++		}
++	}
++#else
+ 	if ((pid = fork()) == -1)
+ 		fatal("Couldn't fork: %s", strerror(errno));
+ 
+@@ -338,6 +364,7 @@
+ 		    strerror(errno));
+ 		_exit(1);
+ 	}
++#endif
+ 	while (waitpid(pid, &status, 0) == -1)
+ 		if (errno != EINTR)
+ 			fatal("Couldn't wait for child: %s", strerror(errno));
+@@ -2431,6 +2458,25 @@
  static void
  connect_to_server(char *path, char **args, int *in, int *out)
  {
@@ -145,7 +182,7 @@
  	int c_in, c_out;
  #ifdef USE_PIPES
  	int pin[2], pout[2];
-@@ -2488,6 +2511,8 @@
+@@ -2488,6 +2534,8 @@
  	ssh_signal(SIGCHLD, sigchld_handler);
  	close(c_in);
  	close(c_out);
