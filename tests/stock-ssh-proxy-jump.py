@@ -110,8 +110,10 @@ def check_password_jump(simulator, bundle_id, documents, fixture, console):
     hosts = ("password-hop", "password-target")
     prompt_suffix = b"'s password: "
     secrets = [(fixture / name).read_bytes().rstrip(b"\n") for name in hosts]
-    if any(not secret or not secret.isalnum() for secret in secrets):
-        raise RuntimeError("Use nonempty alphanumeric fixture passwords")
+    if any(len(secret) < 12 or not secret.isalnum() for secret in secrets):
+        raise RuntimeError(
+            "Use alphanumeric fixture passwords of at least 12 characters"
+        )
     if secrets[0] == secrets[1]:
         raise RuntimeError("The jump and target must have different passwords")
     # AXe matches the simulator UDID as printed by simctl, not UUID's lowercase form.
@@ -222,8 +224,42 @@ def check_password_jump(simulator, bundle_id, documents, fixture, console):
             )
             if not passed:
                 raise RuntimeError(
-                    "Expected a hidden password prompt for the hop and then the target"
+                    "Expected ordered hop and target prompts, a successful login, "
+                    "and no passwords in the output streams"
                 )
+
+            # A custom proxy must not use the foreground authentication input.
+            proxy = shlex.join(
+                ["ssh", "-v", "-F", str(config), "-W", "%h:%p", hosts[0]]
+            )
+            command = shlex.join(
+                [
+                    "ssh",
+                    "-v",
+                    "-F",
+                    str(config),
+                    "-o",
+                    f"ProxyCommand={proxy}",
+                    hosts[1],
+                    "echo",
+                    MARKER,
+                ]
+            )
+            out, err = root / "proxy-out", root / "proxy-err"
+            type_line(
+                f"{command} > {shlex.quote(str(out))} 2> {shlex.quote(str(err))}".encode()
+            )
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                stdout, stderr = read(out), read(err)
+                if prompt_suffix in stdout or prompt_suffix in stderr:
+                    raise RuntimeError("Custom ProxyCommand unexpectedly prompted")
+                if b"Permission denied (password)." in stderr:
+                    break
+                time.sleep(0.1)
+            else:
+                raise RuntimeError("Expected password refusal from custom ProxyCommand")
+            console.print("password-proxy-command: permission denied, no prompt")
         finally:
             subprocess.run(stop, check=False, capture_output=True)
 
@@ -235,7 +271,7 @@ def main(
     password_fixture: Annotated[
         Path | None,
         typer.Option(
-            help="Disposable loopback password fixture; requires AXe and a focused terminal."
+            help="Disposable password fixture; requires AXe and a focused terminal."
         ),
     ] = None,
 ):
