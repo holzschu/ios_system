@@ -630,7 +630,7 @@
  	ret = percent_expand(tmp,
  	    "h", host,
  	    "k", keyalias,
-@@ -233,6 +238,53 @@
+@@ -233,6 +238,54 @@
  	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
  		shell = _PATH_BSHELL;
  
@@ -662,7 +662,8 @@
 +			close(pair[1]);
 +			fatal("dup: %s", strerror(error));
 +		}
-+		error = ashell_ssh_spawn(argv[0], argv, pair[1], pair[1], &pid);
++		error = ashell_ssh_spawn_using(argv[0], argv, pair[1], pair[1], &pid,
++		    options.jump_host ? ashell_ssh_spawn_with_secret_input : ios_posix_spawn);
 +		close(pair[1]);
 +		if (argc != 0)
 +			argv_free(argv, argc);
@@ -684,7 +685,7 @@
  	/* Create pipes for communicating with the proxy. */
  	if (pipe(pin) == -1 || pipe(pout) == -1)
  		fatal("Could not create pipes to communicate with the proxy: %.100s",
-@@ -605,12 +657,15 @@
+@@ -605,12 +658,15 @@
  	const char *msg, *again = "Please type 'yes' or 'no': ";
  	const char *again_fp = "Please type 'yes', 'no' or the fingerprint: ";
  	char *p, *cp;
