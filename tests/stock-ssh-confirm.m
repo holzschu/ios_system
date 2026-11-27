@@ -26,11 +26,21 @@ int main(int argc, char **argv) {
         joinMainThread = true;
         ios_switchSession(session);
         ios_setContext(session);
-        ios_setStreams(stdin, stdout, stderr);
-        ios_settty(stdin);
-        thread_stdin = stdin;
+        FILE *input = stdin, *diagnostics = stderr;
+        if (strncmp(argv[3], "ssh-keygen ", 11) == 0) {
+            // App worker streams need not be the process's standard descriptors.
+            int in = dup(STDIN_FILENO), err = dup(STDERR_FILENO);
+            if (in < 0 || err < 0) return 68;
+            input = fdopen(in, "r");
+            diagnostics = fdopen(err, "w");
+            if (!input || !diagnostics || !freopen("/dev/null", "r", stdin) ||
+                !freopen("/dev/null", "w", stderr)) return 68;
+        }
+        ios_setStreams(input, stdout, diagnostics);
+        ios_settty(input);
+        thread_stdin = input;
         thread_stdout = stdout;
-        thread_stderr = stderr;
+        thread_stderr = diagnostics;
         int status = ios_system(argv[3]);
         ios_closeSession(session);
         return status;

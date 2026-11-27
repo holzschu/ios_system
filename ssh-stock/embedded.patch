@@ -95,17 +95,133 @@
  	pwfree(pw);
 --- a/ssh-keygen.c
 +++ b/ssh-keygen.c
-@@ -13,6 +13,10 @@
-  */
+@@ -14,6 +14,10 @@
  
  #include "includes.h"
-+
+ 
 +#ifdef ASHELL_OPENSSH
 +#define main ashell_ssh_keygen_main
 +#endif
- 
++
  #include <sys/types.h>
  #include <sys/socket.h>
+ #include <sys/stat.h>
+@@ -289,6 +293,21 @@
+ 	have_identity = 1;
+ }
+ 
++static char *
++keygen_read_passphrase(const char *prompt)
++{
++#ifdef ASHELL_OPENSSH
++	char *pass = read_passphrase(prompt, RP_ASHELL_SECRET | RP_ALLOW_EOF);
++
++	/* Missing input must not silently create or save an unencrypted key. */
++	if (pass == NULL)
++		fatal("Could not read passphrase");
++	return pass;
++#else
++	return read_passphrase(prompt, RP_ALLOW_STDIN);
++#endif
++}
++
+ static struct sshkey *
+ load_identity(const char *filename, char **commentp)
+ {
+@@ -306,7 +325,7 @@
+ 		pass = xstrdup(identity_passphrase);
+ 	else {
+ 		xasprintf(&prompt, "Enter passphrase for \"%s\": ", filename);
+-		pass = read_passphrase(prompt, RP_ALLOW_STDIN);
++		pass = keygen_read_passphrase(prompt);
+ 		free(prompt);
+ 	}
+ 	r = sshkey_load_private(filename, pass, &prv, commentp);
+@@ -1408,8 +1427,7 @@
+ 			old_passphrase = xstrdup(identity_passphrase);
+ 		else
+ 			old_passphrase =
+-			    read_passphrase("Enter old passphrase: ",
+-			    RP_ALLOW_STDIN);
++			    keygen_read_passphrase("Enter old passphrase: ");
+ 		r = sshkey_load_private(identity_file, old_passphrase,
+ 		    &private, &comment);
+ 		freezero(old_passphrase, strlen(old_passphrase));
+@@ -1460,10 +1478,9 @@
+ 		passphrase2 = NULL;
+ 	} else {
+ 		passphrase1 =
+-			read_passphrase("Enter new passphrase (empty for no "
+-			    "passphrase): ", RP_ALLOW_STDIN);
+-		passphrase2 = read_passphrase("Enter same passphrase again: ",
+-		    RP_ALLOW_STDIN);
++			keygen_read_passphrase("Enter new passphrase (empty for no "
++			    "passphrase): ");
++		passphrase2 = keygen_read_passphrase("Enter same passphrase again: ");
+ 
+ 		/* Verify that they are the same. */
+ 		if (strcmp(passphrase1, passphrase2) != 0) {
+@@ -1561,8 +1578,7 @@
+ 		else if (identity_new_passphrase)
+ 			passphrase = xstrdup(identity_new_passphrase);
+ 		else
+-			passphrase = read_passphrase("Enter passphrase: ",
+-			    RP_ALLOW_STDIN);
++			passphrase = keygen_read_passphrase("Enter passphrase: ");
+ 		/* Try to load using the passphrase. */
+ 		if ((r = sshkey_load_private(identity_file, passphrase,
+ 		    &private, &comment)) != 0) {
+@@ -1823,8 +1839,7 @@
+ 		ca = load_identity(tmp, NULL);
+ 		if (sshkey_is_sk(ca) &&
+ 		    (ca->sk_flags & SSH_SK_USER_VERIFICATION_REQD)) {
+-			if ((pin = read_passphrase("Enter PIN for CA key: ",
+-			    RP_ALLOW_STDIN)) == NULL)
++			if ((pin = keygen_read_passphrase("Enter PIN for CA key: ")) == NULL)
+ 				fatal_f("couldn't read PIN");
+ 		}
+ 	}
+@@ -2612,8 +2627,7 @@
+ 		if ((signkey->sk_flags & SSH_SK_USER_VERIFICATION_REQD)) {
+ 			xasprintf(&prompt, "Enter PIN for %s key: ",
+ 			    sshkey_type(signkey));
+-			if ((pin = read_passphrase(prompt,
+-			    RP_ALLOW_STDIN)) == NULL)
++			if ((pin = keygen_read_passphrase(prompt)) == NULL)
+ 				fatal_f("couldn't read PIN");
+ 		}
+ 		if ((signkey->sk_flags & SSH_SK_USER_PRESENCE_REQD)) {
+@@ -3096,8 +3110,8 @@
+ 	char *passphrase1, *passphrase2;
+ 
+ 	for (;;) {
+-		passphrase1 = read_passphrase(prompt1, RP_ALLOW_STDIN);
+-		passphrase2 = read_passphrase(prompt2, RP_ALLOW_STDIN);
++		passphrase1 = keygen_read_passphrase(prompt1);
++		passphrase2 = keygen_read_passphrase(prompt2);
+ 		if (strcmp(passphrase1, passphrase2) == 0) {
+ 			freezero(passphrase2, strlen(passphrase2));
+ 			return passphrase1;
+@@ -3183,7 +3197,7 @@
+ 	if (skprovider == NULL)
+ 		fatal("Cannot download keys without provider");
+ 
+-	pin = read_passphrase("Enter PIN for authenticator: ", RP_ALLOW_STDIN);
++	pin = keygen_read_passphrase("Enter PIN for authenticator: ");
+ 	if (!quiet) {
+ 		printf("You may need to touch your authenticator "
+ 		    "to authorize key download.\n");
+@@ -3916,8 +3930,8 @@
+ 			}
+ 			if (++i >= 3)
+ 				fatal("Too many incorrect PINs");
+-			passphrase = read_passphrase("Enter PIN for "
+-			    "authenticator: ", RP_ALLOW_STDIN);
++			passphrase = keygen_read_passphrase("Enter PIN for "
++			    "authenticator: ");
+ 		}
+ 		if (passphrase != NULL) {
+ 			freezero(passphrase, strlen(passphrase));
 --- a/sftp.c
 +++ b/sftp.c
 @@ -16,6 +16,10 @@
