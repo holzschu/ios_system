@@ -221,11 +221,14 @@
  
 --- a/readpass.c
 +++ b/readpass.c
-@@ -110,6 +110,80 @@
+@@ -110,6 +110,95 @@
  /* private/internal read_passphrase flags */
  #define RP_ASK_PERMISSION	0x8000 /* pass hint to askpass for confirm UI */
  
 +#ifdef ASHELL_OPENSSH
++/* Per command thread; CR finishes immediately on a CR-only terminal. */
++static __thread int ashell_skip_secret_lf;
++
 +/* Read secrets only from the echo-free foreground virtual terminal, not
 + * a kernel tty or redirected stdin. */
 +static char *
@@ -233,7 +236,7 @@
 +{
 +	struct stat st;
 +	size_t len = 0;
-+	int c;
++	int c, rejected = 0;
 +	char *secret = NULL;
 +
 +	if (!isatty(STDIN_FILENO) || fstat(STDIN_FILENO, &st) == -1 ||
@@ -241,7 +244,14 @@
 +		return NULL;
 +	if (fputs(prompt, stderr) == EOF || fflush(stderr) == EOF)
 +		return NULL;
-+	while ((c = fgetc(stdin)) != '\r' && c != '\n') {
++	c = fgetc(stdin);
++	/* Consume a possible CRLF tail only when the next read is needed. */
++	if (ashell_skip_secret_lf && c == '\n')
++		c = fgetc(stdin);
++	ashell_skip_secret_lf = 0;
++	for (; c != EOF && c != '\r' && c != '\n'; c = fgetc(stdin)) {
++		if (rejected)
++			continue;
 +		if (c == '\b' || c == 0x7f) {
 +			if (len == 0)
 +				continue;
@@ -249,14 +259,19 @@
 +			while (--len > 0 && ((unsigned char)buf[len] & 0xc0) == 0x80)
 +				continue;
 +		} else {
-+			if (c < ' ' || len == size - 1)
-+				goto done;
-+			buf[len++] = c;
++			if (c < ' ' || len == size - 1) {
++				/* A later prompt must not consume this line's suffix. */
++				explicit_bzero(buf, size);
++				rejected = 1;
++			} else
++				buf[len++] = c;
 +		}
 +	}
-+	buf[len] = '\0';
-+	secret = xstrdup(buf);
-+ done:
++	ashell_skip_secret_lf = c == '\r';
++	if (!rejected && c != EOF) {
++		buf[len] = '\0';
++		secret = xstrdup(buf);
++	}
 +	explicit_bzero(buf, size);
 +	if (fputs("\r\n", stderr) == EOF || fflush(stderr) == EOF) {
 +		freezero(secret, len);
@@ -302,7 +317,7 @@
  /*
   * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
   * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
-@@ -121,6 +195,9 @@
+@@ -121,6 +210,9 @@
  {
  	char cr = '\r', *askpass = NULL, *ret, buf[1024];
  	int rppflags, ttyfd, use_askpass = 0, allow_askpass = 0;
@@ -312,7 +327,7 @@
  	const char *askpass_hint = NULL;
  	const char *s;
  
-@@ -144,6 +221,11 @@
+@@ -144,6 +236,11 @@
  		debug_f("requested to askpass");
  	else if (flags & RP_USE_ASKPASS)
  		use_askpass = 1;
@@ -324,7 +339,7 @@
  	else if (flags & RP_ALLOW_STDIN) {
  		if (!isatty(STDIN_FILENO)) {
  			debug_f("stdin is not a tty");
-@@ -160,6 +242,9 @@
+@@ -160,6 +257,9 @@
  			(void)write(ttyfd, &cr, 1);
  			close(ttyfd);
  		} else {
@@ -334,7 +349,7 @@
  			debug_f("can't open %s: %s", _PATH_TTY,
  			    strerror(errno));
  			use_askpass = 1;
-@@ -182,6 +267,15 @@
+@@ -182,6 +282,15 @@
  		return ret;
  	}
  
