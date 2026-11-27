@@ -44,8 +44,13 @@
  #include <sys/types.h>
  #include <sys/socket.h>
  #include <sys/stat.h>
-@@ -104,7 +108,7 @@
+@@ -102,9 +106,12 @@
+ #endif
+ 
  extern char *__progname;
++#ifdef ASHELL_OPENSSH
++extern __thread struct ssh *ashell_cleanup_ssh;
++#endif
  
  /* Saves a copy of argv for setproctitle emulation */
 -#ifndef HAVE_SETPROCTITLE
@@ -53,7 +58,7 @@
  static char **saved_av;
  #endif
  
-@@ -643,11 +647,13 @@
+@@ -643,11 +650,13 @@
  	 * Discard other fds that are hanging around. These can cause problem
  	 * with backgrounded ssh processes started by ControlPersist.
  	 */
@@ -68,6 +73,26 @@
  	/* Prepare for later setproctitle emulation */
  	/* Save argv so it isn't clobbered by setproctitle() emulation */
  	saved_av = xcalloc(ac + 1, sizeof(*saved_av));
+@@ -691,6 +700,9 @@
+ 	if ((ssh = ssh_alloc_session_state()) == NULL)
+ 		fatal("Couldn't allocate session state");
+ 	channel_init_channels(ssh);
++#ifdef ASHELL_OPENSSH
++	ashell_cleanup_ssh = ssh;
++#endif
+ 
+ 	/* Parse command-line arguments. */
+ 	args = argv_assemble(ac, av); /* logged later */
+@@ -1833,6 +1845,9 @@
+ 		freeaddrinfo(addrs);
+ 	exit_status = ssh_session2(ssh, cinfo);
+ 	ssh_conn_info_free(cinfo);
++#ifdef ASHELL_OPENSSH
++	ashell_cleanup_ssh = NULL;
++#endif
+ 	channel_free_channels(ssh);
+ 	ssh_packet_free(ssh);
+ 	pwfree(pw);
 --- a/ssh-keygen.c
 +++ b/ssh-keygen.c
 @@ -13,6 +13,10 @@
@@ -379,7 +404,74 @@
  			return NULL;
 --- a/sshconnect.c
 +++ b/sshconnect.c
-@@ -605,12 +605,15 @@
+@@ -123,7 +123,12 @@
+ 	    options.host_key_alias : host_arg;
+ 
+ 	snprintf(strport, sizeof strport, "%d", port);
++#ifdef ASHELL_OPENSSH
++	/* The a-Shell sh has no exec builtin; the worker runs the command. */
++	tmp = xstrdup(proxy_command);
++#else
+ 	xasprintf(&tmp, "exec %s", proxy_command);
++#endif
+ 	ret = percent_expand(tmp,
+ 	    "h", host,
+ 	    "k", keyalias,
+@@ -233,6 +238,53 @@
+ 	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
+ 		shell = _PATH_BSHELL;
+ 
++#ifdef ASHELL_OPENSSH
++	{
++		/* Run the proxy in its own isolated worker over one socket. */
++		char *shell_argv[] = { "sh", "-c", NULL, NULL }, **argv;
++		int pair[2], output, error, argc = 0;
++
++		command_string = expand_proxy_command(proxy_command,
++		    options.user, host, host_arg, port);
++		debug("Executing proxy command: %.500s", command_string);
++		if (options.jump_host != NULL) {
++			/* ssh.c built this ProxyJump command. Each hop runs its ssh
++			 * as the worker root rather than holding a shell worker too. */
++			if (argv_split(command_string, &argc, &argv, 0) != 0 ||
++			    argc == 0)
++				fatal("Invalid ProxyJump command: %.500s",
++				    command_string);
++		} else {
++			shell_argv[2] = command_string;
++			argv = shell_argv;
++		}
++		if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
++			fatal("socketpair: %s", strerror(errno));
++		if ((output = dup(pair[0])) == -1) {
++			error = errno;
++			close(pair[0]);
++			close(pair[1]);
++			fatal("dup: %s", strerror(error));
++		}
++		error = ashell_ssh_spawn(argv[0], argv, pair[1], pair[1], &pid);
++		close(pair[1]);
++		if (argc != 0)
++			argv_free(argv, argc);
++		free(command_string);
++		if (error) {
++			close(pair[0]);
++			close(output);
++			fatal("proxy spawn failed: %s", strerror(error));
++		}
++		proxy_command_pid = pid;
++		if (ssh_packet_set_connection(ssh, pair[0], output) == NULL) {
++			close(pair[0]);
++			close(output);
++			return -1;
++		}
++		return 0;
++	}
++#endif
+ 	/* Create pipes for communicating with the proxy. */
+ 	if (pipe(pin) == -1 || pipe(pout) == -1)
+ 		fatal("Could not create pipes to communicate with the proxy: %.100s",
+@@ -605,12 +657,15 @@
  	const char *msg, *again = "Please type 'yes' or 'no': ";
  	const char *again_fp = "Please type 'yes', 'no' or the fingerprint: ";
  	char *p, *cp;
@@ -480,3 +572,29 @@
  		if ((r = sshpkt_put_cstring(ssh, response)) != 0)
  			goto out;
  		freezero(response, strlen(response));
+--- a/clientloop.c
++++ b/clientloop.c
+@@ -2881,10 +2881,23 @@
+ 	}
+ }
+ 
++#ifdef ASHELL_OPENSSH
++__thread struct ssh *ashell_cleanup_ssh;
++#endif
++
+ /* client specific fatal cleanup */
+ void
+ cleanup_exit(int i)
+ {
++#ifdef ASHELL_OPENSSH
++	/*
++	 * ssh runs as a thread, so exit does not close the channel fds. A
++	 * failed -W proxy kept its dup of the worker socket open and the
++	 * outer ssh never saw EOF.
++	 */
++	if (ashell_cleanup_ssh != NULL)
++		channel_close_all(ashell_cleanup_ssh);
++#endif
+ 	leave_raw_mode(options.request_tty == REQUEST_TTY_FORCE);
+ 	if (options.control_path != NULL && muxserver_sock != -1)
+ 		unlink(options.control_path);
