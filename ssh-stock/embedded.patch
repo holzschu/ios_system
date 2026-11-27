@@ -344,7 +344,7 @@
 +        close(pair[0]); close(pair[1]);
 +        fatal("dup: %s", strerror(error));
 +    }
-+    error = ashell_ssh_spawn(path, args, pair[1], pair[1], &child);
++    error = ashell_ssh_spawn_transfer(path, _PATH_SSH_PROGRAM, args, pair[1], pair[1], &child);
 +    close(pair[1]);
 +    if (error) { close(pair[0]); close(output); fatal("spawn: %s", strerror(error)); }
 +    sshpid = child;
@@ -404,7 +404,7 @@
 +        errno = error;
 +        return -1;
 +    }
-+    error = ashell_ssh_spawn(program, child.list, pair[0], pair[0], pid);
++    error = ashell_ssh_spawn_transfer(program, _PATH_SSH_PROGRAM, child.list, pair[0], pair[0], pid);
 +    close(pair[0]);
 +    freeargs(&child);
 +    if (error) { close(pair[1]); close(output); errno = error; return -1; }
@@ -456,7 +456,7 @@
  
 --- a/readpass.c
 +++ b/readpass.c
-@@ -110,6 +110,102 @@
+@@ -110,6 +110,105 @@
  /* private/internal read_passphrase flags */
  #define RP_ASK_PERMISSION	0x8000 /* pass hint to askpass for confirm UI */
  
@@ -473,18 +473,21 @@
 +	size_t len = 0;
 +	int c, rejected = 0;
 +	char *secret = NULL;
++	FILE *input = ios_getSecretInput();
 +
-+	if (!isatty(STDIN_FILENO) || fstat(STDIN_FILENO, &st) == -1 ||
++	if (input == NULL && isatty(STDIN_FILENO))
++		input = stdin;
++	if (input == NULL || fstat(fileno(input), &st) == -1 ||
 +	    !(S_ISSOCK(st.st_mode) || S_ISFIFO(st.st_mode)))
 +		return NULL;
 +	if (fputs(prompt, stderr) == EOF || fflush(stderr) == EOF)
 +		return NULL;
-+	c = fgetc(stdin);
++	c = fgetc(input);
 +	/* Consume a possible CRLF tail only when the next read is needed. */
 +	if (ashell_skip_secret_lf && c == '\n')
-+		c = fgetc(stdin);
++		c = fgetc(input);
 +	ashell_skip_secret_lf = 0;
-+	for (; c != EOF && c != '\r' && c != '\n'; c = fgetc(stdin)) {
++	for (; c != EOF && c != '\r' && c != '\n'; c = fgetc(input)) {
 +		if (rejected)
 +			continue;
 +		if (c == '\b' || c == 0x7f) {
@@ -559,7 +562,7 @@
  /*
   * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
   * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
-@@ -121,6 +217,9 @@
+@@ -121,6 +220,9 @@
  {
  	char cr = '\r', *askpass = NULL, *ret, buf[1024];
  	int rppflags, ttyfd, use_askpass = 0, allow_askpass = 0;
@@ -569,7 +572,7 @@
  	const char *askpass_hint = NULL;
  	const char *s;
  
-@@ -142,6 +241,11 @@
+@@ -142,6 +244,11 @@
  		debug_f("requested to askpass");
  	else if (flags & RP_USE_ASKPASS)
  		use_askpass = 1;
@@ -581,7 +584,7 @@
  	else if (flags & RP_ALLOW_STDIN) {
  		if (!isatty(STDIN_FILENO)) {
  			debug_f("stdin is not a tty");
-@@ -160,6 +264,9 @@
+@@ -160,6 +267,9 @@
  			(void)write(ttyfd, &cr, 1);
  			close(ttyfd);
  		} else {
@@ -591,7 +594,7 @@
  			debug_f("can't open %s: %s", _PATH_TTY,
  			    strerror(errno));
  			use_askpass = 1;
-@@ -182,6 +289,20 @@
+@@ -182,6 +292,20 @@
  		return ret;
  	}
  
