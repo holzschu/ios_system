@@ -8,6 +8,7 @@
 import getpass
 import os
 import plistlib
+import secrets
 import selectors
 import shlex
 import shutil
@@ -17,6 +18,7 @@ import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Annotated
 from uuid import UUID
 
 import typer
@@ -27,6 +29,10 @@ MARKER = b"STOCK_SSH_CONFIRM_FIXTURE_OK"
 REMOTE_COMMAND = f"echo {MARKER.decode()}"
 PROMPT = b"Are you sure you want to continue connecting (yes/no/[fingerprint])?"
 RETRY_PROMPT = b"Please type 'yes', 'no' or the fingerprint:"
+PASSPHRASE_PROMPT = b"Enter passphrase for key"
+PASSWORD_PROMPT = b"'s password: "
+# PAM keyboard-interactive prompts: "Password: ", "Current password: ", ...
+KBDINT_PROMPT = b"assword: "
 
 
 def prepare_probe(root, runtime_frameworks, stock_frameworks):
@@ -94,11 +100,26 @@ def fingerprint(path):
 def loopback_server(root):
     host_key = root / "host-key"
     identity = root / "identity"
-    for key in (host_key, identity):
+    encrypted = root / "encrypted"
+    encrypted_next = root / "encrypted-next"
+    passphrase = secrets.token_hex(16)
+    for key, phrase in (
+        (host_key, ""),
+        (identity, ""),
+        (encrypted, passphrase),
+        (encrypted_next, passphrase),
+    ):
         subprocess.run(
-            ["/usr/bin/ssh-keygen", "-qt", "ed25519", "-N", "", "-f", key], check=True
+            ["/usr/bin/ssh-keygen", "-qt", "ed25519", "-N", phrase, "-f", key],
+            check=True,
         )
     identity_pub = identity.with_suffix(".pub")
+    authorized = root / "authorized_keys"
+    authorized.write_bytes(
+        identity_pub.read_bytes()
+        + encrypted.with_suffix(".pub").read_bytes()
+        + encrypted_next.with_suffix(".pub").read_bytes()
+    )
     host_pub = host_key.with_suffix(".pub")
     user = getpass.getuser()
     # Reserve an ephemeral port until just before sshd binds it.
@@ -110,12 +131,13 @@ def loopback_server(root):
 ListenAddress {HOST}
 Port {port}
 HostKey "{host_key}"
-AuthorizedKeysFile "{identity_pub}"
+AuthorizedKeysFile "{authorized}"
 AllowUsers {user}
 AuthenticationMethods publickey
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 UsePAM no
+PerSourcePenalties no
 StrictModes no
 DisableForwarding yes
 PermitTTY no
@@ -154,6 +176,9 @@ ForceCommand {REMOTE_COMMAND}
                     host_entry(identity_pub),
                     fingerprint(host_pub),
                     fingerprint(identity_pub),
+                    encrypted,
+                    encrypted_next,
+                    passphrase.encode(),
                 )
             finally:
                 if server.poll() is None:
@@ -170,7 +195,7 @@ ForceCommand {REMOTE_COMMAND}
         raise
 
 
-def exchange(args, answer, expected_fingerprint, env):
+def exchange(args, answers, expected_fingerprint, env, prompt=PROMPT):
     with subprocess.Popen(
         args,
         stdin=subprocess.PIPE,
@@ -179,9 +204,9 @@ def exchange(args, answer, expected_fingerprint, env):
         env=env,
     ) as client:
         out, err = bytearray(), bytearray()
-        sent = False
+        sent = 0
         try:
-            if answer is None:
+            if not answers:
                 client.stdin.close()
             with selectors.DefaultSelector() as ready:
                 ready.register(client.stdout, selectors.EVENT_READ, out)
@@ -197,18 +222,142 @@ def exchange(args, answer, expected_fingerprint, env):
                             key.data.extend(data)
                         else:
                             ready.unregister(key.fileobj)
-                    if answer is not None and not sent and PROMPT in err:
-                        assert expected_fingerprint in err, (
-                            "wrong fingerprint in the prompt"
-                        )
-                        assert PROMPT not in out, "confirmation appeared on stdout"
-                        client.stdin.write(answer)
-                        client.stdin.close()
-                        sent = True
+                    while sent < len(answers) and err.count(prompt) > sent:
+                        if expected_fingerprint is not None:
+                            assert expected_fingerprint in err, (
+                                "wrong fingerprint in the prompt"
+                            )
+                        assert prompt not in out, "prompt appeared on stdout"
+                        client.stdin.write(answers[sent])
+                        client.stdin.flush()
+                        sent += 1
+                        if sent == len(answers):
+                            client.stdin.close()
             return client.wait(timeout=2), bytes(out), bytes(err), sent
         finally:
             if client.poll() is None:
                 client.kill()
+
+
+def child_env():
+    env = {k: v for k, v in os.environ.items() if not k.startswith("SIMCTL_CHILD_")}
+    env["SIMCTL_CHILD_SSH_ASKPASS_REQUIRE"] = "never"
+    env["SIMCTL_CHILD_LC_ALL"] = "C"
+    return env
+
+
+def fixture_secret(path):
+    secret = path.read_bytes().rstrip(b"\n")
+    assert secret and not any(c in secret for c in (b"\r", b"\n", b"\x00"))
+    return secret
+
+
+def check_password_retry(
+    simulator, runtime_frameworks, stock_frameworks, fixture, console
+):
+    # A separately qualified, disposable PAM sshd; never ask for a Mac account password.
+    config = fixture / "config"
+    secret = fixture_secret(fixture / "password")
+    with tempfile.TemporaryDirectory(prefix="stock-ssh-password-") as work:
+        root = Path(work)
+        probe, registry = prepare_probe(root, runtime_frameworks, stock_frameworks)
+
+        def ssh_args(method, host):
+            cmd = shlex.join(
+                [
+                    "ssh",
+                    "-F",
+                    str(config.resolve()),
+                    "-o",
+                    "HostName=127.0.0.1",
+                    "-o",
+                    "StrictHostKeyChecking=yes",
+                    "-o",
+                    f"PreferredAuthentications={method}",
+                    "-o",
+                    "NumberOfPasswordPrompts=2",
+                    host,
+                    REMOTE_COMMAND,
+                ]
+            )
+            return [
+                *("xcrun", "simctl", "spawn", str(simulator)),
+                *(probe, registry, root, cmd),
+            ]
+
+        args = ssh_args("password", "password-fixture")
+        for name, first_ending, second_prefix in (
+            ("crlf", b"\r\n", b""),
+            ("split-crlf", b"\r", b"\n"),
+            ("cr-only", b"\r", b""),
+        ):
+            status, out, err, sent = exchange(
+                args,
+                (b"wrong-" + secret + first_ending, second_prefix + secret + b"\r"),
+                None,
+                child_env(),
+                PASSWORD_PROMPT,
+            )
+            assert secret not in out and secret not in err, f"{name}: password echoed"
+            result = (
+                status,
+                sent,
+                err.count(PASSWORD_PROMPT),
+                MARKER in out.splitlines(),
+            )
+            console.print(
+                f"password-{name}: status={status} answers={sent} prompts={result[2]} login={result[3]}",
+                markup=False,
+            )
+            assert (
+                result == (0, 2, 2, True)
+                and b"Permission denied, please try again." in err
+            ), f"{name}: wrong-password retry failed"
+
+        # PAM asks through keyboard-interactive, which ssh tries before password by default.
+        status, out, err, sent = exchange(
+            ssh_args("keyboard-interactive", "password-fixture"),
+            (b"wrong-" + secret + b"\r\n", secret + b"\r"),
+            None,
+            child_env(),
+            KBDINT_PROMPT,
+        )
+        assert secret not in out and secret not in err, "kbdint: password echoed"
+        result = (status, sent, err.count(KBDINT_PROMPT), MARKER in out.splitlines())
+        console.print(
+            f"keyboard-interactive: status={status} answers={sent} prompts={result[2]} login={result[3]}",
+            markup=False,
+        )
+        assert result == (0, 2, 2, True), "keyboard-interactive retry failed"
+
+        # An expired account changes its password inside the same exchange.
+        # The change is permanent: reset the fixture before the next run.
+        if (fixture / "expired-password").exists():
+            old = fixture_secret(fixture / "expired-password")
+            new = fixture_secret(fixture / "expired-new-password")
+            status, out, err, sent = exchange(
+                ssh_args("keyboard-interactive", "expired-fixture"),
+                (old + b"\r", old + b"\r\n", new + b"\r", new + b"\r"),
+                None,
+                child_env(),
+                KBDINT_PROMPT,
+            )
+            assert not any(s in out or s in err for s in (old, new)), (
+                "expired: password echoed"
+            )
+            result = (
+                status,
+                sent,
+                err.count(KBDINT_PROMPT),
+                MARKER in out.splitlines(),
+            )
+            console.print(
+                f"expired-password: status={status} answers={sent} prompts={result[2]} login={result[3]}",
+                markup=False,
+            )
+            assert result == (0, 4, 4, True) and b"New password: " in err, (
+                "expired password change failed"
+            )
 
 
 def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console):
@@ -216,7 +365,18 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
         root = Path(work)
         probe, registry = prepare_probe(root, runtime_frameworks, stock_frameworks)
         with loopback_server(root) as fixture:
-            user, port, identity, host_entry, wrong_entry, host_fp, wrong_fp = fixture
+            (
+                user,
+                port,
+                identity,
+                host_entry,
+                wrong_entry,
+                host_fp,
+                wrong_fp,
+                encrypted,
+                encrypted_next,
+                phrase,
+            ) = fixture
             base_args = [
                 "ssh",
                 "-vv",
@@ -231,11 +391,7 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
                 "-o",
                 "ConnectTimeout=5",
             ]
-            env = {
-                k: v for k, v in os.environ.items() if not k.startswith("SIMCTL_CHILD_")
-            }
-            env["SIMCTL_CHILD_SSH_ASKPASS_REQUIRE"] = "never"
-            env["SIMCTL_CHILD_LC_ALL"] = "C"
+            env = child_env()
 
             def run(
                 name,
@@ -250,6 +406,8 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
                 redirect_stdout=False,
                 force_askpass=False,
                 warning=None,
+                prompt=PROMPT,
+                hidden=None,
             ):
                 home = reuse or root / name
                 key = home / ".ssh" / "known_hosts"
@@ -288,8 +446,19 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
                     home,
                     cmd,
                 ]
-                status, out, err, sent = exchange(args, answer, host_fp, case_env)
-                actual_prompt = PROMPT in err
+                fingerprint_check = host_fp if prompt == PROMPT else None
+                status, out, err, sent = exchange(
+                    args,
+                    () if answer is None else (answer,),
+                    fingerprint_check,
+                    case_env,
+                    prompt,
+                )
+                if hidden is not None:
+                    assert hidden not in out and hidden not in err, (
+                        f"{name}: secret was echoed"
+                    )
+                actual_prompt = prompt in err
                 if redirect_stdout:
                     assert not out, f"{name}: command wrote to unredirected stdout"
                     out = output.read_bytes()
@@ -300,7 +469,7 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
                 assert (status, actual_prompt, sent, marker) == (
                     expected_status,
                     prompted,
-                    answer is not None,
+                    int(answer is not None),
                     accept,
                 ), f"{message}\n{err.decode(errors='replace')[-3000:]}"
                 assert (home / "known_hosts").read_bytes() == host_entry, (
@@ -318,6 +487,51 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
 
             home = run("yes", answer=b"yes\r", prompted=True, accept=True)
             run("reconnect", reuse=home, accept=True)
+            run(
+                "encrypted-identity",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                answer=phrase + b"\r",
+                prompted=True,
+                accept=True,
+                hidden=phrase,
+            )
+            for name, prefix in (("control", b"bad\x01"), ("overflow", b"a" * 1024)):
+                run(
+                    f"rejected-{name}-before-next-key",
+                    reuse=home,
+                    options=("-i", str(encrypted), "-i", str(encrypted_next)),
+                    prompt=PASSPHRASE_PROMPT,
+                    answer=prefix + phrase + b"\r\n",
+                    prompted=True,
+                    hidden=phrase,
+                    warning=f"Enter passphrase for key '{str(encrypted_next)[:100]}'".encode(),
+                )
+            run(
+                "encrypted-identity-incomplete",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                answer=phrase,
+                prompted=True,
+                hidden=phrase,
+            )
+            run(
+                "encrypted-identity-redirected",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                redirect_stdin=True,
+            )
+            run(
+                "encrypted-identity-forced-askpass",
+                reuse=home,
+                options=("-i", str(encrypted)),
+                prompt=PASSPHRASE_PROMPT,
+                force_askpass=True,
+                warning=b"read_passphrase: requested to askpass",
+            )
             run(
                 "stdout-file",
                 answer=b"yes\r",
@@ -351,10 +565,28 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
     print("STOCK_SSH_CONFIRMATION_PASS")
 
 
-def main(simulator: UUID, runtime_frameworks: Path, stock_frameworks: Path):
+def main(
+    simulator: UUID,
+    runtime_frameworks: Path,
+    stock_frameworks: Path,
+    password_fixture: Annotated[
+        Path | None,
+        typer.Option(
+            help="Disposable loopback sshd: directory with config and password files."
+        ),
+    ] = None,
+):
     """Run against a booted Simulator; supply runtime inputs and the recipe's sdk directory."""
     console = Console(stderr=True)
     try:
+        if password_fixture is not None:
+            check_password_retry(
+                simulator,
+                runtime_frameworks,
+                stock_frameworks,
+                password_fixture,
+                console,
+            )
         check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
     except KeyboardInterrupt:
         raise typer.Exit(130) from None
