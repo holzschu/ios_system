@@ -1,0 +1,330 @@
+diff --git i/main.c w/main.c
+index b91c158..e74a3f6 100644
+--- i/main.c
++++ w/main.c
+@@ -132,9 +132,10 @@ main(int argc, char *argv[])
+ 	int		 show_usage;
+ 	int		 options;
+ 	int		 use_pager;
+-	int		 status, signum;
++	int		 status;
++	FILE		*saved_stdout;
+ 	int		 c;
+-	pid_t		 pager_pid, tc_pgid, man_pgid, pid;
++	pid_t		 pager_pid, pid;
+ 
+ #if HAVE_PROGNAME
+ 	progname = getprogname();
+@@ -148,6 +149,7 @@ main(int argc, char *argv[])
+ 	setprogname(progname);
+ #endif
+ 
++	saved_stdout = stdout;
+ 	mandoc_msg_setoutfile(stderr);
+ 	if (strncmp(progname, "mandocdb", 8) == 0 ||
+ 	    strcmp(progname, BINM_MAKEWHATIS) == 0)
+@@ -494,6 +496,10 @@ main(int argc, char *argv[])
+ 	if (argc < 1) {
+ 		if (use_pager) {
+ 			tag_files = tag_init();
++			if (tag_files == NULL) {
++				fputs("cannot create pager temporary files\n", stderr);
++				exit((int)MANDOCLEVEL_SYSERR);
++			}
+ 			tag_files->tagname = conf.output.tag;
+ 		}
+ 		thisarg = "<stdin>";
+@@ -532,6 +538,10 @@ main(int argc, char *argv[])
+ 			if (use_pager) {
+ 				use_pager = 0;
+ 				tag_files = tag_init();
++				if (tag_files == NULL) {
++					fputs("cannot create pager temporary files\n", stderr);
++					exit((int)MANDOCLEVEL_SYSERR);
++				}
+ 				tag_files->tagname = conf.output.tag;
+ 			}
+ 
+@@ -546,6 +556,9 @@ main(int argc, char *argv[])
+ 			if (ferror(stdout)) {
+ 				if (tag_files != NULL) {
+ 					warn("%s", tag_files->ofn);
++					fclose(stdout);
++					stdout = saved_stdout;
++					tag_write();
+ 					tag_unlink();
+ 					tag_files = NULL;
+ 				} else
+@@ -615,52 +628,16 @@ out:
+ 
+ 	if (tag_files != NULL) {
+ 		fclose(stdout);
++		stdout = saved_stdout;
+ 		tag_write();
+-		man_pgid = getpgid(0);
+-		tag_files->tcpgid = man_pgid == getpid() ?
+-		    getpgid(getppid()) : man_pgid;
+-		pager_pid = 0;
+-		signum = SIGSTOP;
+-		for (;;) {
+-
+-			/* Stop here until moved to the foreground. */
+-
+-			tc_pgid = tcgetpgrp(tag_files->ofd);
+-			if (tc_pgid != man_pgid) {
+-				if (tc_pgid == pager_pid) {
+-					(void)tcsetpgrp(tag_files->ofd,
+-					    man_pgid);
+-					if (signum == SIGTTIN)
+-						continue;
+-				} else
+-					tag_files->tcpgid = tc_pgid;
+-				kill(0, signum);
+-				continue;
+-			}
+-
+-			/* Once in the foreground, activate the pager. */
+-
+-			if (pager_pid) {
+-				(void)tcsetpgrp(tag_files->ofd, pager_pid);
+-				kill(pager_pid, SIGCONT);
+-			} else
+-				pager_pid = spawn_pager(tag_files);
+-
+-			/* Wait for the pager to stop or exit. */
+-
+-			while ((pid = waitpid(pager_pid, &status,
+-			    WUNTRACED)) == -1 && errno == EINTR)
+-				continue;
+-
+-			if (pid == -1) {
+-				warn("wait");
+-				mandoc_msg_setrc(MANDOCLEVEL_SYSERR);
+-				break;
+-			}
+-			if (!WIFSTOPPED(status))
+-				break;
+-
+-			signum = WSTOPSIG(status);
++		/* The command streams and pager are owned by ios_system. */
++		pager_pid = spawn_pager(tag_files);
++		while ((pid = waitpid(pager_pid, &status, 0)) == -1 &&
++		    errno == EINTR)
++			continue;
++		if (pid == -1) {
++			warn("wait");
++			mandoc_msg_setrc(MANDOCLEVEL_SYSERR);
+ 		}
+ 		tag_unlink();
+ 	}
+@@ -1156,7 +1133,6 @@ woptions(struct curparse *curp, char *arg)
+ static pid_t
+ spawn_pager(struct tag_files *tag_files)
+ {
+-	const struct timespec timeout = { 0, 100000000 };  /* 0.1s */
+ #define MAX_PAGER_ARGS 16
+ 	char		*argv[MAX_PAGER_ARGS];
+ 	const char	*pager;
+@@ -1213,34 +1189,11 @@ spawn_pager(struct tag_files *tag_files)
+ 		argv[argc++] = tag_files->ofn;
+ 	argv[argc] = NULL;
+ 
+-	switch (pager_pid = fork()) {
+-	case -1:
++	/* ios_fork reserves a command session; it has no child branch. */
++	pager_pid = ios_fork();
++	if (pager_pid == -1)
+ 		err((int)MANDOCLEVEL_SYSERR, "fork");
+-	case 0:
+-		break;
+-	default:
+-		(void)setpgid(pager_pid, 0);
+-		(void)tcsetpgrp(tag_files->ofd, pager_pid);
+-#if HAVE_PLEDGE
+-		if (pledge("stdio rpath tmppath tty proc", NULL) == -1)
+-			err((int)MANDOCLEVEL_SYSERR, "pledge");
+-#endif
+-		tag_files->pager_pid = pager_pid;
+-		return pager_pid;
+-	}
+-
+-	/* The child process becomes the pager. */
+-
+-	if (dup2(tag_files->ofd, STDOUT_FILENO) == -1)
+-		err((int)MANDOCLEVEL_SYSERR, "pager stdout");
+-	close(tag_files->ofd);
+ 	assert(tag_files->tfd == -1);
+-
+-	/* Do not start the pager before controlling the terminal. */
+-
+-	while (tcgetpgrp(STDOUT_FILENO) != getpid())
+-		nanosleep(&timeout, NULL);
+-
+-	execvp(argv[0], argv);
+-	err((int)MANDOCLEVEL_SYSERR, "exec %s", argv[0]);
++	(void)execv(argv[0], argv);
++	return pager_pid;
+ }
+diff --git i/tag.c w/tag.c
+index 473ea7b..9a5cd7b 100644
+--- i/tag.c
++++ w/tag.c
+@@ -17,6 +17,9 @@
+ #include "config.h"
+ 
+ #include <sys/types.h>
++#include <sys/stat.h>
++
++#include <errno.h>
+ 
+ #if HAVE_ERR
+ #include <err.h>
+@@ -42,8 +45,6 @@ struct tag_entry {
+ 	char	 s[];
+ };
+ 
+-static	void	 tag_signal(int) __attribute__((__noreturn__));
+-
+ static struct ohash	 tag_data;
+ static struct tag_files	 tag_files;
+ 
+@@ -56,49 +57,36 @@ static struct tag_files	 tag_files;
+ struct tag_files *
+ tag_init(void)
+ {
+-	struct sigaction	 sa;
+-	int			 ofd;
++	FILE			*output;
++	const char		*home;
++	char			 tmpdir[PATH_MAX];
++	int			 ofd, len;
+ 
+ 	ofd = -1;
+ 	tag_files.tfd = -1;
+ 	tag_files.tcpgid = -1;
+ 
+-	/* Clean up when dying from a signal. */
+-
+-	memset(&sa, 0, sizeof(sa));
+-	sigfillset(&sa.sa_mask);
+-	sa.sa_handler = tag_signal;
+-	sigaction(SIGHUP, &sa, NULL);
+-	sigaction(SIGINT, &sa, NULL);
+-	sigaction(SIGTERM, &sa, NULL);
+-
+-	/*
+-	 * POSIX requires that a process calling tcsetpgrp(3)
+-	 * from the background gets a SIGTTOU signal.
+-	 * In that case, do not stop.
+-	 */
+-
+-	sa.sa_handler = SIG_IGN;
+-	sigaction(SIGTTOU, &sa, NULL);
+-
+-	/* Save the original standard output for use by the pager. */
+-
+-	if ((tag_files.ofd = dup(STDOUT_FILENO)) == -1)
++	/* Use command-local streams and sandbox-writable temporary files. */
++	tag_files.ofd = -1;
++	home = getenv("HOME");
++	if (home == NULL || *home == '\0')
++		goto fail;
++	len = snprintf(tmpdir, sizeof(tmpdir), "%s/tmp", home);
++	if (len < 0 || len >= (int)sizeof(tmpdir) ||
++	    snprintf(tag_files.ofn, sizeof(tag_files.ofn),
++	    "%s/man.XXXXXXXXXX", tmpdir) >= (int)sizeof(tag_files.ofn) ||
++	    snprintf(tag_files.tfn, sizeof(tag_files.tfn),
++	    "%s/man.XXXXXXXXXX", tmpdir) >= (int)sizeof(tag_files.tfn))
++		goto fail;
++	if (mkdir(tmpdir, 0700) == -1 && errno != EEXIST)
+ 		goto fail;
+-
+-	/* Create both temporary output files. */
+-
+-	(void)strlcpy(tag_files.ofn, "/tmp/man.XXXXXXXXXX",
+-	    sizeof(tag_files.ofn));
+-	(void)strlcpy(tag_files.tfn, "/tmp/man.XXXXXXXXXX",
+-	    sizeof(tag_files.tfn));
+ 	if ((ofd = mkstemp(tag_files.ofn)) == -1)
+ 		goto fail;
+ 	if ((tag_files.tfd = mkstemp(tag_files.tfn)) == -1)
+ 		goto fail;
+-	if (dup2(ofd, STDOUT_FILENO) == -1)
++	if ((output = fdopen(ofd, "w")) == NULL)
+ 		goto fail;
+-	close(ofd);
++	stdout = output;
+ 
+ 	/*
+ 	 * Set up the ohash table to collect output line numbers
+@@ -109,13 +97,14 @@ tag_init(void)
+ 	return &tag_files;
+ 
+ fail:
+-	tag_unlink();
+-	if (ofd != -1)
++	if (ofd != -1) {
+ 		close(ofd);
+-	if (tag_files.ofd != -1)
+-		close(tag_files.ofd);
+-	if (tag_files.tfd != -1)
++		unlink(tag_files.ofn);
++	}
++	if (tag_files.tfd != -1) {
+ 		close(tag_files.tfd);
++		unlink(tag_files.tfn);
++	}
+ 	*tag_files.ofn = '\0';
+ 	*tag_files.tfn = '\0';
+ 	tag_files.ofd = -1;
+@@ -246,32 +235,8 @@ tag_write(void)
+ void
+ tag_unlink(void)
+ {
+-	pid_t	 tc_pgid;
+-
+-	if (tag_files.tcpgid != -1) {
+-		tc_pgid = tcgetpgrp(tag_files.ofd);
+-		if (tc_pgid == tag_files.pager_pid ||
+-		    tc_pgid == getpgid(0) ||
+-		    getpgid(tc_pgid) == -1)
+-			(void)tcsetpgrp(tag_files.ofd, tag_files.tcpgid);
+-	}
+ 	if (*tag_files.ofn != '\0')
+ 		unlink(tag_files.ofn);
+ 	if (*tag_files.tfn != '\0')
+ 		unlink(tag_files.tfn);
+ }
+-
+-static void
+-tag_signal(int signum)
+-{
+-	struct sigaction	 sa;
+-
+-	tag_unlink();
+-	memset(&sa, 0, sizeof(sa));
+-	sigemptyset(&sa.sa_mask);
+-	sa.sa_handler = SIG_DFL;
+-	sigaction(signum, &sa, NULL);
+-	kill(getpid(), signum);
+-	/* NOTREACHED */
+-	_exit(1);
+-}
+diff --git i/tag.h w/tag.h
+index bbd40b7..2f5b554 100644
+--- i/tag.h
++++ w/tag.h
+@@ -15,9 +15,11 @@
+  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  */
+ 
++#include <limits.h>
++
+ struct	tag_files {
+-	char	 ofn[20];
+-	char	 tfn[20];
++	char	 ofn[PATH_MAX];
++	char	 tfn[PATH_MAX];
+ 	char	*tagname;
+ 	int	 ofd;
+ 	int	 tfd;

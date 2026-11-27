@@ -1,0 +1,15 @@
+--- a/configure
++++ b/configure
+@@ -159,6 +159,12 @@
+ # In case of failure, do not decide anything yet.
+ # Arguments: test file name, test var name, additional CFLAGS
+ singletest() {
++	# Honor explicit target settings before trying to execute a probe.
++	eval _manual=\${HAVE_${2}}
++	if ismanual "${1}" "${2}" "${_manual}"; then
++		[ "${_manual}" -eq 1 ]
++		return
++	fi
+ 	n=${1}${3}${4}
+ 	cat 1>&3 << __HEREDOC__
+ testing ${n} ...
