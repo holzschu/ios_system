@@ -119,7 +119,62 @@
  
  #include <sys/types.h>
  #include <sys/ioctl.h>
-@@ -2431,6 +2435,25 @@
+@@ -323,6 +327,46 @@
+ 	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
+ 		shell = _PATH_BSHELL;
+ 
++#ifdef ASHELL_OPENSSH
++	{
++		/* sftp runs as a thread and cannot fork. Run the command in a
++		 * worker through the a-Shell sh, as for ProxyCommand. */
++		char *argv[] = { "sh", "-c", (char *)args, NULL };
++		int input = STDIN_FILENO, r;
++
++		if (args == NULL) {
++			/* Without -c, a-Shell runs dash, which cannot leave a
++			 * worker with exit, and Ctrl-D would end sftp too. */
++			error("Interactive local shell is not available; use !command");
++			return;
++		}
++		debug3("Executing sh -c \"%s\"", args);
++		/* Do not make local commands in a batch wait for terminal input. */
++		if (batchmode) {
++			input = open(_PATH_DEVNULL, O_RDONLY);
++			if (input >= 0 && input < 3) {
++				/* The spawn bridge treats 0-2 as thread streams. */
++				int fd = fcntl(input, F_DUPFD, 3);
++				r = errno;
++				close(input);
++				input = fd;
++				errno = r;
++			}
++			if (input == -1) {
++				error("Couldn't prepare local command stdin: %s", strerror(errno));
++				return;
++			}
++		}
++		r = ashell_ssh_spawn(argv[0], argv, input, STDOUT_FILENO, &pid);
++		if (batchmode)
++			close(input);
++		if (r != 0) {
++			error("Couldn't run local command: %s", r == ENOSPC ?
++			    "all shell workers are in use" : strerror(r));
++			return;
++		}
++	}
++#else
+ 	if ((pid = fork()) == -1)
+ 		fatal("Couldn't fork: %s", strerror(errno));
+ 
+@@ -338,6 +382,7 @@
+ 		    strerror(errno));
+ 		_exit(1);
+ 	}
++#endif
+ 	while (waitpid(pid, &status, 0) == -1)
+ 		if (errno != EINTR)
+ 			fatal("Couldn't wait for child: %s", strerror(errno));
+@@ -2431,6 +2476,25 @@
  static void
  connect_to_server(char *path, char **args, int *in, int *out)
  {
@@ -145,7 +200,7 @@
  	int c_in, c_out;
  #ifdef USE_PIPES
  	int pin[2], pout[2];
-@@ -2488,6 +2511,8 @@
+@@ -2488,6 +2534,8 @@
  	ssh_signal(SIGCHLD, sigchld_handler);
  	close(c_in);
  	close(c_out);
