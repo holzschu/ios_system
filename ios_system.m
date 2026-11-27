@@ -1116,7 +1116,7 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         if (host) {
             // Dash owns the host foreground PID and its socket-input lease.
             line = [NSMutableString stringWithFormat:@"dash -c '%@'",
-                [line stringByReplacingOccurrencesOfString:@"'" withString:@"'\\''"]];
+                    [line stringByReplacingOccurrencesOfString:@"'" withString:@"'\\''"]];
         }
         char cwd[MAXPATHLEN];
         if (getcwd(cwd, sizeof(cwd)) == NULL) {
@@ -1127,8 +1127,14 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         workerPaneOptions options = { sizeof(options), ios_isatty(STDOUT_FILENO) != 0,
             p->stdout != NULL && p->stderr != NULL && fileno(p->stderr) != fileno(p->stdout), -1 };
         // Stock ssh prompts from terminal input even when command output is redirected.
-        if (workerRequired(p->argv[0]) && !strcmp(p->argv[0], "ssh"))
-            options.tty = p->stdin && !p->asyncSpawn && ios_isatty(STDIN_FILENO);
+        if (workerRequired(p->argv[0])) {
+            if (!strcmp(p->argv[0], "ssh")) {
+                options.tty = p->stdin && !p->asyncSpawn && ios_isatty(STDIN_FILENO);
+            }
+            if (!strcmp(p->argv[0], "sftp")) {
+                ios_stopInteractive();
+            }
+        }
         char **environment = environmentVariables(p->pid >= 0 ? p->pid : ios_currentPid());
         char **hostEnvironment = NULL;
         if (host) {
@@ -3337,11 +3343,10 @@ static int isInteractive(const char* command) {
     if (strncmp(command, "isympy", 6) == 0) return true;
     if (strncmp(command, "less", 4) == 0) return true;
     if (strncmp(command, "more", 4) == 0) return true;
-    if (strncmp(command, "ssh-keygen", 10) == 0) return false;
-    if (strncmp(command, "ssh", 3) == 0) return true;
+    if (strncmp(command, "ssh", 3) == 0  && (command[3] == 0 || command[3] == ' ')) return true;
     if (strncmp(command, "scp", 3) == 0) return true;
-    if (strncmp(command, "man", 3) == 0) return true;
     if (strncmp(command, "sftp", 4) == 0) return true;
+    if (strncmp(command, "man", 3) == 0) return true;
     if (strncmp(command, "jump", 4) == 0) return true;
     return false;
 }
