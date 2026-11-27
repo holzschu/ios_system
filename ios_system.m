@@ -6,6 +6,7 @@
 //
 
 #include <poll.h>
+#include <sys/ioctl.h>
 #include "ios_spawn.h"
 #include <stdatomic.h>
 #import <UIKit/UIKit.h>
@@ -1013,14 +1014,73 @@ typedef struct {
     int tty, separate_stderr, stderr_fd;
 } workerPaneOptions;
 
-typedef struct {
+typedef struct workerRun {
     int fd;
     int errFd;
     void *job;
     bool finished;
     pid_t pid;
     bool host;
+    pthread_t sftpThread;
+    sessionParameters *sftpSession;
+    struct workerRun *nextSftp;
 } workerRun;
+
+// A running SFTP terminal command can ask its worker about one local escape.
+static pthread_mutex_t sftpRunMutex = PTHREAD_MUTEX_INITIALIZER;
+static workerRun *sftpRuns;
+
+bool ios_forward_sftp_escape_control(const void *sessionId, void (^reply)(bool)) {
+    if (!sessionId) return false;
+    void (*control)(void *, bool, void (^)(bool)) = dlsym(RTLD_DEFAULT, "ashell_pane_sftp_escape_control");
+    if (reply && !control) return false;
+    sessionParameters *session = NULL;
+    pthread_t root = NULL;
+    @synchronized(sessionList) {
+        session = (sessionParameters *)[[sessionList objectForKey:@((NSUInteger)sessionId)] pointerValue];
+        if (session) root = session->current_command_root_thread;
+    }
+    if (!root) return false;
+    bool matched = false;
+    CFTypeRef pane = NULL;
+    pthread_mutex_lock(&sftpRunMutex);
+    for (workerRun *run = sftpRuns; run; run = run->nextSftp) {
+        if (run->sftpSession == session && pthread_equal(run->sftpThread, root)) {
+            matched = true;
+            // The app's remote worker API owns a retained RemotePane handle.
+            if (reply) pane = CFRetain(run->job);
+            break;
+        }
+    }
+    pthread_mutex_unlock(&sftpRunMutex);
+    // A nil reply only probes for the in-band Ctrl-D path. Ctrl-C must
+    // target this exact pane without holding the lock or blocking the UI.
+    if (pane) dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        control((void *)pane, true, reply);
+        CFRelease(pane);
+    });
+    return matched;
+}
+
+// This lease lives in the dedicated SFTP extension, never in the app process.
+static pthread_mutex_t sftpEscapeMutex = PTHREAD_MUTEX_INITIALIZER;
+static atomic_uint *sftpEscape;
+enum { sftpEscapeInterrupt = 1 };
+
+static void clearSFTPEscape(atomic_uint *control) {
+    if (!control) return;
+    pthread_mutex_lock(&sftpEscapeMutex);
+    if (sftpEscape == control) sftpEscape = NULL;
+    pthread_mutex_unlock(&sftpEscapeMutex);
+}
+
+bool ios_accept_sftp_escape_control(bool interrupt) {
+    pthread_mutex_lock(&sftpEscapeMutex);
+    bool handled = interrupt && sftpEscape != NULL;
+    if (handled) atomic_fetch_or(sftpEscape, sftpEscapeInterrupt);
+    pthread_mutex_unlock(&sftpEscapeMutex);
+    return handled;
+}
 
 static void *workerAPI(const char *suffix) {
     static dispatch_once_t once;
@@ -1044,6 +1104,13 @@ static void *executionAPI(const char *suffix, bool host) {
 static void workerRunCleanup(void *argument) {
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     workerRun *run = argument;
+    if (run->sftpThread) {
+        pthread_mutex_lock(&sftpRunMutex);
+        workerRun **entry = &sftpRuns;
+        while (*entry != NULL && *entry != run) entry = &(*entry)->nextSftp;
+        if (*entry == run) *entry = run->nextSftp;
+        pthread_mutex_unlock(&sftpRunMutex);
+    }
     int (*cancel)(void *) = executionAPI("cancel", run->host);
     void (*release)(void *) = executionAPI("release", run->host);
     if (!run->finished && cancel) {
@@ -1090,7 +1157,28 @@ typedef struct {
     int fd, errFd;
     void *job;
     void *ready;
+    atomic_uint *escapeControl;
 } admittedWorker;
+
+// Do not read through the in-band EOF byte: typeahead after it belongs to SFTP.
+static ssize_t readSftpEscapeInput(int fd, char *buffer, size_t capacity, bool *eof) {
+    int available = 0;
+    size_t limit = 1;
+    if (ioctl(fd, FIONREAD, &available) == 0 && available > 0)
+        limit = MIN((size_t)available, capacity);
+    size_t length = 0;
+    while (length < limit) {
+        unsigned char byte;
+        ssize_t n = read(fd, &byte, 1);
+        if (n == 0 || (n == 1 && byte == 4)) {
+            *eof = true;
+            break;
+        }
+        if (n < 0) return length ? (ssize_t)length : n;
+        buffer[length++] = (char)byte;
+    }
+    return (ssize_t)length;
+}
 
 static bool runInWorker(functionParameters *p, int *status, admittedWorker *admitted) {
     bool host = admitted == NULL && hostWanted(p->argv[0]);
@@ -1162,7 +1250,7 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         }
         errFd = spawn_ex ? options.stderr_fd : -1;
     }
-    workerRun run = { fd, errFd, job, false, p->pid, host };
+    workerRun run = { .fd = fd, .errFd = errFd, .job = job, .pid = p->pid, .host = host };
     pthread_mutex_lock(&commandSignalMutex);
     if (p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS) {
         // An interrupt can arrive while spawn has cancellation disabled.
@@ -1176,6 +1264,15 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
     int exitStatus = 137, state = 0;
     size_t inputBytes = 0, outputBytes = 0;
     pthread_cleanup_push(workerRunCleanup, &run);
+    if (!admitted && !host && !strcmp(p->argv[0], "sftp")) {
+        run.sftpThread = pthread_self();
+        run.sftpSession = p->session;
+        pthread_mutex_lock(&sftpRunMutex);
+        run.nextSftp = sftpRuns;
+        sftpRuns = &run;
+        pthread_mutex_unlock(&sftpRunMutex);
+    }
+    atomic_uint *escapeControl = admitted ? admitted->escapeControl : NULL;
     // Publish the PID only after cancellation owns the admitted worker.
     if (admitted && admitted->ready) {
         dispatch_semaphore_t ready = CFBridgingRelease(admitted->ready);
@@ -1194,6 +1291,14 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
         bool wantInput = stdinFd >= 0 && pendingLength == 0;
         struct pollfd fds[3] = { { fd, (short)(POLLIN | (pendingLength > 0 ? POLLOUT : 0)), 0 }, { wantInput ? stdinFd : -1, POLLIN, 0 }, { run.errFd, POLLIN, 0 } };
         poll(fds, 3, 50); // a cancellation point: ios_killpid / Ctrl-C end up in workerRunCleanup
+        if (escapeControl) {
+            unsigned requested = atomic_exchange(escapeControl, 0);
+            if (requested & sftpEscapeInterrupt) {
+                if (p->pid >= 0 && p->pid < IOS_PID_STATUS_SLOTS)
+                    atomic_store(&pidWorkerSignal[p->pid], SIGINT);
+                pthread_exit(NULL);
+            }
+        }
         // Darwin poll rejects /dev/null with POLLNVAL; select reports its readable EOF.
         if (wantInput && (fds[1].revents & POLLNVAL) && stdinFd < FD_SETSIZE) {
             fd_set readable;
@@ -1204,9 +1309,14 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
                 fds[1].revents = POLLIN;
         }
         if (wantInput && (fds[1].revents & (POLLIN | POLLHUP))) {
-            ssize_t n = read(stdinFd, pending, sizeof(pending));
+            bool eof = false;
+            ssize_t n = escapeControl ? readSftpEscapeInput(stdinFd, pending, sizeof(pending), &eof)
+                                      : read(stdinFd, pending, sizeof(pending));
             if (n > 0) { pendingLength = n; pendingOffset = 0; }
-            else { stdinDone = true; stdinFd = -1; }
+            if (eof || (n <= 0 && (!escapeControl || (errno != EINTR && errno != EAGAIN)))) {
+                stdinDone = true;
+                stdinFd = -1;
+            }
         }
         if (pendingLength > 0) {
             ssize_t n = write(fd, pending + pendingOffset, pendingLength - pendingOffset);
@@ -1236,6 +1346,7 @@ static bool runInWorker(functionParameters *p, int *status, admittedWorker *admi
             else { fwrite(buffer, 1, n, p->stderr); fflush(p->stderr); }
         }
     }
+    clearSFTPEscape(escapeControl);
     // The worker closes stdout and stderr together; take what is left on stderr.
     while (run.errFd >= 0) {
         ssize_t n = read(run.errFd, buffer, sizeof(buffer));
@@ -1312,11 +1423,13 @@ int ios_posix_spawn_file_actions_addchdir_np(ios_posix_spawn_file_actions_t *act
 typedef struct {
     functionParameters command;
     admittedWorker worker;
+    atomic_uint escapeControl;
 } spawnedWorker;
 
 static void spawnedWorkerCleanup(void *argument) {
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     spawnedWorker *spawned = argument;
+    clearSFTPEscape(spawned->worker.escapeControl);
     fflush(spawned->command.stdout);
     fflush(spawned->command.stderr);
     fclose(spawned->command.stdin);
@@ -1335,6 +1448,11 @@ static void *spawnedWorkerMain(void *argument) {
     thread_stderr = p->stderr;
     ios_storeThreadIdForPid(p->pid, pthread_self());
     pthread_cleanup_push(spawnedWorkerCleanup, spawned);
+    if (spawned->worker.escapeControl) {
+        pthread_mutex_lock(&sftpEscapeMutex);
+        sftpEscape = spawned->worker.escapeControl;
+        pthread_mutex_unlock(&sftpEscapeMutex);
+    }
     int status = 127;
     runInWorker(p, &status, &spawned->worker);
     recordPidStatus(status);
@@ -1342,9 +1460,9 @@ static void *spawnedWorkerMain(void *argument) {
     return NULL;
 }
 
-int ios_posix_spawn(pid_t *pid, const char *path,
+static int spawnWorker(pid_t *pid, const char *path,
                     const ios_posix_spawn_file_actions_t *actions,
-                    const void *attributes, char *const argv[], char *const envp[]) {
+                    const void *attributes, char *const argv[], char *const envp[], bool sftpEscape) {
     if (pid == NULL || path == NULL || argv == NULL || argv[0] == NULL) return EINVAL;
     if (attributes != NULL) return ENOTSUP;
     int (*spawn)(const char *, const char *, unsigned, unsigned, const char *const *, workerPaneOptions *, int *, void **) = workerAPI("spawn_ex");
@@ -1363,6 +1481,10 @@ int ios_posix_spawn(pid_t *pid, const char *path,
     }
     spawnedWorker *child = calloc(1, sizeof(*child));
     if (child == NULL) return ENOMEM;
+    if (sftpEscape) {
+        atomic_init(&child->escapeControl, 0);
+        child->worker.escapeControl = &child->escapeControl;
+    }
     FILE **streams[] = { &child->command.stdin, &child->command.stdout, &child->command.stderr };
     for (int i = 0; i < 3; i++) {
         int fd = dup(descriptors[i]);
@@ -1421,6 +1543,16 @@ int ios_posix_spawn(pid_t *pid, const char *path,
     pthread_detach(thread);
     pthread_setcancelstate(cancellationState, NULL);
     return 0;
+}
+
+int ios_posix_spawn(pid_t *pid, const char *path, const ios_posix_spawn_file_actions_t *actions,
+                    const void *attributes, char *const argv[], char *const envp[]) {
+    return spawnWorker(pid, path, actions, attributes, argv, envp, false);
+}
+
+int ios_spawn_sftp_escape(pid_t *pid, const char *path, const ios_posix_spawn_file_actions_t *actions,
+                    const void *attributes, char *const argv[], char *const envp[]) {
+    return spawnWorker(pid, path, actions, attributes, argv, envp, true);
 }
 
 extern void ios_getoptReset(void); // restarts getopt for a new command (getopt.c)

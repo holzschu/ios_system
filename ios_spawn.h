@@ -19,6 +19,9 @@ int ios_posix_spawn_file_actions_adddup2(ios_posix_spawn_file_actions_t *, int, 
 int ios_posix_spawn_file_actions_addclose(ios_posix_spawn_file_actions_t *, int);
 int ios_posix_spawn_file_actions_addchdir_np(ios_posix_spawn_file_actions_t *, const char *);
 int ios_posix_spawn(pid_t *, const char *, const ios_posix_spawn_file_actions_t *, const void *, char *const [], char *const []);
+/* Like ios_posix_spawn, but route terminal Ctrl-C and Ctrl-D to this
+ * interactive SFTP escape while it is active. */
+int ios_spawn_sftp_escape(pid_t *, const char *, const ios_posix_spawn_file_actions_t *, const void *, char *const [], char *const []);
 /* Wait for an ios_posix_spawn PID; options is 0 or WNOHANG. Returns PID, 0 while
  * running, or -1 with errno. Status uses waitpid encoding (ios_killpid with SIGINT, SIGTERM, SIGKILL, SIGHUP or SIGQUIT: exit 128 + signal; worker transport failure: exit 125).
  * Optional usage is the isolated worker's RUSAGE_SELF snapshot at command exit,

@@ -6,9 +6,11 @@
 """Run Stock sftp local shell escapes in a worker-enabled a-Shell host on an iOS Simulator."""
 
 import getpass
+import os
 import re
 import shlex
 import shutil
+import signal
 import socket
 import subprocess
 import tempfile
@@ -143,7 +145,195 @@ def run_profile(simulator, bundle_id, documents, lines, done, timeout):
             subprocess.run(stop, check=False, capture_output=True)
 
 
-def main(simulator: UUID, bundle_id: str, timeout: float = 60.0):
+def interactive_controls(simulator, bundle_id, documents, case_dir, config, timeout):
+    """Send real terminal keys and use the SFTP transcript, not the app prompt."""
+    device = str(simulator).upper()
+    stop = ["xcrun", "simctl", "terminate", device, bundle_id]
+
+    def key(*args):
+        subprocess.run(
+            ["axe", *args, "--udid", device],
+            check=True,
+            timeout=15,
+            capture_output=True,
+        )
+
+    def line(command):
+        key("type", command + "\n", "--layout", "us")
+
+    def text(path):
+        return path.read_text(errors="replace") if path.is_file() else ""
+
+    def wait_for(probe):
+        deadline = time.monotonic() + min(timeout, 12)
+        while time.monotonic() < deadline:
+            if probe():
+                return True
+            time.sleep(0.3)
+        return False
+
+    def terminal_ready():
+        ui = subprocess.run(
+            ["axe", "describe-ui", "--udid", device],
+            check=False,
+            capture_output=True,
+            timeout=8,
+        )
+        return ui.returncode == 0 and b'"AXTextArea"' in ui.stdout
+
+    def worker_pid(prefix, match=""):
+        logs = simctl(
+            "spawn",
+            device,
+            "log",
+            "show",
+            "--last",
+            "25s",
+            "--style",
+            "compact",
+            "--predicate",
+            f'process BEGINSWITH "ShellWorker" AND eventMessage BEGINSWITH "command = {prefix}"',
+            capture_output=True,
+            text=True,
+        )
+        rows = "\n".join(line for line in logs.stdout.splitlines() if match in line)
+        pids = re.findall(r"ShellWorker[A-J]\[(\d+):", rows)
+        return int(pids[-1]) if pids else None
+
+    def worker_gone(pid):
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        return False
+
+    failures = []
+    with preserved(documents / ".profile"):
+        (documents / ".profile").write_text("")
+        for name, escape, hid in (
+            ("interrupt", "!sleep 37", "6"),
+            ("eof", "!cat", "7"),
+            ("eof-again", "!cat", "7"),
+            ("eof-no-newline", "!cat", "7"),
+            ("eof-typeahead", "!cat", "7"),
+            ("idle-interrupt", None, "6"),
+            ("idle-eof", None, "7"),
+            ("stalled-interrupt", None, "6"),
+            ("batch-stdin-eof", None, "7"),
+        ):
+            subprocess.run(stop, check=False, capture_output=True)
+            simctl("launch", device, bundle_id, capture_output=True)
+            out, err = case_dir / f"{name}.out", case_dir / f"{name}.err"
+            # Use a file marker to prove terminal input is focused before SFTP.
+            # File paths typed at the prompt are relative to Documents.
+            cwd = case_dir.name
+            startup = case_dir / f"{name}.ready"
+            if not wait_for(terminal_ready):
+                raise RuntimeError(f"{name}: terminal UI did not start")
+            line(f"echo READY > {cwd}/{startup.name}")
+            if not wait_for(lambda startup=startup: text(startup).strip() == "READY"):
+                raise RuntimeError(f"{name}: a-Shell startup marker missing")
+            batch = "-b - " if name == "batch-stdin-eof" else ""
+            line(
+                f"sftp -F {cwd}/{config.name} {batch}target > {cwd}/{out.name} 2> {cwd}/{err.name}"
+            )
+            # Batch mode deliberately suppresses the connection banner.
+            if not batch and not wait_for(
+                lambda err=err: "Connected to target" in text(err)
+            ):
+                raise RuntimeError(f"{name}: no SFTP connection: {text(err)}")
+            if escape == "!sleep 37":
+                line(escape)
+                if not wait_for(lambda: worker_pid("sleep 37 pid=")):
+                    raise RuntimeError("interrupt: local worker never started sleep")
+            elif escape == "!cat":
+                typed = case_dir / f"{name}.typed"
+                submitted_line = name in {"eof", "eof-again"}
+                options = " -u" if submitted_line else ""
+                line(f"!cat{options} > {cwd}/{typed.name}")
+                if not wait_for(typed.exists):
+                    raise RuntimeError(
+                        f"{name}: local worker did not open cat's output"
+                    )
+                payload = "STOCK_SFTP_TYPED_INPUT"
+                if submitted_line:
+                    payload += "\n"
+                key("type", payload, "--layout", "us")
+                # AXe's last Return can be delivered after the next Ctrl-D.
+                # Establish that the line was submitted; the other cases test
+                # a cooked partial line and input immediately after EOF.
+                if submitted_line and not wait_for(
+                    lambda typed=typed, payload=payload: text(typed) == payload
+                ):
+                    raise RuntimeError(
+                        f"{name}: submitted line never reached cat: {text(typed)!r}"
+                    )
+            if batch:
+                line("pwd")
+                if not wait_for(lambda out=out: REMOTE in text(out)):
+                    raise RuntimeError(
+                        f"{name}: SFTP did not read pwd from batch stdin"
+                    )
+            if name == "stalled-interrupt":
+                line("!sleep 51")
+                if not wait_for(lambda: worker_pid("sleep 51 pid=")):
+                    raise RuntimeError("stalled-interrupt: local escape did not start")
+                pid = worker_pid("", rf"'\134sftp' '-F' '{cwd}/{config.name}'")
+                if pid is None:
+                    raise RuntimeError(
+                        "stalled-interrupt: fixture SFTP worker not found"
+                    )
+                os.kill(pid, signal.SIGSTOP)
+                try:
+                    key("key-combo", "--modifiers", "224", "--key", hid)
+                    # Hold the XPC receiver beyond the app's one-second deadline.
+                    time.sleep(2)
+                finally:
+                    if not worker_gone(pid):
+                        os.kill(pid, signal.SIGCONT)
+                if not wait_for(lambda pid=pid: worker_gone(pid)):
+                    failures.append(
+                        "stalled-interrupt: no cancellation after missing reply"
+                    )
+                    continue
+            else:
+                key("key-combo", "--modifiers", "224", "--key", hid)
+            if escape:
+                if name == "eof-typeahead":
+                    line("pwd")
+                # Otherwise confirm the escape finished before sending pwd.
+                if escape == "!cat":
+                    finished = wait_for(
+                        lambda typed=typed, payload=payload: text(typed) == payload
+                    )
+                else:
+                    finished = wait_for(
+                        lambda err=err: "Shell exited with status 130" in text(err)
+                    )
+                if name != "eof-typeahead":
+                    line("pwd")
+                recovered = wait_for(lambda out=out: REMOTE in text(out))
+                if not finished or not recovered or "Invalid command" in text(err):
+                    received = f", typed={text(typed)!r}" if escape == "!cat" else ""
+                    failures.append(
+                        f"{name}: no recovery in same SFTP session: {text(out)!r}, {text(err)!r}{received}"
+                    )
+            else:
+                marker = case_dir / f"{name}.local"
+                line(f"echo LOCAL > {cwd}/{marker.name}")
+                local = wait_for(lambda marker=marker: text(marker).strip() == "LOCAL")
+                if not local or "Invalid command" in text(err):
+                    failures.append(
+                        f"{name}: no clean return to local shell: {text(err)!r}"
+                    )
+        subprocess.run(stop, check=False, capture_output=True)
+    if failures:
+        raise RuntimeError("\n".join(failures))
+
+
+def main(
+    simulator: UUID, bundle_id: str, timeout: float = 60.0, controls: bool = False
+):
     """Run against a booted Simulator with the worker-enabled app BUNDLE_ID installed."""
     console = Console(stderr=True)
     try:
@@ -192,6 +382,21 @@ def main(simulator: UUID, bundle_id: str, timeout: float = 60.0):
                 f"  IdentityFile {case_dir / 'client'}\n  IdentitiesOnly yes\n"
                 f"  UserKnownHostsFile {known}\n  StrictHostKeyChecking yes\n  BatchMode yes\n"
             )
+
+            if controls:
+                stack.callback(
+                    simctl,
+                    "terminate",
+                    str(simulator),
+                    bundle_id,
+                    check=False,
+                    capture_output=True,
+                )
+                interactive_controls(
+                    simulator, bundle_id, documents, case_dir, config, timeout
+                )
+                print("STOCK_SFTP_ESCAPE_CONTROLS_PASS")
+                return
 
             def sftp(name, commands):
                 batch = case_dir / f"{name}.batch"

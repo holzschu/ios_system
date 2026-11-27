@@ -28,15 +28,19 @@
 #define isatty ios_isatty
 
 #define printf(...) fprintf(thread_stdout, __VA_ARGS__)
-static inline int ashell_ssh_spawn(const char *path, char *const argv[], int input, int output, pid_t *pid) {
+static inline int ashell_ssh_spawn_using(const char *path, char *const argv[], int input, int output, pid_t *pid,
+    int (*spawn)(pid_t *, const char *, const ios_posix_spawn_file_actions_t *, const void *, char *const [], char *const [])) {
     ios_posix_spawn_file_actions_t actions;
     int error = ios_posix_spawn_file_actions_init(&actions);
     if (error) return error;
     error = ios_posix_spawn_file_actions_adddup2(&actions, input, 0);
     if (!error) error = ios_posix_spawn_file_actions_adddup2(&actions, output, 1);
-    if (!error) error = ios_posix_spawn(pid, path, &actions, NULL, argv, environmentVariables(ios_currentPid()));
+    if (!error) error = spawn(pid, path, &actions, NULL, argv, environmentVariables(ios_currentPid()));
     ios_posix_spawn_file_actions_destroy(&actions);
     return error;
+}
+static inline int ashell_ssh_spawn(const char *path, char *const argv[], int input, int output, pid_t *pid) {
+    return ashell_ssh_spawn_using(path, argv, input, output, pid, ios_posix_spawn);
 }
 static inline struct passwd *ashell_ssh_getpwuid(uid_t uid) {
     static __thread struct passwd user;
