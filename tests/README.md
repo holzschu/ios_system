@@ -1,3 +1,19 @@
+# Base64 filter
+
+`base64.sh` compares the real command's CLI output with macOS `/usr/bin/base64` for empty, binary and large inputs, decode aliases, arbitrary wrap widths and files. It checks error status and stderr separately: diagnostic wording is not part of the byte comparison. `base64-driver.c` supplies only the host stream boundary; the command and getopt implementations are compiled unchanged.
+
+```sh
+mkdir -p .build/base64
+clang -std=gnu11 -Wall -Wextra -Werror -Wno-deprecated-non-prototype -include stdlib.h -I . tests/base64-driver.c file_cmds/base64/b64.c getopt.c getopt_long.c -lresolv -o "$PWD/.build/base64/base64"
+bash tests/base64.sh "$PWD/.build/base64/base64"
+```
+
+The original command fails the first comparison: `printf x | base64` emits a usage banner instead of `eA==` followed by a newline. The decoder also has a regression for a partial quartet followed by more than one input buffer of whitespace; the expected decoded byte is literal because macOS itself stalls on that input.
+
+In a-Shell, copy `base64-device.sh` into a writable directory, then run `sh base64-device.sh` from a fresh directory on both Simulator and device. It uses the registered command and checks pipelines, binary data, files, failures and re-entry after options and errors. Comparisons use `diff`, which a-Shell registers; it does not register `cmp`. Its `base64-device-check` directory must not exist before the run.
+
+The command now encodes stdin by default and uses macOS wrapping: no internal line breaks unless requested, with a final newline (including empty input when wrapping is disabled). `-d`, `-D`, `--decode`, `-i`/`--input`, `-o`/`--output`, `-b`/`--break`, and `-w`/`--wrap` are supported. `-` selects the corresponding standard stream. Positional input and output files, `-e`, `-l<num>` (minimum 4, rounded down to a multiple of 4), and `-?` remain accepted. The old default wrap width of 72 is replaced by 0; use `-l72` to request it. Malformed base64 is no longer silently discarded. The obsolete `-t` option, which printed Windows batch-test instructions, is removed. Decoding follows macOS bintrans behavior, including its handling of incomplete trailing quartets; it is not a strict input validator.
+
 # Session window size
 
 `window-size.m` calls the public session APIs against the real ios_system framework. It checks independent sessions, reading from a thread without session TLS, resize, closed and unknown sessions, invalid arguments and unchanged outputs on errors.

@@ -60,6 +60,7 @@
 		222419DE2A90A706003AB5B7 /* curl_range.c in Sources */ = {isa = PBXBuildFile; fileRef = 222419DD2A90A706003AB5B7 /* curl_range.c */; };
 		222419E02A90A728003AB5B7 /* rename.c in Sources */ = {isa = PBXBuildFile; fileRef = 222419DF2A90A728003AB5B7 /* rename.c */; };
 		2224F2A32C22D94E00E0BA40 /* b64.c in Sources */ = {isa = PBXBuildFile; fileRef = 2224F2A22C22D94D00E0BA40 /* b64.c */; };
+		2224F2A42C22D94E00E0BA40 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2253BA1D201942B10019CB39 /* libresolv.9.tbd */; };
 		222CC4DC218CBF2300D3A11C /* strnsubst.c in Sources */ = {isa = PBXBuildFile; fileRef = 222CC4DA218CBF2300D3A11C /* strnsubst.c */; };
 		222CC4DF218CBF2900D3A11C /* xargs.c in Sources */ = {isa = PBXBuildFile; fileRef = 222CC4DE218CBF2900D3A11C /* xargs.c */; };
 		22319FA01FDC2332004D875A /* getopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 22319F9E1FDC2332004D875A /* getopt.c */; };
@@ -1614,6 +1615,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2224F2A42C22D94E00E0BA40 /* libresolv.9.tbd in Frameworks */,
 				228265182067F2B4002F9671 /* libncurses.tbd in Frameworks */,
 				228265172067F2A4002F9671 /* libbz2.tbd in Frameworks */,
 				228265162067F29B002F9671 /* ios_system.framework in Frameworks */,
