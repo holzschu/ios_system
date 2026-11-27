@@ -22,6 +22,7 @@ from rich.console import Console
 
 HOST = "127.0.0.1"
 LISTED = "STOCK_SFTP_LISTED_FILE"
+REDIRECTED = "STOCK_SFTP_REDIRECTED_INPUT"
 REMOTE = "Remote working directory:"
 NO_SHELL = "Interactive local shell is not available"
 # sftp and its ssh transport each hold a worker, so this limit leaves none for "!".
@@ -179,6 +180,8 @@ def main(simulator: UUID, bundle_id: str, timeout: float = 60.0):
             listed = case_dir / "listed"
             listed.mkdir()
             (listed / LISTED).touch()
+            local_input = case_dir / "input"
+            local_input.write_text(f"{REDIRECTED}\n")
             known = case_dir / "known_hosts"
             known.write_text(
                 f"[{HOST}]:{port} " + " ".join(host_key.read_text().split()[:2]) + "\n"
@@ -216,6 +219,9 @@ def main(simulator: UUID, bundle_id: str, timeout: float = 60.0):
                         [
                             "!echo STOCK_SFTP_ECHO_OK",
                             f"!ls {shlex.quote(str(listed))}",
+                            # A local stdin reader must not wait for sftp input.
+                            "!cat",
+                            f"!cat < {shlex.quote(str(local_input))}",
                             # The a-Shell sh returns 0 for a found command that fails,
                             # so a missing command is the failure it reports.
                             "!stock-sftp-no-such-command",
@@ -236,6 +242,10 @@ def main(simulator: UUID, bundle_id: str, timeout: float = 60.0):
             if "STOCK_SFTP_ECHO_OK" not in out.splitlines():
                 failures.append(
                     f"escape: echo output missing from stdout: {err.strip()}"
+                )
+            if REDIRECTED not in out.splitlines():
+                failures.append(
+                    "escape: explicitly redirected input missing from stdout"
                 )
             if not re.search(r"^Shell exited with status [1-9]", err, re.MULTILINE):
                 failures.append(

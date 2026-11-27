@@ -119,7 +119,7 @@
  
  #include <sys/types.h>
  #include <sys/ioctl.h>
-@@ -323,6 +327,28 @@
+@@ -323,6 +327,46 @@
  	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
  		shell = _PATH_BSHELL;
  
@@ -128,7 +128,7 @@
 +		/* sftp runs as a thread and cannot fork. Run the command in a
 +		 * worker through the a-Shell sh, as for ProxyCommand. */
 +		char *argv[] = { "sh", "-c", (char *)args, NULL };
-+		int r;
++		int input = STDIN_FILENO, r;
 +
 +		if (args == NULL) {
 +			/* Without -c, a-Shell runs dash, which cannot leave a
@@ -137,8 +137,26 @@
 +			return;
 +		}
 +		debug3("Executing sh -c \"%s\"", args);
-+		if ((r = ashell_ssh_spawn(argv[0], argv, STDIN_FILENO,
-+		    STDOUT_FILENO, &pid)) != 0) {
++		/* Do not make local commands in a batch wait for terminal input. */
++		if (batchmode) {
++			input = open(_PATH_DEVNULL, O_RDONLY);
++			if (input >= 0 && input < 3) {
++				/* The spawn bridge treats 0-2 as thread streams. */
++				int fd = fcntl(input, F_DUPFD, 3);
++				r = errno;
++				close(input);
++				input = fd;
++				errno = r;
++			}
++			if (input == -1) {
++				error("Couldn't prepare local command stdin: %s", strerror(errno));
++				return;
++			}
++		}
++		r = ashell_ssh_spawn(argv[0], argv, input, STDOUT_FILENO, &pid);
++		if (batchmode)
++			close(input);
++		if (r != 0) {
 +			error("Couldn't run local command: %s", r == ENOSPC ?
 +			    "all shell workers are in use" : strerror(r));
 +			return;
@@ -148,7 +166,7 @@
  	if ((pid = fork()) == -1)
  		fatal("Couldn't fork: %s", strerror(errno));
  
-@@ -338,6 +364,7 @@
+@@ -338,6 +382,7 @@
  		    strerror(errno));
  		_exit(1);
  	}
@@ -156,7 +174,7 @@
  	while (waitpid(pid, &status, 0) == -1)
  		if (errno != EINTR)
  			fatal("Couldn't wait for child: %s", strerror(errno));
-@@ -2431,6 +2458,25 @@
+@@ -2431,6 +2476,25 @@
  static void
  connect_to_server(char *path, char **args, int *in, int *out)
  {
