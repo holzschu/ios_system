@@ -106,16 +106,16 @@ def preserved(path):
             path.write_bytes(before)
 
 
-def check_password_jump(simulator, bundle_id, documents, fixture, console):
-    hosts = ("password-hop", "password-target")
+def check_password_jump(simulator, bundle_id, documents, fixture, console, hosts):
+    case = "two-password-jump" if len(hosts) == 2 else "three-password-jump"
     prompt_suffix = b"'s password: "
     secrets = [(fixture / name).read_bytes().rstrip(b"\n") for name in hosts]
     if any(len(secret) < 12 or not secret.isalnum() for secret in secrets):
         raise RuntimeError(
             "Use alphanumeric fixture passwords of at least 12 characters"
         )
-    if secrets[0] == secrets[1]:
-        raise RuntimeError("The jump and target must have different passwords")
+    if len(set(secrets)) != len(hosts):
+        raise RuntimeError("Each jump and the target must have a different password")
     # AXe matches the simulator UDID as printed by simctl, not UUID's lowercase form.
     device = str(simulator).upper()
     stop = ["xcrun", "simctl", "terminate", device, bundle_id]
@@ -156,7 +156,17 @@ def check_password_jump(simulator, bundle_id, documents, fixture, console):
         shutil.copyfile(fixture / "known_hosts", root / "known_hosts")
         out, err = root / "out", root / "err"
         command = shlex.join(
-            ["ssh", "-v", "-F", str(config), "-J", *hosts, "echo", MARKER]
+            [
+                "ssh",
+                "-v",
+                "-F",
+                str(config),
+                "-J",
+                ",".join(hosts[:-1]),
+                hosts[-1],
+                "echo",
+                MARKER,
+            ]
         )
         # A launch PID can precede the terminal's keyboard/input setup.
         ready = root / "ready"
@@ -218,7 +228,7 @@ def check_password_jump(simulator, bundle_id, documents, fixture, console):
                 else "command not started"
             )
             console.print(
-                f"two-password-jump: status={status} prompts={seen} "
+                f"{case}: status={status} prompts={seen} "
                 f"answers={answered} echoed={echoed} login={login}",
                 markup=False,
             )
@@ -227,6 +237,9 @@ def check_password_jump(simulator, bundle_id, documents, fixture, console):
                     "Expected ordered hop and target prompts, a successful login, "
                     "and no passwords in the output streams"
                 )
+
+            if len(hosts) > 2:
+                return
 
             # A custom proxy must not use the foreground authentication input.
             proxy = shlex.join(
@@ -240,7 +253,7 @@ def check_password_jump(simulator, bundle_id, documents, fixture, console):
                     str(config),
                     "-o",
                     f"ProxyCommand={proxy}",
-                    hosts[1],
+                    hosts[-1],
                     "echo",
                     MARKER,
                 ]
@@ -400,8 +413,22 @@ def main(
             if failures:
                 raise RuntimeError("\n".join(failures))
         if password_fixture is not None:
+            if (password_fixture / "password-hop2").is_file():
+                check_password_jump(
+                    simulator,
+                    bundle_id,
+                    documents,
+                    password_fixture,
+                    console,
+                    ("password-hop", "password-hop2", "password-target"),
+                )
             check_password_jump(
-                simulator, bundle_id, documents, password_fixture, console
+                simulator,
+                bundle_id,
+                documents,
+                password_fixture,
+                console,
+                ("password-hop", "password-target"),
             )
         print("STOCK_SSH_PROXY_JUMP_PASS")
     except KeyboardInterrupt:
