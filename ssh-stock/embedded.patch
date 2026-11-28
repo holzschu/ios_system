@@ -95,17 +95,133 @@
  	pwfree(pw);
 --- a/ssh-keygen.c
 +++ b/ssh-keygen.c
-@@ -13,6 +13,10 @@
-  */
+@@ -14,6 +14,10 @@
  
  #include "includes.h"
-+
+ 
 +#ifdef ASHELL_OPENSSH
 +#define main ashell_ssh_keygen_main
 +#endif
- 
++
  #include <sys/types.h>
  #include <sys/socket.h>
+ #include <sys/stat.h>
+@@ -289,6 +293,21 @@
+ 	have_identity = 1;
+ }
+ 
++static char *
++keygen_read_passphrase(const char *prompt)
++{
++#ifdef ASHELL_OPENSSH
++	char *pass = read_passphrase(prompt, RP_ASHELL_SECRET | RP_ALLOW_EOF);
++
++	/* Missing input must not silently create or save an unencrypted key. */
++	if (pass == NULL)
++		fatal("Could not read passphrase");
++	return pass;
++#else
++	return read_passphrase(prompt, RP_ALLOW_STDIN);
++#endif
++}
++
+ static struct sshkey *
+ load_identity(const char *filename, char **commentp)
+ {
+@@ -306,7 +325,7 @@
+ 		pass = xstrdup(identity_passphrase);
+ 	else {
+ 		xasprintf(&prompt, "Enter passphrase for \"%s\": ", filename);
+-		pass = read_passphrase(prompt, RP_ALLOW_STDIN);
++		pass = keygen_read_passphrase(prompt);
+ 		free(prompt);
+ 	}
+ 	r = sshkey_load_private(filename, pass, &prv, commentp);
+@@ -1408,8 +1427,7 @@
+ 			old_passphrase = xstrdup(identity_passphrase);
+ 		else
+ 			old_passphrase =
+-			    read_passphrase("Enter old passphrase: ",
+-			    RP_ALLOW_STDIN);
++			    keygen_read_passphrase("Enter old passphrase: ");
+ 		r = sshkey_load_private(identity_file, old_passphrase,
+ 		    &private, &comment);
+ 		freezero(old_passphrase, strlen(old_passphrase));
+@@ -1460,10 +1478,9 @@
+ 		passphrase2 = NULL;
+ 	} else {
+ 		passphrase1 =
+-			read_passphrase("Enter new passphrase (empty for no "
+-			    "passphrase): ", RP_ALLOW_STDIN);
+-		passphrase2 = read_passphrase("Enter same passphrase again: ",
+-		    RP_ALLOW_STDIN);
++			keygen_read_passphrase("Enter new passphrase (empty for no "
++			    "passphrase): ");
++		passphrase2 = keygen_read_passphrase("Enter same passphrase again: ");
+ 
+ 		/* Verify that they are the same. */
+ 		if (strcmp(passphrase1, passphrase2) != 0) {
+@@ -1561,8 +1578,7 @@
+ 		else if (identity_new_passphrase)
+ 			passphrase = xstrdup(identity_new_passphrase);
+ 		else
+-			passphrase = read_passphrase("Enter passphrase: ",
+-			    RP_ALLOW_STDIN);
++			passphrase = keygen_read_passphrase("Enter passphrase: ");
+ 		/* Try to load using the passphrase. */
+ 		if ((r = sshkey_load_private(identity_file, passphrase,
+ 		    &private, &comment)) != 0) {
+@@ -1823,8 +1839,7 @@
+ 		ca = load_identity(tmp, NULL);
+ 		if (sshkey_is_sk(ca) &&
+ 		    (ca->sk_flags & SSH_SK_USER_VERIFICATION_REQD)) {
+-			if ((pin = read_passphrase("Enter PIN for CA key: ",
+-			    RP_ALLOW_STDIN)) == NULL)
++			if ((pin = keygen_read_passphrase("Enter PIN for CA key: ")) == NULL)
+ 				fatal_f("couldn't read PIN");
+ 		}
+ 	}
+@@ -2612,8 +2627,7 @@
+ 		if ((signkey->sk_flags & SSH_SK_USER_VERIFICATION_REQD)) {
+ 			xasprintf(&prompt, "Enter PIN for %s key: ",
+ 			    sshkey_type(signkey));
+-			if ((pin = read_passphrase(prompt,
+-			    RP_ALLOW_STDIN)) == NULL)
++			if ((pin = keygen_read_passphrase(prompt)) == NULL)
+ 				fatal_f("couldn't read PIN");
+ 		}
+ 		if ((signkey->sk_flags & SSH_SK_USER_PRESENCE_REQD)) {
+@@ -3096,8 +3110,8 @@
+ 	char *passphrase1, *passphrase2;
+ 
+ 	for (;;) {
+-		passphrase1 = read_passphrase(prompt1, RP_ALLOW_STDIN);
+-		passphrase2 = read_passphrase(prompt2, RP_ALLOW_STDIN);
++		passphrase1 = keygen_read_passphrase(prompt1);
++		passphrase2 = keygen_read_passphrase(prompt2);
+ 		if (strcmp(passphrase1, passphrase2) == 0) {
+ 			freezero(passphrase2, strlen(passphrase2));
+ 			return passphrase1;
+@@ -3183,7 +3197,7 @@
+ 	if (skprovider == NULL)
+ 		fatal("Cannot download keys without provider");
+ 
+-	pin = read_passphrase("Enter PIN for authenticator: ", RP_ALLOW_STDIN);
++	pin = keygen_read_passphrase("Enter PIN for authenticator: ");
+ 	if (!quiet) {
+ 		printf("You may need to touch your authenticator "
+ 		    "to authorize key download.\n");
+@@ -3916,8 +3930,8 @@
+ 			}
+ 			if (++i >= 3)
+ 				fatal("Too many incorrect PINs");
+-			passphrase = read_passphrase("Enter PIN for "
+-			    "authenticator: ", RP_ALLOW_STDIN);
++			passphrase = keygen_read_passphrase("Enter PIN for "
++			    "authenticator: ");
+ 		}
+ 		if (passphrase != NULL) {
+ 			freezero(passphrase, strlen(passphrase));
 --- a/sftp.c
 +++ b/sftp.c
 @@ -16,6 +16,10 @@
@@ -228,7 +344,7 @@
 +        close(pair[0]); close(pair[1]);
 +        fatal("dup: %s", strerror(error));
 +    }
-+    error = ashell_ssh_spawn(path, args, pair[1], pair[1], &child);
++    error = ashell_ssh_spawn_transfer(path, _PATH_SSH_PROGRAM, args, pair[1], pair[1], &child);
 +    close(pair[1]);
 +    if (error) { close(pair[0]); close(output); fatal("spawn: %s", strerror(error)); }
 +    sshpid = child;
@@ -288,7 +404,7 @@
 +        errno = error;
 +        return -1;
 +    }
-+    error = ashell_ssh_spawn(program, child.list, pair[0], pair[0], pid);
++    error = ashell_ssh_spawn_transfer(program, _PATH_SSH_PROGRAM, child.list, pair[0], pair[0], pid);
 +    close(pair[0]);
 +    freeargs(&child);
 +    if (error) { close(pair[1]); close(output); errno = error; return -1; }
@@ -340,7 +456,7 @@
  
 --- a/readpass.c
 +++ b/readpass.c
-@@ -110,6 +110,102 @@
+@@ -110,6 +110,105 @@
  /* private/internal read_passphrase flags */
  #define RP_ASK_PERMISSION	0x8000 /* pass hint to askpass for confirm UI */
  
@@ -357,18 +473,21 @@
 +	size_t len = 0;
 +	int c, rejected = 0;
 +	char *secret = NULL;
++	FILE *input = ios_getSecretInput();
 +
-+	if (!isatty(STDIN_FILENO) || fstat(STDIN_FILENO, &st) == -1 ||
++	if (input == NULL && isatty(STDIN_FILENO))
++		input = stdin;
++	if (input == NULL || fstat(fileno(input), &st) == -1 ||
 +	    !(S_ISSOCK(st.st_mode) || S_ISFIFO(st.st_mode)))
 +		return NULL;
 +	if (fputs(prompt, stderr) == EOF || fflush(stderr) == EOF)
 +		return NULL;
-+	c = fgetc(stdin);
++	c = fgetc(input);
 +	/* Consume a possible CRLF tail only when the next read is needed. */
 +	if (ashell_skip_secret_lf && c == '\n')
-+		c = fgetc(stdin);
++		c = fgetc(input);
 +	ashell_skip_secret_lf = 0;
-+	for (; c != EOF && c != '\r' && c != '\n'; c = fgetc(stdin)) {
++	for (; c != EOF && c != '\r' && c != '\n'; c = fgetc(input)) {
 +		if (rejected)
 +			continue;
 +		if (c == '\b' || c == 0x7f) {
@@ -443,7 +562,7 @@
  /*
   * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
   * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
-@@ -121,6 +217,9 @@
+@@ -121,6 +220,9 @@
  {
  	char cr = '\r', *askpass = NULL, *ret, buf[1024];
  	int rppflags, ttyfd, use_askpass = 0, allow_askpass = 0;
@@ -453,7 +572,7 @@
  	const char *askpass_hint = NULL;
  	const char *s;
  
-@@ -142,6 +241,11 @@
+@@ -142,6 +244,11 @@
  		debug_f("requested to askpass");
  	else if (flags & RP_USE_ASKPASS)
  		use_askpass = 1;
@@ -465,7 +584,7 @@
  	else if (flags & RP_ALLOW_STDIN) {
  		if (!isatty(STDIN_FILENO)) {
  			debug_f("stdin is not a tty");
-@@ -160,6 +264,9 @@
+@@ -160,6 +267,9 @@
  			(void)write(ttyfd, &cr, 1);
  			close(ttyfd);
  		} else {
@@ -475,7 +594,7 @@
  			debug_f("can't open %s: %s", _PATH_TTY,
  			    strerror(errno));
  			use_askpass = 1;
-@@ -182,6 +289,20 @@
+@@ -182,6 +292,20 @@
  		return ret;
  	}
  
@@ -511,7 +630,7 @@
  	ret = percent_expand(tmp,
  	    "h", host,
  	    "k", keyalias,
-@@ -233,6 +238,53 @@
+@@ -233,6 +238,54 @@
  	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
  		shell = _PATH_BSHELL;
  
@@ -543,7 +662,8 @@
 +			close(pair[1]);
 +			fatal("dup: %s", strerror(error));
 +		}
-+		error = ashell_ssh_spawn(argv[0], argv, pair[1], pair[1], &pid);
++		error = ashell_ssh_spawn_using(argv[0], argv, pair[1], pair[1], &pid,
++		    options.jump_host ? ashell_ssh_spawn_with_secret_input : ios_posix_spawn);
 +		close(pair[1]);
 +		if (argc != 0)
 +			argv_free(argv, argc);
@@ -565,7 +685,7 @@
  	/* Create pipes for communicating with the proxy. */
  	if (pipe(pin) == -1 || pipe(pout) == -1)
  		fatal("Could not create pipes to communicate with the proxy: %.100s",
-@@ -605,12 +657,15 @@
+@@ -605,12 +658,15 @@
  	const char *msg, *again = "Please type 'yes' or 'no': ";
  	const char *again_fp = "Please type 'yes', 'no' or the fingerprint: ";
  	char *p, *cp;

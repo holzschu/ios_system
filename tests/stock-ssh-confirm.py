@@ -35,13 +35,13 @@ PASSWORD_PROMPT = b"'s password: "
 KBDINT_PROMPT = b"assword: "
 
 
-def prepare_probe(root, runtime_frameworks, stock_frameworks):
+def prepare_probe(root, runtime_frameworks, stock_frameworks, *, keygen=False):
     frameworks = root / "Frameworks"
     frameworks.mkdir()
     for source, name in (
         (runtime_frameworks, "ios_system"),
         (runtime_frameworks, "openssl"),
-        (stock_frameworks, "SSHStock"),
+        (stock_frameworks, "SSHKeygenStock" if keygen else "SSHStock"),
     ):
         name += ".framework"
         shutil.copytree(source / name, frameworks / name)
@@ -73,18 +73,24 @@ def prepare_probe(root, runtime_frameworks, stock_frameworks):
         check=True,
     )
     registry = root / "commandDictionary.plist"
-    registry.write_bytes(
-        plistlib.dumps(
-            {
-                "ssh": [
-                    "@rpath/SSHStock.framework/SSHStock",
-                    "ashell_ssh_main",
-                    "1246ab:c:e:fgi:kl:m:no:p:qstvxAB:CD:E:F:GI:J:KL:MNO:PQ:R:S:TVw:W:XYy",
-                    "no",
-                ],
-            }
-        )
-    )
+    commands = {
+        "ssh": [
+            "@rpath/SSHStock.framework/SSHStock",
+            "ashell_ssh_main",
+            "1246ab:c:e:fgi:kl:m:no:p:qstvxAB:CD:E:F:GI:J:KL:MNO:PQ:R:S:TVw:W:XYy",
+            "no",
+        ],
+    }
+    if keygen:
+        commands = {
+            "ssh-keygen": [
+                "@rpath/SSHKeygenStock.framework/SSHKeygenStock",
+                "ashell_ssh_keygen_main",
+                "",
+                "no",
+            ]
+        }
+    registry.write_bytes(plistlib.dumps(commands))
     return probe, registry
 
 
@@ -204,7 +210,7 @@ def exchange(args, answers, expected_fingerprint, env, prompt=PROMPT):
         env=env,
     ) as client:
         out, err = bytearray(), bytearray()
-        sent = 0
+        sent = consumed = 0
         try:
             if not answers:
                 client.stdin.close()
@@ -222,12 +228,17 @@ def exchange(args, answers, expected_fingerprint, env, prompt=PROMPT):
                             key.data.extend(data)
                         else:
                             ready.unregister(key.fileobj)
-                    while sent < len(answers) and err.count(prompt) > sent:
+                    while sent < len(answers):
+                        expected = prompt if isinstance(prompt, bytes) else prompt[sent]
+                        index = err.find(expected, consumed)
+                        if index == -1:
+                            break
+                        consumed = index + len(expected)
                         if expected_fingerprint is not None:
                             assert expected_fingerprint in err, (
                                 "wrong fingerprint in the prompt"
                             )
-                        assert prompt not in out, "prompt appeared on stdout"
+                        assert expected not in out, "prompt appeared on stdout"
                         client.stdin.write(answers[sent])
                         client.stdin.flush()
                         sent += 1
@@ -565,6 +576,214 @@ def check_confirmation(simulator, runtime_frameworks, stock_frameworks, console)
     print("STOCK_SSH_CONFIRMATION_PASS")
 
 
+def check_keygen(simulator, runtime_frameworks, stock_frameworks, console):
+    with tempfile.TemporaryDirectory(prefix="stock-ssh-keygen-") as work:
+        root = Path(work)
+        probe, registry = prepare_probe(
+            root, runtime_frameworks, stock_frameworks, keygen=True
+        )
+        key = root / "key"
+        generated = root / "generated"
+        old, new = (secrets.token_hex(16).encode() for _ in range(2))
+        subprocess.run(
+            ["/usr/bin/ssh-keygen", "-qt", "ed25519", "-N", old, "-f", key],
+            check=True,
+        )
+        before = key.read_bytes()
+        public = key_fields(key.with_suffix(".pub"))
+        first = b"(empty for no passphrase): "
+        again = b"Enter same passphrase again:"
+        change = (b"Enter old passphrase:", b"Enter new passphrase", again)
+
+        def run(name, options, prompts=(), answers=(), *, check):
+            args = [
+                "xcrun",
+                "simctl",
+                "spawn",
+                str(simulator),
+                probe,
+                registry,
+                root,
+                shlex.join(["ssh-keygen", *options]),
+            ]
+            try:
+                status, out, err, sent = exchange(
+                    args, answers, None, child_env(), prompts
+                )
+            except RuntimeError as error:
+                raise RuntimeError(f"{name}: {error}") from error
+            assert not any(s in out or s in err for s in (old, new)), (
+                f"{name}: secret echoed"
+            )
+            passed = sent == len(answers) and check(status, out, err)
+            console.print(
+                f"{name}: status={status} answers={sent}/{len(answers)} {'PASS' if passed else 'FAIL'}"
+            )
+            return passed
+
+        def unlocked_with(path, phrase):
+            result = subprocess.run(
+                ["/usr/bin/ssh-keygen", "-y", "-P", phrase, "-f", path],
+                capture_output=True,
+                check=False,
+            )
+            return result.returncode == 0 and result.stdout.split()[:2] == key_fields(
+                path.with_suffix(".pub")
+            )
+
+        creation = run(
+            "create-encrypted",
+            ("-qt", "ed25519", "-f", str(generated)),
+            (first, again),
+            (new + b"\r\n", new + b"\r"),
+            check=lambda status, *_: (
+                status == 0
+                and unlocked_with(generated, new)
+                and not unlocked_with(generated, b"")
+            ),
+        )
+        public_read = run(
+            "read-encrypted-public",
+            ("-y", "-f", str(key)),
+            (b"Enter passphrase for",),
+            (old + b"\r",),
+            check=lambda status, out, _: status == 0 and out.split()[:2] == public,
+        )
+        aborted = run(
+            "incomplete-change",
+            ("-p", "-f", str(key)),
+            change[:2],
+            (old + b"\r", new),
+            check=lambda status, _, err: (
+                status != 0 and again not in err and key.read_bytes() == before
+            ),
+        )
+        changed = run(
+            "change-passphrase",
+            ("-p", "-f", str(key)),
+            change,
+            (old + b"\r", new + b"\r", new + b"\r"),
+            check=lambda status, *_: (
+                status == 0 and unlocked_with(key, new) and not unlocked_with(key, old)
+            ),
+        )
+        comment = run(
+            "change-comment",
+            ("-c", "-C", "fixture-comment", "-f", str(key)),
+            (b"Enter passphrase:",),
+            (new + b"\r",),
+            check=lambda status, *_: (
+                status == 0
+                and key.with_suffix(".pub")
+                .read_bytes()
+                .rstrip()
+                .endswith(b" fixture-comment")
+            ),
+        )
+        message = root / "message"
+        message.write_bytes(b"Stock SSH signing fixture\n")
+        signature = message.with_suffix(".sig")
+
+        def signature_valid(status, *_):
+            if status != 0 or not signature.exists():
+                return False
+            return (
+                subprocess.run(
+                    [
+                        "/usr/bin/ssh-keygen",
+                        "-Y",
+                        "check-novalidate",
+                        "-n",
+                        "file",
+                        "-s",
+                        signature,
+                    ],
+                    input=message.read_bytes(),
+                    capture_output=True,
+                    check=False,
+                ).returncode
+                == 0
+            )
+
+        signed = run(
+            "sign-file",
+            ("-Y", "sign", "-n", "file", "-f", str(key), str(message)),
+            (b"Enter passphrase for",),
+            (new + b"\r",),
+            check=signature_valid,
+        )
+        subject = root / "subject"
+        subprocess.run(
+            ["/usr/bin/ssh-keygen", "-qt", "ed25519", "-N", "", "-f", subject],
+            check=True,
+        )
+        certified = run(
+            "sign-certificate",
+            ("-s", str(key), "-I", "fixture-id", str(subject.with_suffix(".pub"))),
+            (b"Enter passphrase for",),
+            (new + b"\r",),
+            check=lambda status, *_: (
+                status == 0
+                and b'Key ID: "fixture-id"'
+                in subprocess.check_output(
+                    ["/usr/bin/ssh-keygen", "-L", "-f", root / "subject-cert.pub"],
+                )
+            ),
+        )
+        empty = root / "empty"
+        no_secret = run(
+            "explicit-empty",
+            ("-qt", "ed25519", "-f", str(empty)),
+            (first, again),
+            (b"\r", b"\r"),
+            check=lambda status, *_: status == 0 and unlocked_with(empty, b""),
+        )
+        scripted = root / "scripted"
+        explicit_new = run(
+            "explicit-N",
+            ("-qt", "ed25519", "-N", new.decode(), "-f", str(scripted)),
+            check=lambda status, _, err: (
+                status == 0 and first not in err and unlocked_with(scripted, new)
+            ),
+        )
+        explicit_old = run(
+            "explicit-P",
+            ("-y", "-P", new.decode(), "-f", str(scripted)),
+            check=lambda status, out, err: (
+                status == 0
+                and b"Enter passphrase for" not in err
+                and out.split()[:2] == key_fields(scripted.with_suffix(".pub"))
+            ),
+        )
+        refused = root / "refused"
+        no_key = run(
+            "missing-input",
+            ("-qt", "ed25519", "-f", str(refused)),
+            check=lambda status, _, err: (
+                status != 0
+                and b"Could not read passphrase" in err
+                and not refused.exists()
+                and not refused.with_suffix(".pub").exists()
+            ),
+        )
+        assert all(
+            (
+                creation,
+                public_read,
+                aborted,
+                changed,
+                comment,
+                signed,
+                certified,
+                no_secret,
+                explicit_new,
+                explicit_old,
+                no_key,
+            )
+        ), "Stock ssh-keygen passphrase regression"
+    print("STOCK_SSH_KEYGEN_PASSPHRASE_PASS")
+
+
 def main(
     simulator: UUID,
     runtime_frameworks: Path,
@@ -575,10 +794,16 @@ def main(
             help="Disposable loopback sshd: directory with config and password files."
         ),
     ] = None,
+    keygen_only: Annotated[
+        bool, typer.Option(help="Check Stock ssh-keygen passphrases only.")
+    ] = False,
 ):
     """Run against a booted Simulator; supply runtime inputs and the recipe's sdk directory."""
     console = Console(stderr=True)
     try:
+        if keygen_only:
+            check_keygen(simulator, runtime_frameworks, stock_frameworks, console)
+            return
         if password_fixture is not None:
             check_password_retry(
                 simulator,

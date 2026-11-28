@@ -42,6 +42,17 @@ static inline int ashell_ssh_spawn_using(const char *path, char *const argv[], i
 static inline int ashell_ssh_spawn(const char *path, char *const argv[], int input, int output, pid_t *pid) {
     return ashell_ssh_spawn_using(path, argv, input, output, pid, ios_posix_spawn);
 }
+static inline int ashell_ssh_spawn_with_secret_input(pid_t *pid, const char *path,
+    const ios_posix_spawn_file_actions_t *actions, const void *attributes, char *const argv[], char *const envp[]) {
+    if (attributes) return ENOTSUP;
+    return ios_posix_spawn_with_secret_input(pid, path, actions, argv, envp);
+}
+static inline int ashell_ssh_spawn_transfer(const char *path, const char *stock_path, char *const argv[],
+    int input, int output, pid_t *pid) {
+    if (!strcmp(path, stock_path) || !strcmp(path, "ssh"))
+        return ashell_ssh_spawn_using(path, argv, input, output, pid, ashell_ssh_spawn_with_secret_input);
+    return ashell_ssh_spawn(path, argv, input, output, pid);
+}
 static inline struct passwd *ashell_ssh_getpwuid(uid_t uid) {
     static __thread struct passwd user;
     struct passwd *original = getpwuid(uid);

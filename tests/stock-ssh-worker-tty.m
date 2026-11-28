@@ -1,4 +1,4 @@
-// Link against ios_system. Arguments: STOCK_COMMAND_REGISTRY foreground|pipe|stdout-file|stdin-file.
+// Link against ios_system. Arguments: STOCK_COMMAND_REGISTRY foreground|pipe|stdout-file|stdin-file [ssh|ssh-keygen].
 #import <Foundation/Foundation.h>
 #import "ios_system.h"
 #include <errno.h>
@@ -33,14 +33,21 @@ static BOOL expect_tty(const char *command, int expected) {
 
 int main(int argc, char **argv) {
     @autoreleasepool {
-        if (argc != 3) return 64;
-        const char *command;
+        if (argc != 3 && argc != 4) return 64;
+        const char *client = argc == 4 ? argv[3] : "ssh";
+        if (strcmp(client, "ssh") && strcmp(client, "ssh-keygen")) return 64;
+        const char *argument = strcmp(client, "ssh") ? "-y" : "-V";
+        char command[128];
         int expected = 1;
-        if (!strcmp(argv[2], "foreground")) command = "ssh -V";
-        else if (!strcmp(argv[2], "stdout-file")) command = "ssh -V > /dev/null";
-        else if (!strcmp(argv[2], "pipe")) { command = "echo yes | ssh -V"; expected = 0; }
-        else if (!strcmp(argv[2], "stdin-file")) { command = "ssh -V < /dev/null"; expected = 0; }
-        else return 64;
+        if (!strcmp(argv[2], "foreground")) snprintf(command, sizeof(command), "%s %s", client, argument);
+        else if (!strcmp(argv[2], "stdout-file")) snprintf(command, sizeof(command), "%s %s > /dev/null", client, argument);
+        else if (!strcmp(argv[2], "pipe")) {
+            snprintf(command, sizeof(command), "echo yes | %s %s", client, argument);
+            expected = 0;
+        } else if (!strcmp(argv[2], "stdin-file")) {
+            snprintf(command, sizeof(command), "%s %s < /dev/null", client, argument);
+            expected = 0;
+        } else return 64;
         alarm(15);
         initializeEnvironment();
         if (addCommandList(@(argv[1]))) return 65;
@@ -52,7 +59,7 @@ int main(int argc, char **argv) {
         thread_stdin = stdin;
         thread_stdout = stdout;
         thread_stderr = stderr;
-        ios_setenv("ASHELL_WORKER_COMMANDS", "ssh", 1);
+        ios_setenv("ASHELL_WORKER_COMMANDS", client, 1);
         joinMainThread = true;
         BOOL passed = expect_tty(command, expected);
         ios_closeSession(session);

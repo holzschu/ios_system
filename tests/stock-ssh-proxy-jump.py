@@ -14,6 +14,7 @@ import tempfile
 import time
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
+from typing import Annotated
 from uuid import UUID
 
 import typer
@@ -105,7 +106,175 @@ def preserved(path):
             path.write_bytes(before)
 
 
-def main(simulator: UUID, bundle_id: str, timeout: float = 120.0):
+def check_password_jump(simulator, bundle_id, documents, fixture, console):
+    hosts = ("password-hop", "password-target")
+    prompt_suffix = b"'s password: "
+    secrets = [(fixture / name).read_bytes().rstrip(b"\n") for name in hosts]
+    if any(len(secret) < 12 or not secret.isalnum() for secret in secrets):
+        raise RuntimeError(
+            "Use alphanumeric fixture passwords of at least 12 characters"
+        )
+    if secrets[0] == secrets[1]:
+        raise RuntimeError("The jump and target must have different passwords")
+    # AXe matches the simulator UDID as printed by simctl, not UUID's lowercase form.
+    device = str(simulator).upper()
+    stop = ["xcrun", "simctl", "terminate", device, bundle_id]
+
+    def type_line(value):
+        subprocess.run(
+            ["axe", "type", "--stdin", "--layout", "us", "--udid", device],
+            input=value,
+            capture_output=True,
+            check=True,
+            timeout=30,
+        )
+        subprocess.run(
+            ["axe", "key", "40", "--udid", device],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        )
+
+    def read(path):
+        try:
+            return path.read_bytes()
+        except FileNotFoundError:
+            return b""
+
+    profile = documents / ".profile"
+    with (
+        tempfile.TemporaryDirectory(
+            prefix="stock-ssh-password-", dir=documents
+        ) as work,
+        preserved(profile),
+    ):
+        root = Path(work)
+        config = root / "config"
+        config.write_text(
+            (fixture / "config").read_text().replace("@FIXTURE@", str(root))
+        )
+        shutil.copyfile(fixture / "known_hosts", root / "known_hosts")
+        out, err = root / "out", root / "err"
+        command = shlex.join(
+            ["ssh", "-v", "-F", str(config), "-J", *hosts, "echo", MARKER]
+        )
+        # A launch PID can precede the terminal's keyboard/input setup.
+        ready = root / "ready"
+        profile.write_text(f"echo ready > {shlex.quote(str(ready))}\n")
+        simctl("launch", device, bundle_id, capture_output=True)
+        try:
+            deadline = time.monotonic() + 15
+            while not ready.is_file():
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(
+                        "Timed out waiting for the password test terminal"
+                    )
+                time.sleep(0.1)
+            type_line(
+                f"{command} > {shlex.quote(str(out))} 2> {shlex.quote(str(err))}".encode()
+            )
+            answered = 0
+            seen = 0
+            denied = False
+            status_ok = False
+            deadline = time.monotonic() + 20
+            while time.monotonic() < deadline:
+                stderr = read(err)
+                seen = stderr.count(prompt_suffix)
+                denied = b"Permission denied (" in stderr
+                status_ok = b"debug1: Exit status 0" in stderr
+                if denied or status_ok:
+                    break
+                if seen > answered:
+                    prompt = stderr.splitlines()[-1]
+                    if (
+                        seen != answered + 1
+                        or answered == len(hosts)
+                        or not prompt.endswith(
+                            f"@{hosts[answered]}'s password: ".encode()
+                        )
+                    ):
+                        break
+                    type_line(secrets[answered])
+                    answered += 1
+                time.sleep(0.1)
+            stdout, stderr = read(out), read(err)
+            login = MARKER.encode() in stdout.splitlines()
+            echoed = any(secret in stdout or secret in stderr for secret in secrets)
+            passed = (
+                status_ok
+                and login
+                and not echoed
+                and answered == seen == len(hosts)
+                and prompt_suffix not in stdout
+            )
+            status = (
+                "0"
+                if status_ok
+                else "permission denied"
+                if denied
+                else "incomplete"
+                if err.exists()
+                else "command not started"
+            )
+            console.print(
+                f"two-password-jump: status={status} prompts={seen} "
+                f"answers={answered} echoed={echoed} login={login}",
+                markup=False,
+            )
+            if not passed:
+                raise RuntimeError(
+                    "Expected ordered hop and target prompts, a successful login, "
+                    "and no passwords in the output streams"
+                )
+
+            # A custom proxy must not use the foreground authentication input.
+            proxy = shlex.join(
+                ["ssh", "-v", "-F", str(config), "-W", "%h:%p", hosts[0]]
+            )
+            command = shlex.join(
+                [
+                    "ssh",
+                    "-v",
+                    "-F",
+                    str(config),
+                    "-o",
+                    f"ProxyCommand={proxy}",
+                    hosts[1],
+                    "echo",
+                    MARKER,
+                ]
+            )
+            out, err = root / "proxy-out", root / "proxy-err"
+            type_line(
+                f"{command} > {shlex.quote(str(out))} 2> {shlex.quote(str(err))}".encode()
+            )
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                stdout, stderr = read(out), read(err)
+                if prompt_suffix in stdout or prompt_suffix in stderr:
+                    raise RuntimeError("Custom ProxyCommand unexpectedly prompted")
+                if b"Permission denied (password)." in stderr:
+                    break
+                time.sleep(0.1)
+            else:
+                raise RuntimeError("Expected password refusal from custom ProxyCommand")
+            console.print("password-proxy-command: permission denied, no prompt")
+        finally:
+            subprocess.run(stop, check=False, capture_output=True)
+
+
+def main(
+    simulator: UUID,
+    bundle_id: str,
+    timeout: float = 120.0,
+    password_fixture: Annotated[
+        Path | None,
+        typer.Option(
+            help="Disposable password fixture; requires AXe and a focused terminal."
+        ),
+    ] = None,
+):
     """Run against a booted Simulator with the worker-enabled app BUNDLE_ID installed."""
     console = Console(stderr=True)
     try:
@@ -230,6 +399,10 @@ def main(simulator: UUID, bundle_id: str, timeout: float = 120.0):
                     failures.append(f"{name}: no login: {err.strip()}")
             if failures:
                 raise RuntimeError("\n".join(failures))
+        if password_fixture is not None:
+            check_password_jump(
+                simulator, bundle_id, documents, password_fixture, console
+            )
         print("STOCK_SSH_PROXY_JUMP_PASS")
     except KeyboardInterrupt:
         raise typer.Exit(130) from None
