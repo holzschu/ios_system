@@ -1506,11 +1506,15 @@ static int spawnWorker(pid_t *pid, const char *path,
     const char *directory = actions && actions->cwd ? actions->cwd : getcwd(cwd, sizeof(cwd));
     workerPaneOptions options = { sizeof(options), 0, 1, -1 };
     int secretFd;
-    struct stat terminal;
-    if (borrowSecretInput && thread_stdin && ios_isatty(STDIN_FILENO) &&
-        (secretFd = fileno(thread_stdin)) >= 0 && fstat(secretFd, &terminal) == 0 &&
-        (S_ISSOCK(terminal.st_mode) || S_ISFIFO(terminal.st_mode)))
-        options.secret_input_fd = &secretFd;
+    if (borrowSecretInput) {
+        // A built-in jump worker can already have terminal input separate from its protocol stdin.
+        FILE *input = ios_getSecretInput();
+        if (input == NULL && thread_stdin && ios_isatty(STDIN_FILENO)) input = thread_stdin;
+        struct stat terminal;
+        if (input && (secretFd = fileno(input)) >= 0 && fstat(secretFd, &terminal) == 0 &&
+            (S_ISSOCK(terminal.st_mode) || S_ISFIFO(terminal.st_mode)))
+            options.secret_input_fd = &secretFd;
+    }
     child->worker.fd = -1;
     int cancellationState;
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cancellationState);
